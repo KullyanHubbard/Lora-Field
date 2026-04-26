@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CDP Web Monitor — Professional real-time system monitoring dashboard with live metrics, performance analytics, and intelligent alerts.">
+    <title>CDP Monitor — Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-broadcast-tower"></i>
+                </div>
+                <span class="logo-text">CDP<span class="logo-accent">Monitor</span></span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <span class="nav-label">Main</span>
+                <a href="#" class="nav-item active" data-page="dashboard" id="nav-dashboard">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="analytics" id="nav-analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="nav-item" data-page="servers" id="nav-servers">
+                    <i class="fas fa-server"></i>
+                    <span>Servers</span>
+                </a>
+                <a href="#" class="nav-item" data-page="alerts" id="nav-alerts">
+                    <i class="fas fa-bell"></i>
+                    <span>Alerts</span>
+                    <span class="nav-badge">3</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <span class="nav-label">Management</span>
+                <a href="#" class="nav-item" data-page="network" id="nav-network">
+                    <i class="fas fa-network-wired"></i>
+                    <span>Network</span>
+                </a>
+                <a href="#" class="nav-item" data-page="logs" id="nav-logs">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings" id="nav-settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile" id="userProfile">
+                <div class="user-avatar">
+                    <span>K</span>
+                    <span class="status-dot online"></span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">Kullyan</span>
+                    <span class="user-role">Administrator</span>
+                </div>
+                <i class="fas fa-ellipsis-v user-menu-icon"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="search-box" id="searchBox">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search metrics, servers, logs..." id="searchInput">
+                    <kbd>⌘K</kbd>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-actions">
+                    <button class="action-btn" id="refreshBtn" aria-label="Refresh data">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="action-btn" id="themeToggle" aria-label="Toggle theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="action-btn notification-btn" id="notificationBtn" aria-label="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-count">5</span>
+                    </button>
+                </div>
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    <span>Live</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content" id="dashboardContent">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <p class="page-subtitle" id="pageSubtitle">Real-time system overview and performance metrics</p>
+                </div>
+                <div class="header-actions">
+                    <div class="time-range" id="timeRange">
+                        <button class="time-btn active" data-range="1h">1H</button>
+                        <button class="time-btn" data-range="6h">6H</button>
+                        <button class="time-btn" data-range="24h">24H</button>
+                        <button class="time-btn" data-range="7d">7D</button>
+                        <button class="time-btn" data-range="30d">30D</button>
+                    </div>
+                    <button class="btn-primary" id="exportBtn">
+                        <i class="fas fa-download"></i>
+                        <span>Export</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Metric Cards -->
+            <div class="metrics-grid">
+                <div class="metric-card" id="metricCpu">
+                    <div class="metric-header">
+                        <div class="metric-icon cpu">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <span class="metric-trend up">
+                            <i class="fas fa-arrow-up"></i> 12%
+                        </span>
+                    </div>
+                    <div class="metric-value" data-target="67">0%</div>
+                    <div class="metric-label">CPU Usage</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill cpu-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card" id="metricMemory">
+                    <div class="metric-header">
+                        <div class="metric-icon memory">
+                            <i class="fas fa-memory"></i>
+                        </div>
+                        <span class="metric-trend up">
+                            <i class="fas fa-arrow-up"></i> 5%
+                        </span>
+                    </div>
+                    <div class="metric-value" data-target="82">0%</div>
+                    <div class="metric-label">Memory Usage</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill memory-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card" id="metricDisk">
+                    <div class="metric-header">
+                        <div class="metric-icon disk">
+                            <i class="fas fa-hdd"></i>
+                        </div>
+                        <span class="metric-trend down">
+                            <i class="fas fa-arrow-down"></i> 3%
+                        </span>
+                    </div>
+                    <div class="metric-value" data-target="45">0%</div>
+                    <div class="metric-label">Disk Usage</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill disk-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card" id="metricNetwork">
+                    <div class="metric-header">
+                        <div class="metric-icon network">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <span class="metric-trend up">
+                            <i class="fas fa-arrow-up"></i> 18%
+                        </span>
+                    </div>
+                    <div class="metric-value" data-target="124">0 Mb/s</div>
+                    <div class="metric-label">Network Traffic</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill network-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-grid">
+                <div class="chart-card main-chart">
+                    <div class="card-header">
+                        <div>
+                            <h3>Performance Overview</h3>
+                            <p class="card-subtitle">System resource utilization over time</p>
+                        </div>
+                        <div class="chart-legend" id="perfLegend">
+                            <span class="legend-item"><span class="legend-dot cpu-dot"></span> CPU</span>
+                            <span class="legend-item"><span class="legend-dot mem-dot"></span> Memory</span>
+                            <span class="legend-item"><span class="legend-dot net-dot"></span> Network</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card side-chart">
+                    <div class="card-header">
+                        <h3>Resource Distribution</h3>
+                        <p class="card-subtitle">Current allocation breakdown</p>
+                    </div>
+                    <div class="chart-container doughnut-container">
+                        <canvas id="resourceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row -->
+            <div class="bottom-grid">
+                <!-- Server Status -->
+                <div class="status-card">
+                    <div class="card-header">
+                        <h3>Server Status</h3>
+                        <a href="#" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="server-list" id="serverList">
+                        <div class="server-item">
+                            <div class="server-info">
+                                <div class="server-status-dot online"></div>
+                                <div>
+                                    <span class="server-name">web-prod-01</span>
+                                    <span class="server-location">Jakarta, ID</span>
+                                </div>
+                            </div>
+                            <div class="server-metrics">
+                                <span class="server-cpu">CPU 34%</span>
+                                <span class="server-uptime">99.9%</span>
+                            </div>
+                        </div>
+                        <div class="server-item">
+                            <div class="server-info">
+                                <div class="server-status-dot online"></div>
+                                <div>
+                                    <span class="server-name">web-prod-02</span>
+                                    <span class="server-location">Singapore, SG</span>
+                                </div>
+                            </div>
+                            <div class="server-metrics">
+                                <span class="server-cpu">CPU 58%</span>
+                                <span class="server-uptime">99.7%</span>
+                            </div>
+                        </div>
+                        <div class="server-item">
+                            <div class="server-info">
+                                <div class="server-status-dot warning"></div>
+                                <div>
+                                    <span class="server-name">db-primary</span>
+                                    <span class="server-location">Tokyo, JP</span>
+                                </div>
+                            </div>
+                            <div class="server-metrics">
+                                <span class="server-cpu high">CPU 89%</span>
+                                <span class="server-uptime">98.5%</span>
+                            </div>
+                        </div>
+                        <div class="server-item">
+                            <div class="server-info">
+                                <div class="server-status-dot offline"></div>
+                                <div>
+                                    <span class="server-name">cache-node-03</span>
+                                    <span class="server-location">Mumbai, IN</span>
+                                </div>
+                            </div>
+                            <div class="server-metrics">
+                                <span class="server-cpu">CPU —</span>
+                                <span class="server-uptime danger">Offline</span>
+                            </div>
+                        </div>
+                        <div class="server-item">
+                            <div class="server-info">
+                                <div class="server-status-dot online"></div>
+                                <div>
+                                    <span class="server-name">api-gateway</span>
+                                    <span class="server-location">Sydney, AU</span>
+                                </div>
+                            </div>
+                            <div class="server-metrics">
+                                <span class="server-cpu">CPU 22%</span>
+                                <span class="server-uptime">99.9%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Feed -->
+                <div class="activity-card">
+                    <div class="card-header">
+                        <h3>Activity Feed</h3>
+                        <div class="filter-tabs">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="critical">Critical</button>
+                            <button class="filter-btn" data-filter="warning">Warning</button>
+                        </div>
+                    </div>
+                    <div class="activity-list" id="activityList">
+                        <div class="activity-item" data-type="critical">
+                            <div class="activity-icon critical">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text"><strong>cache-node-03</strong> is unresponsive</p>
+                                <span class="activity-time">2 minutes ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item" data-type="warning">
+                            <div class="activity-icon warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text"><strong>db-primary</strong> CPU threshold exceeded (89%)</p>
+                                <span class="activity-time">8 minutes ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item" data-type="info">
+                            <div class="activity-icon info">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">Auto-scaling triggered for <strong>web-prod</strong> cluster</p>
+                                <span class="activity-time">15 minutes ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item" data-type="success">
+                            <div class="activity-icon success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">SSL certificate renewed for <strong>*.cdpmonitor.io</strong></p>
+                                <span class="activity-time">1 hour ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item" data-type="warning">
+                            <div class="activity-icon warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">Memory usage spike on <strong>web-prod-02</strong></p>
+                                <span class="activity-time">2 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item" data-type="info">
+                            <div class="activity-icon info">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">Scheduled maintenance completed for <strong>db-replica</strong></p>
+                                <span class="activity-time">3 hours ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notification Panel -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-header">
+            <h3>Notifications</h3>
+            <button class="mark-read-btn" id="markAllRead">Mark all read</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+            <div class="notification-item unread">
+                <div class="notification-icon critical"><i class="fas fa-server"></i></div>
+                <div class="notification-content">
+                    <p>Server <strong>cache-node-03</strong> went offline</p>
+                    <span>2 min ago</span>
+                </div>
+            </div>
+            <div class="notification-item unread">
+                <div class="notification-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="notification-content">
+                    <p>High CPU usage on <strong>db-primary</strong></p>
+                    <span>8 min ago</span>
+                </div>
+            </div>
+            <div class="notification-item unread">
+                <div class="notification-icon info"><i class="fas fa-sync"></i></div>
+                <div class="notification-content">
+                    <p>Auto-scaling event triggered</p>
+                    <span>15 min ago</span>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-icon success"><i class="fas fa-shield-alt"></i></div>
+                <div class="notification-content">
+                    <p>SSL certificate renewed successfully</p>
+                    <span>1 hr ago</span>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-icon info"><i class="fas fa-wrench"></i></div>
+                <div class="notification-content">
+                    <p>Maintenance window completed</p>
+                    <span>3 hr ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
