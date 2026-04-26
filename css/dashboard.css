@@ -1,0 +1,184 @@
+/* style per komponen halaman */
+
+/* Status System Cards */
+.system-cards { margin-bottom: 24px; }
+.system-card .metric-value { font-size: 1.2rem; }
+
+/* Sensor Cards */
+.sensor-cards { margin-bottom: 24px; }
+.sensor-value { font-size: 1.8rem; font-weight: 800; color: var(--color-gray-900); }
+.sensor-unit { font-size: 0.9rem; font-weight: 500; color: var(--color-gray-500); }
+.sensor-card-body { margin-top: 12px; }
+
+/* Irrigation Status Card */
+.irrigation-status-card { margin-bottom: 24px; }
+.irrigation-details { margin-top: 16px; }
+.irrigation-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-gray-100);
+    font-size: 0.82rem;
+}
+.irrigation-details .detail-row:last-child { border-bottom: none; }
+.detail-label { color: var(--color-gray-500); }
+.detail-value { font-weight: 600; color: var(--color-gray-800); }
+
+/* Charts Grid */
+.charts-section { margin-bottom: 24px; }
+.chart-card .card-header { margin-bottom: 12px; }
+
+/* Weather Card */
+.weather-card { margin-bottom: 24px; }
+.weather-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.weather-icon { font-size: 2.5rem; }
+.weather-temp { font-size: 2rem; font-weight: 800; color: var(--color-gray-900); }
+.weather-details { margin-top: 12px; }
+.weather-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--color-gray-100);
+}
+.weather-note {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--color-yellow-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    color: var(--color-yellow);
+    border-left: 3px solid var(--color-yellow);
+}
+
+/* Log Table */
+.log-section { margin-bottom: 24px; }
+.log-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.log-tools .search-box { flex: 0 1 280px; }
+
+/* Monitoring Node Card */
+.node-info-card { margin-bottom: 24px; }
+.node-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+.node-info-item {
+    font-size: 0.82rem;
+    padding: 6px 0;
+}
+.node-info-item .info-label { color: var(--color-gray-500); }
+.node-info-item .info-value { font-weight: 600; color: var(--color-gray-800); display: block; }
+
+/* Sensor Detail Card */
+.sensor-detail-card { margin-bottom: 8px; }
+.sensor-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+.sensor-detail-value { font-size: 1.3rem; font-weight: 700; }
+.sensor-detail-label { font-size: 0.78rem; color: var(--color-gray-500); }
+
+/* Threshold Settings */
+.threshold-section { margin-bottom: 24px; }
+.threshold-form { max-width: 500px; }
+.threshold-preview {
+    margin-top: 16px;
+    padding: 14px;
+    background: var(--color-gray-50);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-gray-200);
+}
+.threshold-preview p { font-size: 0.82rem; margin-bottom: 4px; }
+
+/* Decision Panel */
+.decision-panel .panel-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-gray-100);
+    font-size: 0.85rem;
+}
+.decision-panel .panel-label { color: var(--color-gray-500); }
+.decision-panel .panel-value { font-weight: 600; }
+
+/* Control Logic Table */
+.logic-table td:first-child { font-weight: 500; }
+
+/* Simulation Buttons */
+.sim-buttons { margin-top: 24px; }
+.sim-buttons .btn { min-width: 160px; justify-content: center; }
+
+/* About Page */
+.about-section { margin-bottom: 32px; }
+.about-desc {
+    font-size: 0.92rem;
+    color: var(--color-gray-700);
+    line-height: 1.7;
+    max-width: 700px;
+}
+.goals-list {
+    list-style: none;
+    margin-top: 12px;
+}
+.goals-list li {
+    padding: 6px 0;
+    font-size: 0.85rem;
+    color: var(--color-gray-700);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+.goals-list li::before {
+    content: '✓';
+    color: var(--color-primary);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Tech Cards */
+.tech-card { text-align: center; padding: 20px 16px; }
+.tech-card .card-icon { margin: 0 auto 10px; }
+.tech-card .tech-name { font-size: 0.78rem; color: var(--color-gray-500); margin-bottom: 2px; }
+.tech-card .tech-value { font-size: 0.88rem; font-weight: 600; color: var(--color-gray-800); }
+
+/* Sensor/Actuator Info */
+.info-table td { vertical-align: top; }
+
+/* Forecast Section */
+.forecast-section { margin-bottom: 24px; }
+
+/* Weather Impact */
+.weather-impact {
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 16px;
+}
+.weather-impact.allow {
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    border: 1px solid var(--color-primary);
+}
+.weather-impact.deny {
+    background: var(--color-yellow-light);
+    color: var(--color-yellow);
+    border: 1px solid var(--color-yellow);
+}

@@ -1,0 +1,73 @@
+/* breakpoint responsive */
+
+@media (max-width: 1200px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: none;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .main-content { margin-left: 0; }
+
+    .mobile-toggle { display: flex; }
+
+    .page-content { padding: 16px; }
+
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+
+    .page-header h1 { font-size: 1.25rem; }
+
+    .topbar { padding: 0 16px; }
+    .topbar-clock { display: none; }
+
+    .log-tools {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .log-tools .search-box { flex: 1; }
+
+    .filter-bar { overflow-x: auto; flex-wrap: nowrap; }
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .topology { overflow-x: auto; }
+
+    .node-info-grid { grid-template-columns: 1fr; }
+
+    .threshold-form { max-width: 100%; }
+
+    .chart-wrap { height: 200px; }
+
+    .weather-main { flex-direction: column; text-align: center; }
+
+    table { font-size: 0.75rem; }
+    table th, table td { padding: 8px; }
+}
+
+@media (max-width: 480px) {
+    .grid-4 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+
+    .metric-value { font-size: 1.3rem; }
+    .sensor-value { font-size: 1.4rem; }
+
+    .page-header h1 { font-size: 1.1rem; }
+
+    .btn { padding: 8px 14px; font-size: 0.78rem; }
+    .btn-group { flex-direction: column; }
+    .sim-buttons .btn { min-width: auto; width: 100%; }
+
+    .forecast-card { padding: 14px 12px; }
+
+    .status-big { padding: 20px 16px; }
+    .status-big .valve-status { font-size: 1.1rem; }
+}

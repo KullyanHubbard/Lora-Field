@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LoraField — Tentang sistem pertanian presisi berbasis LoRa P2P.">
+    <title>Tentang — LoraField</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌱%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <h2><i class="fas fa-seedling"></i> LoraField</h2>
+            <p>Sistem Pertanian Presisi Berbasis LoRa</p>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="sidebar-link"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area"></i> Monitoring</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint"></i> Irigasi</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt"></i> Log Sistem</a>
+            <a href="about.html" class="sidebar-link active"><i class="fas fa-info-circle"></i> Tentang</a>
+        </nav>
+        <div class="sidebar-footer">LoraField v0.1-alpha · CDP 2025</div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                <span class="topbar-title">Tentang LoraField</span>
+            </div>
+            <div class="topbar-right">
+                <span class="topbar-clock" id="realtime-clock"></span>
+            </div>
+        </header>
+
+        <div class="page-content">
+            <!-- Description -->
+            <div class="about-section">
+                <div class="page-header">
+                    <h1>Tentang LoraField</h1>
+                </div>
+                <div class="card">
+                    <p class="about-desc">
+                        LoraField adalah sistem pertanian presisi berbasis LoRa P2P yang dirancang untuk membantu petani memantau kondisi lahan dan mengotomasi keputusan irigasi berdasarkan data sensor aktual serta prakiraan cuaca BMKG.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Goals -->
+            <div class="about-section">
+                <h2 class="section-title">Tujuan Sistem</h2>
+                <div class="card">
+                    <ul class="goals-list">
+                        <li>Memantau kelembapan tanah, suhu tanah, suhu udara, dan kelembapan udara.</li>
+                        <li>Mengirim data dari node sensor ke gateway menggunakan LoRa P2P.</li>
+                        <li>Menampilkan data secara terpusat pada dashboard web.</li>
+                        <li>Mengotomasi irigasi berdasarkan threshold kelembapan tanah.</li>
+                        <li>Membuat threshold irigasi fleksibel dan dapat disesuaikan.</li>
+                        <li>Menunda irigasi jika BMKG memprediksi hujan dalam 3 jam ke depan.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tech Stack -->
+            <div class="about-section">
+                <h2 class="section-title">Teknologi Sistem</h2>
+                <div class="grid-3 mb-24" id="tech-grid"></div>
+            </div>
+
+            <!-- Topology -->
+            <div class="about-section">
+                <h2 class="section-title">Topologi Sistem</h2>
+                <div class="card">
+                    <div class="topology" id="topology-diagram"></div>
+                </div>
+            </div>
+
+            <!-- Sensors -->
+            <div class="about-section">
+                <h2 class="section-title">Sensor yang Digunakan</h2>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Sensor</th><th>Fungsi</th><th>Tipe</th></tr></thead>
+                            <tbody id="sensor-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actuators -->
+            <div class="about-section">
+                <h2 class="section-title">Aktuator dan Komponen Daya</h2>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Komponen</th><th>Fungsi</th></tr></thead>
+                            <tbody id="actuator-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Users -->
+            <div class="about-section">
+                <h2 class="section-title">Target Pengguna</h2>
+                <div class="card">
+                    <p class="about-desc">
+                        Petani atau pengelola lahan pertanian di D.I. Yogyakarta, khususnya lahan padi di Bantul dan kebun salak pondoh di Sleman.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/dummy-data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tech cards
+            document.getElementById('tech-grid').innerHTML = TECH_STACK.map(t => `
+                <div class="card tech-card">
+                    <div class="card-icon green"><i class="${t.icon}"></i></div>
+                    <div class="tech-name">${t.name}</div>
+                    <div class="tech-value">${t.value}</div>
+                </div>
+            `).join('');
+
+            // Topology
+            document.getElementById('topology-diagram').innerHTML = TOPOLOGY_STEPS.map((s, i) => {
+                let html = `<div class="topology-node">
+                    <div class="topo-icon"><i class="${s.icon}"></i></div>
+                    <div class="topo-label">${s.label}</div>
+                    <div class="topo-desc">${s.desc}</div>
+                </div>`;
+                if (i < TOPOLOGY_STEPS.length - 1) html += '<div class="topology-arrow"><i class="fas fa-arrow-right"></i></div>';
+                return html;
+            }).join('');
+
+            // Sensors
+            document.getElementById('sensor-table').innerHTML = SENSORS_INFO.map(s => `
+                <tr><td><strong>${s.name}</strong></td><td>${s.purpose}</td><td>${s.type}</td></tr>
+            `).join('');
+
+            // Actuators
+            document.getElementById('actuator-table').innerHTML = ACTUATORS_INFO.map(a => `
+                <tr><td><strong>${a.name}</strong></td><td>${a.purpose}</td></tr>
+            `).join('');
+        });
+    </script>
+</body>
+</html>

@@ -1,438 +1,304 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="CDP Web Monitor — Professional real-time system monitoring dashboard with live metrics, performance analytics, and intelligent alerts.">
-    <title>CDP Monitor — Dashboard</title>
+    <meta name="description" content="LoraField — Dashboard monitoring lahan pertanian, sensor tanah, cuaca, dan status irigasi berbasis LoRa P2P.">
+    <title>Dashboard — LoraField</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌱%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-broadcast-tower"></i>
-                </div>
-                <span class="logo-text">CDP<span class="logo-accent">Monitor</span></span>
-            </div>
-            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-                <i class="fas fa-chevron-left"></i>
-            </button>
+        <div class="sidebar-brand">
+            <h2><i class="fas fa-seedling"></i> LoraField</h2>
+            <p>Sistem Pertanian Presisi Berbasis LoRa</p>
         </div>
-
         <nav class="sidebar-nav">
-            <div class="nav-section">
-                <span class="nav-label">Main</span>
-                <a href="#" class="nav-item active" data-page="dashboard" id="nav-dashboard">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#" class="nav-item" data-page="analytics" id="nav-analytics">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Analytics</span>
-                </a>
-                <a href="#" class="nav-item" data-page="servers" id="nav-servers">
-                    <i class="fas fa-server"></i>
-                    <span>Servers</span>
-                </a>
-                <a href="#" class="nav-item" data-page="alerts" id="nav-alerts">
-                    <i class="fas fa-bell"></i>
-                    <span>Alerts</span>
-                    <span class="nav-badge">3</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <span class="nav-label">Management</span>
-                <a href="#" class="nav-item" data-page="network" id="nav-network">
-                    <i class="fas fa-network-wired"></i>
-                    <span>Network</span>
-                </a>
-                <a href="#" class="nav-item" data-page="logs" id="nav-logs">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Logs</span>
-                </a>
-                <a href="#" class="nav-item" data-page="settings" id="nav-settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-            </div>
+            <a href="index.html" class="sidebar-link active"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area"></i> Monitoring</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint"></i> Irigasi</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt"></i> Log Sistem</a>
+            <a href="about.html" class="sidebar-link"><i class="fas fa-info-circle"></i> Tentang</a>
         </nav>
-
-        <div class="sidebar-footer">
-            <div class="user-profile" id="userProfile">
-                <div class="user-avatar">
-                    <span>K</span>
-                    <span class="status-dot online"></span>
-                </div>
-                <div class="user-info">
-                    <span class="user-name">Kullyan</span>
-                    <span class="user-role">Administrator</span>
-                </div>
-                <i class="fas fa-ellipsis-v user-menu-icon"></i>
-            </div>
-        </div>
+        <div class="sidebar-footer">LoraField v0.1-alpha · CDP 2025</div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="main-content" id="mainContent">
-        <!-- Top Bar -->
+    <main class="main-content">
         <header class="topbar">
             <div class="topbar-left">
-                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="search-box" id="searchBox">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search metrics, servers, logs..." id="searchInput">
-                    <kbd>⌘K</kbd>
-                </div>
+                <button class="mobile-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                <span class="topbar-title">Dashboard LoraField</span>
             </div>
             <div class="topbar-right">
-                <div class="topbar-actions">
-                    <button class="action-btn" id="refreshBtn" aria-label="Refresh data">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <button class="action-btn" id="themeToggle" aria-label="Toggle theme">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <button class="action-btn notification-btn" id="notificationBtn" aria-label="Notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-count">5</span>
-                    </button>
-                </div>
-                <div class="live-indicator">
-                    <span class="live-dot"></span>
-                    <span>Live</span>
-                </div>
+                <span class="topbar-clock" id="realtime-clock"></span>
+                <span class="badge badge-green badge-online">Online</span>
             </div>
         </header>
 
-        <!-- Dashboard Content -->
-        <div class="dashboard-content" id="dashboardContent">
+        <div class="page-content">
             <!-- Page Header -->
             <div class="page-header">
-                <div>
-                    <h1 id="pageTitle">Dashboard</h1>
-                    <p class="page-subtitle" id="pageSubtitle">Real-time system overview and performance metrics</p>
-                </div>
-                <div class="header-actions">
-                    <div class="time-range" id="timeRange">
-                        <button class="time-btn active" data-range="1h">1H</button>
-                        <button class="time-btn" data-range="6h">6H</button>
-                        <button class="time-btn" data-range="24h">24H</button>
-                        <button class="time-btn" data-range="7d">7D</button>
-                        <button class="time-btn" data-range="30d">30D</button>
-                    </div>
-                    <button class="btn-primary" id="exportBtn">
-                        <i class="fas fa-download"></i>
-                        <span>Export</span>
-                    </button>
-                </div>
+                <h1>Dashboard LoraField</h1>
+                <p>Monitoring lahan pertanian, sensor tanah, cuaca, dan status irigasi berbasis LoRa.</p>
             </div>
 
-            <!-- Metric Cards -->
-            <div class="metrics-grid">
-                <div class="metric-card" id="metricCpu">
-                    <div class="metric-header">
-                        <div class="metric-icon cpu">
-                            <i class="fas fa-microchip"></i>
-                        </div>
-                        <span class="metric-trend up">
-                            <i class="fas fa-arrow-up"></i> 12%
-                        </span>
-                    </div>
-                    <div class="metric-value" data-target="67">0%</div>
-                    <div class="metric-label">CPU Usage</div>
-                    <div class="metric-bar">
-                        <div class="metric-bar-fill cpu-fill" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="metric-card" id="metricMemory">
-                    <div class="metric-header">
-                        <div class="metric-icon memory">
-                            <i class="fas fa-memory"></i>
-                        </div>
-                        <span class="metric-trend up">
-                            <i class="fas fa-arrow-up"></i> 5%
-                        </span>
-                    </div>
-                    <div class="metric-value" data-target="82">0%</div>
-                    <div class="metric-label">Memory Usage</div>
-                    <div class="metric-bar">
-                        <div class="metric-bar-fill memory-fill" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="metric-card" id="metricDisk">
-                    <div class="metric-header">
-                        <div class="metric-icon disk">
-                            <i class="fas fa-hdd"></i>
-                        </div>
-                        <span class="metric-trend down">
-                            <i class="fas fa-arrow-down"></i> 3%
-                        </span>
-                    </div>
-                    <div class="metric-value" data-target="45">0%</div>
-                    <div class="metric-label">Disk Usage</div>
-                    <div class="metric-bar">
-                        <div class="metric-bar-fill disk-fill" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="metric-card" id="metricNetwork">
-                    <div class="metric-header">
-                        <div class="metric-icon network">
-                            <i class="fas fa-wifi"></i>
-                        </div>
-                        <span class="metric-trend up">
-                            <i class="fas fa-arrow-up"></i> 18%
-                        </span>
-                    </div>
-                    <div class="metric-value" data-target="124">0 Mb/s</div>
-                    <div class="metric-label">Network Traffic</div>
-                    <div class="metric-bar">
-                        <div class="metric-bar-fill network-fill" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Row -->
-            <div class="charts-grid">
-                <div class="chart-card main-chart">
-                    <div class="card-header">
+            <!-- 1. System Status Cards -->
+            <div class="grid-4 system-cards mb-24">
+                <div class="card system-card">
+                    <div class="metric-card">
+                        <div class="card-icon green"><i class="fas fa-microchip"></i></div>
                         <div>
-                            <h3>Performance Overview</h3>
-                            <p class="card-subtitle">System resource utilization over time</p>
+                            <div class="metric-value" id="sys-node">1 Node</div>
+                            <div class="metric-label">Node Aktif</div>
+                            <span class="badge badge-green metric-status">Online</span>
                         </div>
-                        <div class="chart-legend" id="perfLegend">
-                            <span class="legend-item"><span class="legend-dot cpu-dot"></span> CPU</span>
-                            <span class="legend-item"><span class="legend-dot mem-dot"></span> Memory</span>
-                            <span class="legend-item"><span class="legend-dot net-dot"></span> Network</span>
-                        </div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="performanceChart"></canvas>
                     </div>
                 </div>
-
-                <div class="chart-card side-chart">
-                    <div class="card-header">
-                        <h3>Resource Distribution</h3>
-                        <p class="card-subtitle">Current allocation breakdown</p>
+                <div class="card system-card">
+                    <div class="metric-card">
+                        <div class="card-icon blue"><i class="fas fa-server"></i></div>
+                        <div>
+                            <div class="metric-value">Online</div>
+                            <div class="metric-label">Gateway LoRa</div>
+                            <span class="badge badge-green metric-status">Connected</span>
+                        </div>
                     </div>
-                    <div class="chart-container doughnut-container">
-                        <canvas id="resourceChart"></canvas>
+                </div>
+                <div class="card system-card">
+                    <div class="metric-card">
+                        <div class="card-icon green"><i class="fas fa-exchange-alt"></i></div>
+                        <div>
+                            <div class="metric-value">Connected</div>
+                            <div class="metric-label">MQTT Broker</div>
+                            <span class="badge badge-green metric-status">Mosquitto</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card system-card">
+                    <div class="metric-card">
+                        <div class="card-icon blue"><i class="fas fa-cloud-sun"></i></div>
+                        <div>
+                            <div class="metric-value">Available</div>
+                            <div class="metric-label">BMKG API</div>
+                            <span class="badge badge-green metric-status">Terhubung</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Row -->
-            <div class="bottom-grid">
-                <!-- Server Status -->
-                <div class="status-card">
-                    <div class="card-header">
-                        <h3>Server Status</h3>
-                        <a href="#" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+            <!-- 2. Sensor Cards -->
+            <h2 class="section-title">Ringkasan Sensor Terbaru</h2>
+            <div class="grid-4 sensor-cards mb-24">
+                <div class="card" id="card-soil">
+                    <div class="flex-between">
+                        <div class="card-icon green"><i class="fas fa-water"></i></div>
+                        <span class="badge" id="soil-badge">Normal</span>
                     </div>
-                    <div class="server-list" id="serverList">
-                        <div class="server-item">
-                            <div class="server-info">
-                                <div class="server-status-dot online"></div>
-                                <div>
-                                    <span class="server-name">web-prod-01</span>
-                                    <span class="server-location">Jakarta, ID</span>
-                                </div>
-                            </div>
-                            <div class="server-metrics">
-                                <span class="server-cpu">CPU 34%</span>
-                                <span class="server-uptime">99.9%</span>
-                            </div>
-                        </div>
-                        <div class="server-item">
-                            <div class="server-info">
-                                <div class="server-status-dot online"></div>
-                                <div>
-                                    <span class="server-name">web-prod-02</span>
-                                    <span class="server-location">Singapore, SG</span>
-                                </div>
-                            </div>
-                            <div class="server-metrics">
-                                <span class="server-cpu">CPU 58%</span>
-                                <span class="server-uptime">99.7%</span>
-                            </div>
-                        </div>
-                        <div class="server-item">
-                            <div class="server-info">
-                                <div class="server-status-dot warning"></div>
-                                <div>
-                                    <span class="server-name">db-primary</span>
-                                    <span class="server-location">Tokyo, JP</span>
-                                </div>
-                            </div>
-                            <div class="server-metrics">
-                                <span class="server-cpu high">CPU 89%</span>
-                                <span class="server-uptime">98.5%</span>
-                            </div>
-                        </div>
-                        <div class="server-item">
-                            <div class="server-info">
-                                <div class="server-status-dot offline"></div>
-                                <div>
-                                    <span class="server-name">cache-node-03</span>
-                                    <span class="server-location">Mumbai, IN</span>
-                                </div>
-                            </div>
-                            <div class="server-metrics">
-                                <span class="server-cpu">CPU —</span>
-                                <span class="server-uptime danger">Offline</span>
-                            </div>
-                        </div>
-                        <div class="server-item">
-                            <div class="server-info">
-                                <div class="server-status-dot online"></div>
-                                <div>
-                                    <span class="server-name">api-gateway</span>
-                                    <span class="server-location">Sydney, AU</span>
-                                </div>
-                            </div>
-                            <div class="server-metrics">
-                                <span class="server-cpu">CPU 22%</span>
-                                <span class="server-uptime">99.9%</span>
-                            </div>
-                        </div>
+                    <div class="sensor-card-body">
+                        <div><span class="sensor-value" id="soil-value">38</span><span class="sensor-unit"> % VWC</span></div>
+                        <div class="metric-label">Kelembapan Tanah</div>
+                        <div class="progress-bar"><div class="progress-fill green" id="soil-bar" style="width:38%"></div></div>
                     </div>
                 </div>
+                <div class="card" id="card-stemp">
+                    <div class="flex-between">
+                        <div class="card-icon orange"><i class="fas fa-temperature-low"></i></div>
+                        <span class="badge badge-green">Normal</span>
+                    </div>
+                    <div class="sensor-card-body">
+                        <div><span class="sensor-value" id="stemp-value">27.5</span><span class="sensor-unit"> °C</span></div>
+                        <div class="metric-label">Suhu Tanah</div>
+                        <div class="progress-bar"><div class="progress-fill orange" id="stemp-bar" style="width:55%"></div></div>
+                    </div>
+                </div>
+                <div class="card" id="card-atemp">
+                    <div class="flex-between">
+                        <div class="card-icon red"><i class="fas fa-thermometer-half"></i></div>
+                        <span class="badge badge-green">Normal</span>
+                    </div>
+                    <div class="sensor-card-body">
+                        <div><span class="sensor-value" id="atemp-value">30.2</span><span class="sensor-unit"> °C</span></div>
+                        <div class="metric-label">Suhu Udara</div>
+                        <div class="progress-bar"><div class="progress-fill red" id="atemp-bar" style="width:60%"></div></div>
+                    </div>
+                </div>
+                <div class="card" id="card-ahum">
+                    <div class="flex-between">
+                        <div class="card-icon blue"><i class="fas fa-tint"></i></div>
+                        <span class="badge badge-green">Normal</span>
+                    </div>
+                    <div class="sensor-card-body">
+                        <div><span class="sensor-value" id="ahum-value">78</span><span class="sensor-unit"> %</span></div>
+                        <div class="metric-label">Kelembapan Udara</div>
+                        <div class="progress-bar"><div class="progress-fill blue" id="ahum-bar" style="width:78%"></div></div>
+                    </div>
+                </div>
+            </div>
 
-                <!-- Activity Feed -->
-                <div class="activity-card">
-                    <div class="card-header">
-                        <h3>Activity Feed</h3>
-                        <div class="filter-tabs">
-                            <button class="filter-btn active" data-filter="all">All</button>
-                            <button class="filter-btn" data-filter="critical">Critical</button>
-                            <button class="filter-btn" data-filter="warning">Warning</button>
-                        </div>
+            <!-- 3. Irrigation Status -->
+            <h2 class="section-title">Status Irigasi Saat Ini</h2>
+            <div class="card status-big irrigation-status-card" id="irrigation-card">
+                <div class="valve-status open" id="valve-status-text">TERBUKA</div>
+                <div class="valve-reason" id="valve-reason">Kelembapan tanah berada di bawah threshold bawah dan tidak ada prediksi hujan 3 jam ke depan, maka valve dibuka.</div>
+                <div class="irrigation-details">
+                    <div class="detail-row"><span class="detail-label">Node</span><span class="detail-value">Node 01</span></div>
+                    <div class="detail-row"><span class="detail-label">Lokasi</span><span class="detail-value">Lahan Padi Bantul</span></div>
+                    <div class="detail-row"><span class="detail-label">Threshold Bawah</span><span class="detail-value" id="dash-lower">40% VWC</span></div>
+                    <div class="detail-row"><span class="detail-label">Threshold Atas</span><span class="detail-value" id="dash-upper">70% VWC</span></div>
+                </div>
+                <a href="irrigation.html" class="btn btn-primary mt-16"><i class="fas fa-cog"></i> Detail Irigasi</a>
+            </div>
+
+            <!-- 4. Charts -->
+            <h2 class="section-title mt-24">Grafik Monitoring</h2>
+            <div class="grid-3 charts-section mb-24">
+                <div class="card chart-card">
+                    <div class="card-header"><h3>Kelembapan Tanah</h3></div>
+                    <div class="chart-wrap"><canvas id="chart-soil-moisture"></canvas></div>
+                </div>
+                <div class="card chart-card">
+                    <div class="card-header"><h3>Suhu Tanah</h3></div>
+                    <div class="chart-wrap"><canvas id="chart-soil-temp"></canvas></div>
+                </div>
+                <div class="card chart-card">
+                    <div class="card-header"><h3>Kelembapan Udara</h3></div>
+                    <div class="chart-wrap"><canvas id="chart-air-humidity"></canvas></div>
+                </div>
+            </div>
+
+            <!-- 5. Weather BMKG -->
+            <h2 class="section-title">Cuaca BMKG</h2>
+            <div class="card weather-card mb-24">
+                <div class="weather-main">
+                    <span class="weather-icon" id="weather-icon">☁️</span>
+                    <div>
+                        <div class="weather-temp" id="weather-temp">29°C</div>
+                        <div class="text-muted" id="weather-location">Bantul, D.I. Yogyakarta</div>
                     </div>
-                    <div class="activity-list" id="activityList">
-                        <div class="activity-item" data-type="critical">
-                            <div class="activity-icon critical">
-                                <i class="fas fa-exclamation-circle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text"><strong>cache-node-03</strong> is unresponsive</p>
-                                <span class="activity-time">2 minutes ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item" data-type="warning">
-                            <div class="activity-icon warning">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text"><strong>db-primary</strong> CPU threshold exceeded (89%)</p>
-                                <span class="activity-time">8 minutes ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item" data-type="info">
-                            <div class="activity-icon info">
-                                <i class="fas fa-info-circle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text">Auto-scaling triggered for <strong>web-prod</strong> cluster</p>
-                                <span class="activity-time">15 minutes ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item" data-type="success">
-                            <div class="activity-icon success">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text">SSL certificate renewed for <strong>*.cdpmonitor.io</strong></p>
-                                <span class="activity-time">1 hour ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item" data-type="warning">
-                            <div class="activity-icon warning">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text">Memory usage spike on <strong>web-prod-02</strong></p>
-                                <span class="activity-time">2 hours ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item" data-type="info">
-                            <div class="activity-icon info">
-                                <i class="fas fa-info-circle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text">Scheduled maintenance completed for <strong>db-replica</strong></p>
-                                <span class="activity-time">3 hours ago</span>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+                <div class="weather-details">
+                    <div class="detail-row"><span class="detail-label">Kondisi</span><span class="detail-value" id="weather-cond">Berawan</span></div>
+                    <div class="detail-row"><span class="detail-label">Kelembapan</span><span class="detail-value" id="weather-hum">80%</span></div>
+                    <div class="detail-row"><span class="detail-label">Prediksi Hujan 3 Jam</span><span class="detail-value" id="weather-rain">Tidak Ada</span></div>
+                    <div class="detail-row"><span class="detail-label">Weather Code</span><span class="detail-value" id="weather-code">3</span></div>
+                </div>
+                <div class="weather-note">
+                    <i class="fas fa-info-circle"></i> Jika weather code BMKG menunjukkan hujan ringan, hujan sedang, atau hujan lebat, sistem akan menunda irigasi.
+                </div>
+            </div>
+
+            <!-- 6. Recent Decision Logs -->
+            <h2 class="section-title">Log Keputusan Terbaru</h2>
+            <div class="card mb-24">
+                <div class="table-wrap">
+                    <table id="dash-log-table">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Node</th>
+                                <th>Kelembapan</th>
+                                <th>Threshold</th>
+                                <th>Cuaca</th>
+                                <th>Keputusan</th>
+                                <th>Valve</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dash-log-body"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Notification Panel -->
-    <div class="notification-panel" id="notificationPanel">
-        <div class="notification-header">
-            <h3>Notifications</h3>
-            <button class="mark-read-btn" id="markAllRead">Mark all read</button>
-        </div>
-        <div class="notification-list" id="notificationList">
-            <div class="notification-item unread">
-                <div class="notification-icon critical"><i class="fas fa-server"></i></div>
-                <div class="notification-content">
-                    <p>Server <strong>cache-node-03</strong> went offline</p>
-                    <span>2 min ago</span>
-                </div>
-            </div>
-            <div class="notification-item unread">
-                <div class="notification-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="notification-content">
-                    <p>High CPU usage on <strong>db-primary</strong></p>
-                    <span>8 min ago</span>
-                </div>
-            </div>
-            <div class="notification-item unread">
-                <div class="notification-icon info"><i class="fas fa-sync"></i></div>
-                <div class="notification-content">
-                    <p>Auto-scaling event triggered</p>
-                    <span>15 min ago</span>
-                </div>
-            </div>
-            <div class="notification-item">
-                <div class="notification-icon success"><i class="fas fa-shield-alt"></i></div>
-                <div class="notification-content">
-                    <p>SSL certificate renewed successfully</p>
-                    <span>1 hr ago</span>
-                </div>
-            </div>
-            <div class="notification-item">
-                <div class="notification-icon info"><i class="fas fa-wrench"></i></div>
-                <div class="notification-content">
-                    <p>Maintenance window completed</p>
-                    <span>3 hr ago</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script src="js/dummy-data.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/simulation.js"></script>
+    <script>
+        // Dashboard-specific UI update
+        function updateDashboardUI() {
+            const node = NODES[0];
+            const rain = isRainPredicted();
+            const decision = makeIrrigationDecision(node.soilMoisture, rain);
+            const soilStatus = getSoilStatus(node.soilMoisture);
 
-    <!-- Overlay -->
-    <div class="overlay" id="overlay"></div>
+            // Sensor cards
+            document.getElementById('soil-value').textContent = node.soilMoisture;
+            document.getElementById('stemp-value').textContent = node.soilTemp;
+            document.getElementById('atemp-value').textContent = node.airTemp;
+            document.getElementById('ahum-value').textContent = node.airHumidity;
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+            document.getElementById('soil-bar').style.width = node.soilMoisture + '%';
+            document.getElementById('stemp-bar').style.width = (node.soilTemp / 50 * 100) + '%';
+            document.getElementById('atemp-bar').style.width = (node.airTemp / 50 * 100) + '%';
+            document.getElementById('ahum-bar').style.width = node.airHumidity + '%';
 
-    <script src="script.js"></script>
+            // Soil badge
+            const soilBadge = document.getElementById('soil-badge');
+            soilBadge.textContent = soilStatus.label;
+            soilBadge.className = 'badge ' + (soilStatus.color === 'red' ? 'badge-red' : soilStatus.color === 'blue' ? 'badge-blue' : 'badge-green');
+
+            // Valve status
+            const valveEl = document.getElementById('valve-status-text');
+            valveEl.textContent = decision.valve.toUpperCase();
+            valveEl.className = 'valve-status ' + decision.type;
+            if (decision.type === 'delayed') valveEl.classList.add('delayed');
+            else if (decision.type === 'open') valveEl.classList.add('open');
+            else valveEl.classList.add('closed');
+
+            document.getElementById('valve-reason').textContent = decision.reason;
+            document.getElementById('dash-lower').textContent = ThresholdManager.lower + '% VWC';
+            document.getElementById('dash-upper').textContent = ThresholdManager.upper + '% VWC';
+
+            // Weather
+            const wInfo = getWeatherInfo(WEATHER_DATA.current.code);
+            document.getElementById('weather-icon').textContent = wInfo.icon;
+            document.getElementById('weather-temp').textContent = WEATHER_DATA.current.temp + '°C';
+            document.getElementById('weather-cond').textContent = WEATHER_DATA.current.condition;
+            document.getElementById('weather-hum').textContent = WEATHER_DATA.current.humidity + '%';
+            document.getElementById('weather-rain').textContent = rain ? 'Ada Prediksi Hujan' : 'Tidak Ada';
+            document.getElementById('weather-code').textContent = WEATHER_DATA.current.code;
+
+            // Push history + update charts
+            pushSensorHistory(node);
+            updateDashboardCharts();
+
+            // Add log
+            addLogEntry(node, node.soilMoisture, rain ? 'Hujan' : 'Tidak hujan', WEATHER_DATA.current.code, decision.decision, decision.valve, decision.type, decision.reason);
+
+            // Log table (last 5)
+            const tbody = document.getElementById('dash-log-body');
+            tbody.innerHTML = DECISION_LOGS.slice(0, 5).map(l => {
+                const badge = getDecisionBadge(l.type);
+                return `<tr>
+                    <td>${l.time}</td>
+                    <td>${l.node}</td>
+                    <td>${l.soilMoisture}%</td>
+                    <td>${l.threshold}</td>
+                    <td>${l.weather}</td>
+                    <td><span class="badge ${badge.className}">${l.decision}</span></td>
+                    <td>${l.valve}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initDashboardCharts();
+            updateDashboardUI();
+            startSimulation();
+        });
+    </script>
 </body>
 </html>

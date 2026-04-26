@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LoraField — Monitoring detail sensor lahan pertanian dan riwayat data.">
+    <title>Monitoring — LoraField</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌱%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <h2><i class="fas fa-seedling"></i> LoraField</h2>
+            <p>Sistem Pertanian Presisi Berbasis LoRa</p>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="sidebar-link"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="monitoring.html" class="sidebar-link active"><i class="fas fa-chart-area"></i> Monitoring</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint"></i> Irigasi</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt"></i> Log Sistem</a>
+            <a href="about.html" class="sidebar-link"><i class="fas fa-info-circle"></i> Tentang</a>
+        </nav>
+        <div class="sidebar-footer">LoraField v0.1-alpha · CDP 2025</div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                <span class="topbar-title">Monitoring Sensor</span>
+            </div>
+            <div class="topbar-right">
+                <span class="topbar-clock" id="realtime-clock"></span>
+                <span class="badge badge-green badge-online">Online</span>
+            </div>
+        </header>
+
+        <div class="page-content">
+            <div class="page-header">
+                <h1>Monitoring Sensor Lahan</h1>
+                <p>Detail data sensor, riwayat pengukuran, dan status node.</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-24">
+                <div class="flex-between" style="flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                        <div class="form-group" style="margin:0;">
+                            <select class="form-control" id="filter-node" style="width:180px;">
+                                <option value="01">Node 01</option>
+                                <option value="02">Node 02</option>
+                                <option value="03">Node 03</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <select class="form-control" id="filter-location" style="width:180px;">
+                                <option value="">Semua Lokasi</option>
+                                <option value="Bantul">Bantul</option>
+                                <option value="Sleman">Sleman</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="updateMonitoringUI()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                </div>
+            </div>
+
+            <!-- Node Info Card -->
+            <div class="card node-info-card" id="node-info-card">
+                <div class="flex-between">
+                    <h3 id="node-title">Node 01 — Lahan Padi Bantul</h3>
+                    <span class="badge badge-green" id="node-status-badge">Online</span>
+                </div>
+                <div class="node-info-grid" id="node-info-grid">
+                    <div class="node-info-item"><span class="info-label">Device ID</span><span class="info-value" id="ni-devid">01</span></div>
+                    <div class="node-info-item"><span class="info-label">Status</span><span class="info-value" id="ni-status">Online</span></div>
+                    <div class="node-info-item"><span class="info-label">Frekuensi LoRa</span><span class="info-value" id="ni-freq">921.2 MHz</span></div>
+                    <div class="node-info-item"><span class="info-label">Spreading Factor</span><span class="info-value" id="ni-sf">SF9</span></div>
+                    <div class="node-info-item"><span class="info-label">Sync Word</span><span class="info-value" id="ni-sync">0x12</span></div>
+                    <div class="node-info-item"><span class="info-label">Update Interval</span><span class="info-value" id="ni-interval">10 menit</span></div>
+                    <div class="node-info-item"><span class="info-label">Update Terakhir</span><span class="info-value" id="ni-last">Beberapa detik lalu</span></div>
+                </div>
+            </div>
+
+            <!-- Sensor Details -->
+            <h2 class="section-title">Detail Sensor</h2>
+            <div class="grid-4 mb-24">
+                <div class="card sensor-detail-card">
+                    <div class="sensor-detail-header">
+                        <span class="sensor-detail-label">Kelembapan Tanah</span>
+                        <span class="sensor-detail-value" id="mon-soil" style="color:var(--color-primary)">38% VWC</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill green" id="mon-soil-bar" style="width:38%"></div></div>
+                </div>
+                <div class="card sensor-detail-card">
+                    <div class="sensor-detail-header">
+                        <span class="sensor-detail-label">Suhu Tanah</span>
+                        <span class="sensor-detail-value" id="mon-stemp" style="color:var(--color-orange)">27.5°C</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill orange" id="mon-stemp-bar" style="width:55%"></div></div>
+                </div>
+                <div class="card sensor-detail-card">
+                    <div class="sensor-detail-header">
+                        <span class="sensor-detail-label">Suhu Udara</span>
+                        <span class="sensor-detail-value" id="mon-atemp" style="color:var(--color-red)">30.2°C</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill red" id="mon-atemp-bar" style="width:60%"></div></div>
+                </div>
+                <div class="card sensor-detail-card">
+                    <div class="sensor-detail-header">
+                        <span class="sensor-detail-label">Kelembapan Udara</span>
+                        <span class="sensor-detail-value" id="mon-ahum" style="color:var(--color-blue)">78% RH</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill blue" id="mon-ahum-bar" style="width:78%"></div></div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <h2 class="section-title">Grafik Riwayat Sensor</h2>
+            <div class="grid-2 mb-24">
+                <div class="card"><div class="card-header"><h3>Kelembapan Tanah</h3></div><div class="chart-wrap"><canvas id="mon-chart-soil"></canvas></div></div>
+                <div class="card"><div class="card-header"><h3>Suhu Tanah</h3></div><div class="chart-wrap"><canvas id="mon-chart-soil-temp"></canvas></div></div>
+                <div class="card"><div class="card-header"><h3>Suhu Udara</h3></div><div class="chart-wrap"><canvas id="mon-chart-air-temp"></canvas></div></div>
+                <div class="card"><div class="card-header"><h3>Kelembapan Udara</h3></div><div class="chart-wrap"><canvas id="mon-chart-air-hum"></canvas></div></div>
+            </div>
+
+            <!-- Data Table -->
+            <h2 class="section-title">Tabel Data Sensor</h2>
+            <div class="card">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Waktu</th><th>Node</th><th>Kelembapan Tanah</th><th>Suhu Tanah</th><th>Suhu Udara</th><th>Kelembapan Udara</th><th>Status</th></tr>
+                        </thead>
+                        <tbody id="mon-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/dummy-data.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/simulation.js"></script>
+    <script>
+        let selectedNodeId = '01';
+        let monTableData = [];
+
+        document.getElementById('filter-node').addEventListener('change', e => {
+            selectedNodeId = e.target.value;
+            updateMonitoringUI();
+        });
+
+        function getSelectedNode() {
+            return NODES.find(n => n.id === selectedNodeId) || NODES[0];
+        }
+
+        function updateMonitoringUI() {
+            const node = getSelectedNode();
+            const badge = getNodeStatusBadge(node.status);
+
+            document.getElementById('node-title').textContent = `${node.name} — ${node.location}`;
+            const statusBadge = document.getElementById('node-status-badge');
+            statusBadge.textContent = badge.label;
+            statusBadge.className = `badge ${badge.className}`;
+
+            document.getElementById('ni-devid').textContent = node.id;
+            document.getElementById('ni-status').textContent = node.status.charAt(0).toUpperCase() + node.status.slice(1);
+            document.getElementById('ni-freq').textContent = node.frequency;
+            document.getElementById('ni-sf').textContent = node.spreadingFactor;
+            document.getElementById('ni-sync').textContent = node.syncWord;
+            document.getElementById('ni-interval').textContent = node.updateInterval;
+            document.getElementById('ni-last').textContent = timeAgo(node.lastUpdate);
+
+            document.getElementById('mon-soil').textContent = node.soilMoisture + '% VWC';
+            document.getElementById('mon-stemp').textContent = node.soilTemp + '°C';
+            document.getElementById('mon-atemp').textContent = node.airTemp + '°C';
+            document.getElementById('mon-ahum').textContent = node.airHumidity + '% RH';
+
+            document.getElementById('mon-soil-bar').style.width = node.soilMoisture + '%';
+            document.getElementById('mon-stemp-bar').style.width = (node.soilTemp / 50 * 100) + '%';
+            document.getElementById('mon-atemp-bar').style.width = (node.airTemp / 50 * 100) + '%';
+            document.getElementById('mon-ahum-bar').style.width = node.airHumidity + '%';
+
+            if (node.status !== 'offline') {
+                pushSensorHistory(node);
+                updateMonitoringCharts();
+            }
+
+            // Table
+            if (node.status !== 'offline') {
+                const now = new Date();
+                monTableData.unshift({
+                    time: now.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+                    node: node.name,
+                    soil: node.soilMoisture + '%',
+                    stemp: node.soilTemp + '°C',
+                    atemp: node.airTemp + '°C',
+                    ahum: node.airHumidity + '%',
+                    status: node.status
+                });
+                if (monTableData.length > 20) monTableData.pop();
+            }
+            const tbody = document.getElementById('mon-table-body');
+            tbody.innerHTML = monTableData.slice(0, 10).map(r => {
+                const b = getNodeStatusBadge(r.status);
+                return `<tr><td>${r.time}</td><td>${r.node}</td><td>${r.soil}</td><td>${r.stemp}</td><td>${r.atemp}</td><td>${r.ahum}</td><td><span class="badge ${b.className}">${b.label}</span></td></tr>`;
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMonitoringCharts();
+            updateMonitoringUI();
+            startSimulation();
+        });
+    </script>
+</body>
+</html>
