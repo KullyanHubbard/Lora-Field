@@ -190,8 +190,10 @@
         plugins: {
             legend: { display: false },
             tooltip: {
-                backgroundColor: '#1c1e2e',
-                borderColor: 'rgba(255,255,255,0.1)',
+                backgroundColor: '#ffffff',
+                borderColor: 'rgba(0,0,0,0.08)',
+                titleColor: '#1d1d1f',
+                bodyColor: '#6e6e73',
                 borderWidth: 1,
                 titleFont: { family: 'Inter', size: 12 },
                 bodyFont: { family: 'Inter', size: 11 },
@@ -214,30 +216,30 @@
                     {
                         label: 'CPU',
                         data: generateData(24, 30, 80),
-                        borderColor: '#7c5cfc',
-                        backgroundColor: createGradient(ctx, 'rgb(124,92,252)', 260),
+                        borderColor: '#007aff',
+                        backgroundColor: createGradient(ctx, 'rgb(0,122,255)', 260),
                         borderWidth: 2, fill: true, tension: 0.4,
                         pointRadius: 0, pointHoverRadius: 5,
-                        pointHoverBackgroundColor: '#7c5cfc',
+                        pointHoverBackgroundColor: '#007aff',
                     },
                     {
                         label: 'Memory',
                         data: generateData(24, 50, 90),
-                        borderColor: '#22d3ee',
-                        backgroundColor: createGradient(ctx, 'rgb(34,211,238)', 260),
+                        borderColor: '#5ac8fa',
+                        backgroundColor: createGradient(ctx, 'rgb(90,200,250)', 260),
                         borderWidth: 2, fill: true, tension: 0.4,
                         pointRadius: 0, pointHoverRadius: 5,
-                        pointHoverBackgroundColor: '#22d3ee',
+                        pointHoverBackgroundColor: '#5ac8fa',
                     },
                     {
                         label: 'Network',
                         data: generateData(24, 10, 60),
-                        borderColor: '#34d399',
+                        borderColor: '#34c759',
                         backgroundColor: 'transparent',
                         borderWidth: 2, fill: false, tension: 0.4,
                         pointRadius: 0, pointHoverRadius: 5,
                         borderDash: [6, 3],
-                        pointHoverBackgroundColor: '#34d399',
+                        pointHoverBackgroundColor: '#34c759',
                     }
                 ]
             },
@@ -245,14 +247,14 @@
                 ...chartDefaults,
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255,255,255,0.04)' },
-                        ticks: { color: '#6b7280', font: { size: 10, family: 'Inter' }, maxTicksLimit: 8 },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: { color: '#aeaeb2', font: { size: 10, family: 'Inter' }, maxTicksLimit: 8 },
                         border: { display: false }
                     },
                     y: {
                         min: 0, max: 100,
-                        grid: { color: 'rgba(255,255,255,0.04)' },
-                        ticks: { color: '#6b7280', font: { size: 10, family: 'Inter' }, callback: v => v + '%' },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: { color: '#aeaeb2', font: { size: 10, family: 'Inter' }, callback: v => v + '%' },
                         border: { display: false }
                     }
                 },
@@ -269,8 +271,8 @@
                 labels: ['CPU', 'Memory', 'Storage', 'Network', 'Free'],
                 datasets: [{
                     data: [25, 30, 15, 10, 20],
-                    backgroundColor: ['#7c5cfc', '#22d3ee', '#fb923c', '#34d399', '#252840'],
-                    borderColor: '#1c1e2e',
+                    backgroundColor: ['#007aff', '#5ac8fa', '#ff9500', '#34c759', '#e5e5ea'],
+                    borderColor: '#ffffff',
                     borderWidth: 3,
                     hoverOffset: 8,
                 }]
@@ -284,7 +286,7 @@
                         display: true,
                         position: 'bottom',
                         labels: {
-                            color: '#9ca3af',
+                            color: '#6e6e73',
                             font: { size: 11, family: 'Inter' },
                             padding: 16,
                             usePointStyle: true,

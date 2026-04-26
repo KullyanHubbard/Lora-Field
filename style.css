@@ -1,30 +1,30 @@
 /* ========== CSS Variables & Reset ========== */
 :root {
-    --bg-primary: #0f1117;
-    --bg-secondary: #161822;
-    --bg-card: #1c1e2e;
-    --bg-hover: #252840;
-    --border: rgba(255,255,255,0.06);
-    --text-primary: #e8eaed;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
-    --accent: #7c5cfc;
-    --accent-soft: rgba(124,92,252,0.15);
-    --cyan: #22d3ee;
-    --cyan-soft: rgba(34,211,238,0.15);
-    --green: #34d399;
-    --green-soft: rgba(52,211,153,0.15);
-    --orange: #fb923c;
-    --orange-soft: rgba(251,146,60,0.15);
-    --red: #f87171;
-    --red-soft: rgba(248,113,113,0.15);
-    --pink: #f472b6;
+    --bg-primary: #f5f5f7;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #f0f0f3;
+    --border: rgba(0,0,0,0.08);
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-muted: #aeaeb2;
+    --accent: #007aff;
+    --accent-soft: rgba(0,122,255,0.1);
+    --cyan: #5ac8fa;
+    --cyan-soft: rgba(90,200,250,0.12);
+    --green: #34c759;
+    --green-soft: rgba(52,199,89,0.12);
+    --orange: #ff9500;
+    --orange-soft: rgba(255,149,0,0.12);
+    --red: #ff3b30;
+    --red-soft: rgba(255,59,48,0.1);
+    --pink: #ff2d55;
     --sidebar-w: 260px;
     --sidebar-collapsed: 72px;
     --topbar-h: 64px;
     --radius: 14px;
     --radius-sm: 8px;
-    --shadow: 0 4px 24px rgba(0,0,0,0.25);
+    --shadow: 0 2px 16px rgba(0,0,0,0.06);
     --transition: .3s cubic-bezier(.4,0,.2,1);
 }
 
@@ -42,7 +42,7 @@ a { text-decoration:none; color:inherit; }
 button { border:none; background:none; cursor:pointer; font-family:inherit; color:inherit; }
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:var(--bg-hover); border-radius:9px; }
+::-webkit-scrollbar-thumb { background:#c7c7cc; border-radius:9px; }
 
 /* ========== Sidebar ========== */
 .sidebar {
@@ -154,7 +154,7 @@ button { border:none; background:none; cursor:pointer; font-family:inherit; colo
     justify-content:space-between; padding:0 28px;
     border-bottom:1px solid var(--border); background:var(--bg-secondary);
     position:sticky; top:0; z-index:50; backdrop-filter:blur(12px);
-    background:rgba(22,24,34,0.85);
+    background:rgba(255,255,255,0.85);
 }
 .topbar-left { display:flex; align-items:center; gap:16px; }
 .mobile-menu-btn { display:none; font-size:1.2rem; color:var(--text-secondary); }
@@ -226,11 +226,11 @@ button { border:none; background:none; cursor:pointer; font-family:inherit; colo
 .time-btn.active { background:var(--accent); color:#fff; }
 .btn-primary {
     display:flex; align-items:center; gap:8px; padding:8px 18px;
-    background:linear-gradient(135deg,var(--accent),#6340e0);
+    background:linear-gradient(135deg,#007aff,#0055d4);
     color:#fff; border-radius:var(--radius-sm); font-size:.8rem; font-weight:500;
-    transition:all var(--transition); box-shadow:0 2px 12px rgba(124,92,252,.3);
+    transition:all var(--transition); box-shadow:0 2px 12px rgba(0,122,255,.3);
 }
-.btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(124,92,252,.45); }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(0,122,255,.35); }
 
 /* ========== Metric Cards ========== */
 .metrics-grid {
@@ -239,13 +239,13 @@ button { border:none; background:none; cursor:pointer; font-family:inherit; colo
 .metric-card {
     background:var(--bg-card); border-radius:var(--radius); padding:22px;
     border:1px solid var(--border); transition:all var(--transition);
-    position:relative; overflow:hidden;
+    position:relative; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.04);
 }
 .metric-card::before {
     content:''; position:absolute; top:0; left:0; right:0; height:2px;
     opacity:0; transition:opacity var(--transition);
 }
-.metric-card:hover { transform:translateY(-3px); box-shadow:var(--shadow); border-color:rgba(255,255,255,.1); }
+.metric-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08); border-color:rgba(0,0,0,.1); }
 .metric-card:hover::before { opacity:1; }
 #metricCpu .metric-card::before, #metricCpu::before { background:linear-gradient(90deg,var(--accent),var(--cyan)); }
 #metricMemory::before { background:linear-gradient(90deg,var(--cyan),var(--green)); }
@@ -279,8 +279,9 @@ button { border:none; background:none; cursor:pointer; font-family:inherit; colo
 .chart-card {
     background:var(--bg-card); border-radius:var(--radius); padding:22px;
     border:1px solid var(--border); transition:all var(--transition);
+    box-shadow:0 1px 4px rgba(0,0,0,0.04);
 }
-.chart-card:hover { border-color:rgba(255,255,255,.1); }
+.chart-card:hover { border-color:rgba(0,0,0,.1); box-shadow:0 4px 16px rgba(0,0,0,0.06); }
 .card-header {
     display:flex; align-items:flex-start; justify-content:space-between;
     margin-bottom:18px; flex-wrap:wrap; gap:8px;
@@ -305,7 +306,7 @@ button { border:none; background:none; cursor:pointer; font-family:inherit; colo
 .bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
 .status-card, .activity-card {
     background:var(--bg-card); border-radius:var(--radius); padding:22px;
-    border:1px solid var(--border);
+    border:1px solid var(--border); box-shadow:0 1px 4px rgba(0,0,0,0.04);
 }
 
 /* Server List */
@@ -362,7 +363,7 @@ button { border:none; background:none; cursor:pointer; font-family:inherit; colo
     position:fixed; top:0; right:-380px; width:380px; height:100vh;
     background:var(--bg-secondary); border-left:1px solid var(--border);
     z-index:200; transition:right var(--transition); overflow-y:auto;
-    box-shadow:-8px 0 30px rgba(0,0,0,.3);
+    box-shadow:-8px 0 30px rgba(0,0,0,.08);
 }
 .notification-panel.open { right:0; }
 .notification-header {
@@ -378,7 +379,7 @@ button { border:none; background:none; cursor:pointer; font-family:inherit; colo
     cursor:pointer;
 }
 .notification-item:hover { background:var(--bg-hover); }
-.notification-item.unread { background:rgba(124,92,252,.05); }
+.notification-item.unread { background:rgba(0,122,255,.05); }
 .notification-item.unread::before {
     content:''; width:6px; height:6px; border-radius:50%;
     background:var(--accent); flex-shrink:0; margin-top:8px;
