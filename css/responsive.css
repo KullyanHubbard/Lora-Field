@@ -1,73 +1,227 @@
-/* breakpoint responsive */
+/* Responsive breakpoints */
 
-@media (max-width: 1200px) {
-    .grid-4 { grid-template-columns: repeat(2, 1fr); }
-    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1280px) {
+    .grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .node-info-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    :root {
+        --sidebar-w: 248px;
+    }
+
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .page-header-actions {
+        justify-content: flex-start;
+    }
+
+    .weather-card,
+    .threshold-section {
+        grid-template-columns: 1fr;
+    }
+
+    .node-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 768px) {
+    body {
+        display: block;
+    }
+
     .sidebar {
         transform: translateX(-100%);
         box-shadow: none;
     }
+
     .sidebar.open {
         transform: translateX(0);
         box-shadow: var(--shadow-lg);
     }
 
-    .main-content { margin-left: 0; }
-
-    .mobile-toggle { display: flex; }
-
-    .page-content { padding: 16px; }
-
-    .grid-4 { grid-template-columns: 1fr 1fr; }
-    .grid-3 { grid-template-columns: 1fr; }
-    .grid-2 { grid-template-columns: 1fr; }
-
-    .page-header h1 { font-size: 1.25rem; }
-
-    .topbar { padding: 0 16px; }
-    .topbar-clock { display: none; }
-
-    .log-tools {
-        flex-direction: column;
-        align-items: stretch;
+    .main-content {
+        margin-left: 0;
     }
-    .log-tools .search-box { flex: 1; }
 
-    .filter-bar { overflow-x: auto; flex-wrap: nowrap; }
-    .filter-bar::-webkit-scrollbar { display: none; }
+    .mobile-toggle {
+        display: inline-flex;
+    }
 
-    .topology { overflow-x: auto; }
+    .topbar {
+        height: 58px;
+        padding: 0 16px;
+    }
 
-    .node-info-grid { grid-template-columns: 1fr; }
+    .topbar-clock {
+        display: none;
+    }
 
-    .threshold-form { max-width: 100%; }
+    .page-content {
+        padding: 18px 14px 24px;
+    }
 
-    .chart-wrap { height: 200px; }
+    .page-header {
+        margin-bottom: 18px;
+    }
 
-    .weather-main { flex-direction: column; text-align: center; }
+    .page-header h1 {
+        font-size: 1.42rem;
+    }
 
-    table { font-size: 0.75rem; }
-    table th, table td { padding: 8px; }
+    .page-header p {
+        font-size: 0.88rem;
+    }
+
+    .grid-4,
+    .grid-3,
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .chart-wrap {
+        height: 210px;
+        min-height: 210px;
+    }
+
+    .log-tools,
+    .toolbar-card .flex-between {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .toolbar-controls,
+    .toolbar-controls .form-group,
+    .log-tools .search-box {
+        width: 100%;
+    }
+
+    .filter-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+
+    .filter-bar::-webkit-scrollbar,
+    .topology::-webkit-scrollbar {
+        display: none;
+    }
+
+    .topology {
+        overflow-x: auto;
+    }
+
+    .node-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .weather-card {
+        text-align: left;
+    }
+
+    .weather-main {
+        align-items: center;
+    }
+
+    table {
+        font-size: 0.76rem;
+    }
+
+    table th,
+    table td {
+        padding: 10px;
+    }
 }
 
-@media (max-width: 480px) {
-    .grid-4 { grid-template-columns: 1fr; }
-    .grid-2 { grid-template-columns: 1fr; }
+@media (max-width: 520px) {
+    .topbar-title {
+        max-width: 170px;
+    }
 
-    .metric-value { font-size: 1.3rem; }
-    .sensor-value { font-size: 1.4rem; }
+    .topbar-right {
+        gap: 8px;
+    }
 
-    .page-header h1 { font-size: 1.1rem; }
+    .page-content {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
 
-    .btn { padding: 8px 14px; font-size: 0.78rem; }
-    .btn-group { flex-direction: column; }
-    .sim-buttons .btn { min-width: auto; width: 100%; }
+    .page-header-actions,
+    .btn-group {
+        width: 100%;
+    }
 
-    .forecast-card { padding: 14px 12px; }
+    .page-header-actions .btn,
+    .page-header-actions .status-pill,
+    .btn-group .btn,
+    .sim-buttons .btn {
+        width: 100%;
+    }
 
-    .status-big { padding: 20px 16px; }
-    .status-big .valve-status { font-size: 1.1rem; }
+    .metric-card {
+        align-items: flex-start;
+    }
+
+    .metric-value {
+        font-size: 1.28rem;
+    }
+
+    .sensor-value {
+        font-size: 1.55rem;
+    }
+
+    .sensor-detail-header,
+    .irrigation-details .detail-row,
+    .weather-details .detail-row,
+    .decision-panel .panel-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .detail-value,
+    .decision-panel .panel-value,
+    .sensor-detail-value {
+        text-align: left;
+    }
+
+    .weather-icon {
+        width: 62px;
+        height: 62px;
+        font-size: 1.65rem;
+    }
+
+    .weather-temp {
+        font-size: 1.6rem;
+    }
+
+    .forecast-card {
+        min-height: 170px;
+    }
+
+    .status-big {
+        padding: 22px 16px;
+    }
+
+    .status-big .valve-status {
+        font-size: 1.22rem;
+    }
 }

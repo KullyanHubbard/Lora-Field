@@ -57,7 +57,6 @@ const NODES = [
     }
 ];
 
-// Sumber asli: https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=34.02.01.2001
 const WEATHER_DATA = {
     location: 'Bantul, D.I. Yogyakarta',
     source: 'BMKG Public API',
@@ -79,14 +78,14 @@ const WEATHER_DATA = {
 };
 
 const WEATHER_CODES = [
-    { code: 0, label: 'Cerah', icon: '☀️', isRain: false },
-    { code: 1, label: 'Cerah', icon: '☀️', isRain: false },
-    { code: 2, label: 'Cerah Berawan', icon: '⛅', isRain: false },
-    { code: 3, label: 'Berawan', icon: '☁️', isRain: false },
-    { code: 4, label: 'Berawan Tebal', icon: '☁️', isRain: false },
-    { code: 60, label: 'Hujan Ringan', icon: '🌧️', isRain: true },
-    { code: 61, label: 'Hujan Sedang', icon: '🌧️', isRain: true },
-    { code: 63, label: 'Hujan Lebat', icon: '⛈️', isRain: true }
+    { code: 0, label: 'Cerah', icon: 'fas fa-sun', isRain: false },
+    { code: 1, label: 'Cerah', icon: 'fas fa-sun', isRain: false },
+    { code: 2, label: 'Cerah Berawan', icon: 'fas fa-cloud-sun', isRain: false },
+    { code: 3, label: 'Berawan', icon: 'fas fa-cloud', isRain: false },
+    { code: 4, label: 'Berawan Tebal', icon: 'fas fa-cloud', isRain: false },
+    { code: 60, label: 'Hujan Ringan', icon: 'fas fa-cloud-rain', isRain: true },
+    { code: 61, label: 'Hujan Sedang', icon: 'fas fa-cloud-showers-heavy', isRain: true },
+    { code: 63, label: 'Hujan Lebat', icon: 'fas fa-cloud-bolt', isRain: true }
 ];
 
 const SYSTEM_STATUS = {
@@ -135,7 +134,7 @@ const TECH_STACK = [
 const SENSORS_INFO = [
     { name: 'Capacitive Soil Moisture Sensor V1.2', purpose: 'Kelembapan tanah', type: 'Kapasitif' },
     { name: 'DS18B20 Waterproof', purpose: 'Suhu tanah', type: 'Digital' },
-    { name: 'DHT22 AM2302', purpose: 'Suhu & kelembapan udara', type: 'Digital' }
+    { name: 'DHT22 AM2302', purpose: 'Suhu dan kelembapan udara', type: 'Digital' }
 ];
 
 const ACTUATORS_INFO = [
@@ -145,8 +144,6 @@ const ACTUATORS_INFO = [
     { name: 'Solar Panel 10W', purpose: 'Pengisian daya dari matahari' },
     { name: 'Solar Charge Controller', purpose: 'Pengatur pengisian aki dari solar panel' }
 ];
-
-
 
 const TOPOLOGY_STEPS = [
     { label: 'Node Sensor', icon: 'fas fa-microchip', desc: 'LILYGO LoRa32' },

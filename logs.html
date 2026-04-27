@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="LoraField — Log keputusan sistem irigasi otomatis.">
-    <title>Log Sistem — LoraField</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌱%3C/text%3E%3C/svg%3E">
+    <meta name="description" content="LoraField - Log keputusan sistem irigasi otomatis.">
+    <title>Log Sistem - LoraField</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -13,26 +13,29 @@
     <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-    <aside class="sidebar" id="sidebar">
+    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand">
-            <h2><i class="fas fa-seedling"></i> LoraField</h2>
+            <h2><i class="fas fa-seedling" aria-hidden="true"></i> LoraField</h2>
             <p>Sistem Pertanian Presisi Berbasis LoRa</p>
         </div>
-        <nav class="sidebar-nav">
-            <a href="index.html" class="sidebar-link"><i class="fas fa-th-large"></i> Dashboard</a>
-            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area"></i> Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint"></i> Irigasi</a>
-            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun"></i> Cuaca</a>
-            <a href="logs.html" class="sidebar-link active"><i class="fas fa-list-alt"></i> Log Sistem</a>
+        <nav class="sidebar-nav" aria-label="Menu aplikasi">
+            <a href="index.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
+            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i> Monitoring</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link active" aria-current="page"><i class="fas fa-list-alt" aria-hidden="true"></i> Log Sistem</a>
         </nav>
-        <div class="sidebar-footer">LoraField v0.1-alpha · CDP 2025</div>
+        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
     </aside>
 
     <main class="main-content">
         <header class="topbar">
             <div class="topbar-left">
-                <button class="mobile-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                <button class="mobile-toggle" id="sidebar-toggle" type="button" aria-label="Buka navigasi" aria-controls="sidebar">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
                 <span class="topbar-title">Log Sistem</span>
             </div>
             <div class="topbar-right">
@@ -42,26 +45,34 @@
         </header>
 
         <div class="page-content">
+            <section class="page-header">
+                <div>
+                    <span class="page-kicker">Audit keputusan</span>
+                    <h1>Log Sistem</h1>
+                    <p>Riwayat keputusan valve, status cuaca, dan kondisi sensor untuk penelusuran operasional.</p>
+                </div>
+                <div class="page-header-actions">
+                    <span class="status-pill"><i class="fas fa-database" aria-hidden="true"></i> 50 log terakhir</span>
+                    <a href="index.html" class="btn btn-secondary"><i class="fas fa-table-cells-large" aria-hidden="true"></i> Dashboard</a>
+                </div>
+            </section>
 
-
-            <!-- Tools -->
             <div class="card mb-24">
                 <div class="log-tools">
-                    <div class="filter-bar" id="log-filters">
-                        <button class="filter-btn active" data-filter="all">Semua Log</button>
-                        <button class="filter-btn" data-filter="open">Irigasi Dijalankan</button>
-                        <button class="filter-btn" data-filter="delayed">Irigasi Ditunda</button>
-                        <button class="filter-btn" data-filter="closed">Valve Tertutup</button>
-                        <button class="filter-btn" data-filter="warning">Warning</button>
+                    <div class="filter-bar" id="log-filters" role="group" aria-label="Filter log">
+                        <button class="filter-btn active" type="button" data-filter="all" aria-pressed="true">Semua Log</button>
+                        <button class="filter-btn" type="button" data-filter="open" aria-pressed="false">Irigasi Dijalankan</button>
+                        <button class="filter-btn" type="button" data-filter="delayed" aria-pressed="false">Irigasi Ditunda</button>
+                        <button class="filter-btn" type="button" data-filter="closed" aria-pressed="false">Valve Tertutup</button>
+                        <button class="filter-btn" type="button" data-filter="warning" aria-pressed="false">Warning</button>
                     </div>
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Cari node atau keputusan..." id="log-search">
-                    </div>
+                    <label class="search-box" for="log-search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <input type="text" placeholder="Cari node, lokasi, atau keputusan..." id="log-search">
+                    </label>
                 </div>
             </div>
 
-            <!-- Log Table -->
             <div class="card">
                 <div class="table-wrap">
                     <table>
@@ -96,43 +107,55 @@
 
         function renderLogs() {
             let logs = DECISION_LOGS;
-            if (activeFilter !== 'all') logs = logs.filter(l => l.type === activeFilter);
+            if (activeFilter !== 'all') logs = logs.filter(log => log.type === activeFilter);
             if (searchQuery) {
-                const q = searchQuery.toLowerCase();
-                logs = logs.filter(l => l.node.toLowerCase().includes(q) || l.decision.toLowerCase().includes(q) || l.location.toLowerCase().includes(q));
+                const query = searchQuery.toLowerCase();
+                logs = logs.filter(log =>
+                    log.node.toLowerCase().includes(query) ||
+                    log.decision.toLowerCase().includes(query) ||
+                    log.location.toLowerCase().includes(query)
+                );
             }
 
             const tbody = document.getElementById('log-table-body');
-            tbody.innerHTML = logs.map(l => {
-                const badge = getDecisionBadge(l.type);
+            if (!logs.length) {
+                tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted">Tidak ada log yang cocok dengan filter.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(log => {
+                const badge = getDecisionBadge(log.type);
                 return `<tr>
-                    <td>${l.time}</td>
-                    <td>${l.node}</td>
-                    <td>${l.location}</td>
-                    <td>${l.soilMoisture}%</td>
-                    <td>${l.threshold}</td>
-                    <td>${l.soilTemp}°C</td>
-                    <td>${l.weather}</td>
-                    <td>${l.weatherCode}</td>
-                    <td><span class="badge ${badge.className}">${l.decision}</span></td>
-                    <td>${l.valve}</td>
-                    <td class="text-sm text-muted">${l.note}</td>
+                    <td>${log.time}</td>
+                    <td>${log.node}</td>
+                    <td>${log.location}</td>
+                    <td>${log.soilMoisture}%</td>
+                    <td>${log.threshold}</td>
+                    <td>${log.soilTemp}${DEG_C}</td>
+                    <td>${log.weather}</td>
+                    <td>${log.weatherCode}</td>
+                    <td><span class="badge ${badge.className}">${log.decision}</span></td>
+                    <td>${log.valve}</td>
+                    <td class="text-sm text-muted">${log.note}</td>
                 </tr>`;
             }).join('');
         }
 
-        // Filter buttons
-        document.getElementById('log-filters').addEventListener('click', e => {
-            if (!e.target.classList.contains('filter-btn')) return;
-            document.querySelectorAll('#log-filters .filter-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            activeFilter = e.target.dataset.filter;
+        document.getElementById('log-filters').addEventListener('click', event => {
+            if (!event.target.classList.contains('filter-btn')) return;
+
+            document.querySelectorAll('#log-filters .filter-btn').forEach(button => {
+                button.classList.remove('active');
+                button.setAttribute('aria-pressed', 'false');
+            });
+            event.target.classList.add('active');
+            event.target.setAttribute('aria-pressed', 'true');
+            activeFilter = event.target.dataset.filter;
             renderLogs();
         });
 
-        // Search
-        document.getElementById('log-search').addEventListener('input', e => {
-            searchQuery = e.target.value;
+        document.getElementById('log-search').addEventListener('input', event => {
+            searchQuery = event.target.value.trim();
             renderLogs();
         });
 

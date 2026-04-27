@@ -1,13 +1,14 @@
-// Simulasi data sensor — nanti diganti WebSocket dari backend
+// Simulasi data sensor - nanti diganti WebSocket dari backend.
 
 let simulationInterval = null;
 let currentRainOverride = null;
 
 function randomInRange(min, max, decimals = 1) {
-    return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
+    const low = Math.min(min, max);
+    const high = Math.max(min, max);
+    return parseFloat((Math.random() * (high - low) + low).toFixed(decimals));
 }
 
-// Update nilai sensor secara random (simulasi pembacaan dari node LoRa)
 function simulateSensorData() {
     NODES.forEach(node => {
         if (node.status === 'offline') return;
@@ -19,7 +20,6 @@ function simulateSensorData() {
     });
 }
 
-// Dipanggil dari tombol simulasi di halaman irigasi
 function simulateCondition(type) {
     const node = NODES[0];
     const lower = ThresholdManager.lower;
@@ -32,7 +32,7 @@ function simulateCondition(type) {
             WEATHER_DATA.rainPrediction = false;
             break;
         case 'normal':
-            node.soilMoisture = randomInRange(lower + 5, upper - 5, 0);
+            node.soilMoisture = randomInRange(lower + 1, upper - 1, 0);
             currentRainOverride = false;
             WEATHER_DATA.rainPrediction = false;
             break;
@@ -47,37 +47,38 @@ function simulateCondition(type) {
             WEATHER_DATA.rainPrediction = true;
             WEATHER_DATA.forecast[2] = { label: '+3 Jam', condition: 'Hujan Ringan', code: 60, temp: 25 };
             break;
+        default:
+            return;
     }
+
     node.lastUpdate = new Date();
     updateAllUI();
 }
 
-// Reset rain override
 function resetRainOverride() {
     currentRainOverride = null;
     WEATHER_DATA.rainPrediction = false;
     WEATHER_DATA.forecast[2] = { label: '+3 Jam', condition: 'Cerah Berawan', code: 2, temp: 27 };
 }
 
-// Check if rain is predicted
 function isRainPredicted() {
     if (currentRainOverride !== null) return currentRainOverride;
-    return WEATHER_DATA.rainPrediction;
+    return WEATHER_DATA.rainPrediction || WEATHER_DATA.forecast.some(item => getWeatherInfo(item.code).isRain);
 }
 
-// Panggil updater masing-masing halaman kalau fungsinya ada
 function updateAllUI() {
     if (typeof updateDashboardUI === 'function') updateDashboardUI();
     if (typeof updateMonitoringUI === 'function') updateMonitoringUI();
     if (typeof updateIrrigationUI === 'function') updateIrrigationUI();
     if (typeof updateWeatherUI === 'function') updateWeatherUI();
+    if (typeof renderLogs === 'function') renderLogs();
 }
 
-// Auto-update setiap 8 detik (nanti pakai WebSocket event dari MQTT)
 function startSimulation() {
     if (simulationInterval) return;
     simulationInterval = setInterval(() => {
         simulateSensorData();
+
         if (currentRainOverride === null) {
             WEATHER_DATA.rainPrediction = Math.random() < 0.15;
             if (WEATHER_DATA.rainPrediction) {
@@ -89,6 +90,7 @@ function startSimulation() {
                 WEATHER_DATA.forecast[2] = { label: '+3 Jam', condition: 'Cerah Berawan', code: 2, temp: randomInRange(26, 29, 0) };
             }
         }
+
         updateAllUI();
     }, 8000);
 }
@@ -100,20 +102,27 @@ function stopSimulation() {
     }
 }
 
-// Add a new log entry dynamically
 function addLogEntry(node, soilMoisture, weather, weatherCode, decision, valve, type, note) {
     const now = new Date();
     const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     DECISION_LOGS.unshift({
-        time, node: node.name, location: node.location,
-        soilMoisture, threshold: ThresholdManager.getActiveString(),
-        soilTemp: node.soilTemp, weather, weatherCode,
-        decision, valve, type, note
+        time,
+        node: node.name,
+        location: node.location,
+        soilMoisture,
+        threshold: ThresholdManager.getActiveString(),
+        soilTemp: node.soilTemp,
+        weather,
+        weatherCode,
+        decision,
+        valve,
+        type,
+        note
     });
+
     if (DECISION_LOGS.length > 50) DECISION_LOGS.pop();
 }
 
-// Push sensor history for charts
 function pushSensorHistory(node) {
     const now = new Date();
     const label = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -123,7 +132,6 @@ function pushSensorHistory(node) {
     SENSOR_HISTORY.airTemp.push(node.airTemp);
     SENSOR_HISTORY.airHumidity.push(node.airHumidity);
 
-    // Keep last 20 points
     if (SENSOR_HISTORY_LABELS.length > 20) {
         SENSOR_HISTORY_LABELS.shift();
         SENSOR_HISTORY.soilMoisture.shift();

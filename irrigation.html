@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="LoraField — Kontrol dan pengaturan irigasi otomatis berbasis threshold kelembapan tanah.">
-    <title>Irigasi — LoraField</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌱%3C/text%3E%3C/svg%3E">
+    <meta name="description" content="LoraField - Kontrol dan pengaturan irigasi otomatis berbasis threshold kelembapan tanah.">
+    <title>Irigasi - LoraField</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -13,26 +13,29 @@
     <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-    <aside class="sidebar" id="sidebar">
+    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand">
-            <h2><i class="fas fa-seedling"></i> LoraField</h2>
+            <h2><i class="fas fa-seedling" aria-hidden="true"></i> LoraField</h2>
             <p>Sistem Pertanian Presisi Berbasis LoRa</p>
         </div>
-        <nav class="sidebar-nav">
-            <a href="index.html" class="sidebar-link"><i class="fas fa-th-large"></i> Dashboard</a>
-            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area"></i> Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link active"><i class="fas fa-tint"></i> Irigasi</a>
-            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun"></i> Cuaca</a>
-            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt"></i> Log Sistem</a>
+        <nav class="sidebar-nav" aria-label="Menu aplikasi">
+            <a href="index.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
+            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i> Monitoring</a>
+            <a href="irrigation.html" class="sidebar-link active" aria-current="page"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Log Sistem</a>
         </nav>
-        <div class="sidebar-footer">LoraField v0.1-alpha · CDP 2025</div>
+        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
     </aside>
 
     <main class="main-content">
         <header class="topbar">
             <div class="topbar-left">
-                <button class="mobile-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                <button class="mobile-toggle" id="sidebar-toggle" type="button" aria-label="Buka navigasi" aria-controls="sidebar">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
                 <span class="topbar-title">Kontrol Irigasi</span>
             </div>
             <div class="topbar-right">
@@ -42,51 +45,67 @@
         </header>
 
         <div class="page-content">
+            <section class="page-header">
+                <div>
+                    <span class="page-kicker">Kontrol valve</span>
+                    <h1>Kontrol Irigasi</h1>
+                    <p>Atur threshold VWC, simulasikan kondisi tanah, dan validasi keputusan valve sebelum integrasi backend.</p>
+                </div>
+                <div class="page-header-actions">
+                    <span class="status-pill"><i class="fas fa-sliders" aria-hidden="true"></i> Mode otomatis</span>
+                    <a href="weather.html" class="btn btn-secondary"><i class="fas fa-cloud-rain" aria-hidden="true"></i> Cuaca</a>
+                </div>
+            </section>
 
-            <!-- Status Card -->
             <div class="card status-big mb-24" id="irr-status-card">
                 <div class="valve-status open" id="irr-valve-text">TERBUKA</div>
-                <div style="margin-top:8px;">
+                <div class="mt-16">
                     <span class="badge badge-green" id="irr-mode-badge">Mode: Otomatis</span>
                 </div>
-                <div class="irrigation-details" style="max-width:400px;margin:16px auto 0;">
+                <div class="irrigation-details">
                     <div class="detail-row"><span class="detail-label">Threshold Bawah</span><span class="detail-value" id="irr-lower-active">40% VWC</span></div>
                     <div class="detail-row"><span class="detail-label">Threshold Atas</span><span class="detail-value" id="irr-upper-active">70% VWC</span></div>
                 </div>
             </div>
 
-            <!-- Threshold Settings -->
             <h2 class="section-title">Pengaturan Threshold Irigasi</h2>
             <div class="card threshold-section mb-24">
                 <div class="threshold-form">
                     <div class="form-group">
                         <label for="input-lower">Threshold Bawah (% VWC)</label>
-                        <input type="number" class="form-control" id="input-lower" min="0" max="100" value="40">
+                        <input type="number" class="form-control" id="input-lower" min="0" max="100" step="1" value="40" inputmode="numeric">
                     </div>
                     <div class="form-group">
                         <label for="input-upper">Threshold Atas (% VWC)</label>
-                        <input type="number" class="form-control" id="input-upper" min="0" max="100" value="70">
+                        <input type="number" class="form-control" id="input-upper" min="0" max="100" step="1" value="70" inputmode="numeric">
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn btn-primary" id="btn-save-threshold"><i class="fas fa-save"></i> Simpan Pengaturan</button>
-                        <button class="btn btn-secondary" id="btn-reset-threshold"><i class="fas fa-undo"></i> Reset ke Default</button>
+                        <button class="btn btn-primary" id="btn-save-threshold" type="button"><i class="fas fa-save" aria-hidden="true"></i> Simpan Pengaturan</button>
+                        <button class="btn btn-secondary" id="btn-reset-threshold" type="button"><i class="fas fa-undo" aria-hidden="true"></i> Reset ke Default</button>
                     </div>
+                    <div class="note-box mt-16" id="threshold-feedback" role="status" style="display:none;"></div>
                 </div>
-                <div class="note-box mt-16">
-                    <i class="fas fa-info-circle"></i> Gunakan referensi kalibrasi Volumetric Water Content (VWC) di bawah ini untuk mengatur threshold sesuai standar agronomi.
+                <div class="note-box">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    <span>Gunakan referensi kalibrasi Volumetric Water Content (VWC) untuk menyesuaikan threshold dengan jenis tanaman dan tanah.</span>
                 </div>
             </div>
 
-            <!-- VWC Dataset Reference -->
-            <h2 class="section-title">Referensi Kalibrasi Threshold (Dataset Agronomi VWC)</h2>
+            <h2 class="section-title">Referensi Kalibrasi Threshold</h2>
             <div class="card mb-24">
-
                 <div class="table-wrap">
                     <table class="logic-table">
-                        <thead><tr><th>Jenis / Fase Tanaman</th><th>Jenis Tanah Dominan</th><th>Threshold Bawah (Mulai Irigasi)</th><th>Threshold Atas (Stop Irigasi)</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Jenis / Fase Tanaman</th>
+                                <th>Jenis Tanah Dominan</th>
+                                <th>Threshold Bawah</th>
+                                <th>Threshold Atas</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr><td>Padi (Fase Vegetatif)</td><td>Lempung Berliat (Clay Loam)</td><td><span class="badge badge-yellow">45% VWC</span></td><td><span class="badge badge-blue">75% VWC</span> (Jenuh)</td></tr>
+                            <tr><td>Padi (Fase Vegetatif)</td><td>Lempung Berliat (Clay Loam)</td><td><span class="badge badge-yellow">45% VWC</span></td><td><span class="badge badge-blue">75% VWC</span> Jenuh</td></tr>
                             <tr><td>Salak Pondoh (Berbuah)</td><td>Lempung Berpasir (Sandy Loam)</td><td><span class="badge badge-yellow">30% VWC</span></td><td><span class="badge badge-green">55% VWC</span></td></tr>
                             <tr><td>Sayuran Daun (Sawi, Bayam)</td><td>Lempung (Loam)</td><td><span class="badge badge-yellow">35% VWC</span></td><td><span class="badge badge-green">60% VWC</span></td></tr>
                             <tr><td>Tanaman Keras / Kayu</td><td>Tanah Liat (Clay)</td><td><span class="badge badge-yellow">25% VWC</span></td><td><span class="badge badge-green">50% VWC</span></td></tr>
@@ -94,11 +113,11 @@
                     </table>
                 </div>
                 <div class="note-box mt-16" style="border-left-color: var(--color-blue);">
-                    <strong>Sumber Referensi:</strong> FAO Irrigation and Drainage Paper No. 56 & Dataset Sensor Tanah Kapasitif Umum.
+                    <i class="fas fa-book" aria-hidden="true"></i>
+                    <span><strong>Sumber referensi:</strong> FAO Irrigation and Drainage Paper No. 56 dan dataset sensor tanah kapasitif umum.</span>
                 </div>
             </div>
 
-            <!-- Control Logic Table -->
             <h2 class="section-title">Logika Kendali Irigasi</h2>
             <div class="card mb-24">
                 <div class="table-wrap">
@@ -114,7 +133,6 @@
                 </div>
             </div>
 
-            <!-- Current Decision Panel -->
             <h2 class="section-title">Panel Keputusan Saat Ini</h2>
             <div class="card decision-panel mb-24" id="decision-panel">
                 <div class="panel-row"><span class="panel-label">Kelembapan Saat Ini</span><span class="panel-value" id="dp-moisture">38%</span></div>
@@ -125,16 +143,13 @@
                 <div class="panel-row"><span class="panel-label">Status Valve</span><span class="panel-value" id="dp-valve">Terbuka</span></div>
             </div>
 
-
-            <!-- Simulation Buttons -->
             <h2 class="section-title">Simulasi Kondisi</h2>
             <div class="card sim-buttons mb-24">
-
                 <div class="btn-group">
-                    <button class="btn btn-danger" onclick="simulateCondition('dry')"><i class="fas fa-sun"></i> Tanah Kering</button>
-                    <button class="btn btn-primary" onclick="simulateCondition('normal')"><i class="fas fa-leaf"></i> Tanah Normal</button>
-                    <button class="btn btn-blue" onclick="simulateCondition('wet')"><i class="fas fa-water"></i> Tanah Basah</button>
-                    <button class="btn btn-warning" onclick="simulateCondition('rain')"><i class="fas fa-cloud-rain"></i> Hujan BMKG</button>
+                    <button class="btn btn-danger" type="button" onclick="simulateCondition('dry')"><i class="fas fa-sun" aria-hidden="true"></i> Tanah Kering</button>
+                    <button class="btn btn-primary" type="button" onclick="simulateCondition('normal')"><i class="fas fa-leaf" aria-hidden="true"></i> Tanah Normal</button>
+                    <button class="btn btn-blue" type="button" onclick="simulateCondition('wet')"><i class="fas fa-water" aria-hidden="true"></i> Tanah Basah</button>
+                    <button class="btn btn-warning" type="button" onclick="simulateCondition('rain')"><i class="fas fa-cloud-rain" aria-hidden="true"></i> Hujan BMKG</button>
                 </div>
             </div>
         </div>
@@ -149,15 +164,12 @@
             const rain = isRainPredicted();
             const decision = makeIrrigationDecision(node.soilMoisture, rain);
 
-            // Status card
             const valveEl = document.getElementById('irr-valve-text');
             valveEl.textContent = decision.valve.toUpperCase();
             valveEl.className = 'valve-status ' + (decision.type === 'open' ? 'open' : decision.type === 'delayed' ? 'delayed' : 'closed');
 
             document.getElementById('irr-lower-active').textContent = ThresholdManager.lower + '% VWC';
             document.getElementById('irr-upper-active').textContent = ThresholdManager.upper + '% VWC';
-
-            // Decision panel
             document.getElementById('dp-moisture').textContent = node.soilMoisture + '%';
             document.getElementById('dp-lower').textContent = ThresholdManager.lower + '%';
             document.getElementById('dp-upper').textContent = ThresholdManager.upper + '%';
@@ -166,33 +178,47 @@
             document.getElementById('dp-valve').textContent = decision.valve;
         }
 
-        // Load saved threshold values
         function loadThresholdInputs() {
             document.getElementById('input-lower').value = ThresholdManager.lower;
             document.getElementById('input-upper').value = ThresholdManager.upper;
         }
 
-        // Save threshold
+        function showThresholdFeedback(message, type = 'success') {
+            const feedback = document.getElementById('threshold-feedback');
+            feedback.style.display = 'flex';
+            feedback.style.borderLeftColor = type === 'error' ? 'var(--color-red)' : 'var(--color-primary)';
+            feedback.innerHTML = `<i class="fas ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-check-circle'}" aria-hidden="true"></i><span>${message}</span>`;
+        }
+
         document.getElementById('btn-save-threshold').addEventListener('click', () => {
-            const lower = parseInt(document.getElementById('input-lower').value);
-            const upper = parseInt(document.getElementById('input-upper').value);
-            if (lower >= upper) { alert('Threshold bawah harus lebih kecil dari threshold atas.'); return; }
-            if (lower < 0 || upper > 100) { alert('Nilai threshold harus antara 0-100.'); return; }
+            const lower = Number.parseInt(document.getElementById('input-lower').value, 10);
+            const upper = Number.parseInt(document.getElementById('input-upper').value, 10);
+
+            if (!Number.isFinite(lower) || !Number.isFinite(upper)) {
+                showThresholdFeedback('Threshold harus diisi dengan angka.', 'error');
+                return;
+            }
+            if (lower < 0 || upper > 100 || lower > 100 || upper < 0) {
+                showThresholdFeedback('Nilai threshold harus berada di rentang 0-100%.', 'error');
+                return;
+            }
+            if (lower >= upper) {
+                showThresholdFeedback('Threshold bawah harus lebih kecil dari threshold atas.', 'error');
+                return;
+            }
+
             ThresholdManager.lower = lower;
             ThresholdManager.upper = upper;
             updateIrrigationUI();
-            alert('Pengaturan threshold berhasil disimpan!');
+            showThresholdFeedback('Pengaturan threshold berhasil disimpan.');
         });
 
-        // Reset threshold
         document.getElementById('btn-reset-threshold').addEventListener('click', () => {
             ThresholdManager.reset();
             loadThresholdInputs();
             updateIrrigationUI();
-            alert('Threshold direset ke default (40%-70%).');
+            showThresholdFeedback('Threshold direset ke default 40%-70%.');
         });
-
-
 
         document.addEventListener('DOMContentLoaded', () => {
             loadThresholdInputs();

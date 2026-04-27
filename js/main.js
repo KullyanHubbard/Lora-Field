@@ -1,21 +1,25 @@
 // Fungsi utama shared antar halaman
 
-// Threshold disimpan di localStorage supaya persist kalau refresh
+const DEG_C = '\u00B0C';
+
+// Threshold disimpan di localStorage supaya tetap aktif setelah refresh.
 const ThresholdManager = {
     DEFAULT_LOWER: 40,
     DEFAULT_UPPER: 70,
 
     get lower() {
-        return parseInt(localStorage.getItem('lf_threshold_lower')) || this.DEFAULT_LOWER;
+        const value = Number.parseInt(localStorage.getItem('lf_threshold_lower'), 10);
+        return Number.isFinite(value) ? value : this.DEFAULT_LOWER;
     },
     get upper() {
-        return parseInt(localStorage.getItem('lf_threshold_upper')) || this.DEFAULT_UPPER;
+        const value = Number.parseInt(localStorage.getItem('lf_threshold_upper'), 10);
+        return Number.isFinite(value) ? value : this.DEFAULT_UPPER;
     },
     set lower(val) {
-        localStorage.setItem('lf_threshold_lower', val);
+        localStorage.setItem('lf_threshold_lower', String(val));
     },
     set upper(val) {
-        localStorage.setItem('lf_threshold_upper', val);
+        localStorage.setItem('lf_threshold_upper', String(val));
     },
     reset() {
         localStorage.removeItem('lf_threshold_lower');
@@ -26,24 +30,46 @@ const ThresholdManager = {
     }
 };
 
-// Logika keputusan irigasi berdasarkan threshold aktif & cuaca BMKG
+// Logika keputusan irigasi berdasarkan threshold aktif dan cuaca BMKG.
 function makeIrrigationDecision(soilMoisture, rainPrediction) {
     const lower = ThresholdManager.lower;
     const upper = ThresholdManager.upper;
 
     if (soilMoisture < lower && !rainPrediction) {
-        return { valve: 'Terbuka', decision: 'Irigasi dijalankan', type: 'open', reason: `Kelembapan tanah (${soilMoisture}%) berada di bawah threshold bawah (${lower}%) dan tidak ada prediksi hujan 3 jam ke depan, maka valve dibuka.` };
+        return {
+            valve: 'Terbuka',
+            decision: 'Irigasi dijalankan',
+            type: 'open',
+            reason: `Kelembapan tanah (${soilMoisture}%) berada di bawah threshold bawah (${lower}%) dan tidak ada prediksi hujan 3 jam ke depan, maka valve dibuka.`
+        };
     }
+
     if (soilMoisture < lower && rainPrediction) {
-        return { valve: 'Tertutup', decision: 'Irigasi ditunda', type: 'delayed', reason: `Kelembapan tanah (${soilMoisture}%) berada di bawah threshold bawah (${lower}%), namun BMKG memprediksi hujan dalam 3 jam ke depan. Irigasi ditunda untuk mencegah pemborosan air.` };
+        return {
+            valve: 'Tertutup',
+            decision: 'Irigasi ditunda',
+            type: 'delayed',
+            reason: `Kelembapan tanah (${soilMoisture}%) berada di bawah threshold bawah (${lower}%), namun BMKG memprediksi hujan dalam 3 jam ke depan. Irigasi ditunda untuk mencegah pemborosan air.`
+        };
     }
+
     if (soilMoisture > upper) {
-        return { valve: 'Tertutup', decision: 'Irigasi dihentikan', type: 'closed', reason: `Kelembapan tanah (${soilMoisture}%) berada di atas threshold atas (${upper}%). Tanah terlalu basah, valve ditutup.` };
+        return {
+            valve: 'Tertutup',
+            decision: 'Irigasi dihentikan',
+            type: 'closed',
+            reason: `Kelembapan tanah (${soilMoisture}%) berada di atas threshold atas (${upper}%). Tanah terlalu basah, valve ditutup.`
+        };
     }
-    return { valve: 'Tertutup', decision: 'Kondisi normal', type: 'normal', reason: `Kelembapan tanah (${soilMoisture}%) berada dalam rentang normal (${lower}%-${upper}%). Tidak ada tindakan diperlukan.` };
+
+    return {
+        valve: 'Tertutup',
+        decision: 'Kondisi normal',
+        type: 'normal',
+        reason: `Kelembapan tanah (${soilMoisture}%) berada dalam rentang normal (${lower}%-${upper}%). Tidak ada tindakan diperlukan.`
+    };
 }
 
-// Cek status kelembapan berdasarkan threshold yang sedang aktif
 function getSoilStatus(value) {
     const lower = ThresholdManager.lower;
     const upper = ThresholdManager.upper;
@@ -53,7 +79,6 @@ function getSoilStatus(value) {
     return { label: 'Normal', color: 'green', className: 'status-ok' };
 }
 
-
 function getNodeStatusBadge(status) {
     const map = {
         online: { label: 'Online', className: 'badge-green' },
@@ -62,7 +87,6 @@ function getNodeStatusBadge(status) {
     };
     return map[status] || map.offline;
 }
-
 
 function getDecisionBadge(type) {
     const map = {
@@ -75,45 +99,61 @@ function getDecisionBadge(type) {
     return map[type] || map.normal;
 }
 
-
 function getValveBadge(valve) {
     if (valve === 'Terbuka') return 'badge-green';
     if (valve === 'Ditunda') return 'badge-yellow';
     return 'badge-blue';
 }
 
-
 function getWeatherInfo(code) {
-    return WEATHER_CODES.find(w => w.code === code) || { code, label: 'Tidak diketahui', icon: '❓', isRain: false };
+    return WEATHER_CODES.find(w => w.code === code) || {
+        code,
+        label: 'Tidak diketahui',
+        icon: 'fas fa-circle-question',
+        isRain: false
+    };
 }
 
-// Jam real-time di topbar, format Indonesia
+function renderWeatherIcon(info) {
+    return `<i class="${info.icon}" aria-hidden="true"></i>`;
+}
+
+function setWeatherIcon(elementId, info) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.innerHTML = renderWeatherIcon(info);
+    el.setAttribute('aria-label', info.label);
+}
+
 function startClock() {
     const el = document.getElementById('realtime-clock');
     if (!el) return;
+
     function tick() {
         const now = new Date();
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const date = now.toLocaleDateString('id-ID', options);
         const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        el.textContent = `${date} • ${time}`;
+        el.textContent = `${date} - ${time}`;
     }
+
     tick();
     setInterval(tick, 1000);
 }
-
 
 function setActivePage() {
     const path = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.sidebar-link').forEach(link => {
         link.classList.remove('active');
+        link.removeAttribute('aria-current');
+
         const href = link.getAttribute('href');
         if (href === path || (path === '' && href === 'index.html')) {
             link.classList.add('active');
+            link.setAttribute('aria-current', 'page');
         }
     });
 }
-
 
 function initSidebar() {
     const toggle = document.getElementById('sidebar-toggle');
@@ -121,18 +161,22 @@ function initSidebar() {
     const overlay = document.getElementById('sidebar-overlay');
     if (!toggle || !sidebar) return;
 
+    toggle.setAttribute('aria-expanded', 'false');
+
     toggle.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-        if (overlay) overlay.classList.toggle('active');
+        const isOpen = sidebar.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        if (overlay) overlay.classList.toggle('active', isOpen);
     });
+
     if (overlay) {
         overlay.addEventListener('click', () => {
             sidebar.classList.remove('open');
             overlay.classList.remove('active');
+            toggle.setAttribute('aria-expanded', 'false');
         });
     }
 }
-
 
 function timeAgo(date) {
     if (!date) return 'Tidak tersedia';
@@ -142,7 +186,6 @@ function timeAgo(date) {
     if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
     return `${Math.floor(diff / 86400)} hari lalu`;
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
     startClock();
