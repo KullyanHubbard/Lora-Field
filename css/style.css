@@ -41,8 +41,8 @@
 
     --sidebar-w: 280px;
     --topbar-h: 74px;
-    --radius: 16px;
-    --radius-sm: 10px;
+    --radius: 8px;
+    --radius-sm: 4px;
 
     --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.03);
     --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.06);
@@ -128,7 +128,7 @@ img {
 
 ::-webkit-scrollbar-thumb {
     background: var(--color-gray-200);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
 }
 
 /* Sidebar */
@@ -153,30 +153,30 @@ img {
 .sidebar-brand h2 {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     color: var(--color-gray-900);
-    font-size: 1.18rem;
-    font-weight: 700;
+    font-size: 1.6rem;
+    font-weight: 800;
     letter-spacing: -0.02em;
 }
 
 .sidebar-brand h2 i {
     color: var(--color-primary);
     background: var(--color-primary-light);
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
-    font-size: 0.95rem;
+    border-radius: var(--radius-sm);
+    font-size: 1.3rem;
 }
 
 .sidebar-brand p {
     max-width: 190px;
     margin-top: 6px;
     color: var(--text-muted);
-    font-size: 0.74rem;
+    font-size: 0.9rem;
     line-height: 1.45;
 }
 
@@ -189,23 +189,23 @@ img {
 .sidebar-nav a.sidebar-link {
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-height: 44px;
+    gap: 14px;
+    min-height: 48px;
     margin-bottom: 6px;
     padding: 10px 16px;
     border-radius: var(--radius-sm);
     color: var(--color-gray-600);
-    font-size: 0.92rem;
+    font-size: 1.2rem;
     font-weight: 500;
     text-decoration: none;
     transition: background var(--transition), color var(--transition), transform var(--transition);
 }
 
 .sidebar-nav a.sidebar-link i {
-    width: 18px;
+    width: 26px;
     color: var(--color-gray-400);
     text-align: center;
-    font-size: 1rem;
+    font-size: 1.3rem;
     transition: color var(--transition);
 }
 
@@ -234,7 +234,7 @@ img {
 .sidebar-footer {
     padding: 16px 20px;
     color: var(--color-gray-400);
-    font-size: 0.72rem;
+    font-size: 0.85rem;
     border-top: 1px solid var(--color-border);
 }
 
@@ -273,7 +273,7 @@ img {
 .topbar-title {
     overflow: hidden;
     color: var(--color-gray-800);
-    font-size: 0.98rem;
+    font-size: 1.6rem;
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -338,9 +338,9 @@ img {
 .page-kicker {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 10px;
     color: var(--color-primary-dark);
-    font-size: 0.76rem;
+    font-size: 1.35rem;
     font-weight: 800;
     letter-spacing: 0;
     text-transform: uppercase;
@@ -348,8 +348,8 @@ img {
 
 .page-kicker::before {
     content: "";
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
     border-radius: 999px;
     background: var(--color-primary);
 }
@@ -369,7 +369,7 @@ img {
     min-height: 36px;
     padding: 8px 12px;
     border: 1px solid var(--color-border);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.76);
     color: var(--color-gray-700);
     font-size: 0.78rem;
@@ -391,7 +391,7 @@ img {
     min-height: 24px;
     padding: 4px 10px;
     border: none;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: var(--color-gray-100);
     color: var(--color-gray-700);
     font-size: 0.72rem;
@@ -625,14 +625,14 @@ table tbody tr:last-child td {
     height: 9px;
     margin-top: 8px;
     overflow: hidden;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: var(--color-gray-200);
 }
 
 .progress-fill {
     height: 100%;
     min-width: 2px;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: var(--color-primary);
     transition: width 0.7s ease;
 }
@@ -689,7 +689,7 @@ select.form-control {
     gap: 7px;
     min-height: 40px;
     padding: 10px 18px;
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
     color: var(--color-gray-700);
     font-size: 0.9rem;
     font-weight: 600;
@@ -940,7 +940,7 @@ select.form-control {
     min-height: 34px;
     padding: 7px 13px;
     border: 1px solid var(--color-border);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: var(--color-white);
     color: var(--color-gray-600);
     font-size: 0.76rem;

@@ -30,16 +30,16 @@
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand">
             <h2><i class="fas fa-seedling" aria-hidden="true"></i> LoraField</h2>
-            <p>Sistem Pertanian Presisi Berbasis LoRa</p>
+            <p>LoRa-Based Precision Agriculture System</p>
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi">
             <a href="index.html" class="sidebar-link active" aria-current="page"><i class="fas fa-th-large"
                     aria-hidden="true"></i> Dashboard</a>
             <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i>
                 Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
-            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
-            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Log Sistem</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irrigation</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Weather</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> System Logs</a>
         </nav>
         <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
     </aside>
@@ -51,7 +51,7 @@
                     aria-controls="sidebar">
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
-                <span class="topbar-title">Dashboard LoraField</span>
+                <span class="topbar-title">LoraField Dashboard</span>
             </div>
             <div class="topbar-right">
                 <span class="topbar-clock" id="realtime-clock"></span>
@@ -62,15 +62,10 @@
         <div class="page-content">
             <section class="page-header">
                 <div>
-                    <span class="page-kicker">Operasional lahan</span>
-                    <h1>Dashboard LoraField</h1>
-                    <p>Ringkasan status node, gateway, cuaca BMKG, dan keputusan irigasi dari pembacaan sensor terbaru.
-                    </p>
+                    <span class="page-kicker">Field Operations</span>
                 </div>
                 <div class="page-header-actions">
                     <span class="status-pill"><i class="fas fa-signal" aria-hidden="true"></i> LoRa P2P aktif</span>
-                    <a href="monitoring.html" class="btn btn-secondary"><i class="fas fa-chart-line"
-                            aria-hidden="true"></i> Monitoring</a>
                 </div>
             </section>
 
@@ -306,10 +301,7 @@
             document.getElementById('weather-rain').textContent = rain ? 'Ada Prediksi Hujan' : 'Tidak Ada';
             document.getElementById('weather-code').textContent = WEATHER_DATA.current.code;
 
-            pushSensorHistory(node);
             updateDashboardCharts();
-
-            addLogEntry(node, node.soilMoisture, rain ? 'Hujan' : 'Tidak hujan', WEATHER_DATA.current.code, decision.decision, decision.valve, decision.type, decision.reason);
 
             const tbody = document.getElementById('dash-log-body');
             tbody.innerHTML = DECISION_LOGS.slice(0, 5).map(l => {

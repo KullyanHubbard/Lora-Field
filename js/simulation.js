@@ -52,6 +52,12 @@ function simulateCondition(type) {
     }
 
     node.lastUpdate = new Date();
+
+    pushSensorHistory(node);
+    const rain = isRainPredicted();
+    const decision = makeIrrigationDecision(node.soilMoisture, rain);
+    addLogEntry(node, node.soilMoisture, rain ? 'Hujan' : 'Tidak hujan', WEATHER_DATA.current.code, decision.decision, decision.valve, decision.type, decision.reason);
+
     updateAllUI();
 }
 
@@ -91,6 +97,12 @@ function startSimulation() {
             }
         }
 
+        const node = NODES[0];
+        pushSensorHistory(node);
+        const rain = isRainPredicted();
+        const decision = makeIrrigationDecision(node.soilMoisture, rain);
+        addLogEntry(node, node.soilMoisture, rain ? 'Hujan' : 'Tidak hujan', WEATHER_DATA.current.code, decision.decision, decision.valve, decision.type, decision.reason);
+
         updateAllUI();
     }, 8000);
 }
@@ -102,9 +114,16 @@ function stopSimulation() {
     }
 }
 
+let lastLoggedDecisionType = null;
+
 function addLogEntry(node, soilMoisture, weather, weatherCode, decision, valve, type, note) {
+    // Audit Log Akurasi: Jangan spam log jika tidak ada perubahan status/keputusan.
+    if (lastLoggedDecisionType === type && type === 'normal') return;
+    if (lastLoggedDecisionType === type) return; // Opsional: hanya log transisi
+    lastLoggedDecisionType = type;
+
     const now = new Date();
-    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     DECISION_LOGS.unshift({
         time,
         node: node.name,
@@ -125,7 +144,7 @@ function addLogEntry(node, soilMoisture, weather, weatherCode, decision, valve, 
 
 function pushSensorHistory(node) {
     const now = new Date();
-    const label = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const label = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     SENSOR_HISTORY_LABELS.push(label);
     SENSOR_HISTORY.soilMoisture.push(node.soilMoisture);
     SENSOR_HISTORY.soilTemp.push(node.soilTemp);

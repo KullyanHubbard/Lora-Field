@@ -34,40 +34,52 @@ const ThresholdManager = {
 function makeIrrigationDecision(soilMoisture, rainPrediction) {
     const lower = ThresholdManager.lower;
     const upper = ThresholdManager.upper;
+    
+    let currentValveState = localStorage.getItem('lf_valve_state') || 'Tertutup';
+    let result;
 
     if (soilMoisture < lower && !rainPrediction) {
-        return {
+        result = {
             valve: 'Terbuka',
             decision: 'Irigasi dijalankan',
             type: 'open',
             reason: `Kelembapan tanah (${soilMoisture}%) berada di bawah threshold bawah (${lower}%) dan tidak ada prediksi hujan 3 jam ke depan, maka valve dibuka.`
         };
-    }
-
-    if (soilMoisture < lower && rainPrediction) {
-        return {
+    } else if (soilMoisture < lower && rainPrediction) {
+        result = {
             valve: 'Tertutup',
             decision: 'Irigasi ditunda',
             type: 'delayed',
             reason: `Kelembapan tanah (${soilMoisture}%) berada di bawah threshold bawah (${lower}%), namun BMKG memprediksi hujan dalam 3 jam ke depan. Irigasi ditunda untuk mencegah pemborosan air.`
         };
-    }
-
-    if (soilMoisture > upper) {
-        return {
+    } else if (soilMoisture > upper) {
+        result = {
             valve: 'Tertutup',
             decision: 'Irigasi dihentikan',
             type: 'closed',
             reason: `Kelembapan tanah (${soilMoisture}%) berada di atas threshold atas (${upper}%). Tanah terlalu basah, valve ditutup.`
         };
+    } else {
+        // Hysteresis logic: maintain previous state inside the normal band
+        if (currentValveState === 'Terbuka') {
+            result = {
+                valve: 'Terbuka',
+                decision: 'Irigasi dilanjutkan',
+                type: 'open',
+                reason: `Kelembapan tanah (${soilMoisture}%) berada dalam rentang normal (${lower}%-${upper}%). Valve dipertahankan terbuka karena sedang dalam proses irigasi.`
+            };
+        } else {
+            result = {
+                valve: 'Tertutup',
+                decision: 'Kondisi normal',
+                type: 'normal',
+                reason: `Kelembapan tanah (${soilMoisture}%) berada dalam rentang normal (${lower}%-${upper}%). Tidak ada tindakan diperlukan.`
+            };
+        }
     }
 
-    return {
-        valve: 'Tertutup',
-        decision: 'Kondisi normal',
-        type: 'normal',
-        reason: `Kelembapan tanah (${soilMoisture}%) berada dalam rentang normal (${lower}%-${upper}%). Tidak ada tindakan diperlukan.`
-    };
+    localStorage.setItem('lf_valve_state', result.valve);
+    return result;
 }
 
 function getSoilStatus(value) {

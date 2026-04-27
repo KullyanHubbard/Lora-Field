@@ -26,14 +26,14 @@
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand">
             <h2><i class="fas fa-seedling" aria-hidden="true"></i> LoraField</h2>
-            <p>Sistem Pertanian Presisi Berbasis LoRa</p>
+            <p>LoRa-Based Precision Agriculture System</p>
         </div>
-        <nav class="sidebar-nav" aria-label="Menu aplikasi">
+        <nav class="sidebar-nav" aria-label="Main navigation">
             <a href="index.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
             <a href="monitoring.html" class="sidebar-link active" aria-current="page"><i class="fas fa-chart-area" aria-hidden="true"></i> Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
-            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
-            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Log Sistem</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irrigation</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Weather</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> System Logs</a>
         </nav>
         <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
     </aside>
@@ -44,7 +44,7 @@
                 <button class="mobile-toggle" id="sidebar-toggle" type="button" aria-label="Buka navigasi" aria-controls="sidebar">
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
-                <span class="topbar-title">Monitoring Sensor</span>
+                <span class="topbar-title">Sensor Monitoring</span>
             </div>
             <div class="topbar-right">
                 <span class="topbar-clock" id="realtime-clock"></span>
@@ -55,13 +55,10 @@
         <div class="page-content">
             <section class="page-header">
                 <div>
-                    <span class="page-kicker">Data node</span>
-                    <h1>Monitoring Sensor</h1>
-                    <p>Pantau pembacaan sensor per node, status koneksi, dan tren kelembapan tanah secara real-time.</p>
+                    <span class="page-kicker">Node Data</span>
                 </div>
                 <div class="page-header-actions">
                     <span class="status-pill"><i class="fas fa-clock" aria-hidden="true"></i> Interval 10 menit</span>
-                    <a href="logs.html" class="btn btn-secondary"><i class="fas fa-list-check" aria-hidden="true"></i> Log Sistem</a>
                 </div>
             </section>
 
@@ -248,7 +245,6 @@
             document.getElementById('mon-ahum-bar').style.width = node.airHumidity + '%';
 
             if (node.status !== 'offline') {
-                pushSensorHistory(node);
                 updateMonitoringCharts();
 
                 const now = new Date();
