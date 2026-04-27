@@ -42,10 +42,6 @@
         </header>
 
         <div class="page-content">
-            <div class="page-header">
-                <h1>Kontrol dan Status Irigasi</h1>
-                <p>Pengaturan threshold, logika kendali, dan simulasi keputusan irigasi.</p>
-            </div>
 
             <!-- Status Card -->
             <div class="card status-big mb-24" id="irr-status-card">
@@ -85,7 +81,7 @@
             <!-- VWC Dataset Reference -->
             <h2 class="section-title">Referensi Kalibrasi Threshold (Dataset Agronomi VWC)</h2>
             <div class="card mb-24">
-                <p class="text-muted mb-16 text-sm">Nilai optimal Volumetric Water Content (VWC) berdasarkan jenis tanah dan fase tanaman. Threshold bawah mendekati Titik Layu Permanen (PWP) atau Management Allowable Depletion (MAD), dan threshold atas mendekati Kapasitas Lapang (Field Capacity).</p>
+
                 <div class="table-wrap">
                     <table class="logic-table">
                         <thead><tr><th>Jenis / Fase Tanaman</th><th>Jenis Tanah Dominan</th><th>Threshold Bawah (Mulai Irigasi)</th><th>Threshold Atas (Stop Irigasi)</th></tr></thead>
@@ -129,22 +125,11 @@
                 <div class="panel-row"><span class="panel-label">Status Valve</span><span class="panel-value" id="dp-valve">Terbuka</span></div>
             </div>
 
-            <!-- Timeline -->
-            <h2 class="section-title">Timeline Keputusan</h2>
-            <div class="card mb-24">
-                <div class="timeline">
-                    <div class="timeline-item"><div class="timeline-title">Sensor membaca data</div><div class="timeline-desc">Node sensor mengirim data kelembapan, suhu tanah, suhu udara, dan kelembapan udara.</div></div>
-                    <div class="timeline-item"><div class="timeline-title">Backend memeriksa threshold aktif</div><div class="timeline-desc">Sistem membandingkan kelembapan tanah dengan threshold bawah dan threshold atas.</div></div>
-                    <div class="timeline-item"><div class="timeline-title">Sistem memeriksa data BMKG</div><div class="timeline-desc">API BMKG diperiksa untuk prediksi hujan 3 jam ke depan.</div></div>
-                    <div class="timeline-item"><div class="timeline-title">Sistem menentukan keputusan</div><div class="timeline-desc">Logika kendali menentukan apakah valve dibuka, ditutup, atau irigasi ditunda.</div></div>
-                    <div class="timeline-item"><div class="timeline-title">Valve dikontrol</div><div class="timeline-desc">Relay mengirim sinyal ke solenoid valve untuk membuka atau menutup aliran air.</div></div>
-                </div>
-            </div>
 
             <!-- Simulation Buttons -->
             <h2 class="section-title">Simulasi Kondisi</h2>
             <div class="card sim-buttons mb-24">
-                <p class="text-muted mb-16">Klik tombol di bawah untuk mensimulasikan kondisi tertentu dan melihat keputusan sistem.</p>
+
                 <div class="btn-group">
                     <button class="btn btn-danger" onclick="simulateCondition('dry')"><i class="fas fa-sun"></i> Tanah Kering</button>
                     <button class="btn btn-primary" onclick="simulateCondition('normal')"><i class="fas fa-leaf"></i> Tanah Normal</button>

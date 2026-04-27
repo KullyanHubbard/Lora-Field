@@ -5,6 +5,28 @@
     --color-primary: #10b981;
     --color-primary-light: #ecfdf5;
     --color-primary-dark: #065f46;
+    
+    --color-blue: #3b82f6;
+    --color-blue-light: #eff6ff;
+    --color-red: #ef4444;
+    --color-red-light: #fef2f2;
+    --color-yellow: #f59e0b;
+    --color-yellow-light: #fffbeb;
+    --color-orange: #f97316;
+    --color-orange-light: #fff7ed;
+
+    --color-gray-50: #f8fafc;
+    --color-gray-100: #f1f5f9;
+    --color-gray-200: #e2e8f0;
+    --color-gray-300: #cbd5e1;
+    --color-gray-400: #94a3b8;
+    --color-gray-500: #64748b;
+    --color-gray-600: #475569;
+    --color-gray-700: #334155;
+    --color-gray-800: #1e293b;
+    --color-gray-900: #0f172a;
+    --color-white: #ffffff;
+
     --color-bg: #f8fafc;
     --color-sidebar: #0f172a;
     --color-card: #ffffff;
@@ -17,7 +39,7 @@
     
     --sidebar-w: 240px;
     --topbar-h: 56px;
-    --radius: 8px; /* Lebih tajam, lebih pro */
+    --radius: 8px;
     --radius-sm: 6px;
     
     --transition: 0.15s ease;
@@ -162,17 +184,20 @@ img { max-width: 100%; }
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
     font-weight: 600;
     white-space: nowrap;
+    background: var(--color-gray-50);
+    color: var(--text-muted);
+    border: 1px solid var(--color-border);
 }
-.badge-green { background: var(--color-primary-light); color: var(--color-primary-dark); }
-.badge-red { background: var(--color-red-light); color: var(--color-red); }
-.badge-yellow { background: var(--color-yellow-light); color: var(--color-yellow); }
-.badge-blue { background: var(--color-blue-light); color: var(--color-blue); }
-.badge-gray { background: var(--color-gray-100); color: var(--color-gray-500); }
+.badge-green { color: var(--color-primary-dark); border-color: var(--color-primary-light); background: var(--color-primary-light); }
+.badge-red { color: var(--color-red); border-color: var(--color-red-light); background: var(--color-red-light); }
+.badge-yellow { color: var(--color-yellow); border-color: var(--color-yellow-light); background: var(--color-yellow-light); }
+.badge-blue { color: var(--color-blue); border-color: var(--color-blue-light); background: var(--color-blue-light); }
+.badge-gray { background: var(--color-gray-50); color: var(--color-gray-500); }
 .badge-online::before {
     content: '';
     width: 6px; height: 6px;
@@ -216,11 +241,11 @@ img { max-width: 100%; }
     font-size: 1rem;
     flex-shrink: 0;
 }
-.card-icon.green { background: var(--color-primary-light); color: var(--color-primary); }
-.card-icon.blue { background: var(--color-blue-light); color: var(--color-blue); }
-.card-icon.red { background: var(--color-red-light); color: var(--color-red); }
-.card-icon.yellow { background: var(--color-yellow-light); color: var(--color-yellow); }
-.card-icon.orange { background: var(--color-orange-light); color: var(--color-orange); }
+.card-icon.green, .card-icon.blue, .card-icon.red, .card-icon.yellow, .card-icon.orange { 
+    background: var(--color-gray-50); 
+    color: var(--text-muted); 
+    border: 1px solid var(--color-border);
+}
 
 /* ===== Grid ===== */
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
@@ -242,20 +267,24 @@ table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.82rem;
+    border: 1px solid var(--color-border);
+}
+table th, table td {
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
 }
 table th {
     text-align: left;
-    padding: 10px 12px;
     background: var(--color-gray-50);
-    color: var(--color-gray-600);
+    color: var(--text-main);
     font-weight: 600;
-    border-bottom: 1px solid var(--color-gray-200);
     white-space: nowrap;
 }
 table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--color-gray-100);
-    color: var(--color-gray-700);
+    color: var(--text-muted);
+}
+table tbody tr:hover {
+    background: var(--color-bg);
 }
 table tr:hover td { background: var(--color-gray-50); }
 
