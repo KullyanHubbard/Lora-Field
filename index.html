@@ -1,19 +1,30 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="LoraField - Dashboard monitoring lahan pertanian, sensor tanah, cuaca, dan status irigasi berbasis LoRa P2P.">
+    <meta name="description"
+        content="LoraField - Dashboard monitoring lahan pertanian, sensor tanah, cuaca, dan status irigasi berbasis LoRa P2P.">
     <title>Dashboard - LoraField</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/premium.css">
 </head>
+
 <body>
+    <!-- Ambient Background -->
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+    </div>
     <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
 
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
@@ -22,8 +33,10 @@
             <p>Sistem Pertanian Presisi Berbasis LoRa</p>
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi">
-            <a href="index.html" class="sidebar-link active" aria-current="page"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
-            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i> Monitoring</a>
+            <a href="index.html" class="sidebar-link active" aria-current="page"><i class="fas fa-th-large"
+                    aria-hidden="true"></i> Dashboard</a>
+            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i>
+                Monitoring</a>
             <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
             <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
             <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Log Sistem</a>
@@ -34,7 +47,8 @@
     <main class="main-content">
         <header class="topbar">
             <div class="topbar-left">
-                <button class="mobile-toggle" id="sidebar-toggle" type="button" aria-label="Buka navigasi" aria-controls="sidebar">
+                <button class="mobile-toggle" id="sidebar-toggle" type="button" aria-label="Buka navigasi"
+                    aria-controls="sidebar">
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
                 <span class="topbar-title">Dashboard LoraField</span>
@@ -50,18 +64,20 @@
                 <div>
                     <span class="page-kicker">Operasional lahan</span>
                     <h1>Dashboard LoraField</h1>
-                    <p>Ringkasan status node, gateway, cuaca BMKG, dan keputusan irigasi dari pembacaan sensor terbaru.</p>
+                    <p>Ringkasan status node, gateway, cuaca BMKG, dan keputusan irigasi dari pembacaan sensor terbaru.
+                    </p>
                 </div>
                 <div class="page-header-actions">
                     <span class="status-pill"><i class="fas fa-signal" aria-hidden="true"></i> LoRa P2P aktif</span>
-                    <a href="monitoring.html" class="btn btn-secondary"><i class="fas fa-chart-line" aria-hidden="true"></i> Monitoring</a>
+                    <a href="monitoring.html" class="btn btn-secondary"><i class="fas fa-chart-line"
+                            aria-hidden="true"></i> Monitoring</a>
                 </div>
             </section>
 
             <div class="grid-4 system-cards mb-24">
                 <div class="card system-card">
                     <div class="metric-card">
-                        <div class="card-icon green"><i class="fas fa-microchip" aria-hidden="true"></i></div>
+                        <div class="card-icon"><i class="fas fa-microchip" aria-hidden="true"></i></div>
                         <div>
                             <div class="metric-value" id="sys-node">1 Node</div>
                             <div class="metric-label">Node Aktif</div>
@@ -71,7 +87,7 @@
                 </div>
                 <div class="card system-card">
                     <div class="metric-card">
-                        <div class="card-icon blue"><i class="fas fa-server" aria-hidden="true"></i></div>
+                        <div class="card-icon"><i class="fas fa-server" aria-hidden="true"></i></div>
                         <div>
                             <div class="metric-value">Online</div>
                             <div class="metric-label">Gateway LoRa</div>
@@ -81,7 +97,7 @@
                 </div>
                 <div class="card system-card">
                     <div class="metric-card">
-                        <div class="card-icon green"><i class="fas fa-exchange-alt" aria-hidden="true"></i></div>
+                        <div class="card-icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></div>
                         <div>
                             <div class="metric-value">Connected</div>
                             <div class="metric-label">MQTT Broker</div>
@@ -91,7 +107,7 @@
                 </div>
                 <div class="card system-card">
                     <div class="metric-card">
-                        <div class="card-icon blue"><i class="fas fa-cloud-sun" aria-hidden="true"></i></div>
+                        <div class="card-icon"><i class="fas fa-cloud-sun" aria-hidden="true"></i></div>
                         <div>
                             <div class="metric-value">Available</div>
                             <div class="metric-label">BMKG API</div>
@@ -105,46 +121,58 @@
             <div class="grid-4 sensor-cards mb-24">
                 <div class="card" id="card-soil">
                     <div class="flex-between">
-                        <div class="card-icon green"><i class="fas fa-water" aria-hidden="true"></i></div>
+                        <div class="card-icon"><i class="fas fa-water" aria-hidden="true"></i></div>
                         <span class="badge" id="soil-badge">Normal</span>
                     </div>
                     <div class="sensor-card-body">
-                        <div><span class="sensor-value" id="soil-value">38</span><span class="sensor-unit"> % VWC</span></div>
+                        <div><span class="sensor-value" id="soil-value">38</span><span class="sensor-unit"> % VWC</span>
+                        </div>
                         <div class="metric-label">Kelembapan Tanah</div>
-                        <div class="progress-bar" aria-hidden="true"><div class="progress-fill green" id="soil-bar" style="width:38%"></div></div>
+                        <div class="progress-bar" aria-hidden="true">
+                            <div class="progress-fill" id="soil-bar" style="width:38%"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="card" id="card-stemp">
                     <div class="flex-between">
-                        <div class="card-icon orange"><i class="fas fa-temperature-low" aria-hidden="true"></i></div>
-                        <span class="badge badge-green">Normal</span>
+                        <div class="card-icon"><i class="fas fa-temperature-low" aria-hidden="true"></i></div>
+                        <span class="badge badge-gray">Normal</span>
                     </div>
                     <div class="sensor-card-body">
-                        <div><span class="sensor-value" id="stemp-value">27.5</span><span class="sensor-unit"> &deg;C</span></div>
+                        <div><span class="sensor-value" id="stemp-value">27.5</span><span class="sensor-unit">
+                                &deg;C</span></div>
                         <div class="metric-label">Suhu Tanah</div>
-                        <div class="progress-bar" aria-hidden="true"><div class="progress-fill orange" id="stemp-bar" style="width:55%"></div></div>
+                        <div class="progress-bar" aria-hidden="true">
+                            <div class="progress-fill" id="stemp-bar" style="width:55%"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="card" id="card-atemp">
                     <div class="flex-between">
-                        <div class="card-icon red"><i class="fas fa-thermometer-half" aria-hidden="true"></i></div>
-                        <span class="badge badge-green">Normal</span>
+                        <div class="card-icon"><i class="fas fa-thermometer-half" aria-hidden="true"></i></div>
+                        <span class="badge badge-gray">Normal</span>
                     </div>
                     <div class="sensor-card-body">
-                        <div><span class="sensor-value" id="atemp-value">30.2</span><span class="sensor-unit"> &deg;C</span></div>
+                        <div><span class="sensor-value" id="atemp-value">30.2</span><span class="sensor-unit">
+                                &deg;C</span></div>
                         <div class="metric-label">Suhu Udara</div>
-                        <div class="progress-bar" aria-hidden="true"><div class="progress-fill red" id="atemp-bar" style="width:60%"></div></div>
+                        <div class="progress-bar" aria-hidden="true">
+                            <div class="progress-fill" id="atemp-bar" style="width:60%"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="card" id="card-ahum">
                     <div class="flex-between">
-                        <div class="card-icon blue"><i class="fas fa-droplet" aria-hidden="true"></i></div>
-                        <span class="badge badge-green">Normal</span>
+                        <div class="card-icon"><i class="fas fa-droplet" aria-hidden="true"></i></div>
+                        <span class="badge badge-gray">Normal</span>
                     </div>
                     <div class="sensor-card-body">
-                        <div><span class="sensor-value" id="ahum-value">78</span><span class="sensor-unit"> % RH</span></div>
+                        <div><span class="sensor-value" id="ahum-value">78</span><span class="sensor-unit"> % RH</span>
+                        </div>
                         <div class="metric-label">Kelembapan Udara</div>
-                        <div class="progress-bar" aria-hidden="true"><div class="progress-fill blue" id="ahum-bar" style="width:78%"></div></div>
+                        <div class="progress-bar" aria-hidden="true">
+                            <div class="progress-fill" id="ahum-bar" style="width:78%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -152,28 +180,40 @@
             <h2 class="section-title">Status Irigasi Saat Ini</h2>
             <div class="card status-big irrigation-status-card" id="irrigation-card">
                 <div class="valve-status open" id="valve-status-text">TERBUKA</div>
-                <div class="valve-reason" id="valve-reason">Kelembapan tanah berada di bawah threshold bawah dan tidak ada prediksi hujan 3 jam ke depan, maka valve dibuka.</div>
+                <div class="valve-reason" id="valve-reason">Kelembapan tanah berada di bawah threshold bawah dan tidak
+                    ada prediksi hujan 3 jam ke depan, maka valve dibuka.</div>
                 <div class="irrigation-details">
-                    <div class="detail-row"><span class="detail-label">Node</span><span class="detail-value">Node 01</span></div>
-                    <div class="detail-row"><span class="detail-label">Lokasi</span><span class="detail-value">Lahan Padi Bantul</span></div>
-                    <div class="detail-row"><span class="detail-label">Threshold Bawah</span><span class="detail-value" id="dash-lower">40% VWC</span></div>
-                    <div class="detail-row"><span class="detail-label">Threshold Atas</span><span class="detail-value" id="dash-upper">70% VWC</span></div>
+                    <div class="detail-row"><span class="detail-label">Node</span><span class="detail-value">Node
+                            01</span></div>
+                    <div class="detail-row"><span class="detail-label">Lokasi</span><span class="detail-value">Lahan
+                            Padi Bantul</span></div>
+                    <div class="detail-row"><span class="detail-label">Threshold Bawah</span><span class="detail-value"
+                            id="dash-lower">40% VWC</span></div>
+                    <div class="detail-row"><span class="detail-label">Threshold Atas</span><span class="detail-value"
+                            id="dash-upper">70% VWC</span></div>
                 </div>
-                <a href="irrigation.html" class="btn btn-primary mt-16"><i class="fas fa-cog" aria-hidden="true"></i> Detail Irigasi</a>
+                <a href="irrigation.html" class="btn btn-primary mt-16"><i class="fas fa-cog" aria-hidden="true"></i>
+                    Detail Irigasi</a>
             </div>
 
             <h2 class="section-title mt-24">Grafik Monitoring</h2>
             <div class="grid-3 charts-section mb-24">
                 <div class="card chart-card">
-                    <div class="card-header"><h3>Kelembapan Tanah</h3></div>
+                    <div class="card-header">
+                        <h3>Kelembapan Tanah</h3>
+                    </div>
                     <div class="chart-wrap"><canvas id="chart-soil-moisture"></canvas></div>
                 </div>
                 <div class="card chart-card">
-                    <div class="card-header"><h3>Suhu Tanah</h3></div>
+                    <div class="card-header">
+                        <h3>Suhu Tanah</h3>
+                    </div>
                     <div class="chart-wrap"><canvas id="chart-soil-temp"></canvas></div>
                 </div>
                 <div class="card chart-card">
-                    <div class="card-header"><h3>Kelembapan Udara</h3></div>
+                    <div class="card-header">
+                        <h3>Kelembapan Udara</h3>
+                    </div>
                     <div class="chart-wrap"><canvas id="chart-air-humidity"></canvas></div>
                 </div>
             </div>
@@ -181,17 +221,22 @@
             <h2 class="section-title">Cuaca BMKG</h2>
             <div class="card weather-card mb-24">
                 <div class="weather-main">
-                    <span class="weather-icon" id="weather-icon" aria-label="Berawan"><i class="fas fa-cloud" aria-hidden="true"></i></span>
+                    <span class="weather-icon" id="weather-icon" aria-label="Berawan"><i class="fas fa-cloud"
+                            aria-hidden="true"></i></span>
                     <div>
                         <div class="weather-temp" id="weather-temp">29&deg;C</div>
                         <div class="text-muted" id="weather-location">Bantul, D.I. Yogyakarta</div>
                     </div>
                 </div>
                 <div class="weather-details">
-                    <div class="detail-row"><span class="detail-label">Kondisi</span><span class="detail-value" id="weather-cond">Berawan</span></div>
-                    <div class="detail-row"><span class="detail-label">Kelembapan</span><span class="detail-value" id="weather-hum">80%</span></div>
-                    <div class="detail-row"><span class="detail-label">Prediksi Hujan 3 Jam</span><span class="detail-value" id="weather-rain">Tidak Ada</span></div>
-                    <div class="detail-row"><span class="detail-label">Weather Code</span><span class="detail-value" id="weather-code">3</span></div>
+                    <div class="detail-row"><span class="detail-label">Kondisi</span><span class="detail-value"
+                            id="weather-cond">Berawan</span></div>
+                    <div class="detail-row"><span class="detail-label">Kelembapan</span><span class="detail-value"
+                            id="weather-hum">80%</span></div>
+                    <div class="detail-row"><span class="detail-label">Prediksi Hujan 3 Jam</span><span
+                            class="detail-value" id="weather-rain">Tidak Ada</span></div>
+                    <div class="detail-row"><span class="detail-label">Weather Code</span><span class="detail-value"
+                            id="weather-code">3</span></div>
                 </div>
             </div>
 
@@ -288,4 +333,5 @@
         });
     </script>
 </body>
+
 </html>

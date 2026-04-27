@@ -12,8 +12,15 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/premium.css">
 </head>
 <body>
+    <!-- Ambient Background -->
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+    </div>
     <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
 
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
@@ -105,30 +112,30 @@
                 <div class="card sensor-detail-card">
                     <div class="sensor-detail-header">
                         <span class="sensor-detail-label">Kelembapan Tanah</span>
-                        <span class="sensor-detail-value" id="mon-soil" style="color:var(--color-primary-dark)">38% VWC</span>
+                        <span class="sensor-detail-value" id="mon-soil">38% VWC</span>
                     </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill green" id="mon-soil-bar" style="width:38%"></div></div>
+                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-soil-bar" style="width:38%"></div></div>
                 </div>
                 <div class="card sensor-detail-card">
                     <div class="sensor-detail-header">
                         <span class="sensor-detail-label">Suhu Tanah</span>
-                        <span class="sensor-detail-value" id="mon-stemp" style="color:var(--color-orange)">27.5&deg;C</span>
+                        <span class="sensor-detail-value" id="mon-stemp">27.5&deg;C</span>
                     </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill orange" id="mon-stemp-bar" style="width:55%"></div></div>
+                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-stemp-bar" style="width:55%"></div></div>
                 </div>
                 <div class="card sensor-detail-card">
                     <div class="sensor-detail-header">
                         <span class="sensor-detail-label">Suhu Udara</span>
-                        <span class="sensor-detail-value" id="mon-atemp" style="color:var(--color-red)">30.2&deg;C</span>
+                        <span class="sensor-detail-value" id="mon-atemp">30.2&deg;C</span>
                     </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill red" id="mon-atemp-bar" style="width:60%"></div></div>
+                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-atemp-bar" style="width:60%"></div></div>
                 </div>
                 <div class="card sensor-detail-card">
                     <div class="sensor-detail-header">
                         <span class="sensor-detail-label">Kelembapan Udara</span>
-                        <span class="sensor-detail-value" id="mon-ahum" style="color:var(--color-blue)">78% RH</span>
+                        <span class="sensor-detail-value" id="mon-ahum">78% RH</span>
                     </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill blue" id="mon-ahum-bar" style="width:78%"></div></div>
+                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-ahum-bar" style="width:78%"></div></div>
                 </div>
             </div>
 
