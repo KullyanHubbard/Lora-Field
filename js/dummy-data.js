@@ -146,11 +146,7 @@ const ACTUATORS_INFO = [
     { name: 'Solar Charge Controller', purpose: 'Pengatur pengisian aki dari solar panel' }
 ];
 
-const CROP_PRESETS = {
-    padi: { name: 'Padi', lower: 45, upper: 75 },
-    salak: { name: 'Salak', lower: 35, upper: 65 },
-    custom: { name: 'Umum / Custom', lower: 40, upper: 70 }
-};
+
 
 const TOPOLOGY_STEPS = [
     { label: 'Node Sensor', icon: 'fas fa-microchip', desc: 'LILYGO LoRa32' },
