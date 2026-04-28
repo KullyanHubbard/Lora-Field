@@ -79,7 +79,7 @@ const WEATHER_DATA = {
 
 const WEATHER_CODES = [
     { code: 0, label: 'Cerah', icon: 'fas fa-sun', isRain: false },
-    { code: 1, label: 'Cerah', icon: 'fas fa-sun', isRain: false },
+    { code: 1, label: 'Cerah Berawan', icon: 'fas fa-cloud-sun', isRain: false },
     { code: 2, label: 'Cerah Berawan', icon: 'fas fa-cloud-sun', isRain: false },
     { code: 3, label: 'Berawan', icon: 'fas fa-cloud', isRain: false },
     { code: 4, label: 'Berawan Tebal', icon: 'fas fa-cloud', isRain: false },
@@ -95,28 +95,186 @@ const SYSTEM_STATUS = {
     bmkg: { label: 'BMKG API', value: 'Available', status: 'Terhubung', color: 'green' }
 };
 
+// Urutan log terbaru ke terlama karena dashboard mengambil data dari awal array.
 const DECISION_LOGS = [
-    { time: '10:00', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 38, threshold: '40%-70%', soilTemp: 27.5, weather: 'Tidak hujan', weatherCode: 3, decision: 'Irigasi dijalankan', valve: 'Terbuka', type: 'open', note: 'Kelembapan di bawah threshold bawah' },
-    { time: '10:10', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 72, threshold: '40%-70%', soilTemp: 28.0, weather: 'Tidak hujan', weatherCode: 3, decision: 'Irigasi dihentikan', valve: 'Tertutup', type: 'closed', note: 'Kelembapan di atas threshold atas' },
-    { time: '10:20', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 35, threshold: '40%-70%', soilTemp: 27.8, weather: 'Hujan ringan', weatherCode: 60, decision: 'Irigasi ditunda', valve: 'Tertutup', type: 'delayed', note: 'Prediksi hujan dari BMKG' },
-    { time: '10:30', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 42, threshold: '40%-70%', soilTemp: 27.2, weather: 'Tidak hujan', weatherCode: 3, decision: 'Kondisi normal', valve: 'Tertutup', type: 'normal', note: 'Kelembapan dalam rentang normal' },
-    { time: '10:40', node: 'Node 02', location: 'Kebun Salak Sleman', soilMoisture: 55, threshold: '40%-70%', soilTemp: 26.5, weather: 'Tidak hujan', weatherCode: 2, decision: 'Kondisi normal', valve: 'Tertutup', type: 'normal', note: 'Kelembapan dalam rentang normal' },
-    { time: '10:50', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 33, threshold: '40%-70%', soilTemp: 28.1, weather: 'Tidak hujan', weatherCode: 1, decision: 'Irigasi dijalankan', valve: 'Terbuka', type: 'open', note: 'Kelembapan di bawah threshold bawah' },
-    { time: '11:00', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 68, threshold: '40%-70%', soilTemp: 27.9, weather: 'Tidak hujan', weatherCode: 3, decision: 'Irigasi dihentikan', valve: 'Tertutup', type: 'closed', note: 'Kelembapan mendekati threshold atas' },
-    { time: '11:10', node: 'Node 03', location: 'Lahan Uji', soilMoisture: 0, threshold: '40%-70%', soilTemp: 0, weather: '-', weatherCode: '-', decision: 'Warning', valve: '-', type: 'warning', note: 'Node offline, tidak ada data' },
-    { time: '11:20', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 37, threshold: '40%-70%', soilTemp: 28.3, weather: 'Hujan sedang', weatherCode: 61, decision: 'Irigasi ditunda', valve: 'Tertutup', type: 'delayed', note: 'Prediksi hujan sedang dari BMKG' },
-    { time: '11:30', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 45, threshold: '40%-70%', soilTemp: 27.6, weather: 'Berawan', weatherCode: 3, decision: 'Kondisi normal', valve: 'Tertutup', type: 'normal', note: 'Kelembapan dalam rentang normal' },
-    { time: '11:40', node: 'Node 02', location: 'Kebun Salak Sleman', soilMoisture: 39, threshold: '40%-70%', soilTemp: 26.2, weather: 'Tidak hujan', weatherCode: 2, decision: 'Irigasi dijalankan', valve: 'Terbuka', type: 'open', note: 'Kelembapan di bawah threshold bawah' },
-    { time: '11:50', node: 'Node 01', location: 'Lahan Padi Bantul', soilMoisture: 31, threshold: '40%-70%', soilTemp: 28.5, weather: 'Hujan lebat', weatherCode: 63, decision: 'Irigasi ditunda', valve: 'Tertutup', type: 'delayed', note: 'Prediksi hujan lebat dari BMKG' }
+    {
+        time: '11:50',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 38,
+        threshold: '40%-70%',
+        soilTemp: 27.5,
+        weather: 'Tidak hujan',
+        weatherCode: 3,
+        decision: 'Irigasi dijalankan',
+        valve: 'Terbuka',
+        type: 'open',
+        note: 'Kelembapan di bawah threshold bawah'
+    },
+    {
+        time: '11:40',
+        node: 'Node 02',
+        location: 'Kebun Salak Sleman',
+        soilMoisture: 39,
+        threshold: '40%-70%',
+        soilTemp: 26.2,
+        weather: 'Tidak hujan',
+        weatherCode: 2,
+        decision: 'Irigasi dijalankan',
+        valve: 'Terbuka',
+        type: 'open',
+        note: 'Kelembapan di bawah threshold bawah'
+    },
+    {
+        time: '11:30',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 45,
+        threshold: '40%-70%',
+        soilTemp: 27.6,
+        weather: 'Tidak hujan',
+        weatherCode: 3,
+        decision: 'Kondisi normal',
+        valve: 'Tertutup',
+        type: 'normal',
+        note: 'Kelembapan dalam rentang normal'
+    },
+    {
+        time: '11:20',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 37,
+        threshold: '40%-70%',
+        soilTemp: 28.3,
+        weather: 'Hujan Sedang',
+        weatherCode: 61,
+        decision: 'Irigasi ditunda',
+        valve: 'Tertutup',
+        type: 'delayed',
+        note: 'Prediksi hujan sedang dari BMKG'
+    },
+    {
+        time: '11:10',
+        node: 'Node 03',
+        location: 'Lahan Uji',
+        soilMoisture: 0,
+        threshold: '40%-70%',
+        soilTemp: 0,
+        weather: '-',
+        weatherCode: '-',
+        decision: 'Warning',
+        valve: '-',
+        type: 'warning',
+        note: 'Node offline, tidak ada data'
+    },
+    {
+        time: '11:00',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 68,
+        threshold: '40%-70%',
+        soilTemp: 27.9,
+        weather: 'Tidak hujan',
+        weatherCode: 3,
+        decision: 'Irigasi dilanjutkan',
+        valve: 'Terbuka',
+        type: 'open',
+        note: 'Kelembapan dalam rentang normal, valve dipertahankan terbuka'
+    },
+    {
+        time: '10:50',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 33,
+        threshold: '40%-70%',
+        soilTemp: 28.1,
+        weather: 'Tidak hujan',
+        weatherCode: 1,
+        decision: 'Irigasi dijalankan',
+        valve: 'Terbuka',
+        type: 'open',
+        note: 'Kelembapan di bawah threshold bawah'
+    },
+    {
+        time: '10:40',
+        node: 'Node 02',
+        location: 'Kebun Salak Sleman',
+        soilMoisture: 55,
+        threshold: '40%-70%',
+        soilTemp: 26.5,
+        weather: 'Tidak hujan',
+        weatherCode: 2,
+        decision: 'Kondisi normal',
+        valve: 'Tertutup',
+        type: 'normal',
+        note: 'Kelembapan dalam rentang normal'
+    },
+    {
+        time: '10:30',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 42,
+        threshold: '40%-70%',
+        soilTemp: 27.2,
+        weather: 'Tidak hujan',
+        weatherCode: 3,
+        decision: 'Kondisi normal',
+        valve: 'Tertutup',
+        type: 'normal',
+        note: 'Kelembapan dalam rentang normal'
+    },
+    {
+        time: '10:20',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 35,
+        threshold: '40%-70%',
+        soilTemp: 27.8,
+        weather: 'Hujan Ringan',
+        weatherCode: 60,
+        decision: 'Irigasi ditunda',
+        valve: 'Tertutup',
+        type: 'delayed',
+        note: 'Prediksi hujan dari BMKG'
+    },
+    {
+        time: '10:10',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 72,
+        threshold: '40%-70%',
+        soilTemp: 28.0,
+        weather: 'Tidak hujan',
+        weatherCode: 3,
+        decision: 'Irigasi dihentikan',
+        valve: 'Tertutup',
+        type: 'closed',
+        note: 'Kelembapan di atas threshold atas'
+    },
+    {
+        time: '10:00',
+        node: 'Node 01',
+        location: 'Lahan Padi Bantul',
+        soilMoisture: 42,
+        threshold: '40%-70%',
+        soilTemp: 27.5,
+        weather: 'Tidak hujan',
+        weatherCode: 3,
+        decision: 'Kondisi normal',
+        valve: 'Tertutup',
+        type: 'normal',
+        note: 'Kelembapan dalam rentang normal'
+    }
 ];
 
-const SENSOR_HISTORY_LABELS = ['08:00', '08:10', '08:20', '08:30', '08:40', '08:50', '09:00'];
+// Riwayat ini dipakai grafik dashboard/monitoring untuk Node 01.
+const SENSOR_HISTORY_LABELS = ['10:50', '11:00', '11:10', '11:20', '11:30', '11:40', '11:50'];
 
 const SENSOR_HISTORY = {
-    soilMoisture: [42, 40, 38, 36, 35, 37, 38],
-    soilTemp: [26.5, 26.8, 27.0, 27.3, 27.5, 27.4, 27.5],
-    airTemp: [28.5, 29.0, 29.5, 29.8, 30.0, 30.1, 30.2],
-    airHumidity: [82, 81, 80, 79, 78, 78, 78]
+    soilMoisture: [33, 68, 64, 37, 45, 40, 38],
+    soilTemp: [28.1, 27.9, 27.8, 28.3, 27.6, 27.7, 27.5],
+    airTemp: [30.4, 30.1, 30.0, 30.3, 30.0, 29.9, 30.2],
+    airHumidity: [76, 77, 79, 82, 80, 79, 78]
 };
 
 const TECH_STACK = [

@@ -28,16 +28,16 @@
 
 .sensor-value {
     color: var(--color-gray-900);
-    font-size: 1.9rem;
-    font-weight: 700;
+    font-size: 2rem;
+    font-weight: 900;
     letter-spacing: -0.02em;
     line-height: 1.1;
 }
 
 .sensor-unit {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    font-weight: 700;
+    color: var(--color-gray-900);
+    font-size: 1.3rem;
+    font-weight: 800;
 }
 
 .sensor-card-body {
@@ -47,6 +47,148 @@
 /* Irrigation status card */
 .irrigation-status-card {
     margin-bottom: 24px;
+}
+
+.irrigation-control-card {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.95fr) minmax(320px, 1.35fr);
+    gap: 24px;
+    align-items: center;
+    text-align: left;
+}
+
+.irrigation-status-main {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+}
+
+.valve-emblem {
+    width: 74px;
+    height: 74px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    font-size: 1.7rem;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+}
+
+.valve-emblem.open {
+    background: var(--color-primary-light);
+    border: 1px solid rgba(16, 185, 129, 0.32);
+    color: var(--color-primary-dark);
+    box-shadow: 0 0 0 8px var(--color-primary-soft);
+}
+
+.valve-emblem.closed {
+    background: var(--color-blue-light);
+    border: 1px solid rgba(59, 130, 246, 0.32);
+    color: var(--color-blue);
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.06);
+}
+
+.valve-emblem.delayed {
+    background: var(--color-yellow-light);
+    border: 1px solid rgba(245, 158, 11, 0.34);
+    color: var(--color-yellow);
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.06);
+}
+
+.irrigation-status-copy {
+    min-width: 0;
+}
+
+.control-eyebrow,
+.control-metric-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.control-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.control-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+    margin-top: 8px;
+    padding: 5px 11px;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    border-radius: var(--radius-sm);
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.irrigation-status-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.control-metric {
+    min-height: 88px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.control-metric.is-primary {
+    border-color: rgba(16, 185, 129, 0.28);
+    background: var(--color-primary-soft);
+}
+
+.control-metric strong {
+    display: block;
+    margin-top: 8px;
+    color: var(--color-gray-900);
+    font-size: 1.18rem;
+    line-height: 1.15;
+}
+
+.threshold-band {
+    --threshold-lower: 40%;
+    --threshold-range: 30%;
+    grid-column: 1 / -1;
+    margin-top: 4px;
+}
+
+.threshold-band-track {
+    position: relative;
+    display: block;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-yellow-light), var(--color-primary-light), var(--color-blue-light));
+}
+
+.threshold-band-fill {
+    position: absolute;
+    inset: 0 auto 0 var(--threshold-lower);
+    width: var(--threshold-range);
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-cyan));
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.28);
+}
+
+.threshold-band-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
 }
 
 .irrigation-details {
@@ -234,8 +376,9 @@
 }
 
 .sensor-detail-value {
-    font-size: 1.28rem;
-    font-weight: 700;
+    color: var(--color-gray-900);
+    font-size: 1.42rem;
+    font-weight: 900;
     line-height: 1.2;
     text-align: right;
 }

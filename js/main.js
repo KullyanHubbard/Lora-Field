@@ -2,83 +2,112 @@
 
 const DEG_C = '\u00B0C';
 
+const STORAGE_KEYS = {
+    THRESHOLD_LOWER: 'lf_threshold_lower',
+    THRESHOLD_UPPER: 'lf_threshold_upper',
+    VALVE_STATE: 'lf_valve_state'
+};
+
+const VALVE_STATE = {
+    OPEN: 'Terbuka',
+    CLOSED: 'Tertutup'
+};
+
+const DECISION_TYPE = {
+    OPEN: 'open',
+    DELAYED: 'delayed',
+    CLOSED: 'closed',
+    NORMAL: 'normal',
+    WARNING: 'warning'
+};
+
 // Threshold disimpan di localStorage supaya tetap aktif setelah refresh.
 const ThresholdManager = {
     DEFAULT_LOWER: 40,
     DEFAULT_UPPER: 70,
 
     get lower() {
-        const value = Number.parseInt(localStorage.getItem('lf_threshold_lower'), 10);
+        const value = Number.parseInt(localStorage.getItem(STORAGE_KEYS.THRESHOLD_LOWER), 10);
         return Number.isFinite(value) ? value : this.DEFAULT_LOWER;
     },
     get upper() {
-        const value = Number.parseInt(localStorage.getItem('lf_threshold_upper'), 10);
+        const value = Number.parseInt(localStorage.getItem(STORAGE_KEYS.THRESHOLD_UPPER), 10);
         return Number.isFinite(value) ? value : this.DEFAULT_UPPER;
     },
     set lower(val) {
-        localStorage.setItem('lf_threshold_lower', String(val));
+        localStorage.setItem(STORAGE_KEYS.THRESHOLD_LOWER, String(val));
     },
     set upper(val) {
-        localStorage.setItem('lf_threshold_upper', String(val));
+        localStorage.setItem(STORAGE_KEYS.THRESHOLD_UPPER, String(val));
     },
     reset() {
-        localStorage.removeItem('lf_threshold_lower');
-        localStorage.removeItem('lf_threshold_upper');
+        localStorage.removeItem(STORAGE_KEYS.THRESHOLD_LOWER);
+        localStorage.removeItem(STORAGE_KEYS.THRESHOLD_UPPER);
     },
     getActiveString() {
         return `${this.lower}%-${this.upper}%`;
     }
 };
 
+function getCurrentValveState() {
+    return localStorage.getItem(STORAGE_KEYS.VALVE_STATE) || VALVE_STATE.CLOSED;
+}
+
+function saveValveState(state) {
+    localStorage.setItem(STORAGE_KEYS.VALVE_STATE, state);
+}
+
 // Logika keputusan irigasi berdasarkan threshold aktif dan cuaca BMKG.
 function makeIrrigationDecision(soilMoisture, rainPrediction) {
     const lower = ThresholdManager.lower;
     const upper = ThresholdManager.upper;
-    
-    let currentValveState = localStorage.getItem('lf_valve_state') || 'Tertutup';
+    const currentValveState = getCurrentValveState();
+    const isDry = soilMoisture < lower;
+    const isWet = soilMoisture > upper;
+
     let result;
 
-    if (soilMoisture < lower && !rainPrediction) {
+    if (isDry && !rainPrediction) {
         result = {
-            valve: 'Terbuka',
+            valve: VALVE_STATE.OPEN,
             decision: 'Irigasi dijalankan',
-            type: 'open',
+            type: DECISION_TYPE.OPEN,
             reason: `Kelembapan tanah (${soilMoisture}%) berada di bawah threshold bawah (${lower}%) dan tidak ada prediksi hujan 3 jam ke depan, maka valve dibuka.`
         };
-    } else if (soilMoisture < lower && rainPrediction) {
+    } else if (isDry && rainPrediction) {
         result = {
-            valve: 'Tertutup',
+            valve: VALVE_STATE.CLOSED,
             decision: 'Irigasi ditunda',
-            type: 'delayed',
+            type: DECISION_TYPE.DELAYED,
             reason: `Kelembapan tanah (${soilMoisture}%) berada di bawah threshold bawah (${lower}%), namun BMKG memprediksi hujan dalam 3 jam ke depan. Irigasi ditunda untuk mencegah pemborosan air.`
         };
-    } else if (soilMoisture > upper) {
+    } else if (isWet) {
         result = {
-            valve: 'Tertutup',
+            valve: VALVE_STATE.CLOSED,
             decision: 'Irigasi dihentikan',
-            type: 'closed',
+            type: DECISION_TYPE.CLOSED,
             reason: `Kelembapan tanah (${soilMoisture}%) berada di atas threshold atas (${upper}%). Tanah terlalu basah, valve ditutup.`
         };
     } else {
-        // Hysteresis logic: maintain previous state inside the normal band
-        if (currentValveState === 'Terbuka') {
+        // Histeresis: di rentang normal, valve mengikuti status sebelumnya.
+        if (currentValveState === VALVE_STATE.OPEN) {
             result = {
-                valve: 'Terbuka',
+                valve: VALVE_STATE.OPEN,
                 decision: 'Irigasi dilanjutkan',
-                type: 'open',
+                type: DECISION_TYPE.OPEN,
                 reason: `Kelembapan tanah (${soilMoisture}%) berada dalam rentang normal (${lower}%-${upper}%). Valve dipertahankan terbuka karena sedang dalam proses irigasi.`
             };
         } else {
             result = {
-                valve: 'Tertutup',
+                valve: VALVE_STATE.CLOSED,
                 decision: 'Kondisi normal',
-                type: 'normal',
+                type: DECISION_TYPE.NORMAL,
                 reason: `Kelembapan tanah (${soilMoisture}%) berada dalam rentang normal (${lower}%-${upper}%). Tidak ada tindakan diperlukan.`
             };
         }
     }
 
-    localStorage.setItem('lf_valve_state', result.valve);
+    saveValveState(result.valve);
     return result;
 }
 
@@ -102,19 +131,13 @@ function getNodeStatusBadge(status) {
 
 function getDecisionBadge(type) {
     const map = {
-        open: { label: 'Irigasi Dijalankan', className: 'badge-green' },
-        delayed: { label: 'Irigasi Ditunda', className: 'badge-yellow' },
-        closed: { label: 'Valve Tertutup', className: 'badge-blue' },
-        normal: { label: 'Normal', className: 'badge-blue' },
-        warning: { label: 'Warning', className: 'badge-red' }
+        [DECISION_TYPE.OPEN]: { label: 'Irigasi Dijalankan', className: 'badge-green' },
+        [DECISION_TYPE.DELAYED]: { label: 'Irigasi Ditunda', className: 'badge-yellow' },
+        [DECISION_TYPE.CLOSED]: { label: 'Valve Tertutup', className: 'badge-blue' },
+        [DECISION_TYPE.NORMAL]: { label: 'Normal', className: 'badge-blue' },
+        [DECISION_TYPE.WARNING]: { label: 'Warning', className: 'badge-red' }
     };
-    return map[type] || map.normal;
-}
-
-function getValveBadge(valve) {
-    if (valve === 'Terbuka') return 'badge-green';
-    if (valve === 'Ditunda') return 'badge-yellow';
-    return 'badge-blue';
+    return map[type] || map[DECISION_TYPE.NORMAL];
 }
 
 function getWeatherInfo(code) {

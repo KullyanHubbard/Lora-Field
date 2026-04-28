@@ -3,73 +3,162 @@
 let simulationInterval = null;
 let currentRainOverride = null;
 
+const SIMULATION_INTERVAL_MS = 8000;
+const MAX_LOG_ENTRIES = 50;
+const MAX_HISTORY_POINTS = 20;
+const FORECAST_TARGET_INDEX = 2;
+const RAIN_WEATHER_CODES = [60, 61, 63];
+
+const SENSOR_RANGES = {
+    soilMoisture: [30, 80, 0],
+    soilTemp: [24, 32, 1],
+    airTemp: [26, 34, 1],
+    airHumidity: [60, 90, 0]
+};
+
 function randomInRange(min, max, decimals = 1) {
     const low = Math.min(min, max);
     const high = Math.max(min, max);
     return parseFloat((Math.random() * (high - low) + low).toFixed(decimals));
 }
 
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+
+function randomPercent(min, max) {
+    return clamp(randomInRange(min, max, 0), 0, 100);
+}
+
+function setForecast(code, temp = 27) {
+    const info = getWeatherInfo(code);
+    WEATHER_DATA.rainPrediction = info.isRain;
+    WEATHER_DATA.forecast[FORECAST_TARGET_INDEX] = {
+        label: '+3 Jam',
+        condition: info.label,
+        code,
+        temp
+    };
+}
+
+function setNoRainForecast(temp = 27) {
+    setForecast(2, temp);
+}
+
 function simulateSensorData() {
     NODES.forEach(node => {
         if (node.status === 'offline') return;
-        node.soilMoisture = randomInRange(30, 80, 0);
-        node.soilTemp = randomInRange(24, 32, 1);
-        node.airTemp = randomInRange(26, 34, 1);
-        node.airHumidity = randomInRange(60, 90, 0);
+
+        node.soilMoisture = randomInRange(...SENSOR_RANGES.soilMoisture);
+        node.soilTemp = randomInRange(...SENSOR_RANGES.soilTemp);
+        node.airTemp = randomInRange(...SENSOR_RANGES.airTemp);
+        node.airHumidity = randomInRange(...SENSOR_RANGES.airHumidity);
         node.lastUpdate = new Date();
     });
+}
+
+function getScenarioSoilMoisture(type, lower, upper) {
+    switch (type) {
+        case 'dry':
+            return lower <= 0 ? 0 : randomPercent(Math.max(lower - 15, 0), lower - 1);
+        case 'normal':
+            return randomPercent(lower, upper);
+        case 'wet':
+            return upper >= 100 ? 100 : randomPercent(upper + 1, 100);
+        case 'rain':
+            return lower <= 0 ? 0 : randomPercent(Math.max(lower - 15, 0), lower - 1);
+        default:
+            return null;
+    }
 }
 
 function simulateCondition(type) {
     const node = NODES[0];
     const lower = ThresholdManager.lower;
     const upper = ThresholdManager.upper;
+    const soilMoisture = getScenarioSoilMoisture(type, lower, upper);
+
+    if (soilMoisture === null) return;
+
+    node.soilMoisture = soilMoisture;
 
     switch (type) {
         case 'dry':
-            node.soilMoisture = randomInRange(Math.max(lower - 15, 10), lower - 1, 0);
             currentRainOverride = false;
-            WEATHER_DATA.rainPrediction = false;
+            setNoRainForecast();
             break;
         case 'normal':
-            node.soilMoisture = randomInRange(lower + 1, upper - 1, 0);
             currentRainOverride = false;
-            WEATHER_DATA.rainPrediction = false;
+            setNoRainForecast();
             break;
         case 'wet':
-            node.soilMoisture = randomInRange(upper + 1, 95, 0);
             currentRainOverride = false;
-            WEATHER_DATA.rainPrediction = false;
+            setNoRainForecast();
             break;
         case 'rain':
-            node.soilMoisture = randomInRange(Math.max(lower - 15, 10), lower - 1, 0);
             currentRainOverride = true;
-            WEATHER_DATA.rainPrediction = true;
-            WEATHER_DATA.forecast[2] = { label: '+3 Jam', condition: 'Hujan Ringan', code: 60, temp: 25 };
+            setForecast(60, 25);
             break;
-        default:
-            return;
     }
 
     node.lastUpdate = new Date();
-
-    pushSensorHistory(node);
-    const rain = isRainPredicted();
-    const decision = makeIrrigationDecision(node.soilMoisture, rain);
-    addLogEntry(node, node.soilMoisture, rain ? 'Hujan' : 'Tidak hujan', WEATHER_DATA.current.code, decision.decision, decision.valve, decision.type, decision.reason);
-
+    recordDecisionSnapshot(node);
     updateAllUI();
 }
 
 function resetRainOverride() {
     currentRainOverride = null;
-    WEATHER_DATA.rainPrediction = false;
-    WEATHER_DATA.forecast[2] = { label: '+3 Jam', condition: 'Cerah Berawan', code: 2, temp: 27 };
+    setNoRainForecast();
 }
 
 function isRainPredicted() {
     if (currentRainOverride !== null) return currentRainOverride;
     return WEATHER_DATA.rainPrediction || WEATHER_DATA.forecast.some(item => getWeatherInfo(item.code).isRain);
+}
+
+function getPredictedRainItem() {
+    return WEATHER_DATA.forecast.find(item => getWeatherInfo(item.code).isRain) || null;
+}
+
+function getWeatherLogSnapshot() {
+    const currentInfo = getWeatherInfo(WEATHER_DATA.current.code);
+    const rainItem = getPredictedRainItem();
+
+    if (isRainPredicted()) {
+        if (rainItem) {
+            const rainInfo = getWeatherInfo(rainItem.code);
+            return { weather: rainInfo.label, weatherCode: rainItem.code };
+        }
+
+        return {
+            weather: currentInfo.isRain ? currentInfo.label : 'Hujan',
+            weatherCode: WEATHER_DATA.current.code
+        };
+    }
+
+    return {
+        weather: currentInfo.isRain ? currentInfo.label : 'Tidak hujan',
+        weatherCode: WEATHER_DATA.current.code
+    };
+}
+
+function recordDecisionSnapshot(node) {
+    pushSensorHistory(node);
+
+    const rain = isRainPredicted();
+    const decision = makeIrrigationDecision(node.soilMoisture, rain);
+    const weatherLog = getWeatherLogSnapshot();
+
+    addLogEntry(
+        node,
+        node.soilMoisture,
+        weatherLog.weather,
+        weatherLog.weatherCode,
+        decision.decision,
+        decision.valve,
+        decision.type,
+        decision.reason
+    );
 }
 
 function updateAllUI() {
@@ -88,23 +177,17 @@ function startSimulation() {
         if (currentRainOverride === null) {
             WEATHER_DATA.rainPrediction = Math.random() < 0.15;
             if (WEATHER_DATA.rainPrediction) {
-                const rainCodes = [60, 61, 63];
-                const code = rainCodes[Math.floor(Math.random() * rainCodes.length)];
-                const info = getWeatherInfo(code);
-                WEATHER_DATA.forecast[2] = { label: '+3 Jam', condition: info.label, code, temp: randomInRange(24, 28, 0) };
+                const code = RAIN_WEATHER_CODES[Math.floor(Math.random() * RAIN_WEATHER_CODES.length)];
+                setForecast(code, randomInRange(24, 28, 0));
             } else {
-                WEATHER_DATA.forecast[2] = { label: '+3 Jam', condition: 'Cerah Berawan', code: 2, temp: randomInRange(26, 29, 0) };
+                setNoRainForecast(randomInRange(26, 29, 0));
             }
         }
 
         const node = NODES[0];
-        pushSensorHistory(node);
-        const rain = isRainPredicted();
-        const decision = makeIrrigationDecision(node.soilMoisture, rain);
-        addLogEntry(node, node.soilMoisture, rain ? 'Hujan' : 'Tidak hujan', WEATHER_DATA.current.code, decision.decision, decision.valve, decision.type, decision.reason);
-
+        recordDecisionSnapshot(node);
         updateAllUI();
-    }, 8000);
+    }, SIMULATION_INTERVAL_MS);
 }
 
 function stopSimulation() {
@@ -114,12 +197,12 @@ function stopSimulation() {
     }
 }
 
-let lastLoggedDecisionType = null;
+let lastLoggedDecisionType = DECISION_LOGS.length ? DECISION_LOGS[0].type : null;
 
 function addLogEntry(node, soilMoisture, weather, weatherCode, decision, valve, type, note) {
-    // Audit Log Akurasi: Jangan spam log jika tidak ada perubahan status/keputusan.
+    // Simpan hanya perubahan keputusan agar tabel log tidak cepat penuh.
     if (lastLoggedDecisionType === type && type === 'normal') return;
-    if (lastLoggedDecisionType === type) return; // Opsional: hanya log transisi
+    if (lastLoggedDecisionType === type) return;
     lastLoggedDecisionType = type;
 
     const now = new Date();
@@ -139,7 +222,7 @@ function addLogEntry(node, soilMoisture, weather, weatherCode, decision, valve, 
         note
     });
 
-    if (DECISION_LOGS.length > 50) DECISION_LOGS.pop();
+    if (DECISION_LOGS.length > MAX_LOG_ENTRIES) DECISION_LOGS.pop();
 }
 
 function pushSensorHistory(node) {
@@ -151,7 +234,7 @@ function pushSensorHistory(node) {
     SENSOR_HISTORY.airTemp.push(node.airTemp);
     SENSOR_HISTORY.airHumidity.push(node.airHumidity);
 
-    if (SENSOR_HISTORY_LABELS.length > 20) {
+    if (SENSOR_HISTORY_LABELS.length > MAX_HISTORY_POINTS) {
         SENSOR_HISTORY_LABELS.shift();
         SENSOR_HISTORY.soilMoisture.shift();
         SENSOR_HISTORY.soilTemp.shift();

@@ -61,6 +61,26 @@ Threshold dapat diubah dari halaman Irigasi dan disimpan di `localStorage`. Nila
 - Karakteristik tanah
 - Hasil pengujian lapangan
 
+## Alur Data dan Logika Saat Ini
+
+Proyek masih memakai data dummy dan simulasi frontend.
+
+- `js/dummy-data.js` berisi data awal node, cuaca, log keputusan, dan riwayat sensor.
+- `js/main.js` berisi logic bersama: threshold, status valve, badge, clock, dan keputusan irigasi.
+- `js/simulation.js` mengubah data dummy secara berkala, menambah riwayat sensor, dan menulis log baru saat keputusan berubah.
+- `js/charts.js` hanya bertugas menampilkan data riwayat ke grafik Chart.js.
+
+Aturan keputusan irigasi:
+
+| Kondisi | Cuaca | Keputusan |
+| --- | --- | --- |
+| Kelembapan < threshold bawah | Tidak ada hujan | Valve terbuka |
+| Kelembapan < threshold bawah | Ada prediksi hujan | Irigasi ditunda |
+| Kelembapan > threshold atas | Apapun | Valve tertutup |
+| Kelembapan dalam rentang threshold | Apapun | Mengikuti status valve sebelumnya |
+
+Jika ada data yang terlihat tidak sesuai, cek urutannya dari `js/dummy-data.js`, lalu `makeIrrigationDecision()` di `js/main.js`, lalu `recordDecisionSnapshot()` di `js/simulation.js`.
+
 ## Rencana Integrasi Backend
 
 | Komponen | Teknologi | Status |

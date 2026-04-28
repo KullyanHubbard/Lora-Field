@@ -61,14 +61,42 @@
                 </div>
             </section>
 
-            <div class="card status-big mb-24" id="irr-status-card">
-                <div class="valve-status open" id="irr-valve-text">TERBUKA</div>
-                <div class="mt-16">
-                    <span class="badge badge-green" id="irr-mode-badge">Mode: Otomatis</span>
+            <div class="card status-big irrigation-control-card mb-24" id="irr-status-card">
+                <div class="irrigation-status-main">
+                    <div class="valve-emblem open" id="irr-valve-emblem" aria-hidden="true">
+                        <i class="fas fa-droplet"></i>
+                    </div>
+                    <div class="irrigation-status-copy">
+                        <span class="control-eyebrow">Status Valve</span>
+                        <div class="valve-status open" id="irr-valve-text">TERBUKA</div>
+                        <span class="control-mode-pill" id="irr-mode-badge"><i class="fas fa-bolt" aria-hidden="true"></i> Mode Otomatis</span>
+                    </div>
                 </div>
-                <div class="irrigation-details">
-                    <div class="detail-row"><span class="detail-label">Threshold Bawah</span><span class="detail-value" id="irr-lower-active">40% VWC</span></div>
-                    <div class="detail-row"><span class="detail-label">Threshold Atas</span><span class="detail-value" id="irr-upper-active">70% VWC</span></div>
+
+                <div class="irrigation-status-metrics" aria-label="Ringkasan kondisi irigasi">
+                    <div class="control-metric is-primary">
+                        <span class="control-metric-label">Kelembapan Saat Ini</span>
+                        <strong id="irr-moisture-active">38% VWC</strong>
+                    </div>
+                    <div class="control-metric">
+                        <span class="control-metric-label">Threshold Bawah</span>
+                        <strong id="irr-lower-active">40% VWC</strong>
+                    </div>
+                    <div class="control-metric">
+                        <span class="control-metric-label">Threshold Atas</span>
+                        <strong id="irr-upper-active">70% VWC</strong>
+                    </div>
+                </div>
+
+                <div class="threshold-band" id="irr-threshold-band" aria-hidden="true">
+                    <span class="threshold-band-track">
+                        <span class="threshold-band-fill"></span>
+                    </span>
+                    <div class="threshold-band-labels">
+                        <span>Kering</span>
+                        <span>Zona Irigasi</span>
+                        <span>Basah</span>
+                    </div>
                 </div>
             </div>
 
@@ -92,7 +120,7 @@
                 </div>
                 <div class="note-box">
                     <i class="fas fa-info-circle" aria-hidden="true"></i>
-                    <span>Gunakan referensi kalibrasi Volumetric Water Content (VWC) untuk menyesuaikan threshold dengan jenis tanaman dan tanah.</span>
+                    <span>Kalibrasi VWC: sesuaikan threshold dengan tanaman dan jenis tanah.</span>
                 </div>
             </div>
 
@@ -172,8 +200,14 @@
             valveEl.textContent = decision.valve.toUpperCase();
             valveEl.className = 'valve-status ' + (decision.type === 'open' ? 'open' : decision.type === 'delayed' ? 'delayed' : 'closed');
 
+            const emblemEl = document.getElementById('irr-valve-emblem');
+            emblemEl.className = 'valve-emblem ' + (decision.type === 'open' ? 'open' : decision.type === 'delayed' ? 'delayed' : 'closed');
+
+            document.getElementById('irr-moisture-active').textContent = node.soilMoisture + '% VWC';
             document.getElementById('irr-lower-active').textContent = ThresholdManager.lower + '% VWC';
             document.getElementById('irr-upper-active').textContent = ThresholdManager.upper + '% VWC';
+            document.getElementById('irr-threshold-band').style.setProperty('--threshold-lower', ThresholdManager.lower + '%');
+            document.getElementById('irr-threshold-band').style.setProperty('--threshold-range', (ThresholdManager.upper - ThresholdManager.lower) + '%');
             document.getElementById('dp-moisture').textContent = node.soilMoisture + '%';
             document.getElementById('dp-lower').textContent = ThresholdManager.lower + '%';
             document.getElementById('dp-upper').textContent = ThresholdManager.upper + '%';

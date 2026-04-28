@@ -29,7 +29,8 @@
     }
 
     .weather-card,
-    .threshold-section {
+    .threshold-section,
+    .irrigation-control-card {
         grid-template-columns: 1fr;
     }
 
@@ -64,6 +65,10 @@
     .topbar {
         height: 58px;
         padding: 0 16px;
+    }
+
+    .topbar-title {
+        font-size: 1.45rem;
     }
 
     .topbar-clock {
@@ -153,6 +158,7 @@
 @media (max-width: 520px) {
     .topbar-title {
         max-width: 170px;
+        font-size: 1.28rem;
     }
 
     .topbar-right {
@@ -223,5 +229,27 @@
 
     .status-big .valve-status {
         font-size: 1.22rem;
+    }
+
+    .irrigation-status-main {
+        align-items: flex-start;
+    }
+
+    .valve-emblem {
+        width: 58px;
+        height: 58px;
+        font-size: 1.35rem;
+    }
+
+    .irrigation-status-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .control-metric {
+        min-height: 74px;
+    }
+
+    .threshold-band-labels {
+        font-size: 0.7rem;
     }
 }
