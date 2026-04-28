@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="LoraField - Monitoring detail sensor lahan pertanian dan riwayat data.">
+    <script>
+        try {
+            document.documentElement.dataset.theme = localStorage.getItem('lf_theme') === 'light' ? 'light' : 'dark';
+        } catch (error) {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
     <title>Monitoring - LoraField</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -111,7 +119,7 @@
                         <span class="sensor-detail-label">Kelembapan Tanah</span>
                         <span class="sensor-detail-value" id="mon-soil">38% VWC</span>
                     </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-soil-bar" style="width:38%"></div></div>
+                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-soil-bar" style="transform:scaleX(0.38)"></div></div>
                     <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
                 </div>
                 <div class="card sensor-detail-card">
@@ -119,7 +127,7 @@
                         <span class="sensor-detail-label">Suhu Tanah</span>
                         <span class="sensor-detail-value" id="mon-stemp">27.5&deg;C</span>
                     </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-stemp-bar" style="width:55%"></div></div>
+                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-stemp-bar" style="transform:scaleX(0.55)"></div></div>
                     <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
                 </div>
                 <div class="card sensor-detail-card">
@@ -127,7 +135,7 @@
                         <span class="sensor-detail-label">Suhu Udara</span>
                         <span class="sensor-detail-value" id="mon-atemp">30.2&deg;C</span>
                     </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-atemp-bar" style="width:60%"></div></div>
+                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-atemp-bar" style="transform:scaleX(0.60)"></div></div>
                     <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
                 </div>
                 <div class="card sensor-detail-card">
@@ -135,7 +143,7 @@
                         <span class="sensor-detail-label">Kelembapan Udara</span>
                         <span class="sensor-detail-value" id="mon-ahum">78% RH</span>
                     </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-ahum-bar" style="width:78%"></div></div>
+                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-ahum-bar" style="transform:scaleX(0.78)"></div></div>
                     <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
                 </div>
             </div>
@@ -243,10 +251,10 @@
             document.getElementById('mon-atemp').textContent = node.airTemp + DEG_C;
             document.getElementById('mon-ahum').textContent = node.airHumidity + '% RH';
 
-            document.getElementById('mon-soil-bar').style.width = node.soilMoisture + '%';
-            document.getElementById('mon-stemp-bar').style.width = (node.soilTemp / 50 * 100) + '%';
-            document.getElementById('mon-atemp-bar').style.width = (node.airTemp / 50 * 100) + '%';
-            document.getElementById('mon-ahum-bar').style.width = node.airHumidity + '%';
+            document.getElementById('mon-soil-bar').style.transform = `scaleX(${node.soilMoisture / 100})`;
+            document.getElementById('mon-stemp-bar').style.transform = `scaleX(${node.soilTemp / 50})`;
+            document.getElementById('mon-atemp-bar').style.transform = `scaleX(${node.airTemp / 50})`;
+            document.getElementById('mon-ahum-bar').style.transform = `scaleX(${node.airHumidity / 100})`;
 
             if (node.status !== 'offline') {
                 updateMonitoringCharts();
@@ -268,12 +276,12 @@
             tbody.innerHTML = monTableData.slice(0, 10).map(row => {
                 const rowBadge = getNodeStatusBadge(row.status);
                 return `<tr>
-                    <td>${row.time}</td>
+                    <td class="data-value">${row.time}</td>
                     <td>${row.node}</td>
-                    <td>${row.soil}</td>
-                    <td>${row.stemp}</td>
-                    <td>${row.atemp}</td>
-                    <td>${row.ahum}</td>
+                    <td class="data-value">${row.soil}</td>
+                    <td class="data-value">${row.stemp}</td>
+                    <td class="data-value">${row.atemp}</td>
+                    <td class="data-value">${row.ahum}</td>
                     <td><span class="badge ${rowBadge.className}">${rowBadge.label}</span></td>
                 </tr>`;
             }).join('');

@@ -1,18 +1,31 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="LoraField - Kontrol dan pengaturan irigasi otomatis berbasis threshold kelembapan tanah.">
+    <meta name="description"
+        content="LoraField - Kontrol dan pengaturan irigasi otomatis berbasis threshold kelembapan tanah.">
+    <script>
+        try {
+            document.documentElement.dataset.theme = localStorage.getItem('lf_theme') === 'light' ? 'light' : 'dark';
+        } catch (error) {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
     <title>Irigasi - LoraField</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/premium.css">
 </head>
+
 <body>
     <!-- Ambient Background -->
     <div class="ambient-bg">
@@ -29,8 +42,10 @@
         </div>
         <nav class="sidebar-nav" aria-label="Application Menu">
             <a href="index.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
-            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i> Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link active" aria-current="page"><i class="fas fa-tint" aria-hidden="true"></i> Irrigation</a>
+            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i>
+                Monitoring</a>
+            <a href="irrigation.html" class="sidebar-link active" aria-current="page"><i class="fas fa-tint"
+                    aria-hidden="true"></i> Irrigation</a>
             <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Weather</a>
             <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> System Logs</a>
         </nav>
@@ -40,7 +55,8 @@
     <main class="main-content">
         <header class="topbar">
             <div class="topbar-left">
-                <button class="mobile-toggle" id="sidebar-toggle" type="button" aria-label="Buka navigasi" aria-controls="sidebar">
+                <button class="mobile-toggle" id="sidebar-toggle" type="button" aria-label="Buka navigasi"
+                    aria-controls="sidebar">
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
                 <span class="topbar-title">Irrigation Control</span>
@@ -69,7 +85,8 @@
                     <div class="irrigation-status-copy">
                         <span class="control-eyebrow">Status Valve</span>
                         <div class="valve-status open" id="irr-valve-text">TERBUKA</div>
-                        <span class="control-mode-pill" id="irr-mode-badge"><i class="fas fa-bolt" aria-hidden="true"></i> Mode Otomatis</span>
+                        <span class="control-mode-pill" id="irr-mode-badge"><i class="fas fa-bolt"
+                                aria-hidden="true"></i> Mode Otomatis</span>
                     </div>
                 </div>
 
@@ -105,22 +122,22 @@
                 <div class="threshold-form">
                     <div class="form-group">
                         <label for="input-lower">Threshold Bawah (% VWC)</label>
-                        <input type="number" class="form-control" id="input-lower" min="0" max="100" step="1" value="40" inputmode="numeric">
+                        <input type="number" class="form-control" id="input-lower" min="0" max="100" step="1" value="40"
+                            inputmode="numeric">
                     </div>
                     <div class="form-group">
                         <label for="input-upper">Threshold Atas (% VWC)</label>
-                        <input type="number" class="form-control" id="input-upper" min="0" max="100" step="1" value="70" inputmode="numeric">
+                        <input type="number" class="form-control" id="input-upper" min="0" max="100" step="1" value="70"
+                            inputmode="numeric">
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn btn-primary" id="btn-save-threshold" type="button"><i class="fas fa-save" aria-hidden="true"></i> Simpan Pengaturan</button>
-                        <button class="btn btn-secondary" id="btn-reset-threshold" type="button"><i class="fas fa-undo" aria-hidden="true"></i> Reset ke Default</button>
+                        <button class="btn btn-primary" id="btn-save-threshold" type="button"><i class="fas fa-save"
+                                aria-hidden="true"></i> Simpan Pengaturan</button>
+                        <button class="btn btn-secondary" id="btn-reset-threshold" type="button"><i class="fas fa-undo"
+                                aria-hidden="true"></i> Reset ke Default</button>
                     </div>
-                    <div class="note-box mt-16" id="threshold-feedback" role="status" style="display:none;"></div>
-                </div>
-                <div class="note-box">
-                    <i class="fas fa-info-circle" aria-hidden="true"></i>
-                    <span>Kalibrasi VWC: sesuaikan threshold dengan tanaman dan jenis tanah.</span>
+                    <div class="note-box mt-16 threshold-feedback-hidden" id="threshold-feedback" role="status"></div>
                 </div>
             </div>
 
@@ -137,16 +154,37 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td>Padi (Fase Vegetatif)</td><td>Lempung Berliat (Clay Loam)</td><td><span class="badge badge-yellow">45% VWC</span></td><td><span class="badge badge-blue">75% VWC</span> Jenuh</td></tr>
-                            <tr><td>Salak Pondoh (Berbuah)</td><td>Lempung Berpasir (Sandy Loam)</td><td><span class="badge badge-yellow">30% VWC</span></td><td><span class="badge badge-green">55% VWC</span></td></tr>
-                            <tr><td>Sayuran Daun (Sawi, Bayam)</td><td>Lempung (Loam)</td><td><span class="badge badge-yellow">35% VWC</span></td><td><span class="badge badge-green">60% VWC</span></td></tr>
-                            <tr><td>Tanaman Keras / Kayu</td><td>Tanah Liat (Clay)</td><td><span class="badge badge-yellow">25% VWC</span></td><td><span class="badge badge-green">50% VWC</span></td></tr>
+                            <tr>
+                                <td>Padi (Fase Vegetatif)</td>
+                                <td>Lempung Berliat (Clay Loam)</td>
+                                <td><span class="badge badge-yellow data-value">45% VWC</span></td>
+                                <td><span class="badge badge-blue data-value">75% VWC</span> Jenuh</td>
+                            </tr>
+                            <tr>
+                                <td>Salak Pondoh (Berbuah)</td>
+                                <td>Lempung Berpasir (Sandy Loam)</td>
+                                <td><span class="badge badge-yellow data-value">30% VWC</span></td>
+                                <td><span class="badge badge-green data-value">55% VWC</span></td>
+                            </tr>
+                            <tr>
+                                <td>Sayuran Daun (Sawi, Bayam)</td>
+                                <td>Lempung (Loam)</td>
+                                <td><span class="badge badge-yellow data-value">35% VWC</span></td>
+                                <td><span class="badge badge-green data-value">60% VWC</span></td>
+                            </tr>
+                            <tr>
+                                <td>Tanaman Keras / Kayu</td>
+                                <td>Tanah Liat (Clay)</td>
+                                <td><span class="badge badge-yellow data-value">25% VWC</span></td>
+                                <td><span class="badge badge-green data-value">50% VWC</span></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-                <div class="note-box mt-16" style="border-left-color: var(--color-blue);">
+                <div class="note-box note-box-blue mt-16">
                     <i class="fas fa-book" aria-hidden="true"></i>
-                    <span><strong>Sumber referensi:</strong> FAO Irrigation and Drainage Paper No. 56 dan dataset sensor tanah kapasitif umum.</span>
+                    <span><strong>Sumber referensi:</strong> FAO Irrigation and Drainage Paper No. 56 dan dataset sensor
+                        tanah kapasitif umum.</span>
                 </div>
             </div>
 
@@ -154,12 +192,35 @@
             <div class="card mb-24">
                 <div class="table-wrap">
                     <table class="logic-table">
-                        <thead><tr><th>Kondisi Tanah</th><th>Kondisi Cuaca</th><th>Aksi Sistem</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Kondisi Tanah</th>
+                                <th>Kondisi Cuaca</th>
+                                <th>Aksi Sistem</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr><td>Kelembapan &lt; threshold bawah</td><td>Tidak ada hujan</td><td><span class="badge badge-green">Valve buka</span></td></tr>
-                            <tr><td>Kelembapan &lt; threshold bawah</td><td>Ada prediksi hujan</td><td><span class="badge badge-yellow">Irigasi ditunda</span></td></tr>
-                            <tr><td>Kelembapan &gt; threshold atas</td><td>Apapun</td><td><span class="badge badge-blue">Valve tutup</span></td></tr>
-                            <tr><td>Kelembapan di antara threshold</td><td>Apapun</td><td><span class="badge badge-blue">Normal, mengikuti status sebelumnya (Histeresis)</span></td></tr>
+                            <tr>
+                                <td>Kelembapan &lt; threshold bawah</td>
+                                <td>Tidak ada hujan</td>
+                                <td><span class="badge badge-green">Valve buka</span></td>
+                            </tr>
+                            <tr>
+                                <td>Kelembapan &lt; threshold bawah</td>
+                                <td>Ada prediksi hujan</td>
+                                <td><span class="badge badge-yellow">Irigasi ditunda</span></td>
+                            </tr>
+                            <tr>
+                                <td>Kelembapan &gt; threshold atas</td>
+                                <td>Apapun</td>
+                                <td><span class="badge badge-blue">Valve tutup</span></td>
+                            </tr>
+                            <tr>
+                                <td>Kelembapan di antara threshold</td>
+                                <td>Apapun</td>
+                                <td><span class="badge badge-blue">Normal, mengikuti status sebelumnya
+                                        (Histeresis)</span></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -167,21 +228,31 @@
 
             <h2 class="section-title">Panel Keputusan Saat Ini</h2>
             <div class="card decision-panel mb-24" id="decision-panel">
-                <div class="panel-row"><span class="panel-label">Kelembapan Saat Ini</span><span class="panel-value" id="dp-moisture">38%</span></div>
-                <div class="panel-row"><span class="panel-label">Threshold Bawah</span><span class="panel-value" id="dp-lower">40%</span></div>
-                <div class="panel-row"><span class="panel-label">Threshold Atas</span><span class="panel-value" id="dp-upper">70%</span></div>
-                <div class="panel-row"><span class="panel-label">Prediksi Hujan 3 Jam</span><span class="panel-value" id="dp-rain">Tidak Ada</span></div>
-                <div class="panel-row"><span class="panel-label">Keputusan Sistem</span><span class="panel-value" id="dp-decision">Irigasi dijalankan</span></div>
-                <div class="panel-row"><span class="panel-label">Status Valve</span><span class="panel-value" id="dp-valve">Terbuka</span></div>
+                <div class="panel-row"><span class="panel-label">Kelembapan Saat Ini</span><span class="panel-value"
+                        id="dp-moisture">38%</span></div>
+                <div class="panel-row"><span class="panel-label">Threshold Bawah</span><span class="panel-value"
+                        id="dp-lower">40%</span></div>
+                <div class="panel-row"><span class="panel-label">Threshold Atas</span><span class="panel-value"
+                        id="dp-upper">70%</span></div>
+                <div class="panel-row"><span class="panel-label">Prediksi Hujan 3 Jam</span><span class="panel-value"
+                        id="dp-rain">Tidak Ada</span></div>
+                <div class="panel-row"><span class="panel-label">Keputusan Sistem</span><span class="panel-value"
+                        id="dp-decision">Irigasi dijalankan</span></div>
+                <div class="panel-row"><span class="panel-label">Status Valve</span><span class="panel-value"
+                        id="dp-valve">Terbuka</span></div>
             </div>
 
             <h2 class="section-title">Simulasi Kondisi</h2>
             <div class="card sim-buttons mb-24">
                 <div class="btn-group">
-                    <button class="btn btn-danger" type="button" onclick="simulateCondition('dry')"><i class="fas fa-sun" aria-hidden="true"></i> Tanah Kering</button>
-                    <button class="btn btn-primary" type="button" onclick="simulateCondition('normal')"><i class="fas fa-leaf" aria-hidden="true"></i> Tanah Normal</button>
-                    <button class="btn btn-blue" type="button" onclick="simulateCondition('wet')"><i class="fas fa-water" aria-hidden="true"></i> Tanah Basah</button>
-                    <button class="btn btn-warning" type="button" onclick="simulateCondition('rain')"><i class="fas fa-cloud-rain" aria-hidden="true"></i> Hujan BMKG</button>
+                    <button class="btn btn-danger" type="button" onclick="simulateCondition('dry')"><i
+                            class="fas fa-sun" aria-hidden="true"></i> Tanah Kering</button>
+                    <button class="btn btn-primary" type="button" onclick="simulateCondition('normal')"><i
+                            class="fas fa-leaf" aria-hidden="true"></i> Tanah Normal</button>
+                    <button class="btn btn-blue" type="button" onclick="simulateCondition('wet')"><i
+                            class="fas fa-water" aria-hidden="true"></i> Tanah Basah</button>
+                    <button class="btn btn-warning" type="button" onclick="simulateCondition('rain')"><i
+                            class="fas fa-cloud-rain" aria-hidden="true"></i> Hujan BMKG</button>
                 </div>
             </div>
         </div>
@@ -223,8 +294,8 @@
 
         function showThresholdFeedback(message, type = 'success') {
             const feedback = document.getElementById('threshold-feedback');
-            feedback.style.display = 'flex';
-            feedback.style.borderLeftColor = type === 'error' ? 'var(--color-red)' : 'var(--color-primary)';
+            feedback.classList.remove('threshold-feedback-hidden', 'threshold-feedback-error', 'threshold-feedback-success');
+            feedback.classList.add(type === 'error' ? 'threshold-feedback-error' : 'threshold-feedback-success');
             feedback.innerHTML = `<i class="fas ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-check-circle'}" aria-hidden="true"></i><span>${message}</span>`;
         }
 
@@ -265,4 +336,5 @@
         });
     </script>
 </body>
+
 </html>

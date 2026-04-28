@@ -6,11 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
         content="LoraField - Dashboard monitoring lahan pertanian, sensor tanah, cuaca, dan status irigasi berbasis LoRa P2P.">
+    <script>
+        try {
+            document.documentElement.dataset.theme = localStorage.getItem('lf_theme') === 'light' ? 'light' : 'dark';
+        } catch (error) {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
     <title>Dashboard - LoraField</title>
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -124,7 +132,7 @@
                         </div>
                         <div class="metric-label">Kelembapan Tanah</div>
                         <div class="progress-bar" aria-hidden="true">
-                            <div class="progress-fill" id="soil-bar" style="width:38%"></div>
+                            <div class="progress-fill" id="soil-bar" style="transform:scaleX(0.38)"></div>
                         </div>
                         <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
                     </div>
@@ -139,7 +147,7 @@
                                 &deg;C</span></div>
                         <div class="metric-label">Suhu Tanah</div>
                         <div class="progress-bar" aria-hidden="true">
-                            <div class="progress-fill" id="stemp-bar" style="width:55%"></div>
+                            <div class="progress-fill" id="stemp-bar" style="transform:scaleX(0.55)"></div>
                         </div>
                         <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
                     </div>
@@ -154,7 +162,7 @@
                                 &deg;C</span></div>
                         <div class="metric-label">Suhu Udara</div>
                         <div class="progress-bar" aria-hidden="true">
-                            <div class="progress-fill" id="atemp-bar" style="width:60%"></div>
+                            <div class="progress-fill" id="atemp-bar" style="transform:scaleX(0.60)"></div>
                         </div>
                         <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
                     </div>
@@ -169,7 +177,7 @@
                         </div>
                         <div class="metric-label">Kelembapan Udara</div>
                         <div class="progress-bar" aria-hidden="true">
-                            <div class="progress-fill" id="ahum-bar" style="width:78%"></div>
+                            <div class="progress-fill" id="ahum-bar" style="transform:scaleX(0.78)"></div>
                         </div>
                         <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
                     </div>
@@ -179,8 +187,6 @@
             <h2 class="section-title">Status Irigasi Saat Ini</h2>
             <div class="card status-big irrigation-status-card" id="irrigation-card">
                 <div class="valve-status open" id="valve-status-text">TERBUKA</div>
-                <div class="valve-reason" id="valve-reason">Kelembapan tanah berada di bawah threshold bawah dan tidak
-                    ada prediksi hujan 3 jam ke depan, maka valve dibuka.</div>
                 <div class="irrigation-details">
                     <div class="detail-row"><span class="detail-label">Node</span><span class="detail-value">Node
                             01</span></div>
@@ -277,10 +283,10 @@
             document.getElementById('atemp-value').textContent = node.airTemp;
             document.getElementById('ahum-value').textContent = node.airHumidity;
 
-            document.getElementById('soil-bar').style.width = node.soilMoisture + '%';
-            document.getElementById('stemp-bar').style.width = (node.soilTemp / 50 * 100) + '%';
-            document.getElementById('atemp-bar').style.width = (node.airTemp / 50 * 100) + '%';
-            document.getElementById('ahum-bar').style.width = node.airHumidity + '%';
+            document.getElementById('soil-bar').style.transform = `scaleX(${node.soilMoisture / 100})`;
+            document.getElementById('stemp-bar').style.transform = `scaleX(${node.soilTemp / 50})`;
+            document.getElementById('atemp-bar').style.transform = `scaleX(${node.airTemp / 50})`;
+            document.getElementById('ahum-bar').style.transform = `scaleX(${node.airHumidity / 100})`;
 
             const soilBadge = document.getElementById('soil-badge');
             soilBadge.textContent = soilStatus.label;
@@ -288,12 +294,9 @@
 
             const valveEl = document.getElementById('valve-status-text');
             valveEl.textContent = decision.valve.toUpperCase();
-            valveEl.className = 'valve-status ' + decision.type;
-            if (decision.type === 'delayed') valveEl.classList.add('delayed');
-            else if (decision.type === 'open') valveEl.classList.add('open');
-            else valveEl.classList.add('closed');
+            const valveClass = decision.type === 'open' ? 'open' : decision.type === 'delayed' ? 'delayed' : 'closed';
+            valveEl.className = 'valve-status ' + valveClass;
 
-            document.getElementById('valve-reason').textContent = decision.reason;
             document.getElementById('dash-lower').textContent = ThresholdManager.lower + '% VWC';
             document.getElementById('dash-upper').textContent = ThresholdManager.upper + '% VWC';
 
@@ -311,10 +314,10 @@
             tbody.innerHTML = DECISION_LOGS.slice(0, 5).map(l => {
                 const badge = getDecisionBadge(l.type);
                 return `<tr>
-                    <td>${l.time}</td>
+                    <td class="data-value">${l.time}</td>
                     <td>${l.node}</td>
-                    <td>${l.soilMoisture}%</td>
-                    <td>${l.threshold}</td>
+                    <td class="data-value">${l.soilMoisture}%</td>
+                    <td class="data-value">${l.threshold}</td>
                     <td>${l.weather}</td>
                     <td><span class="badge ${badge.className}">${l.decision}</span></td>
                     <td>${l.valve}</td>

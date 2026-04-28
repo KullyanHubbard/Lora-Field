@@ -162,11 +162,15 @@ function recordDecisionSnapshot(node) {
 }
 
 function updateAllUI() {
-    if (typeof updateDashboardUI === 'function') updateDashboardUI();
-    if (typeof updateMonitoringUI === 'function') updateMonitoringUI();
-    if (typeof updateIrrigationUI === 'function') updateIrrigationUI();
-    if (typeof updateWeatherUI === 'function') updateWeatherUI();
-    if (typeof renderLogs === 'function') renderLogs();
+    // Jadwalkan semua DOM update di frame berikutnya \u2014 sinkron dengan repaint browser.
+    // Ini mencegah visual tearing dan layout thrashing di monitor berapapun Hz-nya.
+    requestAnimationFrame(() => {
+        if (typeof updateDashboardUI === 'function') updateDashboardUI();
+        if (typeof updateMonitoringUI === 'function') updateMonitoringUI();
+        if (typeof updateIrrigationUI === 'function') updateIrrigationUI();
+        if (typeof updateWeatherUI === 'function') updateWeatherUI();
+        if (typeof renderLogs === 'function') renderLogs();
+    });
 }
 
 function startSimulation() {

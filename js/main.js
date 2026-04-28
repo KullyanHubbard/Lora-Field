@@ -5,7 +5,8 @@ const DEG_C = '\u00B0C';
 const STORAGE_KEYS = {
     THRESHOLD_LOWER: 'lf_threshold_lower',
     THRESHOLD_UPPER: 'lf_threshold_upper',
-    VALVE_STATE: 'lf_valve_state'
+    VALVE_STATE: 'lf_valve_state',
+    THEME: 'lf_theme'
 };
 
 const VALVE_STATE = {
@@ -20,6 +21,122 @@ const DECISION_TYPE = {
     NORMAL: 'normal',
     WARNING: 'warning'
 };
+
+const THEME = {
+    LIGHT: 'light',
+    DARK: 'dark'
+};
+
+function getSavedTheme() {
+    try {
+        const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
+        return savedTheme === THEME.LIGHT ? THEME.LIGHT : THEME.DARK;
+    } catch (error) {
+        return THEME.DARK;
+    }
+}
+
+function applyTheme(theme) {
+    const nextTheme = theme === THEME.LIGHT ? THEME.LIGHT : THEME.DARK;
+    document.documentElement.dataset.theme = nextTheme;
+
+    try {
+        if (localStorage.getItem(STORAGE_KEYS.THEME) !== nextTheme) {
+            localStorage.setItem(STORAGE_KEYS.THEME, nextTheme);
+        }
+    } catch (error) {
+        // Tema tetap diterapkan untuk sesi saat ini.
+    }
+
+    document.querySelectorAll('.theme-switcher').forEach(switcher => {
+        switcher.dataset.active = nextTheme;
+    });
+
+    document.querySelectorAll('.theme-option').forEach(button => {
+        const isActive = button.dataset.themeValue === nextTheme;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+    });
+}
+
+function enableThemeTransitions() {
+    const schedule = window.requestAnimationFrame || (callback => window.setTimeout(callback, 0));
+    schedule(() => {
+        document.documentElement.classList.add('theme-ready');
+    });
+}
+
+function clearThemeAnimationState(switcher, button) {
+    document.documentElement.classList.remove('theme-changing');
+    if (switcher) switcher.classList.remove('is-changing');
+    if (button) button.classList.remove('is-pressed');
+}
+
+function setThemeTransitionOrigin(button) {
+    if (!button) return;
+
+    const rect = button.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    document.documentElement.style.setProperty('--theme-x', `${x}px`);
+    document.documentElement.style.setProperty('--theme-y', `${y}px`);
+}
+
+function animateThemeChange(theme, button) {
+    const nextTheme = theme === THEME.LIGHT ? THEME.LIGHT : THEME.DARK;
+    if (document.documentElement.dataset.theme === nextTheme) return;
+
+    const switcher = button ? button.closest('.theme-switcher') : null;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setThemeTransitionOrigin(button);
+
+    document.documentElement.classList.add('theme-changing');
+    if (switcher) switcher.classList.add('is-changing');
+    if (button) button.classList.add('is-pressed');
+
+    const finish = (delay = 260) => {
+        window.setTimeout(() => clearThemeAnimationState(switcher, button), delay);
+    };
+
+    if (document.startViewTransition && !reduceMotion) {
+        const transition = document.startViewTransition(() => applyTheme(nextTheme));
+        transition.finished.then(() => finish(), () => finish());
+        return;
+    }
+
+    applyTheme(nextTheme);
+    finish(960);
+}
+
+function initThemeSwitcher() {
+    const topbarRight = document.querySelector('.topbar-right');
+    if (!topbarRight || document.getElementById('theme-switcher')) return;
+
+    const switcher = document.createElement('div');
+    switcher.className = 'theme-switcher';
+    switcher.id = 'theme-switcher';
+    switcher.setAttribute('role', 'group');
+    switcher.setAttribute('aria-label', 'Pilih tema tampilan');
+    switcher.innerHTML = `
+        <button class="theme-option" type="button" data-theme-value="light" aria-pressed="false">
+            <i class="fas fa-sun" aria-hidden="true"></i>
+            <span>Light</span>
+        </button>
+        <button class="theme-option" type="button" data-theme-value="dark" aria-pressed="false">
+            <i class="fas fa-moon" aria-hidden="true"></i>
+            <span>Dark</span>
+        </button>
+    `;
+
+    topbarRight.prepend(switcher);
+    switcher.addEventListener('click', event => {
+        const button = event.target.closest('.theme-option');
+        if (!button) return;
+        animateThemeChange(button.dataset.themeValue, button);
+    });
+
+    applyTheme(getSavedTheme());
+}
 
 // Threshold disimpan di localStorage supaya tetap aktif setelah refresh.
 const ThresholdManager = {
@@ -164,16 +281,30 @@ function startClock() {
     const el = document.getElementById('realtime-clock');
     if (!el) return;
 
+    let lastSecond = -1;
+
     function tick() {
         const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const date = now.toLocaleDateString('id-ID', options);
-        const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        el.textContent = `${date} - ${time}`;
+        const second = now.getSeconds();
+
+        // Hanya render ulang saat detik berubah — hemat CPU & bebas Hz-dependency.
+        if (second !== lastSecond) {
+            lastSecond = second;
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const date = now.toLocaleDateString('id-ID', options);
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            el.textContent = `${date} - ${time}`;
+        }
+
+        requestAnimationFrame(tick);
     }
 
-    tick();
-    setInterval(tick, 1000);
+    requestAnimationFrame(tick);
+}
+
+// Helper: jadwalkan DOM update di frame berikutnya untuk mencegah layout thrashing.
+function scheduleUpdate(fn) {
+    requestAnimationFrame(fn);
 }
 
 function setActivePage() {
@@ -223,7 +354,10 @@ function timeAgo(date) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    applyTheme(getSavedTheme());
     startClock();
     setActivePage();
     initSidebar();
+    initThemeSwitcher();
+    enableThemeTransitions();
 });

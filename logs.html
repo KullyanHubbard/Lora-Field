@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="LoraField - Log keputusan sistem irigasi otomatis.">
+    <script>
+        try {
+            document.documentElement.dataset.theme = localStorage.getItem('lf_theme') === 'light' ? 'light' : 'dark';
+        } catch (error) {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
     <title>Log Sistem - LoraField</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
@@ -130,14 +138,14 @@
             tbody.innerHTML = logs.map(log => {
                 const badge = getDecisionBadge(log.type);
                 return `<tr>
-                    <td>${log.time}</td>
+                    <td class="data-value">${log.time}</td>
                     <td>${log.node}</td>
                     <td>${log.location}</td>
-                    <td>${log.soilMoisture}%</td>
-                    <td>${log.threshold}</td>
-                    <td>${log.soilTemp}${DEG_C}</td>
+                    <td class="data-value">${log.soilMoisture}%</td>
+                    <td class="data-value">${log.threshold}</td>
+                    <td class="data-value">${log.soilTemp}${DEG_C}</td>
                     <td>${log.weather}</td>
-                    <td>${log.weatherCode}</td>
+                    <td class="data-value">${log.weatherCode}</td>
                     <td><span class="badge ${badge.className}">${log.decision}</span></td>
                     <td>${log.valve}</td>
                     <td class="text-sm text-muted">${log.note}</td>
@@ -165,6 +173,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             renderLogs();
+            startSimulation();
         });
     </script>
 </body>

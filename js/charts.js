@@ -9,47 +9,72 @@ const CHART_COLORS = {
 
 const CHART_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
-const CHART_DEFAULTS = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-        legend: { display: false },
-        tooltip: {
-            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-            titleColor: '#f8fafc',
-            bodyColor: '#cbd5e1',
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            borderWidth: 1,
-            cornerRadius: 8,
-            displayColors: false,
-            padding: 10,
-            titleFont: { family: CHART_FONT, size: 12, weight: '700' },
-            bodyFont: { family: CHART_FONT, size: 11, weight: '600' }
-        }
-    },
-    scales: {
-        x: {
-            grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
-            ticks: { color: '#94a3b8', font: { size: 10, family: CHART_FONT, weight: '600' } },
-            border: { display: false }
+function getChartThemeColors() {
+    const isDark = document.documentElement.dataset.theme !== 'light';
+    return {
+        gridColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+        tickColor: isDark ? '#94a3b8' : '#64748b',
+        tooltipBg: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+        tooltipTitle: isDark ? '#f8fafc' : '#1e293b',
+        tooltipBody: isDark ? '#cbd5e1' : '#475569',
+        tooltipBorder: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+        pointBg: isDark ? '#1e293b' : '#ffffff'
+    };
+}
+
+function getChartOptions(yMin, yMax, unit) {
+    const theme = getChartThemeColors();
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: theme.tooltipBg,
+                titleColor: theme.tooltipTitle,
+                bodyColor: theme.tooltipBody,
+                borderColor: theme.tooltipBorder,
+                borderWidth: 1,
+                cornerRadius: 8,
+                displayColors: false,
+                padding: 10,
+                titleFont: { family: CHART_FONT, size: 12, weight: '700' },
+                bodyFont: { family: CHART_FONT, size: 11, weight: '600' }
+            }
         },
-        y: {
-            grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
-            ticks: { color: '#94a3b8', font: { size: 10, family: CHART_FONT, weight: '600' } },
-            border: { display: false }
-        }
-    },
-    animation: { duration: 650, easing: 'easeOutQuart' }
-};
+        scales: {
+            x: {
+                grid: { color: theme.gridColor, drawBorder: false },
+                ticks: { color: theme.tickColor, font: { size: 10, family: CHART_FONT, weight: '600' } },
+                border: { display: false }
+            },
+            y: {
+                min: yMin,
+                max: yMax,
+                grid: { color: theme.gridColor, drawBorder: false },
+                ticks: {
+                    color: theme.tickColor,
+                    font: { size: 10, family: CHART_FONT, weight: '600' },
+                    callback: value => value + (unit || '')
+                },
+                border: { display: false }
+            }
+        },
+        animation: { duration: 600, easing: 'easeOutQuart' }
+    };
+}
 
 function createLineChart(canvasId, label, data, labels, color, yMin, yMax, unit) {
     const canvas = document.getElementById(canvasId);
     if (!canvas || typeof Chart === 'undefined') return null;
 
-    const gradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, 220);
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 220);
     gradient.addColorStop(0, color.bg.replace('0.12', '0.24'));
     gradient.addColorStop(1, color.bg.replace('0.12', '0.02'));
+
+    const theme = getChartThemeColors();
 
     return new Chart(canvas, {
         type: 'line',
@@ -64,27 +89,13 @@ function createLineChart(canvasId, label, data, labels, color, yMin, yMax, unit)
                 fill: true,
                 tension: 0.35,
                 pointRadius: 3,
-                pointBackgroundColor: '#ffffff',
+                pointBackgroundColor: theme.pointBg,
                 pointBorderColor: color.border,
                 pointBorderWidth: 2,
                 pointHoverRadius: 5
             }]
         },
-        options: {
-            ...CHART_DEFAULTS,
-            scales: {
-                ...CHART_DEFAULTS.scales,
-                y: {
-                    ...CHART_DEFAULTS.scales.y,
-                    min: yMin,
-                    max: yMax,
-                    ticks: {
-                        ...CHART_DEFAULTS.scales.y.ticks,
-                        callback: value => value + (unit || '')
-                    }
-                }
-            }
-        }
+        options: getChartOptions(yMin, yMax, unit)
     });
 }
 
@@ -92,7 +103,7 @@ function updateChartData(chart, newData, newLabels) {
     if (!chart) return;
     chart.data.labels = newLabels || chart.data.labels;
     chart.data.datasets[0].data = newData;
-    chart.update('none');
+    chart.update('active');
 }
 
 let dashSoilChart;

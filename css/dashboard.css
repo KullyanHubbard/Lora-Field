@@ -277,6 +277,12 @@
     margin-top: 0;
 }
 
+.weather-icon-sm {
+    width: 42px;
+    height: 42px;
+    font-size: 1rem;
+}
+
 .weather-note {
     margin-top: 12px;
     padding: 10px 14px;
@@ -391,15 +397,11 @@
 
 /* Threshold and decisions */
 .threshold-section {
-    display: grid;
-    grid-template-columns: minmax(280px, 520px) minmax(260px, 1fr);
-    gap: 20px;
-    align-items: start;
     margin-bottom: 24px;
 }
 
 .threshold-form {
-    max-width: 520px;
+    max-width: 640px;
 }
 
 .threshold-preview {
@@ -413,6 +415,27 @@
 .threshold-preview p {
     margin-bottom: 4px;
     font-size: 0.82rem;
+}
+
+.threshold-feedback-hidden {
+    display: none;
+}
+
+.threshold-feedback-success {
+    display: flex;
+    border-left-color: var(--color-primary);
+    animation: feedbackReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.threshold-feedback-error {
+    display: flex;
+    border-left-color: var(--color-red);
+    animation: feedbackReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes feedbackReveal {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .decision-panel .panel-row {
