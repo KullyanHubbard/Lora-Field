@@ -30,7 +30,8 @@
 
     .weather-card,
     .threshold-section,
-    .irrigation-control-card {
+    .irrigation-control-card,
+    .field-command {
         grid-template-columns: 1fr;
     }
 
@@ -42,6 +43,7 @@
 @media (max-width: 768px) {
     body {
         display: block;
+        overflow-x: hidden;
     }
 
     .sidebar {
@@ -58,6 +60,7 @@
 
     .main-content {
         margin-left: 0;
+        overflow-x: hidden;
     }
 
     .mobile-toggle {
@@ -71,6 +74,14 @@
 
     .topbar-title {
         font-size: 1.45rem;
+    }
+
+    .topbar-title-full {
+        display: none;
+    }
+
+    .topbar-title-short {
+        display: inline;
     }
 
     .topbar-clock {
@@ -106,6 +117,41 @@
     .grid-4,
     .grid-3,
     .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .field-map-panel,
+    .telemetry-panel {
+        max-width: 100%;
+        padding: 16px;
+    }
+
+    .field-plot {
+        width: 100%;
+        max-width: calc(100vw - 60px);
+        min-height: 248px;
+    }
+
+    .field-row {
+        left: 28px;
+        right: auto;
+        width: calc(100% - 56px);
+        height: 28px;
+    }
+
+    .irrigation-line {
+        left: 10%;
+        right: auto;
+        width: 80%;
+    }
+
+    .field-row-1 { top: 34px; }
+    .field-row-2 { top: 74px; }
+    .field-row-3 { top: 114px; }
+    .field-row-4 { top: 154px; }
+    .field-row-5 { top: 194px; }
+
+    .field-metrics-strip {
         grid-template-columns: 1fr;
     }
 
@@ -169,7 +215,7 @@
 
 @media (max-width: 520px) {
     .topbar-title {
-        max-width: 170px;
+        max-width: none;
         font-size: 1.28rem;
     }
 
@@ -200,6 +246,56 @@
 
     .metric-card {
         align-items: flex-start;
+    }
+
+    .field-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .field-plot {
+        width: 320px;
+        max-width: 100%;
+        min-height: 226px;
+    }
+
+    .field-node,
+    .weather-pin {
+        font-size: 0.68rem;
+        padding: 7px 9px;
+        max-width: 92px;
+        white-space: nowrap;
+    }
+
+    .sensor-node {
+        left: 8px;
+    }
+
+    .gateway-node {
+        width: 36px;
+        justify-content: center;
+        gap: 0;
+        right: 8px;
+    }
+
+    .gateway-node span {
+        display: none;
+    }
+
+    .weather-pin {
+        width: 36px;
+        justify-content: center;
+        gap: 0;
+        right: 8px;
+        color: transparent;
+    }
+
+    .weather-pin i {
+        color: var(--color-blue);
+    }
+
+    .network-health-grid {
+        grid-template-columns: 1fr;
     }
 
     .metric-value {

@@ -50,7 +50,7 @@
     --ring: 0 0 0 4px rgba(16, 185, 129, 0.15);
 
     --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    --font: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
 }
 
@@ -346,6 +346,10 @@ img {
     line-height: 1.15;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.topbar-title-short {
+    display: none;
 }
 
 .topbar-clock {

@@ -18,6 +18,7 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
@@ -59,7 +60,10 @@
                     aria-controls="sidebar">
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
-                <span class="topbar-title">LoraField Dashboard</span>
+                <span class="topbar-title">
+                    <span class="topbar-title-full">LoraField Dashboard</span>
+                    <span class="topbar-title-short">Dashboard</span>
+                </span>
             </div>
             <div class="topbar-right">
                 <span class="topbar-clock" id="realtime-clock"></span>
@@ -73,52 +77,118 @@
                     <span class="page-kicker">Field Operations</span>
                 </div>
                 <div class="page-header-actions">
-                    <span class="status-pill"><i class="fas fa-signal" aria-hidden="true"></i> LoRa P2P aktif</span>
+                    <span class="status-pill"><i class="fas fa-signal" aria-hidden="true"></i> LoRa P2P active</span>
                 </div>
             </section>
 
-            <div class="grid-4 system-cards mb-24">
-                <div class="card system-card">
-                    <div class="metric-card">
-                        <div class="card-icon"><i class="fas fa-microchip" aria-hidden="true"></i></div>
+            <section class="field-command mb-24" aria-label="LoraField field and telemetry overview">
+                <div class="field-map-panel">
+                    <div class="field-panel-header">
                         <div>
-                            <div class="metric-value" id="sys-node">1 Node</div>
-                            <div class="metric-label">Node Aktif</div>
-                            <span class="badge badge-green metric-status">Online</span>
+                            <span class="panel-eyebrow">Lahan Padi Bantul</span>
+                            <h2>Live Field Map</h2>
+                        </div>
+                        <span class="badge badge-green">Node 01 Online</span>
+                    </div>
+
+                    <div class="field-plot" aria-hidden="true">
+                        <span class="field-row field-row-1"></span>
+                        <span class="field-row field-row-2"></span>
+                        <span class="field-row field-row-3"></span>
+                        <span class="field-row field-row-4"></span>
+                        <span class="field-row field-row-5"></span>
+                        <span class="irrigation-line"></span>
+                        <span class="irrigation-spray spray-1"></span>
+                        <span class="irrigation-spray spray-2"></span>
+                        <span class="irrigation-spray spray-3"></span>
+                        <span class="lora-link lora-link-main"></span>
+                        <span class="lora-link lora-link-echo"></span>
+
+                        <span class="field-node sensor-node">
+                            <i class="fas fa-microchip" aria-hidden="true"></i>
+                            <span>Node 01</span>
+                        </span>
+                        <span class="field-node gateway-node">
+                            <i class="fas fa-tower-broadcast" aria-hidden="true"></i>
+                            <span>Gateway</span>
+                        </span>
+                        <span class="weather-pin">
+                            <i class="fas fa-cloud-sun" aria-hidden="true"></i>
+                            BMKG
+                        </span>
+                    </div>
+
+                    <div class="field-metrics-strip">
+                        <div>
+                            <span>Soil Moisture</span>
+                            <strong id="field-moisture-value">38% VWC</strong>
+                        </div>
+                        <div>
+                            <span>Valve State</span>
+                            <strong class="field-state open" id="field-valve-value">Open</strong>
+                        </div>
+                        <div>
+                            <span>Weather Risk</span>
+                            <strong id="field-weather-value">Low</strong>
                         </div>
                     </div>
                 </div>
-                <div class="card system-card">
-                    <div class="metric-card">
-                        <div class="card-icon"><i class="fas fa-server" aria-hidden="true"></i></div>
+
+                <div class="telemetry-panel">
+                    <div class="field-panel-header">
                         <div>
-                            <div class="metric-value">Online</div>
-                            <div class="metric-label">Gateway LoRa</div>
-                            <span class="badge badge-green metric-status">Connected</span>
+                            <span class="panel-eyebrow">Telemetry Route</span>
+                            <h2>LoRa to Cloud</h2>
+                        </div>
+                        <span class="frequency-pill">921.2 MHz</span>
+                    </div>
+
+                    <div class="network-flow" aria-label="Telemetry route">
+                        <div class="network-step">
+                            <span class="network-icon"><i class="fas fa-microchip" aria-hidden="true"></i></span>
+                            <div>
+                                <strong id="sys-node">1 Node</strong>
+                                <span>Field Sensor</span>
+                            </div>
+                        </div>
+                        <span class="network-connector"></span>
+                        <div class="network-step">
+                            <span class="network-icon"><i class="fas fa-signal" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>LoRa P2P</strong>
+                                <span>SF9 Sync 0x12</span>
+                            </div>
+                        </div>
+                        <span class="network-connector"></span>
+                        <div class="network-step">
+                            <span class="network-icon"><i class="fas fa-server" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>Gateway Online</strong>
+                                <span>LILYGO LoRa32</span>
+                            </div>
+                        </div>
+                        <span class="network-connector"></span>
+                        <div class="network-step">
+                            <span class="network-icon"><i class="fas fa-cloud" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>MQTT Connected</strong>
+                                <span>Mosquitto broker</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="network-health-grid">
+                        <div>
+                            <span>BMKG API</span>
+                            <strong>Available</strong>
+                        </div>
+                        <div>
+                            <span>Last Update</span>
+                            <strong id="field-last-update">0s ago</strong>
                         </div>
                     </div>
                 </div>
-                <div class="card system-card">
-                    <div class="metric-card">
-                        <div class="card-icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></div>
-                        <div>
-                            <div class="metric-value">Connected</div>
-                            <div class="metric-label">MQTT Broker</div>
-                            <span class="badge badge-green metric-status">Mosquitto</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="card system-card">
-                    <div class="metric-card">
-                        <div class="card-icon"><i class="fas fa-cloud-sun" aria-hidden="true"></i></div>
-                        <div>
-                            <div class="metric-value">Available</div>
-                            <div class="metric-label">BMKG API</div>
-                            <span class="badge badge-green metric-status">Terhubung</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </section>
 
             <h2 class="section-title">Ringkasan Sensor Terbaru</h2>
             <div class="grid-4 sensor-cards mb-24">
@@ -288,6 +358,9 @@
             document.getElementById('atemp-bar').style.transform = `scaleX(${node.airTemp / 50})`;
             document.getElementById('ahum-bar').style.transform = `scaleX(${node.airHumidity / 100})`;
 
+            const fieldMoisture = document.getElementById('field-moisture-value');
+            if (fieldMoisture) fieldMoisture.textContent = node.soilMoisture + '% VWC';
+
             const soilBadge = document.getElementById('soil-badge');
             soilBadge.textContent = soilStatus.label;
             soilBadge.className = 'badge ' + (soilStatus.color === 'red' ? 'badge-red' : soilStatus.color === 'blue' ? 'badge-blue' : soilStatus.color === 'gray' ? 'badge-gray' : 'badge-green');
@@ -296,6 +369,12 @@
             valveEl.textContent = decision.valve.toUpperCase();
             const valveClass = decision.type === 'open' ? 'open' : decision.type === 'delayed' ? 'delayed' : 'closed';
             valveEl.className = 'valve-status ' + valveClass;
+
+            const fieldValve = document.getElementById('field-valve-value');
+            if (fieldValve) {
+                fieldValve.textContent = decision.type === 'open' ? 'Open' : decision.type === 'delayed' ? 'Delayed' : 'Closed';
+                fieldValve.className = 'field-state ' + valveClass;
+            }
 
             document.getElementById('dash-lower').textContent = ThresholdManager.lower + '% VWC';
             document.getElementById('dash-upper').textContent = ThresholdManager.upper + '% VWC';
@@ -307,6 +386,11 @@
             document.getElementById('weather-hum').textContent = WEATHER_DATA.current.humidity + '%';
             document.getElementById('weather-rain').textContent = rain ? 'Ada Prediksi Hujan' : 'Tidak Ada';
             document.getElementById('weather-code').textContent = WEATHER_DATA.current.code;
+
+            const fieldWeather = document.getElementById('field-weather-value');
+            if (fieldWeather) fieldWeather.textContent = rain ? 'Rain Risk' : 'Low';
+            const fieldLastUpdate = document.getElementById('field-last-update');
+            if (fieldLastUpdate) fieldLastUpdate.textContent = 'Live';
 
             updateDashboardCharts();
 

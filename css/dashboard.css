@@ -17,6 +17,318 @@
     font-size: 1.22rem;
 }
 
+/* Dashboard field identity */
+.field-command {
+    display: grid;
+    grid-template-columns: minmax(460px, 1.42fr) minmax(320px, 0.78fr);
+    gap: 16px;
+    align-items: stretch;
+}
+
+.field-command > * {
+    min-width: 0;
+}
+
+.field-map-panel,
+.telemetry-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background:
+        linear-gradient(145deg, rgba(16, 185, 129, 0.08), transparent 42%),
+        var(--color-card);
+    box-shadow: var(--shadow-sm);
+}
+
+.field-map-panel {
+    padding: 20px;
+}
+
+.telemetry-panel {
+    padding: 18px;
+}
+
+.field-panel-header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.panel-eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.field-panel-header h2 {
+    color: var(--color-gray-900);
+    font-size: 1.18rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.field-plot {
+    position: relative;
+    min-height: 292px;
+    overflow: hidden;
+    border: 1px solid rgba(16, 185, 129, 0.18);
+    border-radius: var(--radius);
+    background:
+        radial-gradient(circle at 16% 18%, rgba(16, 185, 129, 0.24), transparent 32%),
+        linear-gradient(135deg, rgba(6, 182, 212, 0.1), transparent 44%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.12));
+    isolation: isolate;
+}
+
+.field-plot::before {
+    content: "";
+    position: absolute;
+    inset: 22px;
+    border-radius: calc(var(--radius) + 6px);
+    background:
+        linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 42px 42px;
+    opacity: 0.65;
+    z-index: 0;
+}
+
+.field-row {
+    position: absolute;
+    left: 42px;
+    right: 42px;
+    height: 32px;
+    border: 1px solid rgba(16, 185, 129, 0.18);
+    border-radius: 999px;
+    background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 10px, transparent 10px 22px),
+        linear-gradient(90deg, rgba(16, 185, 129, 0.38), rgba(6, 182, 212, 0.22));
+    box-shadow: inset 0 0 18px rgba(15, 23, 42, 0.18);
+    transform: rotate(-3deg);
+    z-index: 1;
+}
+
+.field-row-1 { top: 42px; }
+.field-row-2 { top: 88px; }
+.field-row-3 { top: 134px; }
+.field-row-4 { top: 180px; }
+.field-row-5 { top: 226px; }
+
+.irrigation-line {
+    position: absolute;
+    left: 9%;
+    right: 10%;
+    top: 55%;
+    height: 5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.28), var(--color-primary), rgba(6, 182, 212, 0.8));
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.24);
+    z-index: 2;
+}
+
+.irrigation-spray {
+    position: absolute;
+    width: 78px;
+    height: 52px;
+    border-radius: 999px 999px 10px 10px;
+    background: radial-gradient(circle at 50% 90%, rgba(6, 182, 212, 0.34), transparent 62%);
+    z-index: 2;
+}
+
+.spray-1 { left: 20%; top: 42%; }
+.spray-2 { left: 45%; top: 39%; }
+.spray-3 { right: 18%; top: 43%; }
+
+.lora-link {
+    position: absolute;
+    height: 0;
+    border-top: 2px dashed rgba(16, 185, 129, 0.68);
+    transform-origin: left center;
+    z-index: 4;
+}
+
+.lora-link-main {
+    left: 27%;
+    top: 52%;
+    width: 51%;
+    transform: rotate(-18deg);
+}
+
+.lora-link-echo {
+    left: 30%;
+    top: 49%;
+    width: 44%;
+    border-top-color: rgba(6, 182, 212, 0.4);
+    transform: rotate(-12deg);
+}
+
+.field-node,
+.weather-pin {
+    position: absolute;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 8px 11px;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.82);
+    color: var(--color-white);
+    font-size: 0.76rem;
+    font-weight: 800;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+}
+
+.field-node i,
+.weather-pin i {
+    color: var(--color-primary);
+}
+
+.sensor-node {
+    left: 12%;
+    top: 48%;
+}
+
+.gateway-node {
+    right: 8%;
+    top: 18%;
+}
+
+.gateway-node::before {
+    content: "";
+    position: absolute;
+    inset: -16px;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    border-radius: 50%;
+    opacity: 0.7;
+}
+
+.weather-pin {
+    right: 10%;
+    bottom: 12%;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.weather-pin i {
+    color: var(--color-blue);
+}
+
+.field-metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.field-metrics-strip div,
+.network-health-grid div {
+    min-height: 66px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.field-metrics-strip span,
+.network-health-grid span,
+.network-step span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.field-metrics-strip strong,
+.network-health-grid strong,
+.frequency-pill {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-gray-900);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.field-state.open { color: var(--color-primary-dark); }
+.field-state.closed { color: var(--color-blue); }
+.field-state.delayed { color: var(--color-yellow); }
+
+.frequency-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    margin-top: 0;
+    padding: 6px 10px;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    border-radius: var(--radius-sm);
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    font-size: 0.76rem;
+}
+
+.network-flow {
+    display: grid;
+    gap: 8px;
+}
+
+.network-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 66px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.network-step strong {
+    display: block;
+    color: var(--color-gray-900);
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.network-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border: 1px solid rgba(16, 185, 129, 0.22);
+    border-radius: var(--radius-sm);
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+
+.network-connector {
+    width: 2px;
+    height: 16px;
+    margin-left: 31px;
+    background: linear-gradient(180deg, var(--color-primary), rgba(16, 185, 129, 0.08));
+}
+
+.network-health-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
 /* Sensor cards */
 .sensor-cards {
     margin-bottom: 24px;
