@@ -6,12 +6,21 @@ Dashboard web frontend untuk monitoring sensor dan otomasi irigasi lahan pertani
 
 LoraField memakai node sensor berbasis LILYGO LoRa32 untuk membaca kelembapan tanah, suhu tanah, suhu udara, dan kelembapan udara. Data dikirim lewat LoRa P2P ke gateway, lalu ditampilkan di dashboard web secara real-time. Sistem juga memakai prakiraan cuaca BMKG untuk menunda irigasi jika hujan diprediksi turun dalam 3 jam ke depan.
 
-> Catatan: saat ini proyek masih frontend statis. Backend belum dibuat, sehingga data memakai dummy dan simulasi JavaScript.
+> Catatan: frontend statis masih memakai dummy dan simulasi JavaScript. Backend basic sudah tersedia di folder `backend/` sebagai fondasi awal API.
 
 ## Struktur Folder
 
 ```text
 .
+|-- backend/
+|   |-- app/
+|   |   |-- __init__.py
+|   |   |-- database.py
+|   |   |-- main.py
+|   |   `-- schemas.py
+|   |-- data/
+|   |-- requirements.txt
+|   `-- README.md
 |-- frontend/
 |   |-- public/
 |   |   `-- static/
@@ -54,6 +63,8 @@ LoraField memakai node sensor berbasis LILYGO LoRa32 untuk membaca kelembapan ta
 
 ## Cara Menjalankan
 
+### Frontend
+
 1. Clone atau download repository ini.
 2. Masuk ke folder `frontend`.
 3. Jalankan frontend React/Vite.
@@ -65,6 +76,18 @@ npm run dev
 ```
 
 Versi halaman statis lama berada di `frontend/public/static/index.html`.
+
+### Backend
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Backend tersedia di `http://127.0.0.1:8000` dan dokumentasi API di `http://127.0.0.1:8000/docs`.
 
 ## Fitur Frontend
 
@@ -107,23 +130,25 @@ Aturan keputusan irigasi:
 
 Jika ada data yang terlihat tidak sesuai, cek urutannya dari `frontend/public/static/js/dummy-data.js`, lalu `makeIrrigationDecision()` di `frontend/public/static/js/main.js`, lalu `recordDecisionSnapshot()` di `frontend/public/static/js/simulation.js`.
 
-## Rencana Integrasi Backend
+## Status Integrasi Backend
 
 | Komponen | Teknologi | Status |
 | --- | --- | --- |
-| Backend API | FastAPI | Belum dibuat |
-| Database | SQLite | Belum dibuat |
+| Backend API | FastAPI | Basic tersedia |
+| Database | SQLite | Basic tersedia |
 | Message Broker | Mosquitto MQTT | Belum diintegrasikan |
 | Real-time Update | WebSocket | Belum diintegrasikan |
 | Data Cuaca | API BMKG | Masih dummy |
 | Node Sensor | LILYGO LoRa32 | Hardware terpisah |
 
-## Teknologi Frontend
+## Teknologi
 
 - HTML5
 - CSS3
 - JavaScript vanilla
 - React/Vite scaffold
+- FastAPI
+- SQLite
 - Chart.js v4 via CDN
 - Font Awesome 6 via CDN
 

@@ -3,6 +3,7 @@
 ## Stack
 - Frontend scaffold: React/Vite di `frontend/`
 - Halaman statis lama: HTML/CSS/JS vanilla di `frontend/public/static/`
+- Backend basic: FastAPI + SQLite di `backend/`
 - Dark theme: background #0d1117, accent #00e676
 - Root directory hanya untuk metadata proyek dan dokumentasi
 

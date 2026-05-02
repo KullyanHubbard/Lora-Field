@@ -20,9 +20,9 @@
 /* Dashboard field identity */
 .field-command {
     display: grid;
-    grid-template-columns: minmax(460px, 1.42fr) minmax(320px, 0.78fr);
+    grid-template-columns: minmax(460px, 1.35fr) minmax(340px, 0.82fr);
     gap: 16px;
-    align-items: stretch;
+    align-items: start;
 }
 
 .field-command > * {
@@ -46,6 +46,7 @@
 }
 
 .telemetry-panel {
+    height: fit-content;
     padding: 18px;
 }
 
@@ -235,9 +236,9 @@
 .network-health-grid div {
     min-height: 66px;
     padding: 12px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-hover);
     border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.72);
 }
 
 .field-metrics-strip span,
@@ -280,45 +281,56 @@
 
 .network-flow {
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .network-step {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-height: 66px;
-    padding: 12px;
-    border: 1px solid var(--color-border);
+    min-height: 58px;
+    padding: 10px 14px 10px 34px;
+    border: 1px solid var(--color-border-hover);
     border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.network-step > div {
+    min-width: 0;
 }
 
 .network-step strong {
     display: block;
     color: var(--color-gray-900);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 800;
     line-height: 1.2;
 }
 
 .network-icon {
-    width: 38px;
-    height: 38px;
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 auto;
-    border: 1px solid rgba(16, 185, 129, 0.22);
-    border-radius: var(--radius-sm);
-    background: var(--color-primary-light);
-    color: var(--color-primary-dark);
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+    transform: translateY(-50%);
+}
+
+.network-icon i {
+    display: none;
 }
 
 .network-connector {
     width: 2px;
-    height: 16px;
-    margin-left: 31px;
+    height: 12px;
+    margin-left: 17px;
     background: linear-gradient(180deg, var(--color-primary), rgba(16, 185, 129, 0.08));
 }
 
@@ -326,7 +338,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
-    margin-top: 12px;
+    margin-top: 10px;
 }
 
 /* Sensor cards */
