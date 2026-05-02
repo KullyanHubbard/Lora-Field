@@ -1,9 +1,10 @@
 # LoraField Project Rules
 
 ## Stack
-- HTML/CSS/JS vanilla, no frameworks
+- Frontend scaffold: React/Vite di `frontend/`
+- Halaman statis lama: HTML/CSS/JS vanilla di `frontend/public/static/`
 - Dark theme: background #0d1117, accent #00e676
-- Semua file di root directory
+- Root directory hanya untuk metadata proyek dan dokumentasi
 
 ## Konvensi Bahasa
 - Label UI: Bahasa Indonesia

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LoraField Dashboard</title>
+  </head>
+  <body>
+    <script>
+      const target = window.location.pathname.includes('/frontend/')
+        ? 'public/static/index.html'
+        : '/static/index.html';
+
+      window.location.replace(target);
+    </script>
+    <p>
+      Membuka dashboard...
+      <a href="public/static/index.html">Klik di sini jika tidak berpindah otomatis.</a>
+    </p>
+  </body>
+</html>

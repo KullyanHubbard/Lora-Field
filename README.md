@@ -12,33 +12,59 @@ LoraField memakai node sensor berbasis LILYGO LoRa32 untuk membaca kelembapan ta
 
 ```text
 .
-|-- index.html          # Dashboard utama
-|-- monitoring.html     # Monitoring detail sensor
-|-- irrigation.html     # Kontrol dan pengaturan irigasi
-|-- weather.html        # Prakiraan cuaca BMKG
-|-- logs.html           # Log keputusan sistem
-|-- css/
-|   |-- style.css       # Design system dan komponen UI
-|   |-- dashboard.css   # Style khusus halaman
-|   `-- responsive.css  # Breakpoint responsif
-|-- js/
-|   |-- dummy-data.js   # Data dummy node, cuaca, dan log
-|   |-- main.js         # Logic utama, threshold, clock, sidebar
-|   |-- charts.js       # Helper Chart.js
-|   `-- simulation.js   # Simulasi data sensor real-time
+|-- frontend/
+|   |-- public/
+|   |   `-- static/
+|   |       |-- index.html          # Dashboard statis lama
+|   |       |-- monitoring.html     # Monitoring detail sensor
+|   |       |-- irrigation.html     # Kontrol dan pengaturan irigasi
+|   |       |-- weather.html        # Prakiraan cuaca BMKG
+|   |       |-- logs.html           # Log keputusan sistem
+|   |       |-- image.png
+|   |       |-- css/
+|   |       |   |-- style.css       # Design system dan komponen UI
+|   |       |   |-- dashboard.css   # Style khusus halaman
+|   |       |   |-- premium.css
+|   |       |   `-- responsive.css  # Breakpoint responsif
+|   |       `-- js/
+|   |           |-- dummy-data.js   # Data dummy node, cuaca, dan log
+|   |           |-- main.js         # Logic utama, threshold, clock, sidebar
+|   |           |-- charts.js       # Helper Chart.js
+|   |           `-- simulation.js   # Simulasi data sensor real-time
+|   |-- src/
+|   |   |-- assets/
+|   |   |-- components/
+|   |   |-- layout/
+|   |   |-- pages/
+|   |   |-- features/
+|   |   |-- hooks/
+|   |   |-- context/
+|   |   |-- redux/
+|   |   |-- services/
+|   |   |-- utils/
+|   |   |-- App.jsx
+|   |   |-- index.css
+|   |   `-- main.jsx
+|   |-- index.html
+|   |-- package.json
+|   |-- README.md
+|   `-- vite.config.js
 `-- README.md
 ```
 
 ## Cara Menjalankan
 
 1. Clone atau download repository ini.
-2. Buka `index.html` langsung di browser.
-3. Navigasi antar halaman memakai sidebar.
+2. Masuk ke folder `frontend`.
+3. Jalankan frontend React/Vite.
 
 ```bash
-# Alternatif memakai local server
-npx serve .
+cd frontend
+npm install
+npm run dev
 ```
+
+Versi halaman statis lama berada di `frontend/public/static/index.html`.
 
 ## Fitur Frontend
 
@@ -65,10 +91,10 @@ Threshold dapat diubah dari halaman Irigasi dan disimpan di `localStorage`. Nila
 
 Proyek masih memakai data dummy dan simulasi frontend.
 
-- `js/dummy-data.js` berisi data awal node, cuaca, log keputusan, dan riwayat sensor.
-- `js/main.js` berisi logic bersama: threshold, status valve, badge, clock, dan keputusan irigasi.
-- `js/simulation.js` mengubah data dummy secara berkala, menambah riwayat sensor, dan menulis log baru saat keputusan berubah.
-- `js/charts.js` hanya bertugas menampilkan data riwayat ke grafik Chart.js.
+- `frontend/public/static/js/dummy-data.js` berisi data awal node, cuaca, log keputusan, dan riwayat sensor.
+- `frontend/public/static/js/main.js` berisi logic bersama: threshold, status valve, badge, clock, sidebar, dan keputusan irigasi.
+- `frontend/public/static/js/simulation.js` mengubah data dummy secara berkala, menambah riwayat sensor, dan menulis log baru saat keputusan berubah.
+- `frontend/public/static/js/charts.js` hanya bertugas menampilkan data riwayat ke grafik Chart.js.
 
 Aturan keputusan irigasi:
 
@@ -79,7 +105,7 @@ Aturan keputusan irigasi:
 | Kelembapan > threshold atas | Apapun | Valve tertutup |
 | Kelembapan dalam rentang threshold | Apapun | Mengikuti status valve sebelumnya |
 
-Jika ada data yang terlihat tidak sesuai, cek urutannya dari `js/dummy-data.js`, lalu `makeIrrigationDecision()` di `js/main.js`, lalu `recordDecisionSnapshot()` di `js/simulation.js`.
+Jika ada data yang terlihat tidak sesuai, cek urutannya dari `frontend/public/static/js/dummy-data.js`, lalu `makeIrrigationDecision()` di `frontend/public/static/js/main.js`, lalu `recordDecisionSnapshot()` di `frontend/public/static/js/simulation.js`.
 
 ## Rencana Integrasi Backend
 
@@ -97,6 +123,7 @@ Jika ada data yang terlihat tidak sesuai, cek urutannya dari `js/dummy-data.js`,
 - HTML5
 - CSS3
 - JavaScript vanilla
+- React/Vite scaffold
 - Chart.js v4 via CDN
 - Font Awesome 6 via CDN
 
