@@ -329,19 +329,77 @@ function initSidebar() {
 
     toggle.setAttribute('aria-expanded', 'false');
 
-    toggle.addEventListener('click', () => {
-        const isOpen = sidebar.classList.toggle('open');
+    const setOpen = isOpen => {
+        sidebar.classList.toggle('open', isOpen);
         toggle.setAttribute('aria-expanded', String(isOpen));
         if (overlay) overlay.classList.toggle('active', isOpen);
+        // Kunci scroll body saat drawer terbuka di mobile agar tidak double-scroll.
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+    };
+
+    toggle.addEventListener('click', () => {
+        setOpen(!sidebar.classList.contains('open'));
     });
 
     if (overlay) {
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('active');
-            toggle.setAttribute('aria-expanded', 'false');
-        });
+        overlay.addEventListener('click', () => setOpen(false));
     }
+
+    // Tutup dengan tombol ESC.
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && sidebar.classList.contains('open')) {
+            setOpen(false);
+        }
+    });
+
+    // Tutup otomatis saat memilih menu (UX standar mobile drawer).
+    sidebar.querySelectorAll('a.sidebar-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                setOpen(false);
+            }
+        });
+    });
+
+    // Reset state saat resize dari mobile ke desktop.
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(() => {
+            if (!window.matchMedia('(max-width: 768px)').matches) {
+                setOpen(false);
+            }
+        }, 120);
+    });
+
+    // Swipe-to-close: geser ke kiri saat drawer terbuka.
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let tracking = false;
+
+    sidebar.addEventListener('touchstart', event => {
+        if (!sidebar.classList.contains('open')) return;
+        const touch = event.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        tracking = true;
+    }, { passive: true });
+
+    sidebar.addEventListener('touchmove', event => {
+        if (!tracking) return;
+        const touch = event.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = Math.abs(touch.clientY - touchStartY);
+        // Hanya horizontal swipe yang dianggap gesture close.
+        if (deltaX < -60 && deltaY < 40) {
+            setOpen(false);
+            tracking = false;
+        }
+    }, { passive: true });
+
+    sidebar.addEventListener('touchend', () => {
+        tracking = false;
+    }, { passive: true });
 }
 
 function timeAgo(date) {
