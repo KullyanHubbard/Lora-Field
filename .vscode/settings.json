@@ -1,0 +1,30 @@
+{
+  "html-css-class-completion.includeGlobPattern": "frontend/**/*.css",
+  "html-css-class-completion.excludeGlobPattern": "{**/node_modules/**,**/dist/**,**/build/**,**/.git/**,**/.venv/**,**/__pycache__/**,backend/data/**}",
+  "html-css-class-completion.HTMLLanguages": [
+    "html"
+  ],
+  "html-css-class-completion.CSSLanguages": [
+    "css"
+  ],
+  "html-css-class-completion.JavaScriptLanguages": [
+    "javascriptreact"
+  ],
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.venv/**": true,
+    "**/__pycache__/**": true,
+    "**/backend/data/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/backend/data": true
+  }
+}
