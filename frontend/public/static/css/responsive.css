@@ -1085,6 +1085,117 @@ video {
 }
 
 /* ==========================================================================
+   14. iPad / tablet & touch device fixes
+   - iOS Safari auto-zoom kalau input <16px → set 16px (samar di mata,
+     besar manfaatnya).
+   - Touch targets ≥44px (Apple HIG) di semua viewport bila pointer kasar.
+   - Suppress long-press callout pada ikon dekoratif (field map, weather pin).
+   - iPad portrait (769–1024px): sidebar dipersempit & padding diringkas
+     supaya konten tidak terjepit.
+   ========================================================================== */
+@media (pointer: coarse) {
+    /* Cegah iOS Safari (iPhone & iPad) zoom otomatis saat input fokus.
+       Browser mengabaikan rule ini kalau viewport user-scalable=no, tapi
+       proyek ini sengaja mengizinkan pinch-zoom (accessibility). */
+    .form-control,
+    select.form-control,
+    .search-box input,
+    input[type="text"],
+    input[type="number"],
+    input[type="search"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    textarea {
+        font-size: 16px;
+    }
+
+    /* Touch target minimum (Apple HIG 44pt). Tetap padat di desktop
+       karena tidak match (pointer: fine). */
+    .btn {
+        min-height: 44px;
+    }
+
+    .form-control,
+    select.form-control {
+        min-height: 44px;
+    }
+
+    .filter-btn {
+        min-height: 38px;
+    }
+
+    /* Sidebar link sudah 48px di drawer mode; di tablet portrait
+       (sidebar visible) bumped agar nyaman ditekan jari. */
+    .sidebar-nav a.sidebar-link {
+        min-height: 46px;
+    }
+
+    /* Hilangkan long-press menu konteks pada elemen dekoratif yang
+       sering tertekan tidak sengaja saat scroll. */
+    .field-node,
+    .weather-pin,
+    .card-icon,
+    .valve-emblem,
+    .weather-icon,
+    .forecast-icon {
+        -webkit-touch-callout: none;
+    }
+
+    /* iOS Safari sticky :hover — tambahkan :active feedback agar tap
+       terasa responsif tanpa nempel state hover. */
+    .btn:active {
+        transform: scale(0.98);
+    }
+
+    .filter-btn:active,
+    .theme-option:active {
+        opacity: 0.7;
+    }
+}
+
+/* iPad portrait & tablet portrait — sidebar persisten tapi dipersempit
+   agar content area tidak terjepit (iPad standard portrait = 810px,
+   iPad Pro 11" portrait = 834px, iPad mini portrait = 744px → drawer). */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+    :root {
+        --sidebar-w: 220px;
+    }
+
+    .sidebar-brand {
+        padding: 20px 16px 16px;
+    }
+
+    .sidebar-brand h2 {
+        font-size: 1.4rem;
+    }
+
+    .sidebar-brand p {
+        font-size: 0.82rem;
+    }
+
+    .sidebar-nav {
+        padding: 12px 12px;
+    }
+
+    .sidebar-nav a.sidebar-link {
+        padding: 10px 12px;
+        font-size: 1rem;
+    }
+
+    .page-content {
+        padding: 22px 20px;
+    }
+
+    .topbar {
+        padding: 0 20px;
+    }
+
+    /* Field-command tetap stack di iPad portrait (≤1024 sudah handle),
+       sensor cards 2-col tidak terjepit dengan sidebar 220px. */
+}
+
+/* ==========================================================================
    11. Print-friendly fallback (opsional, tidak memotong fitur)
    ========================================================================== */
 @media print {
