@@ -1083,6 +1083,11 @@ video {
         animation: none !important;
     }
 }
+
+/* ==========================================================================
+   11. Print-friendly fallback (opsional, tidak memotong fitur)
+   ========================================================================== */
+@media print {
     .sidebar,
     .topbar,
     .ambient-bg,

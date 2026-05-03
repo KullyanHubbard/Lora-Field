@@ -113,10 +113,16 @@ function animateThemeChange(theme, button) {
 
     // Snappy path: tidak ada view-transition, tidak ada glow/settle animation,
     // hanya CSS transition pendek (lihat .theme-fast di style.css/responsive.css).
+    // Cancel timer sebelumnya kalau user spam toggle — cegah class dilepas
+    // di tengah transisi click berikutnya.
     document.documentElement.classList.add('theme-fast');
+    if (animateThemeChange._fastTimer) {
+        window.clearTimeout(animateThemeChange._fastTimer);
+    }
     applyTheme(nextTheme);
-    window.setTimeout(() => {
+    animateThemeChange._fastTimer = window.setTimeout(() => {
         document.documentElement.classList.remove('theme-fast');
+        animateThemeChange._fastTimer = 0;
     }, 220);
     finish(220);
 }
