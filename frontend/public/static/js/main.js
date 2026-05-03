@@ -88,24 +88,37 @@ function animateThemeChange(theme, button) {
 
     const switcher = button ? button.closest('.theme-switcher') : null;
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setThemeTransitionOrigin(button);
+    // Mobile / touch device: skip View Transition (clip-path 145vmax + recomposite
+    // semua glassmorphic layer = jank di GPU mobile). Gunakan transisi snappy saja.
+    const isTouchDevice = window.matchMedia && (
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(max-width: 768px)').matches
+    );
+    const skipFancyTransition = reduceMotion || isTouchDevice;
 
-    document.documentElement.classList.add('theme-changing');
-    if (switcher) switcher.classList.add('is-changing');
+    setThemeTransitionOrigin(button);
     if (button) button.classList.add('is-pressed');
 
     const finish = (delay = 260) => {
         window.setTimeout(() => clearThemeAnimationState(switcher, button), delay);
     };
 
-    if (document.startViewTransition && !reduceMotion) {
+    if (document.startViewTransition && !skipFancyTransition) {
+        document.documentElement.classList.add('theme-changing');
+        if (switcher) switcher.classList.add('is-changing');
         const transition = document.startViewTransition(() => applyTheme(nextTheme));
         transition.finished.then(() => finish(), () => finish());
         return;
     }
 
+    // Snappy path: tidak ada view-transition, tidak ada glow/settle animation,
+    // hanya CSS transition pendek (lihat .theme-fast di style.css/responsive.css).
+    document.documentElement.classList.add('theme-fast');
     applyTheme(nextTheme);
-    finish(960);
+    window.setTimeout(() => {
+        document.documentElement.classList.remove('theme-fast');
+    }, 220);
+    finish(220);
 }
 
 function initThemeSwitcher() {

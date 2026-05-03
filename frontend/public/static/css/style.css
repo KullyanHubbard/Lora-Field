@@ -100,6 +100,33 @@ html.theme-ready .card-icon {
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Fast-path saat theme switch di mobile/touch device.
+   Override durasi panjang agar GPU mobile tidak harus me-recomposite
+   layer backdrop-filter selama ~1 detik. */
+html.theme-fast,
+html.theme-fast body,
+html.theme-fast .ambient-bg,
+html.theme-fast .ambient-orb,
+html.theme-fast .sidebar,
+html.theme-fast .topbar,
+html.theme-fast .card,
+html.theme-fast .status-big,
+html.theme-fast .status-pill,
+html.theme-fast .theme-switcher,
+html.theme-fast .theme-option,
+html.theme-fast .badge,
+html.theme-fast .btn,
+html.theme-fast .form-control,
+html.theme-fast .search-box,
+html.theme-fast .filter-btn,
+html.theme-fast table th,
+html.theme-fast table td,
+html.theme-fast .progress-bar,
+html.theme-fast .card-icon {
+    transition-duration: 0.18s !important;
+    transition-timing-function: ease-out !important;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
     mix-blend-mode: normal;

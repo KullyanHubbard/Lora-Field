@@ -1014,9 +1014,75 @@ video {
 }
 
 /* ==========================================================================
-   11. Print-friendly fallback (opsional, tidak memotong fitur)
+   13. Mobile theme-switch performance — kurangi durasi & beban GPU
+   Mobile GPU choke saat backdrop-filter + opacity transitions berlangsung
+   bersamaan ~1 detik. Di sini kita pangkas durasinya & matikan animasi
+   ambient orbs (yang paling berat, blur 120px di area 60vw).
    ========================================================================== */
-@media print {
+@media (max-width: 768px), (pointer: coarse) {
+    /* Kurangi blur radius pada glassmorphism di mobile — blur(20-24px)
+       di banyak elemen sekaligus = composite layer mahal. Tetap terlihat
+       glassy, tapi separuh beban GPU. */
+    :root:not([data-theme="light"]) .sidebar,
+    :root[data-theme="dark"] .sidebar {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    :root:not([data-theme="light"]) .topbar,
+    :root[data-theme="dark"] .topbar {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    :root:not([data-theme="light"]) .card,
+    :root[data-theme="dark"] .card {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    html.theme-ready body,
+    html.theme-ready .ambient-bg,
+    html.theme-ready .ambient-orb,
+    html.theme-ready .sidebar,
+    html.theme-ready .topbar,
+    html.theme-ready .card,
+    html.theme-ready .status-big,
+    html.theme-ready .status-pill,
+    html.theme-ready .theme-switcher,
+    html.theme-ready .theme-option,
+    html.theme-ready .badge,
+    html.theme-ready .btn,
+    html.theme-ready .form-control,
+    html.theme-ready .search-box,
+    html.theme-ready .filter-btn,
+    html.theme-ready table th,
+    html.theme-ready table td,
+    html.theme-ready .progress-bar,
+    html.theme-ready .card-icon {
+        transition-duration: 0.2s;
+        transition-timing-function: ease-out;
+    }
+
+    /* Ambient orbs: di mobile selalu instant — fade-out yang panjang
+       sambil blur 120px = paling berat untuk GPU mobile. */
+    .ambient-orb {
+        transition: opacity 0.18s ease-out !important;
+        animation-duration: 30s; /* perlambat float, kurangi GPU load */
+    }
+
+    /* Light mode di mobile: orbs di-disable total dari compositing
+       (visibility hidden + opacity 0 → layer di-skip). */
+    :root[data-theme="light"] .ambient-orb {
+        visibility: hidden;
+    }
+
+    /* Theme-changing animations berat (settle/glow) — skip di mobile. */
+    html.theme-changing .main-content,
+    html.theme-changing .sidebar {
+        animation: none !important;
+    }
+}
     .sidebar,
     .topbar,
     .ambient-bg,
