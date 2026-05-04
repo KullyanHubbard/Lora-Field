@@ -22,43 +22,33 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/premium.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-        media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    </noscript>
 </head>
 
 <body class="auth-page">
-    <main class="login-shell">
-        <section class="login-brand-panel" aria-label="LoraField">
-            <div class="login-logo">
-                <i class="fas fa-seedling" aria-hidden="true"></i>
+    <main class="login-shell" aria-labelledby="login-title">
+        <section class="login-card login-card-center" aria-label="Form login">
+            <div class="login-logo login-logo-center">
+                <span class="login-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M12 21v-8" />
+                        <path d="M12 13c-4.4 0-8-3.6-8-8v-.5h.5c4.4 0 8 3.6 8 8v.5H12Z" />
+                        <path d="M12 14c4.4 0 8-3.6 8-8v-.5h-.5c-4.4 0-8 3.6-8 8v.5H12Z" />
+                    </svg>
+                </span>
                 <span>LoraField</span>
             </div>
-            <h1>Akses aman dashboard LoraField</h1>
-            <div class="login-info-grid">
-                <div>
-                    <span>Akun</span>
-                    <strong>User</strong>
-                </div>
-                <div>
-                    <span>Autentikasi</span>
-                    <strong>Password</strong>
-                </div>
-                <div>
-                    <span>Akses</span>
-                    <strong>Terbatas</strong>
-                </div>
-            </div>
-        </section>
 
-        <section class="login-card" aria-label="Form login">
-            <div class="card-header">
-                <div>
-                    <h2>Masuk Akun</h2>
-                    <span class="card-subtitle">Akses dashboard sesuai kebun milik user.</span>
-                </div>
+            <div class="login-visual" aria-hidden="true">
+                <span class="login-field-line login-field-line-1"></span>
+                <span class="login-field-line login-field-line-2"></span>
+                <span class="login-field-line login-field-line-3"></span>
+                <span class="login-signal"></span>
+                <span class="login-node"></span>
+            </div>
+
+            <div class="login-intro">
+                <h1 id="login-title">Masuk Akun</h1>
+                <p>Monitoring kebun LoRa dalam satu akses.</p>
             </div>
 
             <form id="login-form" class="login-form">
@@ -73,7 +63,12 @@
                         autocomplete="current-password" value="password" required>
                 </div>
                 <button class="btn btn-primary login-submit" type="submit">
-                    <i class="fas fa-right-to-bracket" aria-hidden="true"></i> Login
+                    <svg class="login-submit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <path d="M10 17l5-5-5-5" />
+                        <path d="M15 12H3" />
+                    </svg>
+                    <span>Masuk</span>
                 </button>
                 <a class="forgot-link" href="#">Lupa Password</a>
             </form>
@@ -85,6 +80,7 @@
             event.preventDefault();
             try {
                 localStorage.setItem('lf_auth_demo', 'true');
+                localStorage.removeItem('lf_selected_farm');
             } catch (error) {
                 // Login demo tetap lanjut tanpa penyimpanan lokal.
             }

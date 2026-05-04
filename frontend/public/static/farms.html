@@ -54,7 +54,7 @@
             <a href="nodes.html" class="sidebar-link"><i class="fas fa-microchip" aria-hidden="true"></i> Node Sensor</a>
             <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
             <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Riwayat</a>
-            <a href="settings.html" class="sidebar-link"><i class="fas fa-gear" aria-hidden="true"></i> Settings</a>
+            <a href="settings.html" class="sidebar-link"><i class="fas fa-user-gear" aria-hidden="true"></i> Account Setting</a>
         </nav>
         <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
     </aside>
@@ -66,36 +66,19 @@
                     aria-controls="sidebar">
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
-                <span class="topbar-title">
-                    <span class="topbar-title-full">Kebun Saya</span>
-                    <span class="topbar-title-short">Kebun</span>
-                </span>
             </div>
             <div class="topbar-right">
                 <span class="topbar-clock" id="realtime-clock"></span>
-                <span class="badge badge-green badge-online">Online</span>
             </div>
         </header>
 
         <div class="page-content">
-            <section class="page-header">
-                <div>
-                    <span class="page-kicker">Kebun Saya</span>
-                    <h1 id="farms-title">Daftar Kebun</h1>
-                    <p>Data kebun dibatasi sesuai akun yang sedang login.</p>
-                </div>
-                <div class="page-header-actions">
-                    <span class="status-pill"><i class="fas fa-user-lock" aria-hidden="true"></i> Pak Budi</span>
-                </div>
-            </section>
-
             <div class="card toolbar-card mb-24">
                 <div class="flex-between">
                     <label class="search-box farm-search-list" for="farm-list-search">
                         <i class="fas fa-search" aria-hidden="true"></i>
                         <input type="text" id="farm-list-search" placeholder="Cari kebun, lokasi, atau tanaman">
                     </label>
-                    <span class="badge badge-green" id="farm-list-count">0 Kebun</span>
                 </div>
             </div>
 
@@ -120,8 +103,6 @@
 
         function renderFarmList() {
             const farms = getVisibleFarms();
-            document.getElementById('farm-list-count').textContent = `${farms.length} Kebun`;
-            document.getElementById('farms-title').textContent = `Daftar Kebun ${CURRENT_USER.name}`;
 
             const list = document.getElementById('farm-list');
             list.innerHTML = farms.map(farm => {

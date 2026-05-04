@@ -187,19 +187,25 @@ video {
         display: none;
     }
 
-    .theme-option span {
+    .farm-switcher {
+        max-width: 46vw;
+        min-height: 34px;
+        padding: 6px 9px;
+    }
+
+    .farm-switcher-name {
+        font-size: 0.76rem;
+    }
+
+    .farm-switcher-action {
         display: none;
     }
 
     .theme-option {
-        width: 36px;
-        min-width: 36px;
+        width: 34px;
+        min-width: 34px;
         min-height: 32px;
         padding: 5px;
-    }
-
-    .badge-online {
-        padding: 4px 8px;
     }
 
     .page-content {
@@ -487,18 +493,19 @@ video {
         gap: 6px;
     }
 
-    .badge-online {
-        font-size: 0.66rem;
-        padding: 4px 7px;
-    }
-
     .theme-switcher {
         padding: 2px;
     }
 
+    .topbar-user {
+        min-width: 34px;
+        min-height: 32px;
+        padding: 0 8px;
+    }
+
     .theme-option {
-        min-width: 32px;
-        width: 32px;
+        min-width: 34px;
+        width: 34px;
         min-height: 30px;
         padding: 4px;
     }
@@ -787,13 +794,19 @@ video {
         font-size: 1rem;
     }
 
-    .badge-online {
-        padding: 3px 7px;
-    }
-
     .theme-option {
         min-width: 30px;
         width: 30px;
+    }
+
+    .topbar-user {
+        width: 32px;
+        min-width: 32px;
+        padding: 0;
+    }
+
+    .topbar-user span {
+        display: none;
     }
 
     .page-content {
@@ -1085,6 +1098,7 @@ video {
     html.theme-ready .status-pill,
     html.theme-ready .theme-switcher,
     html.theme-ready .theme-option,
+    html.theme-ready .topbar-user,
     html.theme-ready .badge,
     html.theme-ready .btn,
     html.theme-ready .form-control,

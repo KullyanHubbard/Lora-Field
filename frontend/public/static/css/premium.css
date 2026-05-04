@@ -135,8 +135,8 @@
 :root[data-theme="dark"] h3,
 :root[data-theme="dark"] .metric-value,
 :root[data-theme="dark"] .sensor-value {
-    color: var(--color-white) !important;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    color: var(--color-gray-900);
+    text-shadow: none;
 }
 
 /* Sidebar Glassmorphism */
@@ -186,6 +186,66 @@
     color: var(--color-white);
 }
 
+:root:not([data-theme="light"]) .farm-switcher,
+:root[data-theme="dark"] .farm-switcher {
+    background: rgba(15, 23, 42, 0.78);
+    border-color: rgba(51, 65, 85, 0.9);
+    color: var(--color-white);
+}
+
+:root:not([data-theme="light"]) .farm-switcher:hover,
+:root[data-theme="dark"] .farm-switcher:hover {
+    border-color: var(--color-primary);
+    background: rgba(16, 185, 129, 0.12);
+}
+
+.topbar-right {
+    gap: 8px;
+}
+
+.topbar-right .badge {
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    font-size: var(--fs-sm);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+}
+
+.topbar-clock {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+}
+
+.topbar-clock:hover {
+    border-color: var(--color-border);
+    background: var(--color-card);
+}
+
+:root:not([data-theme="light"]) .topbar-user,
+:root[data-theme="dark"] .topbar-user {
+    background: rgba(15, 23, 42, 0.78);
+    border-color: rgba(51, 65, 85, 0.9);
+    color: var(--color-white);
+}
+
+:root:not([data-theme="light"]) .topbar-user:hover,
+:root[data-theme="dark"] .topbar-user:hover {
+    border-color: var(--color-primary);
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--color-white);
+}
+
+:root:not([data-theme="light"]) .topbar-clock:hover,
+:root[data-theme="dark"] .topbar-clock:hover {
+    background: rgba(15, 23, 42, 0.52);
+}
+
 /* Card Glassmorphism & Hover Effects */
 :root:not([data-theme="light"]) .card,
 :root[data-theme="dark"] .card {
@@ -221,13 +281,6 @@
 
 :root:not([data-theme="light"]) .badge-green,
 :root[data-theme="dark"] .badge-green {
-    background: rgba(16, 185, 129, 0.15);
-    color: var(--color-primary-dark);
-    border-color: rgba(16, 185, 129, 0.3);
-}
-
-:root:not([data-theme="light"]) .badge-online,
-:root[data-theme="dark"] .badge-online {
     background: rgba(16, 185, 129, 0.15);
     color: var(--color-primary-dark);
     border-color: rgba(16, 185, 129, 0.3);
@@ -456,4 +509,378 @@
     background: rgba(15, 23, 42, 0.72);
     border-color: rgba(148, 163, 184, 0.22);
     color: var(--text-muted);
+}
+
+/* Theme consistency pass */
+:root[data-theme="light"] {
+    --color-bg: #f8fafc;
+    --color-sidebar: #ffffff;
+    --color-card: #ffffff;
+    --color-border: rgba(15, 23, 42, 0.14);
+    --color-border-hover: rgba(15, 23, 42, 0.24);
+    --text-main: #334155;
+    --text-muted: #64748b;
+    --shadow-sm: 0 4px 18px rgba(15, 23, 42, 0.045);
+    --shadow-md: 0 12px 32px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 20px 48px rgba(15, 23, 42, 0.12);
+}
+
+:root:not([data-theme="light"]),
+:root[data-theme="dark"] {
+    --color-card: rgba(15, 23, 42, 0.72);
+    --color-border: rgba(148, 163, 184, 0.22);
+    --color-border-hover: rgba(148, 163, 184, 0.34);
+    --text-main: #dbe4ee;
+    --text-muted: #94a3b8;
+}
+
+body {
+    color: var(--text-main);
+    font-size: var(--fs-base);
+    font-weight: var(--weight-regular);
+}
+
+h1,
+h2,
+h3,
+strong,
+.card-header h3,
+.farm-card-header h3,
+.location-map-header h3,
+.node-info-card h3,
+.maps-key-panel strong,
+.timeline-item .timeline-title,
+.topology-node .topo-label,
+.lf-pop-title {
+    color: var(--color-gray-900);
+    font-weight: var(--weight-bold);
+    text-shadow: none;
+}
+
+.sidebar-brand h2 {
+    font-size: 1.42rem;
+    font-weight: var(--weight-bold);
+    letter-spacing: 0;
+}
+
+.sidebar-brand p,
+.sidebar-footer,
+.card-header .card-subtitle,
+.farm-card-header span:not(.badge),
+.farm-card-body span,
+.metric-label,
+.node-info-item .info-label,
+.sensor-detail-label,
+.detail-label,
+.panel-label,
+.forecast-label,
+.timeline-item .timeline-desc,
+.topology-node .topo-desc,
+.lf-pop-sub,
+.lf-pop-row.text-muted,
+.text-muted {
+    color: var(--text-muted);
+    font-weight: var(--weight-medium);
+}
+
+.sidebar-nav a.sidebar-link {
+    color: var(--text-muted);
+    font-size: var(--fs-lg);
+    font-weight: var(--weight-semibold);
+}
+
+.sidebar-nav a.sidebar-link i {
+    color: var(--text-muted);
+    font-size: 1.06rem;
+}
+
+.sidebar-nav a.sidebar-link.active,
+.sidebar-nav a.sidebar-link[aria-current="page"] {
+    color: var(--color-primary-dark);
+    font-weight: var(--weight-bold);
+}
+
+.topbar-clock,
+.farm-switcher-action {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    font-weight: var(--weight-medium);
+}
+
+.farm-switcher-name,
+.card-header h3,
+.farm-card-header h3,
+.location-map-header h3,
+.node-info-card h3 {
+    font-size: var(--fs-lg);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0;
+}
+
+.farm-card-body strong,
+.node-info-item .info-value,
+.detail-value,
+.panel-value,
+.forecast-cond,
+.location-result,
+.maps-key-panel span {
+    color: var(--text-main);
+    font-size: var(--fs-md);
+    font-weight: var(--weight-semibold);
+}
+
+.metric-value,
+.sensor-value,
+.sensor-detail-value,
+.forecast-temp,
+.weather-temp,
+.valve-status {
+    color: var(--color-gray-900);
+    font-weight: var(--weight-heavy);
+    text-shadow: none;
+}
+
+.badge,
+.btn,
+.btn-sm,
+.filter-btn,
+.form-group label,
+.progress-range,
+table th {
+    font-weight: var(--weight-bold);
+    letter-spacing: 0;
+}
+
+.badge {
+    border: 1px solid transparent;
+    font-size: var(--fs-xs);
+}
+
+.btn {
+    font-size: var(--fs-md);
+}
+
+.btn-sm {
+    font-size: var(--fs-sm);
+}
+
+.filter-btn,
+table th {
+    font-size: var(--fs-sm);
+}
+
+table {
+    font-size: var(--fs-md);
+}
+
+table th {
+    color: var(--text-muted);
+    text-transform: none;
+}
+
+table td {
+    color: var(--text-main);
+    font-weight: var(--weight-medium);
+}
+
+.data-value {
+    color: var(--color-gray-900);
+    font-weight: var(--weight-semibold);
+}
+
+.form-control,
+.search-box input,
+.search-box {
+    color: var(--text-main);
+    font-size: var(--fs-md);
+}
+
+.card,
+.farm-card,
+.field-map-panel,
+.telemetry-panel,
+.status-big,
+.toolbar-card,
+.farm-switcher,
+.theme-switcher,
+.topbar-user,
+.search-box,
+.form-control,
+.filter-btn,
+.node-info-item,
+.location-selected,
+.location-result,
+.location-map-shell,
+.maps-key-panel,
+.table-wrap,
+.note-box {
+    border-color: var(--color-border);
+}
+
+.theme-switcher {
+    height: 36px;
+    border-color: var(--color-border);
+}
+
+.theme-option,
+.theme-option.active,
+.theme-option[aria-pressed="true"] {
+    width: 34px;
+    min-width: 34px;
+    min-height: 30px;
+    padding: 5px;
+    font-size: 0;
+}
+
+.table-wrap {
+    border: 1px solid var(--color-border);
+}
+
+.card:hover,
+.farm-card:hover,
+.farm-card.is-selected,
+.farm-switcher:hover,
+.topbar-user:hover,
+.filter-btn:hover {
+    border-color: var(--color-border-hover);
+}
+
+:root[data-theme="light"] .sidebar,
+:root[data-theme="light"] .topbar,
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .farm-card,
+:root[data-theme="light"] .field-map-panel,
+:root[data-theme="light"] .telemetry-panel,
+:root[data-theme="light"] .status-big,
+:root[data-theme="light"] .toolbar-card,
+:root[data-theme="light"] .farm-switcher,
+:root[data-theme="light"] .theme-switcher,
+:root[data-theme="light"] .topbar-user,
+:root[data-theme="light"] .search-box,
+:root[data-theme="light"] .form-control,
+:root[data-theme="light"] .filter-btn,
+:root[data-theme="light"] .node-info-item,
+:root[data-theme="light"] .table-wrap,
+:root[data-theme="light"] .note-box {
+    border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="light"] table th,
+:root[data-theme="light"] table td,
+:root[data-theme="light"] .farm-card-body div {
+    border-bottom-color: rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme="light"] .badge-green {
+    border-color: rgba(16, 185, 129, 0.24);
+}
+
+:root[data-theme="light"] .badge-yellow {
+    border-color: rgba(245, 158, 11, 0.28);
+}
+
+:root[data-theme="light"] .badge-red {
+    border-color: rgba(239, 68, 68, 0.24);
+}
+
+:root[data-theme="light"] .badge-gray {
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+:root:not([data-theme="light"]) .card-header h3,
+:root:not([data-theme="light"]) .farm-card-header h3,
+:root:not([data-theme="light"]) .farm-card-body strong,
+:root:not([data-theme="light"]) .node-info-item .info-value,
+:root:not([data-theme="light"]) table td,
+:root:not([data-theme="light"]) .data-value,
+:root[data-theme="dark"] .card-header h3,
+:root[data-theme="dark"] .farm-card-header h3,
+:root[data-theme="dark"] .farm-card-body strong,
+:root[data-theme="dark"] .node-info-item .info-value,
+:root[data-theme="dark"] table td,
+:root[data-theme="dark"] .data-value {
+    color: var(--text-main);
+}
+
+@media (max-width: 768px) {
+    .farm-switcher {
+        max-width: 46vw;
+        min-height: 34px;
+        padding: 6px 9px;
+    }
+
+    .farm-switcher-name {
+        font-size: var(--fs-sm);
+    }
+}
+
+/* Sidebar final normalization: active state only changes color/background. */
+.sidebar-nav a.sidebar-link,
+.sidebar-nav a.sidebar-link:visited,
+.sidebar-nav a.sidebar-link.active,
+.sidebar-nav a.sidebar-link[aria-current="page"] {
+    min-height: 48px;
+    padding: 10px 16px;
+    border-left: 0 !important;
+    color: var(--text-muted);
+    font-family: var(--font) !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-synthesis: none;
+}
+
+.sidebar-nav a.sidebar-link i,
+.sidebar-nav a.sidebar-link.active i,
+.sidebar-nav a.sidebar-link[aria-current="page"] i {
+    width: 26px !important;
+    flex: 0 0 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    font-size: 1.08rem !important;
+    line-height: 1;
+}
+
+.sidebar-nav a.sidebar-link .sidebar-label,
+.sidebar-nav a.sidebar-link.active .sidebar-label,
+.sidebar-nav a.sidebar-link[aria-current="page"] .sidebar-label {
+    display: block;
+    min-width: 0;
+    color: inherit;
+    font-family: var(--font) !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-synthesis: none;
+}
+
+.sidebar-nav a.sidebar-link:hover {
+    color: var(--color-gray-900);
+}
+
+.sidebar-nav a.sidebar-link.active,
+.sidebar-nav a.sidebar-link[aria-current="page"] {
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+
+:root:not([data-theme="light"]) .sidebar-nav a.sidebar-link.active,
+:root:not([data-theme="light"]) .sidebar-nav a.sidebar-link[aria-current="page"],
+:root[data-theme="dark"] .sidebar-nav a.sidebar-link.active,
+:root[data-theme="dark"] .sidebar-nav a.sidebar-link[aria-current="page"] {
+    border-left: 0 !important;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--color-primary-dark);
+}
+
+@media (max-width: 768px) {
+    .sidebar-nav a.sidebar-link,
+    .sidebar-nav a.sidebar-link.active,
+    .sidebar-nav a.sidebar-link[aria-current="page"] {
+        font-size: 1rem !important;
+    }
 }

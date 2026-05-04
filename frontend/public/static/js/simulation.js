@@ -84,13 +84,7 @@ function simulateCondition(type) {
 
     switch (type) {
         case 'dry':
-            currentRainOverride = false;
-            setNoRainForecast();
-            break;
         case 'normal':
-            currentRainOverride = false;
-            setNoRainForecast();
-            break;
         case 'wet':
             currentRainOverride = false;
             setNoRainForecast();
@@ -204,8 +198,7 @@ function stopSimulation() {
 let lastLoggedDecisionType = DECISION_LOGS.length ? DECISION_LOGS[0].type : null;
 
 function addLogEntry(node, soilMoisture, weather, weatherCode, decision, valve, type, note) {
-    // Simpan hanya perubahan keputusan agar tabel log tidak cepat penuh.
-    if (lastLoggedDecisionType === type && type === 'normal') return;
+    // Simpan hanya jika tipe keputusan berubah agar log tidak cepat penuh.
     if (lastLoggedDecisionType === type) return;
     lastLoggedDecisionType = type;
 

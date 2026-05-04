@@ -138,17 +138,34 @@ function initThemeSwitcher() {
     switcher.setAttribute('role', 'group');
     switcher.setAttribute('aria-label', 'Pilih tema tampilan');
     switcher.innerHTML = `
-        <button class="theme-option" type="button" data-theme-value="light" aria-pressed="false">
-            <i class="fas fa-sun" aria-hidden="true"></i>
+        <button class="theme-option" type="button" data-theme-value="light" aria-pressed="false" aria-label="Tema light" title="Light">
+            <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
             <span>Light</span>
         </button>
-        <button class="theme-option" type="button" data-theme-value="dark" aria-pressed="false">
-            <i class="fas fa-moon" aria-hidden="true"></i>
+        <button class="theme-option" type="button" data-theme-value="dark" aria-pressed="false" aria-label="Tema dark" title="Dark">
+            <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.99 12.38A8.5 8.5 0 1 1 11.62 3.01 6.5 6.5 0 0 0 20.99 12.38Z"></path>
+            </svg>
             <span>Dark</span>
         </button>
     `;
 
-    topbarRight.prepend(switcher);
+    const clock = document.getElementById('realtime-clock');
+    if (clock && clock.parentElement === topbarRight) {
+        clock.insertAdjacentElement('afterend', switcher);
+    } else {
+        topbarRight.prepend(switcher);
+    }
     switcher.addEventListener('click', event => {
         const button = event.target.closest('.theme-option');
         if (!button) return;
@@ -324,15 +341,17 @@ function getFarmLastUpdate(farm) {
 function getSelectedFarmId() {
     const params = new URLSearchParams(window.location.search);
     const fromUrl = params.get('farm');
-    if (fromUrl) return fromUrl;
+    if (fromUrl && getFarmById(fromUrl)) return fromUrl;
     try {
-        return localStorage.getItem(STORAGE_KEYS.SELECTED_FARM) || (typeof FARMS !== 'undefined' && FARMS[0] && FARMS[0].id);
+        const savedFarmId = localStorage.getItem(STORAGE_KEYS.SELECTED_FARM);
+        return getFarmById(savedFarmId) ? savedFarmId : null;
     } catch (error) {
-        return typeof FARMS !== 'undefined' && FARMS[0] && FARMS[0].id;
+        return null;
     }
 }
 
 function setSelectedFarmId(farmId) {
+    if (!getFarmById(farmId)) return;
     try {
         localStorage.setItem(STORAGE_KEYS.SELECTED_FARM, farmId);
     } catch (error) {
@@ -379,6 +398,14 @@ function startClock() {
     const el = document.getElementById('realtime-clock');
     if (!el) return;
 
+    el.innerHTML = `
+        <svg class="topbar-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 7v5l3 2"></path>
+        </svg>
+        <span class="topbar-clock-time"></span>
+    `;
+    const timeEl = el.querySelector('.topbar-clock-time');
     let lastSecond = -1;
 
     function tick() {
@@ -391,7 +418,9 @@ function startClock() {
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             const date = now.toLocaleDateString('id-ID', options);
             const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            el.textContent = `${date} - ${time}`;
+            if (timeEl) timeEl.textContent = time;
+            el.title = `${date} - ${time}`;
+            el.setAttribute('aria-label', `${date} - ${time}`);
         }
 
         requestAnimationFrame(tick);
@@ -405,8 +434,130 @@ function scheduleUpdate(fn) {
     requestAnimationFrame(fn);
 }
 
+const FARM_NAV_ITEMS = [
+    { href: 'farm-detail.html', icon: 'fas fa-th-large', label: 'Dashboard' },
+    { href: 'monitoring.html', icon: 'fas fa-chart-area', label: 'Monitoring' },
+    { href: 'irrigation.html', icon: 'fas fa-tint', label: 'Irigasi' },
+    { href: 'gateway.html', icon: 'fas fa-tower-broadcast', label: 'Gateway' },
+    { href: 'nodes.html', icon: 'fas fa-microchip', label: 'Node Sensor' },
+    { href: 'weather.html', icon: 'fas fa-cloud-sun', label: 'Cuaca' },
+    { href: 'logs.html', icon: 'fas fa-list-alt', label: 'Riwayat' }
+];
+
+const SELECTOR_NAV_ITEMS = [
+    { href: 'index.html', icon: 'fas fa-map-location-dot', label: 'Kebun Saya' },
+    { href: 'settings.html', icon: 'fas fa-user-gear', label: 'Account Setting' }
+];
+
+const FARM_PAGE_PATHS = new Set([
+    'farm-detail.html',
+    'monitoring.html',
+    'irrigation.html',
+    'gateway.html',
+    'nodes.html',
+    'weather.html',
+    'logs.html'
+]);
+
+function getCurrentPagePath() {
+    return window.location.pathname.split('/').pop() || 'index.html';
+}
+
+function getSidebarContext() {
+    return FARM_PAGE_PATHS.has(getCurrentPagePath()) ? 'farm' : 'selector';
+}
+
+function getFarmScopedHref(href) {
+    if (href === 'settings.html') return href;
+    const farm = getCurrentFarm();
+    if (!farm || !farm.id) return href;
+    return `${href}?farm=${encodeURIComponent(farm.id)}`;
+}
+
+function renderContextSidebar() {
+    const nav = document.querySelector('.sidebar-nav');
+    if (!nav) return;
+
+    const context = getSidebarContext();
+    const items = context === 'farm' ? FARM_NAV_ITEMS : SELECTOR_NAV_ITEMS;
+    nav.innerHTML = items.map(item => {
+        const href = context === 'farm' ? getFarmScopedHref(item.href) : item.href;
+        return `<a href="${href}" class="sidebar-link"><i class="${item.icon}" aria-hidden="true"></i><span class="sidebar-label">${item.label}</span></a>`;
+    }).join('');
+}
+
+function renderFarmSwitcher() {
+    if (getSidebarContext() !== 'farm') return;
+
+    const topbarLeft = document.querySelector('.topbar-left');
+    const farm = getCurrentFarm();
+    if (!topbarLeft || !farm || document.getElementById('farm-switcher')) return;
+
+    const switcher = document.createElement('a');
+    switcher.className = 'farm-switcher';
+    switcher.id = 'farm-switcher';
+    switcher.href = 'index.html';
+    switcher.innerHTML = `
+        <i class="fas fa-map-location-dot" aria-hidden="true"></i>
+        <span class="farm-switcher-copy">
+            <span class="farm-switcher-name">${farm.name}</span>
+            <span class="farm-switcher-action">Ganti Kebun</span>
+        </span>
+    `;
+    topbarLeft.appendChild(switcher);
+}
+
+function renderTopbarUser() {
+    const topbarRight = document.querySelector('.topbar-right');
+    if (!topbarRight) return;
+
+    const existingProfile = document.getElementById('topbar-user');
+    if (existingProfile) {
+        if (existingProfile.tagName.toLowerCase() === 'a') {
+            existingProfile.className = 'topbar-user';
+            existingProfile.href = 'settings.html';
+            existingProfile.setAttribute('aria-label', 'Account Pak Budi');
+            existingProfile.innerHTML = getTopbarUserMarkup();
+            return;
+        }
+
+        const replacement = document.createElement('a');
+        replacement.className = 'topbar-user';
+        replacement.id = 'topbar-user';
+        replacement.href = 'settings.html';
+        replacement.setAttribute('aria-label', 'Account Pak Budi');
+        replacement.innerHTML = getTopbarUserMarkup();
+        existingProfile.replaceWith(replacement);
+        return;
+    }
+
+    const profile = document.createElement('a');
+    profile.className = 'topbar-user';
+    profile.id = 'topbar-user';
+    profile.href = 'settings.html';
+    profile.setAttribute('aria-label', 'Account Pak Budi');
+    profile.innerHTML = getTopbarUserMarkup();
+
+    const switcher = document.getElementById('theme-switcher');
+    if (switcher && switcher.parentElement === topbarRight) {
+        switcher.insertAdjacentElement('afterend', profile);
+    } else {
+        topbarRight.appendChild(profile);
+    }
+}
+
+function getTopbarUserMarkup() {
+    return `
+        <svg class="topbar-user-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M20 21a8 8 0 0 0-16 0"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>Pak Budi</span>
+    `;
+}
+
 function setActivePage() {
-    const path = window.location.pathname.split('/').pop() || 'index.html';
+    const path = getCurrentPagePath();
     const activeMap = {
         'farms.html': 'index.html'
     };
@@ -416,7 +567,8 @@ function setActivePage() {
         link.removeAttribute('aria-current');
 
         const href = link.getAttribute('href');
-        if (href === activePath || (activePath === '' && href === 'index.html')) {
+        const hrefPath = (href || '').split('?')[0].split('#')[0];
+        if (hrefPath === activePath || (activePath === '' && hrefPath === 'index.html')) {
             link.classList.add('active');
             link.setAttribute('aria-current', 'page');
         }
@@ -516,8 +668,11 @@ function timeAgo(date) {
 document.addEventListener('DOMContentLoaded', () => {
     applyTheme(getSavedTheme());
     startClock();
+    renderContextSidebar();
+    renderFarmSwitcher();
     setActivePage();
     initSidebar();
     initThemeSwitcher();
+    renderTopbarUser();
     enableThemeTransitions();
 });
