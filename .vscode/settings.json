@@ -26,5 +26,6 @@
     "**/.venv": true,
     "**/__pycache__": true,
     "**/backend/data": true
-  }
+  },
+  "liveServer.settings.port": 5501
 }

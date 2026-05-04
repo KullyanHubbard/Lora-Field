@@ -24,6 +24,7 @@ Dokumentasi otomatis FastAPI tersedia di `http://127.0.0.1:8000/docs`.
 | GET | `/health` | Cek status backend |
 | GET | `/api/summary` | Ringkasan node, sensor terbaru, cuaca, dan keputusan |
 | GET | `/api/nodes` | Daftar node |
+| PATCH | `/api/nodes/{node_id}/location` | Simpan lokasi dan koordinat node |
 | GET | `/api/nodes/{node_id}/readings` | Riwayat pembacaan sensor |
 | POST | `/api/nodes/{node_id}/readings` | Simpan pembacaan sensor baru |
 | GET | `/api/weather` | Data cuaca aktif |

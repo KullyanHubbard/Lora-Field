@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import get_connection, init_db, row_to_dict
-from .schemas import SensorReadingIn, ThresholdConfig, WeatherUpdate
+from .schemas import NodeLocationUpdate, SensorReadingIn, ThresholdConfig, WeatherUpdate
 
 
 THRESHOLDS = ThresholdConfig()
@@ -132,6 +132,36 @@ def list_nodes() -> dict:
     with get_connection() as connection:
         nodes = [dict(row) for row in connection.execute("SELECT * FROM nodes ORDER BY id")]
     return {"items": nodes}
+
+
+@app.patch("/api/nodes/{node_id}/location")
+def update_node_location(node_id: str, payload: NodeLocationUpdate) -> dict:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE nodes
+            SET location = ?,
+                region = ?,
+                latitude = ?,
+                longitude = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                payload.location,
+                payload.region,
+                payload.latitude,
+                payload.longitude,
+                node_id,
+            ),
+        )
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Node tidak ditemukan")
+
+        node = row_to_dict(
+            connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
+        )
+    return {"node": node}
 
 
 @app.get("/api/nodes/{node_id}/readings")

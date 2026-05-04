@@ -8,6 +8,13 @@ class SensorReadingIn(BaseModel):
     air_humidity: float = Field(..., ge=0, le=100)
 
 
+class NodeLocationUpdate(BaseModel):
+    location: str = Field(..., min_length=3)
+    region: str = Field(default="", max_length=80)
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+
+
 class WeatherUpdate(BaseModel):
     location: str = Field(default="Bantul, D.I. Yogyakarta", min_length=3)
     condition: str = Field(default="Berawan", min_length=3)

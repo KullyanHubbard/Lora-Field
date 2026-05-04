@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .env.local
+public/static/js/maps-config.js
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

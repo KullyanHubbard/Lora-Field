@@ -7,11 +7,57 @@ DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "lorafield.db"
 
 
+DEFAULT_NODES = [
+    {
+        "id": "node-01",
+        "name": "Node 01",
+        "location": "Lahan Padi Bantul",
+        "region": "Bantul",
+        "latitude": -7.8881,
+        "longitude": 110.3289,
+        "status": "online",
+        "battery": 92,
+        "reading": (38, 27.5, 30.2, 78),
+    },
+    {
+        "id": "node-02",
+        "name": "Node 02",
+        "location": "Kebun Salak Sleman",
+        "region": "Sleman",
+        "latitude": -7.6528,
+        "longitude": 110.4207,
+        "status": "standby",
+        "battery": 86,
+        "reading": (55, 26.8, 29.7, 75),
+    },
+    {
+        "id": "node-03",
+        "name": "Node 03",
+        "location": "Lahan Uji",
+        "region": "Bantul",
+        "latitude": -7.8294,
+        "longitude": 110.3816,
+        "status": "offline",
+        "battery": 0,
+        "reading": (0, 0, 0, 0),
+    },
+]
+
+
 def get_connection() -> sqlite3.Connection:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     return connection
+
+
+def ensure_column(connection: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+    columns = {
+        row["name"]
+        for row in connection.execute(f"PRAGMA table_info({table})").fetchall()
+    }
+    if column not in columns:
+        connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def init_db() -> None:
@@ -22,6 +68,9 @@ def init_db() -> None:
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
                 location TEXT NOT NULL,
+                region TEXT NOT NULL DEFAULT '',
+                latitude REAL,
+                longitude REAL,
                 status TEXT NOT NULL,
                 battery INTEGER NOT NULL,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -63,22 +112,51 @@ def init_db() -> None:
             """
         )
 
-        node_count = connection.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
-        if node_count == 0:
+        ensure_column(connection, "nodes", "region", "TEXT NOT NULL DEFAULT ''")
+        ensure_column(connection, "nodes", "latitude", "REAL")
+        ensure_column(connection, "nodes", "longitude", "REAL")
+
+        for node in DEFAULT_NODES:
             connection.execute(
                 """
-                INSERT INTO nodes (id, name, location, status, battery)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT OR IGNORE INTO nodes
+                    (id, name, location, region, latitude, longitude, status, battery)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                ("node-01", "Node 01", "Lahan Padi Bantul", "online", 92),
+                (
+                    node["id"],
+                    node["name"],
+                    node["location"],
+                    node["region"],
+                    node["latitude"],
+                    node["longitude"],
+                    node["status"],
+                    node["battery"],
+                ),
             )
             connection.execute(
                 """
-                INSERT INTO readings (node_id, soil_moisture, soil_temp, air_temp, air_humidity)
-                VALUES (?, ?, ?, ?, ?)
+                UPDATE nodes
+                SET region = CASE WHEN region = '' THEN ? ELSE region END,
+                    latitude = COALESCE(latitude, ?),
+                    longitude = COALESCE(longitude, ?)
+                WHERE id = ?
                 """,
-                ("node-01", 38, 27.5, 30.2, 78),
+                (node["region"], node["latitude"], node["longitude"], node["id"]),
             )
+
+            reading_count = connection.execute(
+                "SELECT COUNT(*) FROM readings WHERE node_id = ?",
+                (node["id"],),
+            ).fetchone()[0]
+            if reading_count == 0:
+                connection.execute(
+                    """
+                    INSERT INTO readings (node_id, soil_moisture, soil_temp, air_temp, air_humidity)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (node["id"], *node["reading"]),
+                )
 
         weather_count = connection.execute("SELECT COUNT(*) FROM weather").fetchone()[0]
         if weather_count == 0:

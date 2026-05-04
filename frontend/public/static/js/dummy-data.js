@@ -9,9 +9,12 @@
 const NODES = [
     {
         id: '01',
+        backendId: 'node-01',
         name: 'Node 01',
         location: 'Lahan Padi Bantul',
         region: 'Bantul',
+        latitude: -7.8881,
+        longitude: 110.3289,
         status: 'online',
         frequency: '921.2 MHz',
         spreadingFactor: 'SF9',
@@ -25,9 +28,12 @@ const NODES = [
     },
     {
         id: '02',
+        backendId: 'node-02',
         name: 'Node 02',
         location: 'Kebun Salak Sleman',
         region: 'Sleman',
+        latitude: -7.6528,
+        longitude: 110.4207,
         status: 'standby',
         frequency: '921.4 MHz',
         spreadingFactor: 'SF9',
@@ -41,9 +47,12 @@ const NODES = [
     },
     {
         id: '03',
+        backendId: 'node-03',
         name: 'Node 03',
         location: 'Lahan Uji',
         region: 'Bantul',
+        latitude: -7.8294,
+        longitude: 110.3816,
         status: 'offline',
         frequency: '921.6 MHz',
         spreadingFactor: 'SF9',

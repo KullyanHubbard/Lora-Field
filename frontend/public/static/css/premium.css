@@ -413,9 +413,47 @@
 :root:not([data-theme="light"]) .field-metrics-strip div,
 :root:not([data-theme="light"]) .network-health-grid div,
 :root:not([data-theme="light"]) .network-step,
+:root:not([data-theme="light"]) .location-map-shell,
+:root:not([data-theme="light"]) .location-selected,
+:root:not([data-theme="light"]) .location-result,
 :root[data-theme="dark"] .field-metrics-strip div,
 :root[data-theme="dark"] .network-health-grid div,
-:root[data-theme="dark"] .network-step {
+:root[data-theme="dark"] .network-step,
+:root[data-theme="dark"] .location-map-shell,
+:root[data-theme="dark"] .location-selected,
+:root[data-theme="dark"] .location-result {
     background: rgba(15, 23, 42, 0.62);
     border-color: rgba(148, 163, 184, 0.22);
+}
+
+:root:not([data-theme="light"]) .map-icon-btn,
+:root[data-theme="dark"] .map-icon-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--color-border);
+    color: var(--color-gray-400);
+}
+
+:root:not([data-theme="light"]) .map-icon-btn:hover,
+:root[data-theme="dark"] .map-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.24);
+    color: var(--color-white);
+}
+
+:root:not([data-theme="light"]) .location-result:hover,
+:root[data-theme="dark"] .location-result:hover {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.36);
+    color: var(--color-primary-dark);
+}
+
+:root:not([data-theme="light"]) .location-empty,
+:root:not([data-theme="light"]) .map-unavailable,
+:root:not([data-theme="light"]) .maps-key-panel,
+:root[data-theme="dark"] .location-empty,
+:root[data-theme="dark"] .map-unavailable,
+:root[data-theme="dark"] .maps-key-panel {
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(148, 163, 184, 0.22);
+    color: var(--text-muted);
 }

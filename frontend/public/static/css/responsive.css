@@ -87,6 +87,7 @@ video {
     .weather-card,
     .threshold-section,
     .irrigation-control-card,
+    .location-map-layout,
     .field-command {
         grid-template-columns: 1fr;
     }
@@ -294,6 +295,28 @@ video {
     .toolbar-controls .form-group {
         width: 100%;
         min-width: 0;
+    }
+
+    .location-search-control {
+        grid-template-columns: minmax(0, 1fr) 42px;
+    }
+
+    .maps-key-form {
+        grid-template-columns: 1fr;
+    }
+
+    .location-map-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .location-map-actions {
+        justify-content: flex-start;
+    }
+
+    .location-map-shell,
+    .location-map {
+        min-height: 280px;
     }
 
     .log-tools .search-box {
