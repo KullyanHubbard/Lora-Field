@@ -319,9 +319,20 @@ video {
         min-height: 280px;
     }
 
-    .log-tools .search-box {
+    .log-right {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .log-right .search-box {
         width: 100%;
         flex: 0 0 auto;
+    }
+
+    .log-right #btn-export-csv {
+        width: 100%;
+        justify-content: center;
     }
 
     /* Filter bar — tetap horizontal scroll, fitur penuh */

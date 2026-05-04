@@ -341,6 +341,12 @@
     margin-top: 10px;
 }
 
+.external-services {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border-hover);
+}
+
 /* Sensor cards */
 .sensor-cards {
     margin-bottom: 24px;
@@ -644,8 +650,22 @@
     flex-wrap: wrap;
 }
 
-.log-tools .search-box {
-    flex: 0 1 320px;
+.log-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.log-right .search-box {
+    flex: 0 1 280px;
+}
+
+.log-right #btn-export-csv {
+    white-space: nowrap;
+    padding: 0 14px;
+    height: 40px;
+    font-size: 0.82rem;
 }
 
 /* Monitoring */

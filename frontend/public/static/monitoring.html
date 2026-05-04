@@ -157,42 +157,6 @@
                 </div>
             </div>
 
-            <h2 class="section-title">Detail Sensor</h2>
-            <div class="grid-4 mb-24">
-                <div class="card sensor-detail-card">
-                    <div class="sensor-detail-header">
-                        <span class="sensor-detail-label">Kelembapan Tanah</span>
-                        <span class="sensor-detail-value" id="mon-soil">38% VWC</span>
-                    </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-soil-bar" style="transform:scaleX(0.38)"></div></div>
-                    <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
-                </div>
-                <div class="card sensor-detail-card">
-                    <div class="sensor-detail-header">
-                        <span class="sensor-detail-label">Suhu Tanah</span>
-                        <span class="sensor-detail-value" id="mon-stemp">27.5&deg;C</span>
-                    </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-stemp-bar" style="transform:scaleX(0.55)"></div></div>
-                    <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
-                </div>
-                <div class="card sensor-detail-card">
-                    <div class="sensor-detail-header">
-                        <span class="sensor-detail-label">Suhu Udara</span>
-                        <span class="sensor-detail-value" id="mon-atemp">30.2&deg;C</span>
-                    </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-atemp-bar" style="transform:scaleX(0.60)"></div></div>
-                    <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
-                </div>
-                <div class="card sensor-detail-card">
-                    <div class="sensor-detail-header">
-                        <span class="sensor-detail-label">Kelembapan Udara</span>
-                        <span class="sensor-detail-value" id="mon-ahum">78% RH</span>
-                    </div>
-                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="mon-ahum-bar" style="transform:scaleX(0.78)"></div></div>
-                    <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
-                </div>
-            </div>
-
             <h2 class="section-title">Grafik Riwayat Sensor</h2>
             <div class="grid-2 mb-24">
                 <div class="card"><div class="card-header"><h3>Kelembapan Tanah</h3></div><div class="chart-wrap"><canvas id="mon-chart-soil"></canvas></div></div>
@@ -291,16 +255,6 @@
             document.getElementById('ni-sync').textContent = node.syncWord;
             document.getElementById('ni-interval').textContent = node.updateInterval;
             document.getElementById('ni-last').textContent = timeAgo(node.lastUpdate);
-
-            document.getElementById('mon-soil').textContent = node.soilMoisture + '% VWC';
-            document.getElementById('mon-stemp').textContent = node.soilTemp + DEG_C;
-            document.getElementById('mon-atemp').textContent = node.airTemp + DEG_C;
-            document.getElementById('mon-ahum').textContent = node.airHumidity + '% RH';
-
-            document.getElementById('mon-soil-bar').style.transform = `scaleX(${node.soilMoisture / 100})`;
-            document.getElementById('mon-stemp-bar').style.transform = `scaleX(${node.soilTemp / 50})`;
-            document.getElementById('mon-atemp-bar').style.transform = `scaleX(${node.airTemp / 50})`;
-            document.getElementById('mon-ahum-bar').style.transform = `scaleX(${node.airHumidity / 100})`;
 
             if (node.status !== 'offline') {
                 updateMonitoringCharts();

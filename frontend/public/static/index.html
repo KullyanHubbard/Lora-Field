@@ -135,7 +135,7 @@
                     <div class="field-panel-header">
                         <div>
                             <span class="panel-eyebrow">Telemetry Route</span>
-                            <h2>LoRa to Cloud</h2>
+                            <h2>LoRa to Local</h2>
                         </div>
                         <span class="frequency-pill">921.2 MHz</span>
                     </div>
@@ -169,18 +169,28 @@
                                 <span>Mosquitto broker</span>
                             </div>
                         </div>
+                        <div class="network-step">
+                            <span class="network-icon"><i class="fas fa-database" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>Backend Active</strong>
+                                <span>FastAPI + SQLite</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="network-health-grid">
-                        <div>
-                            <span>BMKG API</span>
-                            <strong>Available</strong>
+                    <section class="external-services" aria-label="External services">
+                        <span class="panel-eyebrow">External Services</span>
+                        <div class="network-health-grid">
+                            <div>
+                                <span>BMKG API</span>
+                                <strong>Available</strong>
+                            </div>
+                            <div>
+                                <span>Last Update</span>
+                                <strong id="field-last-update">Live</strong>
+                            </div>
                         </div>
-                        <div>
-                            <span>Last Update</span>
-                            <strong id="field-last-update">0s ago</strong>
-                        </div>
-                    </div>
+                    </section>
                 </div>
             </section>
 
@@ -248,65 +258,6 @@
                 </div>
             </div>
 
-            <h2 class="section-title">Status Irigasi Saat Ini</h2>
-            <div class="card status-big irrigation-status-card" id="irrigation-card">
-                <div class="valve-status open" id="valve-status-text">TERBUKA</div>
-                <div class="irrigation-details">
-                    <div class="detail-row"><span class="detail-label">Node</span><span class="detail-value">Node
-                            01</span></div>
-                    <div class="detail-row"><span class="detail-label">Lokasi</span><span class="detail-value">Lahan
-                            Padi Bantul</span></div>
-                    <div class="detail-row"><span class="detail-label">Threshold Bawah</span><span class="detail-value"
-                            id="dash-lower">40% VWC</span></div>
-                    <div class="detail-row"><span class="detail-label">Threshold Atas</span><span class="detail-value"
-                            id="dash-upper">70% VWC</span></div>
-                </div>
-                <a href="irrigation.html" class="btn btn-primary mt-16"><i class="fas fa-cog" aria-hidden="true"></i>
-                    Detail Irigasi</a>
-            </div>
-
-
-            <h2 class="section-title">Cuaca BMKG</h2>
-            <div class="card weather-card mb-24">
-                <div class="weather-main">
-                    <span class="weather-icon" id="weather-icon" aria-label="Berawan"><i class="fas fa-cloud"
-                            aria-hidden="true"></i></span>
-                    <div>
-                        <div class="weather-temp" id="weather-temp">29&deg;C</div>
-                        <div class="text-muted" id="weather-location">Bantul, D.I. Yogyakarta</div>
-                    </div>
-                </div>
-                <div class="weather-details">
-                    <div class="detail-row"><span class="detail-label">Kondisi</span><span class="detail-value"
-                            id="weather-cond">Berawan</span></div>
-                    <div class="detail-row"><span class="detail-label">Kelembapan</span><span class="detail-value"
-                            id="weather-hum">80%</span></div>
-                    <div class="detail-row"><span class="detail-label">Prediksi Hujan 3 Jam</span><span
-                            class="detail-value" id="weather-rain">Tidak Ada</span></div>
-                    <div class="detail-row"><span class="detail-label">Weather Code</span><span class="detail-value"
-                            id="weather-code">3</span></div>
-                </div>
-            </div>
-
-            <h2 class="section-title">Log Keputusan Terbaru</h2>
-            <div class="card mb-24">
-                <div class="table-wrap">
-                    <table id="dash-log-table">
-                        <thead>
-                            <tr>
-                                <th>Waktu</th>
-                                <th>Node</th>
-                                <th>Kelembapan</th>
-                                <th>Threshold</th>
-                                <th>Cuaca</th>
-                                <th>Keputusan</th>
-                                <th>Valve</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dash-log-body"></tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </main>
 
@@ -339,47 +290,17 @@
             soilBadge.textContent = soilStatus.label;
             soilBadge.className = 'badge ' + (soilStatus.color === 'red' ? 'badge-red' : soilStatus.color === 'blue' ? 'badge-blue' : soilStatus.color === 'gray' ? 'badge-gray' : 'badge-green');
 
-            const valveEl = document.getElementById('valve-status-text');
-            valveEl.textContent = decision.valve.toUpperCase();
             const valveClass = decision.type === 'open' ? 'open' : decision.type === 'delayed' ? 'delayed' : 'closed';
-            valveEl.className = 'valve-status ' + valveClass;
-
             const fieldValve = document.getElementById('field-valve-value');
             if (fieldValve) {
                 fieldValve.textContent = decision.type === 'open' ? 'Open' : decision.type === 'delayed' ? 'Delayed' : 'Closed';
                 fieldValve.className = 'field-state ' + valveClass;
             }
 
-            document.getElementById('dash-lower').textContent = ThresholdManager.lower + '% VWC';
-            document.getElementById('dash-upper').textContent = ThresholdManager.upper + '% VWC';
-
-            const wInfo = getWeatherInfo(WEATHER_DATA.current.code);
-            setWeatherIcon('weather-icon', wInfo);
-            document.getElementById('weather-temp').textContent = WEATHER_DATA.current.temp + DEG_C;
-            document.getElementById('weather-cond').textContent = WEATHER_DATA.current.condition;
-            document.getElementById('weather-hum').textContent = WEATHER_DATA.current.humidity + '%';
-            document.getElementById('weather-rain').textContent = rain ? 'Ada Prediksi Hujan' : 'Tidak Ada';
-            document.getElementById('weather-code').textContent = WEATHER_DATA.current.code;
-
             const fieldWeather = document.getElementById('field-weather-value');
             if (fieldWeather) fieldWeather.textContent = rain ? 'Rain Risk' : 'Low';
             const fieldLastUpdate = document.getElementById('field-last-update');
             if (fieldLastUpdate) fieldLastUpdate.textContent = 'Live';
-
-
-            const tbody = document.getElementById('dash-log-body');
-            tbody.innerHTML = DECISION_LOGS.slice(0, 5).map(l => {
-                const badge = getDecisionBadge(l.type);
-                return `<tr>
-                    <td class="data-value">${l.time}</td>
-                    <td>${l.node}</td>
-                    <td class="data-value">${l.soilMoisture}%</td>
-                    <td class="data-value">${l.threshold}</td>
-                    <td>${l.weather}</td>
-                    <td><span class="badge ${badge.className}">${l.decision}</span></td>
-                    <td>${l.valve}</td>
-                </tr>`;
-            }).join('');
         }
 
         // ── OpenStreetMap (Leaflet) – Dashboard Field Map ──────────────────

@@ -103,10 +103,15 @@
                         <button class="filter-btn" type="button" data-filter="closed" aria-pressed="false">Valve Tertutup</button>
                         <button class="filter-btn" type="button" data-filter="warning" aria-pressed="false">Warning</button>
                     </div>
-                    <label class="search-box" for="log-search">
-                        <i class="fas fa-search" aria-hidden="true"></i>
-                        <input type="text" placeholder="Cari node, lokasi, atau keputusan..." id="log-search">
-                    </label>
+                    <div class="log-right">
+                        <label class="search-box" for="log-search">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <input type="text" placeholder="Cari node, lokasi, atau keputusan..." id="log-search">
+                        </label>
+                        <button class="btn btn-secondary" type="button" id="btn-export-csv" onclick="exportLogsCSV()">
+                            <i class="fas fa-download" aria-hidden="true"></i> Export CSV
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -195,6 +200,55 @@
             searchQuery = event.target.value.trim();
             renderLogs();
         });
+
+        function escapeCSV(value) {
+            const str = String(value ?? '');
+            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+
+        function exportLogsCSV() {
+            let logs = DECISION_LOGS;
+            if (activeFilter !== 'all') logs = logs.filter(log => log.type === activeFilter);
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                logs = logs.filter(log =>
+                    log.node.toLowerCase().includes(query) ||
+                    log.decision.toLowerCase().includes(query) ||
+                    log.location.toLowerCase().includes(query)
+                );
+            }
+
+            const headers = ['Waktu', 'Node', 'Lokasi', 'Kelembapan (%)', 'Threshold', 'Suhu Tanah (°C)', 'Cuaca', 'Weather Code', 'Keputusan', 'Valve', 'Keterangan'];
+            const rows = logs.map(log => [
+                log.time,
+                log.node,
+                log.location,
+                log.soilMoisture,
+                log.threshold,
+                log.soilTemp,
+                log.weather,
+                log.weatherCode,
+                log.decision,
+                log.valve,
+                log.note
+            ].map(escapeCSV).join(','));
+
+            const csv = [headers.map(escapeCSV).join(','), ...rows].join('\r\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const today = new Date().toISOString().slice(0, 10);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lorafield-logs-${today}.csv`;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             renderLogs();
