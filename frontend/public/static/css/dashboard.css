@@ -665,6 +665,219 @@
     margin: 0;
 }
 
+.location-search-control {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 42px;
+    gap: 8px;
+    align-items: center;
+}
+
+.map-icon-btn {
+    width: 42px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+}
+
+.map-icon-btn:hover {
+    border-color: var(--color-border-hover);
+    background: var(--color-gray-200);
+    color: var(--color-gray-900);
+    transform: translateY(-1px);
+}
+
+.pac-container {
+    z-index: 3000;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+}
+
+.location-map-card {
+    padding: 18px;
+}
+
+.location-map-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.location-map-header h3 {
+    color: var(--color-gray-900);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.location-map-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.location-map-layout {
+    display: grid;
+    grid-template-columns: minmax(360px, 1.45fr) minmax(260px, 0.75fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+.location-map-shell {
+    position: relative;
+    min-height: 320px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-gray-100);
+}
+
+.location-map {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+}
+
+.map-unavailable {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: var(--color-gray-50);
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.map-unavailable[hidden] {
+    display: none;
+}
+
+.maps-key-panel {
+    width: min(460px, 100%);
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-card);
+    box-shadow: var(--shadow-sm);
+}
+
+.maps-key-panel strong {
+    color: var(--color-gray-900);
+    font-size: 0.98rem;
+}
+
+.maps-key-panel span {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.maps-key-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.maps-key-hint {
+    font-size: 0.74rem;
+}
+
+.location-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+}
+
+.location-selected,
+.location-result {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-gray-50);
+}
+
+.location-selected {
+    min-height: 104px;
+    padding: 14px;
+}
+
+.location-selected strong,
+.location-selected span {
+    display: block;
+}
+
+.location-selected strong {
+    margin-top: 4px;
+    color: var(--color-gray-900);
+    font-size: 0.96rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.location-selected span:last-child {
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+}
+
+.location-results {
+    display: grid;
+    gap: 8px;
+    max-height: 204px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.location-result {
+    width: 100%;
+    padding: 10px 12px;
+    color: var(--color-gray-800);
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: left;
+    overflow-wrap: anywhere;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.location-result:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+
+.location-result span {
+    display: block;
+    margin-top: 3px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.location-empty {
+    min-height: 48px;
+    padding: 12px;
+    border: 1px dashed var(--color-border-hover);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
 .node-info-card {
     margin-bottom: 24px;
 }
@@ -883,3 +1096,166 @@
 .weather-impact i {
     margin-right: 6px;
 }
+
+/* ── OpenStreetMap / Leaflet integration ─────────────────────────────── */
+
+/* Dashboard field map container */
+.field-osm-map {
+    position: relative;
+    height: 292px;
+    border: 1px solid rgba(16, 185, 129, 0.18);
+    border-radius: var(--radius);
+    overflow: hidden;
+    z-index: 1;
+}
+
+/* Monitoring node map shell override */
+.location-map-shell .location-map {
+    min-height: 360px;
+}
+
+/* Custom Leaflet marker */
+.lf-marker {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid var(--color-primary);
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--color-primary);
+    font-size: 1rem;
+    box-shadow: 0 0 0 4px rgba(0, 230, 118, 0.12), 0 4px 14px rgba(0,0,0,0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.lf-marker:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 6px rgba(0, 230, 118, 0.18), 0 6px 20px rgba(0,0,0,0.5);
+}
+
+.lf-marker-node {
+    border-color: var(--color-primary);
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--color-primary);
+}
+
+.lf-marker-gw {
+    border-color: #60a5fa;
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+}
+
+/* Popup dark-mode override */
+.lf-popup .leaflet-popup-content-wrapper {
+    padding: 0;
+    border-radius: 10px;
+    background: #1a1f2e;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+    color: #e2e8f0;
+    font-family: var(--font);
+}
+
+.lf-popup .leaflet-popup-tip {
+    background: #1a1f2e;
+}
+
+.lf-popup-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+}
+
+.lf-pop-title {
+    display: block;
+    color: #f1f5f9;
+    font-size: 0.92rem;
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+
+.lf-pop-sub {
+    display: block;
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.lf-pop-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #cbd5e1;
+    line-height: 1.5;
+}
+
+.lf-pop-row i {
+    width: 14px;
+    text-align: center;
+    color: var(--color-primary);
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.lf-pop-row.text-muted {
+    color: #475569;
+    font-size: 0.72rem;
+    margin-top: 4px;
+}
+
+.lf-pop-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.lf-pop-badge.badge-green {
+    background: rgba(0, 230, 118, 0.15);
+    color: #00e676;
+    border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+.lf-pop-badge.badge-yellow {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.lf-pop-badge.badge-red {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+/* Leaflet attribution dark override */
+.lf-popup .leaflet-popup-close-button {
+    color: #64748b !important;
+    font-size: 18px !important;
+    top: 6px !important;
+    right: 8px !important;
+}
+
+.leaflet-control-attribution {
+    background: rgba(15, 23, 42, 0.72) !important;
+    color: #475569 !important;
+    font-size: 0.65rem !important;
+}
+
+.leaflet-control-attribution a {
+    color: #64748b !important;
+}
+

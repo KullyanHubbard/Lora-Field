@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/premium.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -112,32 +113,7 @@
                         <span class="badge badge-green">Node 01 Online</span>
                     </div>
 
-                    <div class="field-plot" aria-hidden="true">
-                        <span class="field-row field-row-1"></span>
-                        <span class="field-row field-row-2"></span>
-                        <span class="field-row field-row-3"></span>
-                        <span class="field-row field-row-4"></span>
-                        <span class="field-row field-row-5"></span>
-                        <span class="irrigation-line"></span>
-                        <span class="irrigation-spray spray-1"></span>
-                        <span class="irrigation-spray spray-2"></span>
-                        <span class="irrigation-spray spray-3"></span>
-                        <span class="lora-link lora-link-main"></span>
-                        <span class="lora-link lora-link-echo"></span>
-
-                        <span class="field-node sensor-node">
-                            <i class="fas fa-microchip" aria-hidden="true"></i>
-                            <span>Node 01</span>
-                        </span>
-                        <span class="field-node gateway-node">
-                            <i class="fas fa-tower-broadcast" aria-hidden="true"></i>
-                            <span>Gateway</span>
-                        </span>
-                        <span class="weather-pin">
-                            <i class="fas fa-cloud-sun" aria-hidden="true"></i>
-                            BMKG
-                        </span>
-                    </div>
+                    <div class="field-osm-map" id="dash-field-map" aria-label="Peta lokasi node sensor"></div>
 
                     <div class="field-metrics-strip">
                         <div>
@@ -292,27 +268,6 @@
                     Detail Irigasi</a>
             </div>
 
-            <h2 class="section-title mt-24">Grafik Monitoring</h2>
-            <div class="grid-3 charts-section mb-24">
-                <div class="card chart-card">
-                    <div class="card-header">
-                        <h3>Kelembapan Tanah</h3>
-                    </div>
-                    <div class="chart-wrap"><canvas id="chart-soil-moisture"></canvas></div>
-                </div>
-                <div class="card chart-card">
-                    <div class="card-header">
-                        <h3>Suhu Tanah</h3>
-                    </div>
-                    <div class="chart-wrap"><canvas id="chart-soil-temp"></canvas></div>
-                </div>
-                <div class="card chart-card">
-                    <div class="card-header">
-                        <h3>Kelembapan Udara</h3>
-                    </div>
-                    <div class="chart-wrap"><canvas id="chart-air-humidity"></canvas></div>
-                </div>
-            </div>
 
             <h2 class="section-title">Cuaca BMKG</h2>
             <div class="card weather-card mb-24">
@@ -362,6 +317,7 @@
     <script src="js/main.js"></script>
     <script src="js/charts.js"></script>
     <script src="js/simulation.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         function updateDashboardUI() {
             const node = NODES[0];
@@ -413,7 +369,6 @@
             const fieldLastUpdate = document.getElementById('field-last-update');
             if (fieldLastUpdate) fieldLastUpdate.textContent = 'Live';
 
-            updateDashboardCharts();
 
             const tbody = document.getElementById('dash-log-body');
             tbody.innerHTML = DECISION_LOGS.slice(0, 5).map(l => {
@@ -430,8 +385,90 @@
             }).join('');
         }
 
+        // ── OpenStreetMap (Leaflet) – Dashboard Field Map ──────────────────
+        let dashMap = null;
+        let dashNodeMarker = null;
+
+        function initDashFieldMap() {
+            const node = NODES[0];
+            const center = [node.latitude, node.longitude];
+            const gatewayLat = node.latitude + 0.0042;
+            const gatewayLng = node.longitude + 0.0068;
+
+            // Tile layer disesuaikan dengan dark theme
+            dashMap = L.map('dash-field-map', {
+                center: center,
+                zoom: 15,
+                zoomControl: true,
+                attributionControl: true,
+                scrollWheelZoom: false
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(dashMap);
+
+            // Custom icon – Node Sensor
+            const nodeIcon = L.divIcon({
+                className: '',
+                html: '<div class="lf-marker lf-marker-node"><i class="fas fa-microchip"></i></div>',
+                iconSize: [38, 38],
+                iconAnchor: [19, 19],
+                popupAnchor: [0, -22]
+            });
+
+            // Custom icon – Gateway
+            const gwIcon = L.divIcon({
+                className: '',
+                html: '<div class="lf-marker lf-marker-gw"><i class="fas fa-tower-broadcast"></i></div>',
+                iconSize: [38, 38],
+                iconAnchor: [19, 19],
+                popupAnchor: [0, -22]
+            });
+
+            // Marker node sensor
+            dashNodeMarker = L.marker(center, { icon: nodeIcon })
+                .addTo(dashMap)
+                .bindPopup(buildDashPopup(node), { className: 'lf-popup', maxWidth: 240 });
+
+            // Marker gateway
+            L.marker([gatewayLat, gatewayLng], { icon: gwIcon })
+                .addTo(dashMap)
+                .bindPopup('<div class="lf-popup-inner"><strong class="lf-pop-title">Gateway LoRa</strong><span class="lf-pop-sub">LILYGO LoRa32 &bull; 921.2 MHz</span><span class="lf-pop-row"><i class="fas fa-signal"></i> SF9 &bull; Sync 0x12</span><span class="lf-pop-badge badge-green">Online</span></div>', { className: 'lf-popup', maxWidth: 240 });
+
+            // Garis LoRa link antar node ↔ gateway
+            L.polyline([center, [gatewayLat, gatewayLng]], {
+                color: '#00e676',
+                weight: 2,
+                opacity: 0.65,
+                dashArray: '6 8'
+            }).addTo(dashMap);
+        }
+
+        function buildDashPopup(node) {
+            const rain = isRainPredicted();
+            const decision = makeIrrigationDecision(node.soilMoisture, rain);
+            const valveColor = decision.type === 'open' ? '#00e676' : decision.type === 'delayed' ? '#f59e0b' : '#60a5fa';
+            return `<div class="lf-popup-inner">
+                <strong class="lf-pop-title">${node.name}</strong>
+                <span class="lf-pop-sub">${node.location}</span>
+                <span class="lf-pop-row"><i class="fas fa-water"></i> Kelembapan: <b>${node.soilMoisture}% VWC</b></span>
+                <span class="lf-pop-row"><i class="fas fa-temperature-low"></i> Suhu Tanah: <b>${node.soilTemp}°C</b></span>
+                <span class="lf-pop-row" style="color:${valveColor}"><i class="fas fa-tint"></i> Valve: <b>${decision.valve}</b></span>
+                <span class="lf-pop-row text-muted"><i class="fas fa-map-marker-alt"></i> ${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)}</span>
+            </div>`;
+        }
+
+        function refreshDashPopup() {
+            if (!dashNodeMarker) return;
+            const node = NODES[0];
+            dashNodeMarker.setPopupContent(buildDashPopup(node));
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            initDashboardCharts();
+            initDashFieldMap();
             updateDashboardUI();
             startSimulation();
         });

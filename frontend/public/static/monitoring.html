@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/premium.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -121,6 +122,25 @@
                 </div>
             </div>
 
+            <!-- Peta Lokasi Node -->
+            <h2 class="section-title">Peta Lokasi Node</h2>
+            <div class="card location-map-card mb-24">
+                <div class="location-map-header">
+                    <div>
+                        <h3><i class="fas fa-map-marked-alt" aria-hidden="true"></i> Sebaran Node Sensor</h3>
+                        <span class="text-muted" style="font-size:0.8rem">Klik marker untuk melihat data sensor</span>
+                    </div>
+                    <div class="location-map-actions">
+                        <span class="badge badge-green" id="mon-map-online-badge">1 Online</span>
+                        <span class="badge badge-gray" id="mon-map-standby-badge">1 Standby</span>
+                        <span class="badge badge-red" id="mon-map-offline-badge">1 Offline</span>
+                    </div>
+                </div>
+                <div class="location-map-shell">
+                    <div class="location-map" id="mon-node-map" aria-label="Peta sebaran node sensor"></div>
+                </div>
+            </div>
+
             <div class="card node-info-card" id="node-info-card">
                 <div class="flex-between">
                     <h3 id="node-title">Node 01 - Lahan Padi Bantul</h3>
@@ -207,6 +227,7 @@
     <script src="js/main.js"></script>
     <script src="js/charts.js"></script>
     <script src="js/simulation.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         let selectedNodeId = '01';
         let selectedRegion = '';
@@ -312,8 +333,79 @@
             }).join('');
         }
 
+        // ── OpenStreetMap (Leaflet) – Monitoring Node Map ──────────────
+        let monMap = null;
+        const monMarkers = {};
+
+        function initMonNodeMap() {
+            // Tengah peta: rata-rata koordinat semua node
+            const avgLat = NODES.reduce((s, n) => s + n.latitude, 0) / NODES.length;
+            const avgLng = NODES.reduce((s, n) => s + n.longitude, 0) / NODES.length;
+
+            monMap = L.map('mon-node-map', {
+                center: [avgLat, avgLng],
+                zoom: 11,
+                zoomControl: true,
+                scrollWheelZoom: false
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(monMap);
+
+            NODES.forEach(node => {
+                const colorMap = { online: '#00e676', standby: '#f59e0b', offline: '#f87171' };
+                const iconColor = colorMap[node.status] || '#94a3b8';
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div class="lf-marker" style="background:${iconColor}20;border-color:${iconColor}"><i class="fas fa-microchip" style="color:${iconColor}"></i></div>`,
+                    iconSize: [38, 38],
+                    iconAnchor: [19, 19],
+                    popupAnchor: [0, -22]
+                });
+
+                const marker = L.marker([node.latitude, node.longitude], { icon })
+                    .addTo(monMap)
+                    .bindPopup(buildMonPopup(node), { className: 'lf-popup', maxWidth: 256 });
+
+                monMarkers[node.id] = marker;
+            });
+
+            // Fit bounds semua node
+            const bounds = L.latLngBounds(NODES.map(n => [n.latitude, n.longitude]));
+            monMap.fitBounds(bounds, { padding: [40, 40] });
+        }
+
+        function buildMonPopup(node) {
+            const statusLabel = { online: 'Online', standby: 'Standby', offline: 'Offline' }[node.status] || node.status;
+            const statusClass = { online: 'badge-green', standby: 'badge-yellow', offline: 'badge-red' }[node.status] || 'badge-gray';
+            const isOff = node.status === 'offline';
+            return `<div class="lf-popup-inner">
+                <strong class="lf-pop-title">${node.name}</strong>
+                <span class="lf-pop-sub">${node.location}</span>
+                ${!isOff ? `
+                <span class="lf-pop-row"><i class="fas fa-water"></i> Kelembapan: <b>${node.soilMoisture}% VWC</b></span>
+                <span class="lf-pop-row"><i class="fas fa-temperature-low"></i> Suhu Tanah: <b>${node.soilTemp}&deg;C</b></span>
+                <span class="lf-pop-row"><i class="fas fa-thermometer-half"></i> Suhu Udara: <b>${node.airTemp}&deg;C</b></span>
+                <span class="lf-pop-row"><i class="fas fa-droplet"></i> Kelembapan Udara: <b>${node.airHumidity}% RH</b></span>
+                ` : '<span class="lf-pop-row" style="color:#f87171"><i class="fas fa-exclamation-triangle"></i> Node Offline</span>'}
+                <span class="lf-pop-row text-muted"><i class="fas fa-map-marker-alt"></i> ${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)}</span>
+                <span class="lf-pop-badge ${statusClass}">${statusLabel}</span>
+            </div>`;
+        }
+
+        function panMonMapToNode(nodeId) {
+            const node = NODES.find(n => n.id === nodeId);
+            if (!monMap || !node) return;
+            monMap.setView([node.latitude, node.longitude], 15, { animate: true });
+            if (monMarkers[nodeId]) monMarkers[nodeId].openPopup();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initMonitoringCharts();
+            initMonNodeMap();
             updateMonitoringUI();
             startSimulation();
         });
