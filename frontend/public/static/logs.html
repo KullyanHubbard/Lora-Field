@@ -58,11 +58,17 @@
             <p>LoRa-Based Precision Agriculture System</p>
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi">
-            <a href="index.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
+            <a href="farm-detail.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
+            <a href="index.html" class="sidebar-link"><i class="fas fa-map-location-dot" aria-hidden="true"></i>
+                Kebun Saya</a>
             <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i> Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irrigation</a>
-            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Weather</a>
-            <a href="logs.html" class="sidebar-link active" aria-current="page"><i class="fas fa-list-alt" aria-hidden="true"></i> System Logs</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
+            <a href="gateway.html" class="sidebar-link"><i class="fas fa-tower-broadcast" aria-hidden="true"></i>
+                Gateway</a>
+            <a href="nodes.html" class="sidebar-link"><i class="fas fa-microchip" aria-hidden="true"></i> Node Sensor</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link active" aria-current="page"><i class="fas fa-list-alt" aria-hidden="true"></i> Riwayat</a>
+            <a href="settings.html" class="sidebar-link"><i class="fas fa-gear" aria-hidden="true"></i> Settings</a>
         </nav>
         <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
     </aside>
@@ -74,8 +80,8 @@
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
                 <span class="topbar-title">
-                    <span class="topbar-title-full">System Logs</span>
-                    <span class="topbar-title-short">Logs</span>
+                    <span class="topbar-title-full">Riwayat Sistem</span>
+                    <span class="topbar-title-short">Riwayat</span>
                 </span>
             </div>
             <div class="topbar-right">
@@ -87,7 +93,8 @@
         <div class="page-content">
             <section class="page-header">
                 <div>
-                    <span class="page-kicker">Decision Audit</span>
+                    <span class="page-kicker">Audit Keputusan</span>
+                    <h1 id="logs-title">Riwayat Kebun</h1>
                 </div>
                 <div class="page-header-actions">
                     <span class="status-pill"><i class="fas fa-database" aria-hidden="true"></i> 50 log terakhir</span>
@@ -108,7 +115,7 @@
                             <i class="fas fa-search" aria-hidden="true"></i>
                             <input type="text" placeholder="Cari node, lokasi, atau keputusan..." id="log-search">
                         </label>
-                        <button class="btn btn-secondary" type="button" id="btn-export-csv" onclick="exportLogsCSV()">
+                        <button class="btn btn-secondary" type="button" id="btn-export-csv">
                             <i class="fas fa-download" aria-hidden="true"></i> Export CSV
                         </button>
                     </div>
@@ -147,8 +154,15 @@
         let activeFilter = 'all';
         let searchQuery = '';
 
+        function getScopedLogs() {
+            const farm = getCurrentFarm();
+            const farmNodeNames = new Set(getFarmNodes(farm).map(node => node.name));
+            document.getElementById('logs-title').textContent = `Riwayat ${farm.name}`;
+            return DECISION_LOGS.filter(log => farmNodeNames.has(log.node));
+        }
+
         function renderLogs() {
-            let logs = DECISION_LOGS;
+            let logs = getScopedLogs();
             if (activeFilter !== 'all') logs = logs.filter(log => log.type === activeFilter);
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
@@ -210,7 +224,7 @@
         }
 
         function exportLogsCSV() {
-            let logs = DECISION_LOGS;
+            let logs = getScopedLogs();
             if (activeFilter !== 'all') logs = logs.filter(log => log.type === activeFilter);
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
@@ -243,7 +257,7 @@
             const a = document.createElement('a');
             a.href = url;
             a.download = `lorafield-logs-${today}.csv`;
-            a.style.display = 'none';
+            a.className = 'download-link-hidden';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -251,6 +265,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btn-export-csv').addEventListener('click', exportLogsCSV);
             renderLogs();
             startSimulation();
         });

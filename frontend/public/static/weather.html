@@ -58,11 +58,17 @@
             <p>LoRa-Based Precision Agriculture System</p>
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi">
-            <a href="index.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
+            <a href="farm-detail.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
+            <a href="index.html" class="sidebar-link"><i class="fas fa-map-location-dot" aria-hidden="true"></i>
+                Kebun Saya</a>
             <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i> Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irrigation</a>
-            <a href="weather.html" class="sidebar-link active" aria-current="page"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Weather</a>
-            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> System Logs</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
+            <a href="gateway.html" class="sidebar-link"><i class="fas fa-tower-broadcast" aria-hidden="true"></i>
+                Gateway</a>
+            <a href="nodes.html" class="sidebar-link"><i class="fas fa-microchip" aria-hidden="true"></i> Node Sensor</a>
+            <a href="weather.html" class="sidebar-link active" aria-current="page"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Riwayat</a>
+            <a href="settings.html" class="sidebar-link"><i class="fas fa-gear" aria-hidden="true"></i> Settings</a>
         </nav>
         <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
     </aside>
@@ -74,8 +80,8 @@
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
                 <span class="topbar-title">
-                    <span class="topbar-title-full">Weather Forecast</span>
-                    <span class="topbar-title-short">Weather</span>
+                    <span class="topbar-title-full">Cuaca BMKG</span>
+                    <span class="topbar-title-short">Cuaca</span>
                 </span>
             </div>
             <div class="topbar-right">
@@ -87,17 +93,17 @@
         <div class="page-content">
             <section class="page-header">
                 <div>
-                    <span class="page-kicker">Meteorological Data</span>
+                    <span class="page-kicker">Data Meteorologi</span>
                 </div>
                 <div class="page-header-actions">
-                    <span class="status-pill"><i class="fas fa-location-dot" aria-hidden="true"></i> Bantul, DIY</span>
+                    <span class="status-pill" id="weather-location-pill"><i class="fas fa-location-dot" aria-hidden="true"></i> Lokasi Kebun</span>
                 </div>
             </section>
 
             <div class="card mb-24">
                 <div class="node-info-grid">
-                    <div class="node-info-item"><span class="info-label">Wilayah</span><span class="info-value">Bantul, D.I. Yogyakarta</span></div>
-                    <div class="node-info-item"><span class="info-label">Status Koneksi</span><span class="info-value"><span class="badge badge-green">Available</span></span></div>
+                    <div class="node-info-item"><span class="info-label">Wilayah</span><span class="info-value" id="w-region">-</span></div>
+                    <div class="node-info-item"><span class="info-label">Status Koneksi</span><span class="info-value"><span class="badge badge-green" id="w-api-status">Available</span></span></div>
                     <div class="node-info-item"><span class="info-label">Update Terakhir</span><span class="info-value" id="w-last-update">10 menit lalu</span></div>
                 </div>
             </div>
@@ -108,7 +114,7 @@
                     <span class="weather-icon" id="w-icon" aria-label="Berawan"><i class="fas fa-cloud" aria-hidden="true"></i></span>
                     <div>
                         <div class="weather-temp" id="w-temp">29&deg;C</div>
-                        <div class="text-muted">Bantul, D.I. Yogyakarta</div>
+                        <div class="text-muted" id="w-location">Lokasi Kebun</div>
                     </div>
                 </div>
                 <div class="weather-details">
@@ -154,10 +160,14 @@
     <script>
         function updateWeatherUI() {
             const weather = WEATHER_DATA;
-            const rain = isRainPredicted();
+            const farm = getCurrentFarm();
+            const rain = farm.rainPrediction || isRainPredicted();
             const info = getWeatherInfo(weather.current.code);
 
             setWeatherIcon('w-icon', info);
+            document.getElementById('weather-location-pill').innerHTML = `<i class="fas fa-location-dot" aria-hidden="true"></i> ${farm.region}`;
+            document.getElementById('w-region').textContent = farm.location;
+            document.getElementById('w-location').textContent = farm.location;
             document.getElementById('w-temp').textContent = weather.current.temp + DEG_C;
             document.getElementById('w-cond').textContent = weather.current.condition;
             document.getElementById('w-hum').textContent = weather.current.humidity + '%';

@@ -21,7 +21,7 @@
             document.documentElement.dataset.theme = 'dark';
         }
     </script>
-    <title>Dashboard - LoraField</title>
+    <title>Pilih Kebun - LoraField</title>
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
 
@@ -64,13 +64,19 @@
             <p>LoRa-Based Precision Agriculture System</p>
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi">
-            <a href="index.html" class="sidebar-link active" aria-current="page"><i class="fas fa-th-large"
+            <a href="farm-detail.html" class="sidebar-link"><i class="fas fa-th-large"
                     aria-hidden="true"></i> Dashboard</a>
+            <a href="index.html" class="sidebar-link active" aria-current="page"><i class="fas fa-map-location-dot" aria-hidden="true"></i>
+                Kebun Saya</a>
             <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i>
                 Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irrigation</a>
-            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Weather</a>
-            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> System Logs</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
+            <a href="gateway.html" class="sidebar-link"><i class="fas fa-tower-broadcast" aria-hidden="true"></i>
+                Gateway</a>
+            <a href="nodes.html" class="sidebar-link"><i class="fas fa-microchip" aria-hidden="true"></i> Node Sensor</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Riwayat</a>
+            <a href="settings.html" class="sidebar-link"><i class="fas fa-gear" aria-hidden="true"></i> Settings</a>
         </nav>
         <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
     </aside>
@@ -83,12 +89,13 @@
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
                 <span class="topbar-title">
-                    <span class="topbar-title-full">LoraField Dashboard</span>
-                    <span class="topbar-title-short">Dashboard</span>
+                    <span class="topbar-title-full">Pilih Kebun</span>
+                    <span class="topbar-title-short">Kebun</span>
                 </span>
             </div>
             <div class="topbar-right">
                 <span class="topbar-clock" id="realtime-clock"></span>
+                <span class="badge badge-gray" id="topbar-user">Pak Budi</span>
                 <span class="badge badge-green badge-online">Online</span>
             </div>
         </header>
@@ -96,211 +103,62 @@
         <div class="page-content">
             <section class="page-header">
                 <div>
-                    <span class="page-kicker">Field Operations</span>
+                    <span class="page-kicker">Kebun Saya</span>
+                    <h1 id="dashboard-greeting">Pilih Kebun</h1>
+                    <p>Pilih kebun dari marker map atau card kebun untuk masuk ke dashboard monitoring.</p>
                 </div>
                 <div class="page-header-actions">
-                    <span class="status-pill"><i class="fas fa-signal" aria-hidden="true"></i> LoRa P2P active</span>
+                    <span class="status-pill"><i class="fas fa-user-lock" aria-hidden="true"></i> Akses akun</span>
+                    <a class="btn btn-secondary btn-sm" href="login.html"><i class="fas fa-right-from-bracket"
+                            aria-hidden="true"></i> Logout</a>
                 </div>
             </section>
 
-            <section class="field-command mb-24" aria-label="LoraField field and telemetry overview">
-                <div class="field-map-panel">
-                    <div class="field-panel-header">
-                        <div>
-                            <span class="panel-eyebrow">Lahan Padi Bantul</span>
-                            <h2>Live Field Map</h2>
-                        </div>
-                        <span class="badge badge-green">Node 01 Online</span>
+            <section class="field-map-panel mb-24" aria-label="Peta pemilihan kebun">
+                <div class="field-panel-header">
+                    <div>
+                        <span class="panel-eyebrow">Peta Kebun Interaktif</span>
+                        <h2>Lokasi Kebun</h2>
                     </div>
-
-                    <div class="field-osm-map" id="dash-field-map" aria-label="Peta lokasi node sensor"></div>
-
-                    <div class="field-metrics-strip">
-                        <div>
-                            <span>Soil Moisture</span>
-                            <strong id="field-moisture-value">38% VWC</strong>
-                        </div>
-                        <div>
-                            <span>Valve State</span>
-                            <strong class="field-state open" id="field-valve-value">Open</strong>
-                        </div>
-                        <div>
-                            <span>Weather Risk</span>
-                            <strong id="field-weather-value">Low</strong>
-                        </div>
-                    </div>
+                    <span class="badge badge-green" id="map-farm-count">0 Kebun</span>
                 </div>
 
-                <div class="telemetry-panel">
-                    <div class="field-panel-header">
-                        <div>
-                            <span class="panel-eyebrow">Telemetry Route</span>
-                            <h2>LoRa to Local</h2>
-                        </div>
-                        <span class="frequency-pill">921.2 MHz</span>
-                    </div>
+                <label class="search-box farm-search" for="farm-search">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input type="text" id="farm-search" placeholder="Cari nama kebun, lokasi, atau tanaman">
+                </label>
 
-                    <div class="network-flow" aria-label="Telemetry route">
-                        <div class="network-step">
-                            <span class="network-icon"><i class="fas fa-microchip" aria-hidden="true"></i></span>
-                            <div>
-                                <strong id="sys-node">1 Node</strong>
-                                <span>Field Sensor</span>
-                            </div>
-                        </div>
-                        <div class="network-step">
-                            <span class="network-icon"><i class="fas fa-signal" aria-hidden="true"></i></span>
-                            <div>
-                                <strong>LoRa P2P</strong>
-                                <span>SF9 Sync 0x12</span>
-                            </div>
-                        </div>
-                        <div class="network-step">
-                            <span class="network-icon"><i class="fas fa-server" aria-hidden="true"></i></span>
-                            <div>
-                                <strong>Gateway Online</strong>
-                                <span>LILYGO LoRa32</span>
-                            </div>
-                        </div>
-                        <div class="network-step">
-                            <span class="network-icon"><i class="fas fa-cloud" aria-hidden="true"></i></span>
-                            <div>
-                                <strong>MQTT Connected</strong>
-                                <span>Mosquitto broker</span>
-                            </div>
-                        </div>
-                        <div class="network-step">
-                            <span class="network-icon"><i class="fas fa-database" aria-hidden="true"></i></span>
-                            <div>
-                                <strong>Backend Active</strong>
-                                <span>FastAPI + SQLite</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="field-osm-map farm-osm-map" id="farm-map" aria-label="Peta lokasi kebun"></div>
 
-                    <section class="external-services" aria-label="External services">
-                        <span class="panel-eyebrow">External Services</span>
-                        <div class="network-health-grid">
-                            <div>
-                                <span>BMKG API</span>
-                                <strong>Available</strong>
-                            </div>
-                            <div>
-                                <span>Last Update</span>
-                                <strong id="field-last-update">Live</strong>
-                            </div>
-                        </div>
-                    </section>
+                <div class="field-metrics-strip selected-farm-strip" id="selected-farm-strip">
+                    <div>
+                        <span>Kebun Dipilih</span>
+                        <strong id="selected-farm-name">-</strong>
+                    </div>
+                    <div>
+                        <span>Aksi Utama</span>
+                        <strong>Buka Dashboard</strong>
+                    </div>
+                    <div>
+                        <span>Mode Pilih</span>
+                        <strong>Marker Map / Card</strong>
+                    </div>
                 </div>
             </section>
 
-            <h2 class="section-title">Ringkasan Sensor Terbaru</h2>
-            <div class="grid-4 sensor-cards mb-24">
-                <div class="card" id="card-soil">
-                    <div class="flex-between">
-                        <div class="card-icon"><i class="fas fa-water" aria-hidden="true"></i></div>
-                        <span class="badge" id="soil-badge">Normal</span>
-                    </div>
-                    <div class="sensor-card-body">
-                        <div><span class="sensor-value" id="soil-value">38</span><span class="sensor-unit"> % VWC</span>
-                        </div>
-                        <div class="metric-label">Kelembapan Tanah</div>
-                        <div class="progress-bar" aria-hidden="true">
-                            <div class="progress-fill" id="soil-bar" style="transform:scaleX(0.38)"></div>
-                        </div>
-                        <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
-                    </div>
-                </div>
-                <div class="card" id="card-stemp">
-                    <div class="flex-between">
-                        <div class="card-icon"><i class="fas fa-temperature-low" aria-hidden="true"></i></div>
-                        <span class="badge badge-gray">Normal</span>
-                    </div>
-                    <div class="sensor-card-body">
-                        <div><span class="sensor-value" id="stemp-value">27.5</span><span class="sensor-unit">
-                                &deg;C</span></div>
-                        <div class="metric-label">Suhu Tanah</div>
-                        <div class="progress-bar" aria-hidden="true">
-                            <div class="progress-fill" id="stemp-bar" style="transform:scaleX(0.55)"></div>
-                        </div>
-                        <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
-                    </div>
-                </div>
-                <div class="card" id="card-atemp">
-                    <div class="flex-between">
-                        <div class="card-icon"><i class="fas fa-thermometer-half" aria-hidden="true"></i></div>
-                        <span class="badge badge-gray">Normal</span>
-                    </div>
-                    <div class="sensor-card-body">
-                        <div><span class="sensor-value" id="atemp-value">30.2</span><span class="sensor-unit">
-                                &deg;C</span></div>
-                        <div class="metric-label">Suhu Udara</div>
-                        <div class="progress-bar" aria-hidden="true">
-                            <div class="progress-fill" id="atemp-bar" style="transform:scaleX(0.60)"></div>
-                        </div>
-                        <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
-                    </div>
-                </div>
-                <div class="card" id="card-ahum">
-                    <div class="flex-between">
-                        <div class="card-icon"><i class="fas fa-droplet" aria-hidden="true"></i></div>
-                        <span class="badge badge-gray">Normal</span>
-                    </div>
-                    <div class="sensor-card-body">
-                        <div><span class="sensor-value" id="ahum-value">78</span><span class="sensor-unit"> % RH</span>
-                        </div>
-                        <div class="metric-label">Kelembapan Udara</div>
-                        <div class="progress-bar" aria-hidden="true">
-                            <div class="progress-fill" id="ahum-bar" style="transform:scaleX(0.78)"></div>
-                        </div>
-                        <div class="progress-range" aria-hidden="true"><span>0%</span><span>100%</span></div>
-                    </div>
-                </div>
-            </div>
-
+            <h2 class="section-title">Kebun Saya</h2>
+            <section class="farm-card-grid" id="farm-list" aria-label="Daftar kebun milik user"></section>
         </div>
     </main>
 
     <script src="js/dummy-data.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/charts.js"></script>
-    <script src="js/simulation.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         function updateDashboardUI() {
-            const node = NODES[0];
-            const rain = isRainPredicted();
-            const decision = makeIrrigationDecision(node.soilMoisture, rain);
-            const soilStatus = getSoilStatus(node.soilMoisture);
-
-            document.getElementById('soil-value').textContent = node.soilMoisture;
-            document.getElementById('stemp-value').textContent = node.soilTemp;
-            document.getElementById('atemp-value').textContent = node.airTemp;
-            document.getElementById('ahum-value').textContent = node.airHumidity;
-
-            document.getElementById('soil-bar').style.transform = `scaleX(${node.soilMoisture / 100})`;
-            document.getElementById('stemp-bar').style.transform = `scaleX(${node.soilTemp / 50})`;
-            document.getElementById('atemp-bar').style.transform = `scaleX(${node.airTemp / 50})`;
-            document.getElementById('ahum-bar').style.transform = `scaleX(${node.airHumidity / 100})`;
-
-            const fieldMoisture = document.getElementById('field-moisture-value');
-            if (fieldMoisture) fieldMoisture.textContent = node.soilMoisture + '% VWC';
-
-            const soilBadge = document.getElementById('soil-badge');
-            soilBadge.textContent = soilStatus.label;
-            soilBadge.className = 'badge ' + (soilStatus.color === 'red' ? 'badge-red' : soilStatus.color === 'blue' ? 'badge-blue' : soilStatus.color === 'gray' ? 'badge-gray' : 'badge-green');
-
-            const valveClass = decision.type === 'open' ? 'open' : decision.type === 'delayed' ? 'delayed' : 'closed';
-            const fieldValve = document.getElementById('field-valve-value');
-            if (fieldValve) {
-                fieldValve.textContent = decision.type === 'open' ? 'Open' : decision.type === 'delayed' ? 'Delayed' : 'Closed';
-                fieldValve.className = 'field-state ' + valveClass;
-            }
-
-            const fieldWeather = document.getElementById('field-weather-value');
-            if (fieldWeather) fieldWeather.textContent = rain ? 'Rain Risk' : 'Low';
-            const fieldLastUpdate = document.getElementById('field-last-update');
-            if (fieldLastUpdate) fieldLastUpdate.textContent = 'Live';
+            renderFarmSelectionHeader();
+            renderFarmCards();
+            updateSelectedFarmStrip();
         }
 
         // ── OpenStreetMap (Leaflet) – Dashboard Field Map ──────────────────
@@ -368,13 +226,12 @@
         function buildDashPopup(node) {
             const rain = isRainPredicted();
             const decision = makeIrrigationDecision(node.soilMoisture, rain);
-            const valveColor = decision.type === 'open' ? '#00e676' : decision.type === 'delayed' ? '#f59e0b' : '#60a5fa';
             return `<div class="lf-popup-inner">
                 <strong class="lf-pop-title">${node.name}</strong>
                 <span class="lf-pop-sub">${node.location}</span>
                 <span class="lf-pop-row"><i class="fas fa-water"></i> Kelembapan: <b>${node.soilMoisture}% VWC</b></span>
                 <span class="lf-pop-row"><i class="fas fa-temperature-low"></i> Suhu Tanah: <b>${node.soilTemp}°C</b></span>
-                <span class="lf-pop-row" style="color:${valveColor}"><i class="fas fa-tint"></i> Valve: <b>${decision.valve}</b></span>
+                <span class="lf-pop-row"><i class="fas fa-tint"></i> Valve: <b>${decision.valve}</b></span>
                 <span class="lf-pop-row text-muted"><i class="fas fa-map-marker-alt"></i> ${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)}</span>
             </div>`;
         }
@@ -385,10 +242,190 @@
             dashNodeMarker.setPopupContent(buildDashPopup(node));
         }
 
+        let farmMap = null;
+        let farmLayer = null;
+        let selectedFarmId = getSelectedFarmId();
+        let currentFarmFilter = '';
+
+        function getVisibleFarms() {
+            const keyword = currentFarmFilter.trim().toLowerCase();
+            if (!keyword) return FARMS;
+            return FARMS.filter(farm => {
+                return farm.name.toLowerCase().includes(keyword) ||
+                    farm.location.toLowerCase().includes(keyword) ||
+                    farm.crop.toLowerCase().includes(keyword);
+            });
+        }
+
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+
+        function renderFarmSelectionHeader() {
+            setText('dashboard-greeting', `Pilih Kebun ${CURRENT_USER.name}`);
+            setText('topbar-user', CURRENT_USER.name);
+            setText('map-farm-count', `${getVisibleFarms().length} Kebun`);
+        }
+
+        function getFarmCardClass(farm) {
+            return farm.id === selectedFarmId ? 'farm-card is-selected' : 'farm-card';
+        }
+
+        function renderFarmCards() {
+            const farms = getVisibleFarms();
+            const list = document.getElementById('farm-list');
+            if (!list) return;
+
+            setText('map-farm-count', `${farms.length} Kebun`);
+            list.innerHTML = farms.map(farm => `<article class="${getFarmCardClass(farm)}" data-farm-card="${farm.id}" tabindex="0" role="link" aria-label="Buka dashboard ${farm.name}">
+                <div class="farm-card-header">
+                    <div>
+                        <h3>${farm.name}</h3>
+                        <span>${farm.owner}</span>
+                    </div>
+                    <span class="badge badge-green">Akses Aktif</span>
+                </div>
+                <div class="farm-card-body">
+                    <div><span>Lokasi Kebun</span><strong>${farm.location}</strong></div>
+                    <div><span>Jenis Tanaman</span><strong>${farm.crop}</strong></div>
+                    <div><span>Luas Lahan</span><strong>${farm.area}</strong></div>
+                </div>
+                <div class="farm-card-actions">
+                    <a class="btn btn-primary btn-sm" href="farm-detail.html?farm=${farm.id}" data-farm-detail="${farm.id}">
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i> Buka Dashboard
+                    </a>
+                </div>
+            </article>`).join('') || '<div class="empty-state">Kebun tidak ditemukan.</div>';
+        }
+
+        function updateSelectedFarmStrip() {
+            const farm = getFarmById(selectedFarmId) || FARMS[0];
+            if (!farm) return;
+            setText('selected-farm-name', farm.name);
+        }
+
+        function buildFarmPopup(farm) {
+            return `<div class="lf-popup-inner">
+                <strong class="lf-pop-title">${farm.name}</strong>
+                <span class="lf-pop-sub">Marker kebun milik akun</span>
+                <span class="lf-pop-row"><i class="fas fa-location-dot"></i> Pilih kebun dari peta</span>
+                <a class="btn btn-primary btn-sm lf-pop-action" href="farm-detail.html?farm=${farm.id}" data-farm-detail="${farm.id}">Buka Dashboard</a>
+            </div>`;
+        }
+
+        function createFarmIcon(farm) {
+            const isSelected = farm.id === selectedFarmId ? ' is-selected' : '';
+            const statusClass = farm.gateway.status === 'online' ? 'lf-marker-farm-online' : 'lf-marker-farm-offline';
+            return L.divIcon({
+                className: '',
+                html: `<div class="lf-marker lf-marker-farm ${statusClass}${isSelected}"><i class="fas fa-seedling"></i></div>`,
+                iconSize: [38, 38],
+                iconAnchor: [19, 19],
+                popupAnchor: [0, -22]
+            });
+        }
+
+        function renderFarmMapMarkers() {
+            if (!farmMap || !farmLayer) return;
+            farmLayer.clearLayers();
+
+            const farms = getVisibleFarms();
+            farms.forEach(farm => {
+                const marker = L.marker([farm.latitude, farm.longitude], { icon: createFarmIcon(farm) })
+                    .bindPopup(buildFarmPopup(farm), { className: 'lf-popup', maxWidth: 280 })
+                    .on('click', () => selectFarm(farm.id, false));
+                farmLayer.addLayer(marker);
+            });
+
+            if (farms.length) {
+                const bounds = L.latLngBounds(farms.map(farm => [farm.latitude, farm.longitude]));
+                farmMap.fitBounds(bounds.pad(0.22));
+            }
+        }
+
+        function initFarmMap() {
+            if (!window.L) {
+                const map = document.getElementById('farm-map');
+                if (map) map.innerHTML = '<div class="empty-state">Map belum tersedia.</div>';
+                return;
+            }
+
+            farmMap = L.map('farm-map', {
+                center: [-7.79, 110.3],
+                zoom: 9,
+                zoomControl: true,
+                attributionControl: true,
+                scrollWheelZoom: false
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(farmMap);
+
+            farmLayer = L.layerGroup().addTo(farmMap);
+            renderFarmMapMarkers();
+        }
+
+        function selectFarm(farmId, shouldRenderMap = true) {
+            selectedFarmId = farmId;
+            setSelectedFarmId(farmId);
+            updateSelectedFarmStrip();
+            renderFarmCards();
+            if (shouldRenderMap) renderFarmMapMarkers();
+        }
+
+        function bindDashboardEvents() {
+            const search = document.getElementById('farm-search');
+            if (search) {
+                search.addEventListener('input', event => {
+                    currentFarmFilter = event.target.value;
+                    renderFarmSelectionHeader();
+                    renderFarmCards();
+                    renderFarmMapMarkers();
+                });
+            }
+
+            document.addEventListener('click', event => {
+                const selectButton = event.target.closest('[data-farm-select]');
+                if (selectButton) {
+                    selectFarm(selectButton.dataset.farmSelect);
+                    return;
+                }
+
+                const detailLink = event.target.closest('[data-farm-detail]');
+                if (detailLink) {
+                    setSelectedFarmId(detailLink.dataset.farmDetail);
+                    return;
+                }
+
+                const farmCard = event.target.closest('[data-farm-card]');
+                if (farmCard && !event.target.closest('a, button')) {
+                    const farmId = farmCard.dataset.farmCard;
+                    setSelectedFarmId(farmId);
+                    window.location.href = `farm-detail.html?farm=${farmId}`;
+                }
+            });
+
+            document.addEventListener('keydown', event => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                const farmCard = event.target.closest('[data-farm-card]');
+                if (!farmCard) return;
+                event.preventDefault();
+                const farmId = farmCard.dataset.farmCard;
+                setSelectedFarmId(farmId);
+                window.location.href = `farm-detail.html?farm=${farmId}`;
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            initDashFieldMap();
-            updateDashboardUI();
-            startSimulation();
+            renderFarmSelectionHeader();
+            renderFarmCards();
+            updateSelectedFarmStrip();
+            initFarmMap();
+            bindDashboardEvents();
         });
     </script>
 </body>

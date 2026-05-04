@@ -347,6 +347,291 @@
     border-top: 1px solid var(--color-border-hover);
 }
 
+.system-summary-grid .metric-card {
+    min-height: 108px;
+}
+
+.metric-value-compact {
+    max-width: 100%;
+    font-size: 1.02rem;
+    overflow-wrap: anywhere;
+}
+
+.farm-search {
+    margin-bottom: 14px;
+}
+
+.farm-search-list {
+    width: min(420px, 100%);
+}
+
+.map-helper-text {
+    font-size: 0.8rem;
+}
+
+.farm-osm-map {
+    height: 380px;
+}
+
+.farm-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.farm-card {
+    display: flex;
+    min-width: 0;
+    min-height: 100%;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-card);
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.farm-card:hover,
+.farm-card.is-selected {
+    border-color: rgba(16, 185, 129, 0.45);
+    box-shadow: var(--shadow-md);
+}
+
+.farm-card[role="link"] {
+    cursor: pointer;
+}
+
+.farm-card[role="link"]:focus-visible {
+    outline: 2px solid rgba(16, 185, 129, 0.85);
+    outline-offset: 3px;
+}
+
+.farm-card.is-selected {
+    background:
+        linear-gradient(145deg, rgba(16, 185, 129, 0.08), transparent 42%),
+        var(--color-card);
+}
+
+.farm-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.farm-card-header h3 {
+    color: var(--color-gray-900);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.farm-card-header span:not(.badge) {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.farm-card-body {
+    display: grid;
+    gap: 10px;
+}
+
+.farm-card-body div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.farm-card-body div:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.farm-card-body span {
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.farm-card-body strong {
+    color: var(--color-gray-900);
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-align: right;
+}
+
+.farm-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.alert-list {
+    display: grid;
+    gap: 10px;
+}
+
+.alert-item,
+.empty-state {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-card);
+}
+
+.alert-item > div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.alert-item strong {
+    color: var(--color-gray-900);
+    font-size: 0.88rem;
+}
+
+.alert-item span:not(.badge) {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.empty-state {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.download-link-hidden {
+    display: none;
+}
+
+.auth-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.login-shell {
+    width: min(980px, 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+    gap: 18px;
+    align-items: stretch;
+}
+
+.login-brand-panel,
+.login-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background:
+        linear-gradient(145deg, rgba(16, 185, 129, 0.1), transparent 48%),
+        var(--color-card);
+    box-shadow: var(--shadow-md);
+}
+
+.login-brand-panel {
+    display: flex;
+    min-height: 440px;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 32px;
+}
+
+.login-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-primary-dark);
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.login-brand-panel h1 {
+    max-width: 520px;
+    color: var(--color-gray-900);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.05;
+}
+
+.login-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.login-info-grid div {
+    min-height: 70px;
+    padding: 12px;
+    border: 1px solid var(--color-border-hover);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.login-info-grid span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.login-info-grid strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-gray-900);
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+}
+
+.login-card {
+    padding: 28px;
+}
+
+.login-card .card-header h2 {
+    color: var(--color-gray-900);
+    font-size: 1.35rem;
+    font-weight: 900;
+}
+
+.login-form {
+    display: grid;
+    gap: 16px;
+}
+
+.login-submit {
+    width: 100%;
+    justify-content: center;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-gray-800);
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.forgot-link {
+    justify-self: center;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
 /* Sensor cards */
 .sensor-cards {
     margin-bottom: 24px;
@@ -1162,10 +1447,45 @@
     color: var(--color-primary);
 }
 
+.lf-marker-node-online {
+    border-color: var(--color-primary);
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--color-primary);
+}
+
+.lf-marker-node-standby {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.lf-marker-node-offline {
+    border-color: #f87171;
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+}
+
 .lf-marker-gw {
     border-color: #60a5fa;
     background: rgba(96, 165, 250, 0.15);
     color: #60a5fa;
+}
+
+.lf-marker-farm-online {
+    border-color: var(--color-primary);
+    background: rgba(0, 230, 118, 0.16);
+    color: var(--color-primary);
+}
+
+.lf-marker-farm-offline {
+    border-color: #f87171;
+    background: rgba(248, 113, 113, 0.16);
+    color: #f87171;
+}
+
+.lf-marker-farm.is-selected {
+    transform: scale(1.14);
+    box-shadow: 0 0 0 7px rgba(0, 230, 118, 0.18), 0 8px 24px rgba(0,0,0,0.5);
 }
 
 /* Popup dark-mode override */
@@ -1232,6 +1552,10 @@
     margin-top: 4px;
 }
 
+.lf-pop-row.danger {
+    color: #f87171;
+}
+
 .lf-pop-badge {
     display: inline-block;
     margin-top: 8px;
@@ -1259,6 +1583,45 @@
     background: rgba(248, 113, 113, 0.15);
     color: #f87171;
     border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.lf-pop-action {
+    margin-top: 8px;
+}
+
+@media (max-width: 1180px) {
+    .farm-card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .farm-card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .farm-osm-map {
+        height: 320px;
+    }
+
+    .farm-card-actions,
+    .alert-item {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .login-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .login-brand-panel {
+        min-height: 320px;
+        padding: 24px;
+    }
+
+    .login-info-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Leaflet attribution dark override */

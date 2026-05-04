@@ -6,7 +6,8 @@ const STORAGE_KEYS = {
     THRESHOLD_LOWER: 'lf_threshold_lower',
     THRESHOLD_UPPER: 'lf_threshold_upper',
     VALVE_STATE: 'lf_valve_state',
-    THEME: 'lf_theme'
+    THEME: 'lf_theme',
+    SELECTED_FARM: 'lf_selected_farm'
 };
 
 const VALVE_STATE = {
@@ -252,7 +253,7 @@ function getSoilStatus(value) {
     const upper = ThresholdManager.upper;
     if (value <= 0) return { label: 'Tidak Ada Data', color: 'gray', className: 'status-offline' };
     if (value < lower) return { label: 'Butuh Irigasi', color: 'red', className: 'status-danger' };
-    if (value > upper) return { label: 'Terlalu Basah', color: 'blue', className: 'status-wet' };
+    if (value > upper) return { label: 'Terlalu Basah', color: 'yellow', className: 'status-wet' };
     return { label: 'Normal', color: 'green', className: 'status-ok' };
 }
 
@@ -265,12 +266,90 @@ function getNodeStatusBadge(status) {
     return map[status] || map.offline;
 }
 
+function getGatewayStatusBadge(status) {
+    const map = {
+        online: { label: 'Online', className: 'badge-green' },
+        offline: { label: 'Offline', className: 'badge-red' },
+        degraded: { label: 'Gangguan', className: 'badge-yellow' }
+    };
+    return map[status] || map.offline;
+}
+
+function getValveStatusBadge(valve) {
+    const map = {
+        Terbuka: { label: 'Terbuka', className: 'badge-green' },
+        Tertutup: { label: 'Tertutup', className: 'badge-yellow' },
+        'Tidak diketahui': { label: 'Tidak diketahui', className: 'badge-red' }
+    };
+    return map[valve] || map['Tidak diketahui'];
+}
+
+function getIrrigationStatusBadge(status) {
+    if (status === 'Aktif') return { label: status, className: 'badge-green' };
+    if (status === 'Normal') return { label: status, className: 'badge-green' };
+    if (status === 'Perlu cek gateway') return { label: status, className: 'badge-red' };
+    return { label: status || 'Perlu cek', className: 'badge-yellow' };
+}
+
+function getFarmById(farmId) {
+    if (typeof FARMS === 'undefined' || !Array.isArray(FARMS)) return null;
+    return FARMS.find(farm => farm.id === farmId) || null;
+}
+
+function getFarmNodes(farm) {
+    if (!farm || typeof NODES === 'undefined' || !Array.isArray(NODES)) return [];
+    return NODES.filter(node => node.farmId === farm.id || farm.nodeIds.includes(node.id));
+}
+
+function getFarmNodeStats(farm) {
+    const nodes = getFarmNodes(farm);
+    const active = nodes.filter(node => node.status === 'online' || node.status === 'standby').length;
+    const troubled = nodes.filter(node => node.status === 'offline').length;
+    return { total: nodes.length, active, troubled };
+}
+
+function getFarmAverageMoisture(farm) {
+    const validNodes = getFarmNodes(farm).filter(node => node.status !== 'offline' && node.soilMoisture > 0);
+    if (!validNodes.length) return null;
+    const total = validNodes.reduce((sum, node) => sum + node.soilMoisture, 0);
+    return Math.round(total / validNodes.length);
+}
+
+function getFarmLastUpdate(farm) {
+    const dates = [farm && farm.lastUpdate, ...getFarmNodes(farm).map(node => node.lastUpdate)].filter(Boolean);
+    if (!dates.length) return null;
+    return dates.reduce((latest, date) => new Date(date) > new Date(latest) ? date : latest, dates[0]);
+}
+
+function getSelectedFarmId() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('farm');
+    if (fromUrl) return fromUrl;
+    try {
+        return localStorage.getItem(STORAGE_KEYS.SELECTED_FARM) || (typeof FARMS !== 'undefined' && FARMS[0] && FARMS[0].id);
+    } catch (error) {
+        return typeof FARMS !== 'undefined' && FARMS[0] && FARMS[0].id;
+    }
+}
+
+function setSelectedFarmId(farmId) {
+    try {
+        localStorage.setItem(STORAGE_KEYS.SELECTED_FARM, farmId);
+    } catch (error) {
+        // Query parameter tetap menjadi sumber utama saat localStorage tidak tersedia.
+    }
+}
+
+function getCurrentFarm() {
+    return getFarmById(getSelectedFarmId()) || (typeof FARMS !== 'undefined' && FARMS[0]);
+}
+
 function getDecisionBadge(type) {
     const map = {
         [DECISION_TYPE.OPEN]: { label: 'Irigasi Dijalankan', className: 'badge-green' },
         [DECISION_TYPE.DELAYED]: { label: 'Irigasi Ditunda', className: 'badge-yellow' },
-        [DECISION_TYPE.CLOSED]: { label: 'Valve Tertutup', className: 'badge-blue' },
-        [DECISION_TYPE.NORMAL]: { label: 'Normal', className: 'badge-blue' },
+        [DECISION_TYPE.CLOSED]: { label: 'Valve Tertutup', className: 'badge-yellow' },
+        [DECISION_TYPE.NORMAL]: { label: 'Normal', className: 'badge-green' },
         [DECISION_TYPE.WARNING]: { label: 'Warning', className: 'badge-red' }
     };
     return map[type] || map[DECISION_TYPE.NORMAL];
@@ -328,12 +407,16 @@ function scheduleUpdate(fn) {
 
 function setActivePage() {
     const path = window.location.pathname.split('/').pop() || 'index.html';
+    const activeMap = {
+        'farms.html': 'index.html'
+    };
+    const activePath = activeMap[path] || path;
     document.querySelectorAll('.sidebar-link').forEach(link => {
         link.classList.remove('active');
         link.removeAttribute('aria-current');
 
         const href = link.getAttribute('href');
-        if (href === path || (path === '' && href === 'index.html')) {
+        if (href === activePath || (activePath === '' && href === 'index.html')) {
             link.classList.add('active');
             link.setAttribute('aria-current', 'page');
         }

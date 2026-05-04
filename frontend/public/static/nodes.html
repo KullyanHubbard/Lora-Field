@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Kesehatan node sensor LoraField.">
+    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+    <script>
+        try {
+            document.documentElement.dataset.theme = localStorage.getItem('lf_theme') === 'light' ? 'light' : 'dark';
+        } catch (error) {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
+    <title>Node Sensor - LoraField</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/premium.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    </noscript>
+</head>
+
+<body>
+    <div class="ambient-bg"><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div><div class="ambient-orb orb-3"></div></div>
+    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
+        <div class="sidebar-brand"><h2><i class="fas fa-seedling" aria-hidden="true"></i> LoraField</h2><p>LoRa-Based Precision Agriculture System</p></div>
+        <nav class="sidebar-nav" aria-label="Menu aplikasi">
+            <a href="farm-detail.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
+            <a href="index.html" class="sidebar-link"><i class="fas fa-map-location-dot" aria-hidden="true"></i> Kebun Saya</a>
+            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i> Monitoring</a>
+            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
+            <a href="gateway.html" class="sidebar-link"><i class="fas fa-tower-broadcast" aria-hidden="true"></i> Gateway</a>
+            <a href="nodes.html" class="sidebar-link active" aria-current="page"><i class="fas fa-microchip" aria-hidden="true"></i> Node Sensor</a>
+            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
+            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Riwayat</a>
+            <a href="settings.html" class="sidebar-link"><i class="fas fa-gear" aria-hidden="true"></i> Settings</a>
+        </nav>
+        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-toggle" id="sidebar-toggle" type="button" aria-label="Buka navigasi" aria-controls="sidebar"><i class="fas fa-bars" aria-hidden="true"></i></button>
+                <span class="topbar-title"><span class="topbar-title-full">Node Sensor</span><span class="topbar-title-short">Node</span></span>
+            </div>
+            <div class="topbar-right"><span class="topbar-clock" id="realtime-clock"></span><span class="badge badge-green badge-online">Online</span></div>
+        </header>
+
+        <div class="page-content">
+            <section class="page-header">
+                <div>
+                    <span class="page-kicker">Node Sensor</span>
+                    <h1 id="nodes-title">Kesehatan Node</h1>
+                    <p>Node sensor yang terpasang pada kebun terpilih.</p>
+                </div>
+            </section>
+
+            <div class="card">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Node</th>
+                                <th>Lokasi Titik</th>
+                                <th>Status</th>
+                                <th>Baterai</th>
+                                <th>RSSI LoRa</th>
+                                <th>Last Update</th>
+                            </tr>
+                        </thead>
+                        <tbody id="node-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/dummy-data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        function renderNodes() {
+            const farm = getCurrentFarm();
+            document.getElementById('nodes-title').textContent = `Node Sensor ${farm.name}`;
+            document.getElementById('node-table').innerHTML = getFarmNodes(farm).map(node => {
+                const badge = getNodeStatusBadge(node.status);
+                return `<tr>
+                    <td>${node.name}</td>
+                    <td>${node.location}</td>
+                    <td><span class="badge ${badge.className}">${badge.label}</span></td>
+                    <td>${node.battery}%</td>
+                    <td>${node.rssi === null ? '-' : `${node.rssi} dBm`}</td>
+                    <td>${timeAgo(node.lastUpdate)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', renderNodes);
+    </script>
+</body>
+
+</html>
