@@ -569,6 +569,19 @@
     margin-bottom: 24px;
 }
 
+.weather-info-card {
+    padding: 18px;
+}
+
+.weather-info-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 0;
+}
+
+.weather-info-grid .node-info-item {
+    min-height: 64px;
+}
+
 .weather-main {
     display: flex;
     align-items: center;

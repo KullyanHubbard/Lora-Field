@@ -59,7 +59,6 @@ const NODES = [
 
 const WEATHER_DATA = {
     location: 'Bantul, D.I. Yogyakarta',
-    source: 'BMKG Public API',
     status: 'Available',
     lastUpdate: '10 menit lalu',
     current: {
