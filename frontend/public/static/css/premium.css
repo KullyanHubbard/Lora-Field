@@ -884,3 +884,62 @@ table td {
         font-size: 1rem !important;
     }
 }
+
+/* ─── Auth Brand Bar (pojok kiri atas halaman login) ─── */
+.auth-brand-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    padding: 18px 28px;
+}
+
+.auth-brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    cursor: default;
+}
+
+.auth-brand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, var(--color-primary, #10b981) 0%, #34d399 100%);
+    border-radius: 8px;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+}
+
+.auth-brand-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: #ffffff;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.auth-brand-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 30%, #34d399 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+:root[data-theme="light"] .auth-brand-name {
+    background: linear-gradient(135deg, #0f172a 30%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+:root[data-theme="light"] .auth-brand-icon {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
