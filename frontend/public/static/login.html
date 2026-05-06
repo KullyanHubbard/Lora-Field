@@ -82,12 +82,33 @@
                     </svg>
                     <span>Masuk</span>
                 </button>
-                <a class="forgot-link" href="#">Lupa Password</a>
+                <button class="forgot-link" id="forgot-password" type="button" aria-expanded="false"
+                    aria-controls="forgot-panel">
+                    Lupa Password
+                </button>
+                <section class="forgot-panel" id="forgot-panel" aria-label="Atur ulang password" hidden>
+                    <div class="form-group">
+                        <label for="forgot-email">Email Akun</label>
+                        <input class="form-control" type="email" id="forgot-email" autocomplete="email"
+                            placeholder="nama@email.com">
+                    </div>
+                    <button class="btn btn-secondary forgot-submit" id="forgot-submit" type="button">
+                        Kirim Instruksi
+                    </button>
+                    <p class="forgot-feedback" id="forgot-feedback" role="status" aria-live="polite" hidden></p>
+                </section>
             </form>
         </section>
     </main>
 
     <script>
+        const loginEmail = document.getElementById('login-email');
+        const forgotButton = document.getElementById('forgot-password');
+        const forgotPanel = document.getElementById('forgot-panel');
+        const forgotEmail = document.getElementById('forgot-email');
+        const forgotSubmit = document.getElementById('forgot-submit');
+        const forgotFeedback = document.getElementById('forgot-feedback');
+
         document.getElementById('login-form').addEventListener('submit', event => {
             event.preventDefault();
             try {
@@ -97,6 +118,36 @@
                 // Login demo tetap lanjut tanpa penyimpanan lokal.
             }
             window.location.href = 'index.html';
+        });
+
+        function setForgotFeedback(message, type) {
+            forgotFeedback.hidden = false;
+            forgotFeedback.className = `forgot-feedback forgot-feedback-${type}`;
+            forgotFeedback.textContent = message;
+        }
+
+        forgotButton.addEventListener('click', () => {
+            const isOpening = forgotPanel.hidden;
+            forgotPanel.hidden = !isOpening;
+            forgotButton.setAttribute('aria-expanded', String(isOpening));
+
+            if (!isOpening) return;
+
+            forgotEmail.value = loginEmail.value.trim();
+            forgotFeedback.hidden = true;
+            forgotFeedback.textContent = '';
+            forgotEmail.focus();
+        });
+
+        forgotSubmit.addEventListener('click', () => {
+            const identifier = forgotEmail.value.trim() || loginEmail.value.trim();
+            if (!identifier) {
+                setForgotFeedback('Masukkan email akun terlebih dahulu.', 'error');
+                forgotEmail.focus();
+                return;
+            }
+
+            setForgotFeedback(`Permintaan untuk ${identifier} berhasil dibuat. Admin LoraField akan membantu proses berikutnya.`, 'success');
         });
     </script>
 </body>
