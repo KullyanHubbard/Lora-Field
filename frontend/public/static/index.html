@@ -121,21 +121,21 @@
             const list = document.getElementById('farm-list');
             if (!list) return;
 
-            list.innerHTML = farms.map(farm => `<article class="${getFarmCardClass(farm)}" data-farm-card="${farm.id}" tabindex="0" role="link" aria-label="Buka dashboard ${farm.name}">
+            list.innerHTML = farms.map(farm => `<article class="${getFarmCardClass(farm)}" data-farm-card="${escapeHtml(farm.id)}" tabindex="0" role="link" aria-label="Buka dashboard ${escapeHtml(farm.name)}">
                 <div class="farm-card-header">
                     <div>
-                        <h3>${farm.name}</h3>
-                        <span>${farm.owner}</span>
+                        <h3>${escapeHtml(farm.name)}</h3>
+                        <span>${escapeHtml(farm.owner)}</span>
                     </div>
                     <span class="badge badge-green">Akses Aktif</span>
                 </div>
                 <div class="farm-card-body">
-                    <div><span>Lokasi Kebun</span><strong>${farm.location}</strong></div>
-                    <div><span>Jenis Tanaman</span><strong>${farm.crop}</strong></div>
-                    <div><span>Luas Lahan</span><strong>${farm.area}</strong></div>
+                    <div><span>Lokasi Kebun</span><strong>${escapeHtml(farm.location)}</strong></div>
+                    <div><span>Jenis Tanaman</span><strong>${escapeHtml(farm.crop)}</strong></div>
+                    <div><span>Luas Lahan</span><strong>${escapeHtml(farm.area)}</strong></div>
                 </div>
                 <div class="farm-card-actions">
-                    <a class="btn btn-primary btn-sm" href="farm-detail.html?farm=${farm.id}" data-farm-detail="${farm.id}">
+                    <a class="btn btn-primary btn-sm" href="farm-detail.html?farm=${encodeURIComponent(farm.id)}" data-farm-detail="${escapeHtml(farm.id)}">
                         <i class="fas fa-arrow-right" aria-hidden="true"></i> Buka Dashboard
                     </a>
                 </div>
@@ -144,8 +144,8 @@
 
         function buildFarmPopup(farm) {
             return `<div class="lf-popup-inner">
-                <strong class="lf-pop-title">${farm.name}</strong>
-                <a class="btn btn-primary btn-sm lf-pop-action" href="farm-detail.html?farm=${farm.id}" data-farm-detail="${farm.id}">Buka Dashboard</a>
+                <strong class="lf-pop-title">${escapeHtml(farm.name)}</strong>
+                <a class="btn btn-primary btn-sm lf-pop-action" href="farm-detail.html?farm=${encodeURIComponent(farm.id)}" data-farm-detail="${escapeHtml(farm.id)}">Buka Dashboard</a>
             </div>`;
         }
 

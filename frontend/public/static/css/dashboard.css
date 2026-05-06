@@ -1838,6 +1838,188 @@
     }
 }
 
+/* Compact farm detail dashboard */
+.page-content.farm-detail-page {
+    max-width: 1460px;
+    padding: 14px 24px 18px;
+}
+
+.page-content.farm-detail-page .mb-24 {
+    margin-bottom: 14px;
+}
+
+.page-content.farm-detail-page .card {
+    padding: 16px 20px;
+    border-radius: 8px;
+}
+
+.page-content.farm-detail-page .card-header {
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.page-content.farm-detail-page .card-header h3,
+.farm-section-title {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.25;
+}
+
+.page-content.farm-detail-page .farm-detail-grid {
+    align-items: start;
+    gap: 14px;
+}
+
+.page-content.farm-detail-page .farm-info-card {
+    padding: 18px 22px;
+}
+
+.farm-info-row,
+.farm-badges,
+.farm-warning-text {
+    display: flex;
+    align-items: center;
+}
+
+.farm-info-row {
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.farm-info-main {
+    min-width: 0;
+}
+
+.farm-title {
+    margin: 0 0 4px;
+    color: var(--text-main);
+    font-size: 1.22rem;
+    line-height: 1.25;
+}
+
+.farm-meta {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.farm-badges {
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.page-content.farm-detail-page .card.farm-warning-card {
+    border-color: var(--color-warning, #f59e0b);
+    border-left-width: 4px;
+    padding: 13px 20px;
+}
+
+.farm-warning-text {
+    color: var(--text-main);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.farm-warning-icon {
+    margin-right: 6px;
+    color: var(--color-warning, #f59e0b);
+}
+
+.farm-detail-page .farm-card-body {
+    gap: 0;
+}
+
+.farm-detail-page .farm-card-body div {
+    min-height: 39px;
+    padding: 8px 0;
+}
+
+.farm-detail-page .farm-card-body span {
+    font-size: 0.72rem;
+}
+
+.farm-detail-page .farm-card-body strong {
+    font-size: 0.78rem;
+}
+
+.page-content.farm-detail-page .farm-node-card {
+    padding-bottom: 20px;
+}
+
+.farm-node-toolbar {
+    margin-bottom: 10px;
+}
+
+.farm-detail-page .table-wrap {
+    border-radius: 8px;
+}
+
+.farm-detail-page table {
+    min-width: 700px;
+    font-size: 0.78rem;
+}
+
+.farm-detail-page table th,
+.farm-detail-page table td {
+    padding: 9px 14px;
+}
+
+.farm-detail-page table th {
+    font-size: 0.72rem;
+}
+
+.farm-detail-page .badge {
+    min-height: 22px;
+    padding: 3px 9px;
+    font-size: 0.68rem;
+}
+
+.farm-detail-page .btn-sm {
+    min-height: 30px;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+}
+
+.node-name,
+.node-location {
+    display: block;
+}
+
+.node-location,
+.node-update,
+.empty-table-cell {
+    opacity: 0.62;
+}
+
+.empty-table-cell {
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .page-content.farm-detail-page {
+        padding: 12px 14px 16px;
+    }
+
+    .page-content.farm-detail-page .card {
+        padding: 14px;
+    }
+
+    .farm-info-row,
+    .farm-node-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .farm-badges {
+        flex-wrap: wrap;
+    }
+
+    .page-content.farm-detail-page .farm-detail-grid {
+        gap: 12px;
+    }
+}
+
 /* Leaflet attribution dark override */
 .lf-popup .leaflet-popup-close-button {
     color: #64748b !important;
@@ -1855,4 +2037,3 @@
 .leaflet-control-attribution a {
     color: #64748b !important;
 }
-

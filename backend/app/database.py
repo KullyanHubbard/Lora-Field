@@ -1,5 +1,7 @@
+from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
+from typing import Generator
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -44,11 +46,20 @@ DEFAULT_NODES = [
 ]
 
 
-def get_connection() -> sqlite3.Connection:
+@contextmanager
+def get_connection() -> Generator[sqlite3.Connection, None, None]:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
-    return connection
+    connection.execute("PRAGMA foreign_keys = ON")
+    try:
+        yield connection
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
 
 
 def ensure_column(connection: sqlite3.Connection, table: str, column: str, definition: str) -> None:

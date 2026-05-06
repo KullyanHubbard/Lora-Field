@@ -4,10 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Dashboard kebun LoraField untuk membuka monitoring sensor, gateway, irigasi, dan cuaca BMKG.">
+    <meta name="description" content="Dashboard kebun LoraField - ringkasan monitoring sensor, gateway, irigasi, dan cuaca.">
     <meta name="color-scheme" content="dark light">
     <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LoraField">
     <script>
         try {
             document.documentElement.dataset.theme = localStorage.getItem('lf_theme') === 'light' ? 'light' : 'dark';
@@ -22,12 +27,22 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/premium.css">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+        media="print" onload="this.media='all'">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
         media="print" onload="this.media='all'">
     <noscript>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
     </noscript>
-    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -60,41 +75,238 @@
             </div>
         </header>
 
-        <div class="page-content">
-            <section class="farm-card-grid" id="detail-module-list"></section>
+        <div class="page-content farm-detail-page">
+
+            <!-- Info Kebun -->
+            <div class="card farm-info-card mb-24" id="farm-info-bar"></div>
+
+            <!-- Peringatan (tampil jika ada) -->
+            <div id="dashboard-warning-wrap"></div>
+
+            <!-- Stat Ringkasan: Kelembapan+Irigasi | Gateway+Cuaca -->
+            <div class="grid-2 farm-detail-grid mb-24">
+                <div class="card" id="stat-soil-irrigation">
+                    <div class="card-header">
+                        <h3><i class="fas fa-droplet" aria-hidden="true"></i> Kelembapan &amp; Irigasi</h3>
+                    </div>
+                    <div class="farm-card-body" id="stat-soil-body"></div>
+                </div>
+                <div class="card" id="stat-gateway-weather">
+                    <div class="card-header">
+                        <h3><i class="fas fa-tower-broadcast" aria-hidden="true"></i> Gateway &amp; Cuaca</h3>
+                    </div>
+                    <div class="farm-card-body" id="stat-gw-body"></div>
+                </div>
+            </div>
+
+            <!-- Tabel Node Sensor (ringkasan) -->
+            <div class="card farm-node-card mb-24">
+                <div class="farm-node-toolbar flex-between">
+                    <h3 class="farm-section-title"><i class="fas fa-microchip" aria-hidden="true"></i> Status Node Sensor</h3>
+                    <a id="dash-node-link" href="monitoring.html" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-chart-area" aria-hidden="true"></i> Lihat Monitoring
+                    </a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Node</th>
+                                <th>Kelembapan</th>
+                                <th>Suhu Tanah</th>
+                                <th>Valve</th>
+                                <th>Baterai</th>
+                                <th>Status</th>
+                                <th>Update</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboard-node-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+
         </div>
     </main>
 
     <script src="js/dummy-data.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/simulation.js"></script>
     <script>
+        // --- Render statis (dipanggil sekali saat load) ---
+
+        function renderFarmInfoBar(farm) {
+            const gwBadge = getGatewayStatusBadge(farm.gateway.status);
+            const farmBadgeClass = farm.status === 'warning' ? 'badge-yellow' : 'badge-green';
+            const farmBadgeLabel = farm.status === 'warning' ? 'Perlu Perhatian' : 'Normal';
+            const lastUpd = getFarmLastUpdate(farm);
+            document.getElementById('farm-info-bar').innerHTML = `
+                <div class="farm-info-row">
+                    <div class="farm-info-main">
+                        <h2 class="farm-title">${escapeHtml(farm.name)}</h2>
+                        <p class="farm-meta">
+                            <i class="fas fa-leaf" aria-hidden="true"></i> ${escapeHtml(farm.crop)}
+                            &nbsp;&middot;&nbsp;
+                            <i class="fas fa-ruler-combined" aria-hidden="true"></i> ${escapeHtml(farm.area)}
+                            &nbsp;&middot;&nbsp;
+                            <i class="fas fa-location-dot" aria-hidden="true"></i> ${escapeHtml(farm.location)}
+                            &nbsp;&middot;&nbsp;
+                            Update: ${timeAgo(lastUpd)}
+                        </p>
+                    </div>
+                    <div class="farm-badges">
+                        <span class="badge ${farmBadgeClass}">${farmBadgeLabel}</span>
+                        <span class="badge ${gwBadge.className}">
+                            <i class="fas fa-tower-broadcast" aria-hidden="true"></i> ${gwBadge.label}
+                        </span>
+                    </div>
+                </div>`;
+        }
+
+        function renderWarning(farm) {
+            const wrap = document.getElementById('dashboard-warning-wrap');
+            if (!farm.warning || farm.warning === 'Tidak ada peringatan') {
+                wrap.innerHTML = '';
+                return;
+            }
+            wrap.innerHTML = `
+                <div class="card farm-warning-card mb-24">
+                    <div class="farm-warning-text">
+                        <span>
+                            <i class="fas fa-triangle-exclamation farm-warning-icon" aria-hidden="true"></i>
+                            ${escapeHtml(farm.warning)}
+                        </span>
+                    </div>
+                </div>`;
+        }
+
+        // --- Render dinamis (dipanggil updateDashboardUI tiap simulasi) ---
+
+        function renderStatSoilIrrigation(farm) {
+            const avgMoisture = getFarmAverageMoisture(farm);
+            const soilStatus = avgMoisture !== null ? getSoilStatus(avgMoisture) : null;
+            const soilBadgeClass = !soilStatus ? 'badge-red'
+                : soilStatus.className === 'status-ok' ? 'badge-green'
+                : soilStatus.className === 'status-danger' ? 'badge-red'
+                : 'badge-yellow';
+            const soilBadgeLabel = soilStatus ? soilStatus.label : 'Tidak Ada Data';
+
+            const nodes = getFarmNodes(farm);
+            const activeNode = nodes.find(n => n.status !== 'offline');
+            const rain = WEATHER_DATA.rainPrediction;
+            const decision = activeNode ? makeIrrigationDecision(activeNode.soilMoisture, rain) : null;
+            const irrigBadge = decision
+                ? getIrrigationStatusBadge(decision.decision)
+                : { label: farm.irrigation, className: 'badge-red' };
+            const valveBadge = decision
+                ? getValveStatusBadge(decision.valve)
+                : getValveStatusBadge(farm.valve);
+
+            document.getElementById('stat-soil-body').innerHTML = `
+                <div>
+                    <span>Kelembapan Rata-rata</span>
+                    <strong class="data-value">${avgMoisture !== null ? avgMoisture + '%' : '—'}</strong>
+                </div>
+                <div>
+                    <span>Status Tanah</span>
+                    <span class="badge ${soilBadgeClass}">${soilBadgeLabel}</span>
+                </div>
+                <div>
+                    <span>Status Irigasi</span>
+                    <span class="badge ${irrigBadge.className}">${escapeHtml(irrigBadge.label)}</span>
+                </div>
+                <div>
+                    <span>Status Valve</span>
+                    <span class="badge ${valveBadge.className}">${escapeHtml(valveBadge.label)}</span>
+                </div>`;
+        }
+
+        function renderStatGatewayWeather(farm) {
+            const gwBadge = getGatewayStatusBadge(farm.gateway.status);
+            const weatherInfo = getWeatherInfo(WEATHER_DATA.current.code);
+            const rainBadge = WEATHER_DATA.rainPrediction
+                ? { label: 'Prediksi Hujan', className: 'badge-yellow' }
+                : { label: 'Tidak Ada Hujan', className: 'badge-green' };
+
+            document.getElementById('stat-gw-body').innerHTML = `
+                <div>
+                    <span>Status Gateway</span>
+                    <span class="badge ${gwBadge.className}">${gwBadge.label}</span>
+                </div>
+                <div>
+                    <span>Terakhir Online</span>
+                    <strong>${timeAgo(farm.gateway.lastSeen)}</strong>
+                </div>
+                <div>
+                    <span>Kondisi Cuaca</span>
+                    <strong class="data-value">
+                        <i class="${weatherInfo.icon}" aria-hidden="true"></i>
+                        ${escapeHtml(weatherInfo.label)}
+                    </strong>
+                </div>
+                <div>
+                    <span>Suhu Udara</span>
+                    <strong class="data-value">${WEATHER_DATA.current.temp}${DEG_C}</strong>
+                </div>
+                <div>
+                    <span>Prediksi Hujan (3 jam)</span>
+                    <span class="badge ${rainBadge.className}">${rainBadge.label}</span>
+                </div>`;
+        }
+
+        function renderNodeTable(farm) {
+            const nodes = getFarmNodes(farm);
+            const tbody = document.getElementById('dashboard-node-body');
+            if (!nodes.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-table-cell">Tidak ada node terdaftar.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = nodes.map(node => {
+                const statusBadge = getNodeStatusBadge(node.status);
+                const valveBadge = getValveStatusBadge(node.valveState);
+                const offline = node.status === 'offline';
+                return `<tr>
+                    <td>
+                        <span class="node-name">${escapeHtml(node.name)}</span>
+                        <small class="node-location">${escapeHtml(node.location)}</small>
+                    </td>
+                    <td class="data-value">${offline ? '—' : node.soilMoisture + '%'}</td>
+                    <td class="data-value">${offline ? '—' : node.soilTemp + DEG_C}</td>
+                    <td><span class="badge ${valveBadge.className}">${valveBadge.label}</span></td>
+                    <td class="data-value">${offline ? '—' : node.battery + '%'}</td>
+                    <td><span class="badge ${statusBadge.className}">${statusBadge.label}</span></td>
+                    <td class="node-update">${timeAgo(node.lastUpdate)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Dipanggil oleh simulation.js setiap tick
+        function updateDashboardUI() {
+            const farm = getCurrentFarm();
+            if (!farm) return;
+            renderStatSoilIrrigation(farm);
+            renderStatGatewayWeather(farm);
+            renderNodeTable(farm);
+        }
+
         function renderFarmDetail() {
             const farm = getCurrentFarm();
+            if (!farm) return;
             setSelectedFarmId(farm.id);
-            document.getElementById('detail-module-list').innerHTML = [
-                ['Monitoring', 'monitoring.html', 'Grafik dan tabel data sensor'],
-                ['Irigasi', 'irrigation.html', 'Status valve dan keputusan sistem'],
-                ['Gateway', 'gateway.html', 'Koneksi gateway kebun'],
-                ['Node Sensor', 'nodes.html', 'Kesehatan node dan RSSI LoRa'],
-                ['Cuaca', 'weather.html', 'Prakiraan BMKG'],
-                ['Riwayat', 'logs.html', 'Audit keputusan dan log sistem']
-            ].map(([label, href, desc]) => `<article class="farm-card">
-                <div class="farm-card-header">
-                    <div>
-                        <h3>${label}</h3>
-                        <span>${desc}</span>
-                    </div>
-                </div>
-                <div class="farm-card-actions">
-                    <a class="btn btn-primary btn-sm" href="${href}?farm=${farm.id}">
-                        <i class="fas fa-arrow-right" aria-hidden="true"></i> Buka Modul
-                    </a>
-                </div>
-            </article>`).join('');
+
+            const nodeLink = document.getElementById('dash-node-link');
+            if (nodeLink) nodeLink.href = `monitoring.html?farm=${encodeURIComponent(farm.id)}`;
+
+            renderFarmInfoBar(farm);
+            renderWarning(farm);
+            renderStatSoilIrrigation(farm);
+            renderStatGatewayWeather(farm);
+            renderNodeTable(farm);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             renderFarmDetail();
+            startSimulation();
         });
     </script>
 </body>

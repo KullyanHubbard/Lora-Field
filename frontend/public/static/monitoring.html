@@ -137,7 +137,7 @@
             if (farmNodes.length) selectedNodeId = farmNodes[0].id;
 
             nodeSelect.innerHTML = farmNodes.map(node => {
-                return `<option value="${node.id}">${node.name} - ${node.location}</option>`;
+                return `<option value="${escapeHtml(node.id)}">${escapeHtml(node.name)} - ${escapeHtml(node.location)}</option>`;
             }).join('');
             nodeSelect.value = selectedNodeId;
         }
@@ -149,11 +149,12 @@
 
         function getSelectedNode() {
             const nodes = getMonitoringNodes();
-            return nodes.find(node => node.id === selectedNodeId) || nodes[0] || NODES[0];
+            return nodes.find(node => node.id === selectedNodeId) || nodes[0] || null;
         }
 
         function updateMonitoringUI() {
             const node = getSelectedNode();
+            if (!node) return;
             selectedNodeId = node.id;
             nodeSelect.value = node.id;
 
@@ -178,7 +179,7 @@
                 const rowBadge = getNodeStatusBadge(row.status);
                 return `<tr>
                     <td class="data-value">${row.time}</td>
-                    <td>${row.node}</td>
+                    <td>${escapeHtml(row.node)}</td>
                     <td class="data-value">${row.soil}</td>
                     <td class="data-value">${row.stemp}</td>
                     <td class="data-value">${row.atemp}</td>

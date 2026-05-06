@@ -2,6 +2,16 @@
 
 const DEG_C = '\u00B0C';
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 const STORAGE_KEYS = {
     THRESHOLD_LOWER: 'lf_threshold_lower',
     THRESHOLD_UPPER: 'lf_threshold_upper',
@@ -500,7 +510,7 @@ function renderFarmSwitcher() {
     switcher.innerHTML = `
         <i class="fas fa-map-location-dot" aria-hidden="true"></i>
         <span class="farm-switcher-copy">
-            <span class="farm-switcher-name">${farm.name}</span>
+            <span class="farm-switcher-name">${escapeHtml(farm.name)}</span>
             <span class="farm-switcher-action">Ganti Kebun</span>
         </span>
     `;

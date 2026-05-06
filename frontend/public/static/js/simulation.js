@@ -156,19 +156,23 @@ function recordDecisionSnapshot(node) {
 }
 
 function updateAllUI() {
-    // Jadwalkan semua DOM update di frame berikutnya \u2014 sinkron dengan repaint browser.
-    // Ini mencegah visual tearing dan layout thrashing di monitor berapapun Hz-nya.
     requestAnimationFrame(() => {
-        if (typeof updateDashboardUI === 'function') updateDashboardUI();
-        if (typeof updateMonitoringUI === 'function') updateMonitoringUI();
-        if (typeof updateIrrigationUI === 'function') updateIrrigationUI();
-        if (typeof updateWeatherUI === 'function') updateWeatherUI();
-        if (typeof renderLogs === 'function') renderLogs();
+        [
+            () => typeof updateDashboardUI === 'function' && updateDashboardUI(),
+            () => typeof updateMonitoringUI === 'function' && updateMonitoringUI(),
+            () => typeof updateIrrigationUI === 'function' && updateIrrigationUI(),
+            () => typeof updateWeatherUI === 'function' && updateWeatherUI(),
+            () => typeof renderLogs === 'function' && renderLogs(),
+        ].forEach(fn => {
+            try { fn(); } catch (err) { console.error('[LoraField] UI update error:', err); }
+        });
     });
 }
 
 function startSimulation() {
     if (simulationInterval) return;
+    if (!Array.isArray(NODES) || !NODES.length) return;
+    if (typeof WEATHER_DATA === 'undefined') return;
     simulationInterval = setInterval(() => {
         simulateSensorData();
 
