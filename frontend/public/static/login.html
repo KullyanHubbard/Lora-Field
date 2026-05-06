@@ -92,8 +92,23 @@
                         <input class="form-control" type="email" id="forgot-email" autocomplete="email"
                             placeholder="nama@email.com">
                     </div>
+                    <div class="form-group" id="forgot-code-row" hidden>
+                        <label for="forgot-code">Kode Verifikasi</label>
+                        <input class="form-control" type="text" id="forgot-code" inputmode="numeric"
+                            autocomplete="one-time-code" placeholder="Masukkan 6 digit kode">
+                    </div>
+                    <div class="form-group forgot-reset-field" hidden>
+                        <label for="forgot-new-password">Password Baru</label>
+                        <input class="form-control" type="password" id="forgot-new-password"
+                            autocomplete="new-password" placeholder="Minimal 6 karakter">
+                    </div>
+                    <div class="form-group forgot-reset-field" hidden>
+                        <label for="forgot-confirm-password">Ulangi Password</label>
+                        <input class="form-control" type="password" id="forgot-confirm-password"
+                            autocomplete="new-password" placeholder="Ulangi password baru">
+                    </div>
                     <button class="btn btn-secondary forgot-submit" id="forgot-submit" type="button">
-                        Kirim Instruksi
+                        Kirim Kode
                     </button>
                     <p class="forgot-feedback" id="forgot-feedback" role="status" aria-live="polite" hidden></p>
                 </section>
@@ -103,11 +118,18 @@
 
     <script>
         const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
         const forgotButton = document.getElementById('forgot-password');
         const forgotPanel = document.getElementById('forgot-panel');
         const forgotEmail = document.getElementById('forgot-email');
+        const forgotCodeRow = document.getElementById('forgot-code-row');
+        const forgotCodeInput = document.getElementById('forgot-code');
+        const forgotNewPassword = document.getElementById('forgot-new-password');
+        const forgotConfirmPassword = document.getElementById('forgot-confirm-password');
         const forgotSubmit = document.getElementById('forgot-submit');
         const forgotFeedback = document.getElementById('forgot-feedback');
+        const forgotResetFields = document.querySelectorAll('.forgot-reset-field');
+        let forgotCode = '';
 
         document.getElementById('login-form').addEventListener('submit', event => {
             event.preventDefault();
@@ -126,6 +148,20 @@
             forgotFeedback.textContent = message;
         }
 
+        function resetForgotState() {
+            forgotCode = '';
+            forgotCodeRow.hidden = true;
+            forgotCodeInput.value = '';
+            forgotNewPassword.value = '';
+            forgotConfirmPassword.value = '';
+            forgotResetFields.forEach(field => {
+                field.hidden = true;
+            });
+            forgotSubmit.textContent = 'Kirim Kode';
+            forgotFeedback.hidden = true;
+            forgotFeedback.textContent = '';
+        }
+
         forgotButton.addEventListener('click', () => {
             const isOpening = forgotPanel.hidden;
             forgotPanel.hidden = !isOpening;
@@ -134,20 +170,54 @@
             if (!isOpening) return;
 
             forgotEmail.value = loginEmail.value.trim();
-            forgotFeedback.hidden = true;
-            forgotFeedback.textContent = '';
+            resetForgotState();
             forgotEmail.focus();
         });
 
         forgotSubmit.addEventListener('click', () => {
             const identifier = forgotEmail.value.trim() || loginEmail.value.trim();
+            const submittedCode = forgotCodeInput.value.trim();
+            const nextPassword = forgotNewPassword.value.trim();
+            const confirmPassword = forgotConfirmPassword.value.trim();
             if (!identifier) {
                 setForgotFeedback('Masukkan email akun terlebih dahulu.', 'error');
                 forgotEmail.focus();
                 return;
             }
 
-            setForgotFeedback(`Permintaan untuk ${identifier} berhasil dibuat. Admin LoraField akan membantu proses berikutnya.`, 'success');
+            if (!forgotCode) {
+                forgotCode = String(Math.floor(100000 + Math.random() * 900000));
+                forgotCodeRow.hidden = false;
+                forgotResetFields.forEach(field => {
+                    field.hidden = false;
+                });
+                forgotSubmit.textContent = 'Simpan Password';
+                setForgotFeedback(`Kode verifikasi untuk ${identifier}: ${forgotCode}`, 'success');
+                forgotCodeInput.focus();
+                return;
+            }
+
+            if (submittedCode !== forgotCode) {
+                setForgotFeedback('Kode verifikasi belum sesuai.', 'error');
+                forgotCodeInput.focus();
+                return;
+            }
+
+            if (nextPassword.length < 6) {
+                setForgotFeedback('Password baru minimal 6 karakter.', 'error');
+                forgotNewPassword.focus();
+                return;
+            }
+
+            if (nextPassword !== confirmPassword) {
+                setForgotFeedback('Ulangi password belum sama.', 'error');
+                forgotConfirmPassword.focus();
+                return;
+            }
+
+            loginEmail.value = identifier;
+            loginPassword.value = nextPassword;
+            setForgotFeedback('Password berhasil disimpan untuk sesi demo. Silakan masuk dengan password baru.', 'success');
         });
     </script>
 </body>
