@@ -462,9 +462,11 @@
 }
 
 .farm-card-body strong {
+    min-width: 0;
     color: var(--color-gray-900);
     font-size: 0.82rem;
     font-weight: 800;
+    overflow-wrap: anywhere;
     text-align: right;
 }
 
@@ -520,11 +522,13 @@
 
 .auth-page {
     min-height: 100vh;
+    min-height: 100dvh;
     display: grid;
     place-items: center;
     padding: 24px;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     background: var(--color-bg);
     color: var(--text-main);
     isolation: isolate;

@@ -890,15 +890,35 @@ table td {
     position: fixed;
     top: 0;
     left: 0;
+    right: 0;
     z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     padding: 18px 28px;
 }
 
 .auth-brand-link {
     display: inline-flex;
     align-items: center;
+    min-width: 0;
     gap: 9px;
     cursor: default;
+}
+
+.auth-theme-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.auth-theme-slot .theme-switcher {
+    background: rgba(9, 11, 18, 0.72);
+    border-color: rgba(148, 163, 184, 0.22);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(14px);
 }
 
 .auth-brand-icon {
@@ -941,5 +961,137 @@ table td {
 
 :root[data-theme="light"] .auth-brand-icon {
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
+:root[data-theme="light"] .auth-theme-slot .theme-switcher {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(15, 23, 42, 0.13);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 480px) {
+    .auth-brand-bar {
+        padding: 14px 16px;
+    }
+
+    .auth-brand-name {
+        font-size: 1rem;
+    }
+}
+
+/* Mobile cascade hardening: premium.css dimuat setelah responsive.css,
+   jadi aturan penting mobile perlu ditegaskan di layer terakhir ini. */
+@media (max-width: 768px) {
+    .topbar {
+        min-width: 0;
+    }
+
+    .topbar-left,
+    .topbar-right {
+        min-width: 0;
+    }
+
+    .topbar-left {
+        flex: 1 1 auto;
+        overflow: hidden;
+    }
+
+    .topbar-right {
+        flex: 0 0 auto;
+    }
+
+    .topbar-clock {
+        display: none;
+    }
+
+    .farm-switcher {
+        flex: 1 1 auto;
+        max-width: min(42vw, 176px);
+    }
+
+    .auth-page {
+        place-items: start center;
+        padding: 86px 16px 28px;
+    }
+
+    .auth-brand-bar {
+        padding-left: max(env(safe-area-inset-left), 18px);
+        padding-right: max(env(safe-area-inset-right), 18px);
+    }
+
+    .auth-theme-slot .theme-switcher {
+        flex-shrink: 0;
+    }
+
+    .card,
+    .field-map-panel,
+    .telemetry-panel,
+    .table-wrap {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .farm-card-header {
+        flex-direction: column;
+    }
+
+    .farm-card-header .badge {
+        align-self: flex-start;
+    }
+
+    .farm-card-body div {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .farm-card-body strong {
+        text-align: left;
+    }
+
+    .farm-card-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar-user {
+        width: 36px;
+        min-width: 36px;
+        padding: 0;
+    }
+
+    .topbar-user span {
+        display: none;
+    }
+
+    .farm-switcher {
+        max-width: 40vw;
+    }
+
+    .auth-page {
+        padding: 78px 14px 22px;
+    }
+
+    .login-shell {
+        width: 100%;
+    }
+}
+
+@media (max-width: 360px) {
+    .farm-switcher {
+        max-width: 36vw;
+        padding-inline: 8px;
+    }
+
+    .farm-switcher i {
+        display: none;
+    }
+
+    .theme-option {
+        min-width: 30px;
+        width: 30px;
+    }
 }
 

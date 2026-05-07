@@ -1344,7 +1344,7 @@ select.form-control {
 }
 
 .search-box input {
-    min-width: 120px;
+    min-width: 0;
     flex: 1;
     border: 0;
     outline: 0;

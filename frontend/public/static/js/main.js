@@ -140,7 +140,9 @@ function animateThemeChange(theme, button) {
 
 function initThemeSwitcher() {
     const topbarRight = document.querySelector('.topbar-right');
-    if (!topbarRight || document.getElementById('theme-switcher')) return;
+    const authThemeSlot = document.querySelector('.auth-theme-slot');
+    const switcherHost = topbarRight || authThemeSlot;
+    if (!switcherHost || document.getElementById('theme-switcher')) return;
 
     const switcher = document.createElement('div');
     switcher.className = 'theme-switcher';
@@ -174,7 +176,7 @@ function initThemeSwitcher() {
     if (clock && clock.parentElement === topbarRight) {
         clock.insertAdjacentElement('afterend', switcher);
     } else {
-        topbarRight.prepend(switcher);
+        switcherHost.prepend(switcher);
     }
     switcher.addEventListener('click', event => {
         const button = event.target.closest('.theme-option');
