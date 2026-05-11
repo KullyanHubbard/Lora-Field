@@ -12,6 +12,38 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
+function readLocalStorage(key, fallback = null) {
+    try {
+        const value = localStorage.getItem(key);
+        return value === null ? fallback : value;
+    } catch (error) {
+        return fallback;
+    }
+}
+
+function writeLocalStorage(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+function removeLocalStorage(key) {
+    try {
+        localStorage.removeItem(key);
+    } catch (error) {
+        // Browser tetap bisa berjalan tanpa penyimpanan lokal.
+    }
+}
+
+function clampPercent(value, fallback) {
+    const number = Number.parseInt(value, 10);
+    if (!Number.isFinite(number)) return fallback;
+    return Math.min(Math.max(number, 0), 100);
+}
+
 const STORAGE_KEYS = {
     THRESHOLD_LOWER: 'lf_threshold_lower',
     THRESHOLD_UPPER: 'lf_threshold_upper',
@@ -39,24 +71,16 @@ const THEME = {
 };
 
 function getSavedTheme() {
-    try {
-        const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
-        return savedTheme === THEME.LIGHT ? THEME.LIGHT : THEME.DARK;
-    } catch (error) {
-        return THEME.DARK;
-    }
+    const savedTheme = readLocalStorage(STORAGE_KEYS.THEME, THEME.DARK);
+    return savedTheme === THEME.LIGHT ? THEME.LIGHT : THEME.DARK;
 }
 
 function applyTheme(theme) {
     const nextTheme = theme === THEME.LIGHT ? THEME.LIGHT : THEME.DARK;
     document.documentElement.dataset.theme = nextTheme;
 
-    try {
-        if (localStorage.getItem(STORAGE_KEYS.THEME) !== nextTheme) {
-            localStorage.setItem(STORAGE_KEYS.THEME, nextTheme);
-        }
-    } catch (error) {
-        // Tema tetap diterapkan untuk sesi saat ini.
+    if (readLocalStorage(STORAGE_KEYS.THEME) !== nextTheme) {
+        writeLocalStorage(STORAGE_KEYS.THEME, nextTheme);
     }
 
     document.querySelectorAll('.theme-switcher').forEach(switcher => {
@@ -150,7 +174,7 @@ function initThemeSwitcher() {
     switcher.setAttribute('role', 'group');
     switcher.setAttribute('aria-label', 'Pilih tema tampilan');
     switcher.innerHTML = `
-        <button class="theme-option" type="button" data-theme-value="light" aria-pressed="false" aria-label="Tema light" title="Light">
+        <button class="theme-option" type="button" data-theme-value="light" aria-pressed="false" aria-label="Tema terang" title="Terang">
             <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="12" cy="12" r="4"></circle>
                 <path d="M12 2v2"></path>
@@ -162,13 +186,13 @@ function initThemeSwitcher() {
                 <path d="m6.34 17.66-1.41 1.41"></path>
                 <path d="m19.07 4.93-1.41 1.41"></path>
             </svg>
-            <span>Light</span>
+            <span>Terang</span>
         </button>
-        <button class="theme-option" type="button" data-theme-value="dark" aria-pressed="false" aria-label="Tema dark" title="Dark">
+        <button class="theme-option" type="button" data-theme-value="dark" aria-pressed="false" aria-label="Tema gelap" title="Gelap">
             <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M20.99 12.38A8.5 8.5 0 1 1 11.62 3.01 6.5 6.5 0 0 0 20.99 12.38Z"></path>
             </svg>
-            <span>Dark</span>
+            <span>Gelap</span>
         </button>
     `;
 
@@ -193,22 +217,24 @@ const ThresholdManager = {
     DEFAULT_UPPER: 70,
 
     get lower() {
-        const value = Number.parseInt(localStorage.getItem(STORAGE_KEYS.THRESHOLD_LOWER), 10);
-        return Number.isFinite(value) ? value : this.DEFAULT_LOWER;
+        const lower = clampPercent(readLocalStorage(STORAGE_KEYS.THRESHOLD_LOWER), this.DEFAULT_LOWER);
+        const upper = this.upper;
+        return lower < upper ? lower : this.DEFAULT_LOWER;
     },
     get upper() {
-        const value = Number.parseInt(localStorage.getItem(STORAGE_KEYS.THRESHOLD_UPPER), 10);
-        return Number.isFinite(value) ? value : this.DEFAULT_UPPER;
+        const upper = clampPercent(readLocalStorage(STORAGE_KEYS.THRESHOLD_UPPER), this.DEFAULT_UPPER);
+        const rawLower = clampPercent(readLocalStorage(STORAGE_KEYS.THRESHOLD_LOWER), this.DEFAULT_LOWER);
+        return rawLower < upper ? upper : this.DEFAULT_UPPER;
     },
     set lower(val) {
-        localStorage.setItem(STORAGE_KEYS.THRESHOLD_LOWER, String(val));
+        writeLocalStorage(STORAGE_KEYS.THRESHOLD_LOWER, String(clampPercent(val, this.DEFAULT_LOWER)));
     },
     set upper(val) {
-        localStorage.setItem(STORAGE_KEYS.THRESHOLD_UPPER, String(val));
+        writeLocalStorage(STORAGE_KEYS.THRESHOLD_UPPER, String(clampPercent(val, this.DEFAULT_UPPER)));
     },
     reset() {
-        localStorage.removeItem(STORAGE_KEYS.THRESHOLD_LOWER);
-        localStorage.removeItem(STORAGE_KEYS.THRESHOLD_UPPER);
+        removeLocalStorage(STORAGE_KEYS.THRESHOLD_LOWER);
+        removeLocalStorage(STORAGE_KEYS.THRESHOLD_UPPER);
     },
     getActiveString() {
         return `${this.lower}%-${this.upper}%`;
@@ -216,11 +242,11 @@ const ThresholdManager = {
 };
 
 function getCurrentValveState() {
-    return localStorage.getItem(STORAGE_KEYS.VALVE_STATE) || VALVE_STATE.CLOSED;
+    return readLocalStorage(STORAGE_KEYS.VALVE_STATE, VALVE_STATE.CLOSED);
 }
 
 function saveValveState(state) {
-    localStorage.setItem(STORAGE_KEYS.VALVE_STATE, state);
+    writeLocalStorage(STORAGE_KEYS.VALVE_STATE, state);
 }
 
 // Logika keputusan irigasi berdasarkan threshold aktif dan cuaca BMKG.
@@ -327,7 +353,8 @@ function getFarmById(farmId) {
 
 function getFarmNodes(farm) {
     if (!farm || typeof NODES === 'undefined' || !Array.isArray(NODES)) return [];
-    return NODES.filter(node => node.farmId === farm.id || farm.nodeIds.includes(node.id));
+    const nodeIds = Array.isArray(farm.nodeIds) ? farm.nodeIds : [];
+    return NODES.filter(node => node.farmId === farm.id || nodeIds.includes(node.id));
 }
 
 function getFarmNodeStats(farm) {
@@ -347,32 +374,31 @@ function getFarmAverageMoisture(farm) {
 function getFarmLastUpdate(farm) {
     const dates = [farm && farm.lastUpdate, ...getFarmNodes(farm).map(node => node.lastUpdate)].filter(Boolean);
     if (!dates.length) return null;
-    return dates.reduce((latest, date) => new Date(date) > new Date(latest) ? date : latest, dates[0]);
+    return dates.reduce((latest, date) => {
+        const nextTime = new Date(date).getTime();
+        const latestTime = new Date(latest).getTime();
+        if (!Number.isFinite(nextTime)) return latest;
+        if (!Number.isFinite(latestTime)) return date;
+        return nextTime > latestTime ? date : latest;
+    }, dates[0]);
 }
 
 function getSelectedFarmId() {
     const params = new URLSearchParams(window.location.search);
     const fromUrl = params.get('farm');
     if (fromUrl && getFarmById(fromUrl)) return fromUrl;
-    try {
-        const savedFarmId = localStorage.getItem(STORAGE_KEYS.SELECTED_FARM);
-        return getFarmById(savedFarmId) ? savedFarmId : null;
-    } catch (error) {
-        return null;
-    }
+    const savedFarmId = readLocalStorage(STORAGE_KEYS.SELECTED_FARM);
+    return getFarmById(savedFarmId) ? savedFarmId : null;
 }
 
 function setSelectedFarmId(farmId) {
     if (!getFarmById(farmId)) return;
-    try {
-        localStorage.setItem(STORAGE_KEYS.SELECTED_FARM, farmId);
-    } catch (error) {
-        // Query parameter tetap menjadi sumber utama saat localStorage tidak tersedia.
-    }
+    writeLocalStorage(STORAGE_KEYS.SELECTED_FARM, farmId);
 }
 
 function getCurrentFarm() {
-    return getFarmById(getSelectedFarmId()) || (typeof FARMS !== 'undefined' && FARMS[0]);
+    if (typeof FARMS === 'undefined' || !Array.isArray(FARMS) || !FARMS.length) return null;
+    return getFarmById(getSelectedFarmId()) || FARMS[0];
 }
 
 function getDecisionBadge(type) {
@@ -381,13 +407,14 @@ function getDecisionBadge(type) {
         [DECISION_TYPE.DELAYED]: { label: 'Irigasi Ditunda', className: 'badge-yellow' },
         [DECISION_TYPE.CLOSED]: { label: 'Valve Tertutup', className: 'badge-yellow' },
         [DECISION_TYPE.NORMAL]: { label: 'Normal', className: 'badge-green' },
-        [DECISION_TYPE.WARNING]: { label: 'Warning', className: 'badge-red' }
+        [DECISION_TYPE.WARNING]: { label: 'Peringatan', className: 'badge-red' }
     };
     return map[type] || map[DECISION_TYPE.NORMAL];
 }
 
 function getWeatherInfo(code) {
-    return WEATHER_CODES.find(w => w.code === code) || {
+    const weatherCodes = typeof WEATHER_CODES !== 'undefined' && Array.isArray(WEATHER_CODES) ? WEATHER_CODES : [];
+    return weatherCodes.find(w => w.code === code) || {
         code,
         label: 'Tidak diketahui',
         icon: 'fas fa-circle-question',
@@ -396,7 +423,7 @@ function getWeatherInfo(code) {
 }
 
 function renderWeatherIcon(info) {
-    return `<i class="${info.icon}" aria-hidden="true"></i>`;
+    return `<i class="${escapeHtml(info.icon)}" aria-hidden="true"></i>`;
 }
 
 function setWeatherIcon(elementId, info) {
@@ -418,27 +445,21 @@ function startClock() {
         <span class="topbar-clock-time"></span>
     `;
     const timeEl = el.querySelector('.topbar-clock-time');
-    let lastSecond = -1;
 
     function tick() {
         const now = new Date();
-        const second = now.getSeconds();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const date = now.toLocaleDateString('id-ID', options);
+        const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        if (timeEl) timeEl.textContent = time;
+        el.title = `${date} - ${time}`;
+        el.setAttribute('aria-label', `${date} - ${time}`);
 
-        // Hanya render ulang saat detik berubah — hemat CPU & bebas Hz-dependency.
-        if (second !== lastSecond) {
-            lastSecond = second;
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const date = now.toLocaleDateString('id-ID', options);
-            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            if (timeEl) timeEl.textContent = time;
-            el.title = `${date} - ${time}`;
-            el.setAttribute('aria-label', `${date} - ${time}`);
-        }
-
-        requestAnimationFrame(tick);
+        const nextSecondDelay = 1000 - now.getMilliseconds();
+        window.setTimeout(tick, nextSecondDelay);
     }
 
-    requestAnimationFrame(tick);
+    tick();
 }
 
 // Helper: jadwalkan DOM update di frame berikutnya untuk mencegah layout thrashing.
@@ -458,7 +479,7 @@ const FARM_NAV_ITEMS = [
 
 const SELECTOR_NAV_ITEMS = [
     { href: 'index.html', icon: 'fas fa-map-location-dot', label: 'Kebun Saya' },
-    { href: 'settings.html', icon: 'fas fa-user-gear', label: 'Account Setting' }
+    { href: 'settings.html', icon: 'fas fa-user-gear', label: 'Pengaturan Akun' }
 ];
 
 const FARM_PAGE_PATHS = new Set([
@@ -494,7 +515,7 @@ function renderContextSidebar() {
     const items = context === 'farm' ? FARM_NAV_ITEMS : SELECTOR_NAV_ITEMS;
     nav.innerHTML = items.map(item => {
         const href = context === 'farm' ? getFarmScopedHref(item.href) : item.href;
-        return `<a href="${href}" class="sidebar-link"><i class="${item.icon}" aria-hidden="true"></i><span class="sidebar-label">${item.label}</span></a>`;
+        return `<a href="${escapeHtml(href)}" class="sidebar-link"><i class="${escapeHtml(item.icon)}" aria-hidden="true"></i><span class="sidebar-label">${escapeHtml(item.label)}</span></a>`;
     }).join('');
 }
 
@@ -528,7 +549,7 @@ function renderTopbarUser() {
         if (existingProfile.tagName.toLowerCase() === 'a') {
             existingProfile.className = 'topbar-user';
             existingProfile.href = 'settings.html';
-            existingProfile.setAttribute('aria-label', 'Account Pak Budi');
+            existingProfile.setAttribute('aria-label', 'Akun Pak Budi');
             existingProfile.innerHTML = getTopbarUserMarkup();
             return;
         }
@@ -537,7 +558,7 @@ function renderTopbarUser() {
         replacement.className = 'topbar-user';
         replacement.id = 'topbar-user';
         replacement.href = 'settings.html';
-        replacement.setAttribute('aria-label', 'Account Pak Budi');
+        replacement.setAttribute('aria-label', 'Akun Pak Budi');
         replacement.innerHTML = getTopbarUserMarkup();
         existingProfile.replaceWith(replacement);
         return;
@@ -547,7 +568,7 @@ function renderTopbarUser() {
     profile.className = 'topbar-user';
     profile.id = 'topbar-user';
     profile.href = 'settings.html';
-    profile.setAttribute('aria-label', 'Account Pak Budi');
+    profile.setAttribute('aria-label', 'Akun Pak Budi');
     profile.innerHTML = getTopbarUserMarkup();
 
     const switcher = document.getElementById('theme-switcher');
@@ -670,7 +691,11 @@ function initSidebar() {
 
 function timeAgo(date) {
     if (!date) return 'Tidak tersedia';
-    const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    const timestamp = new Date(date).getTime();
+    if (!Number.isFinite(timestamp)) return 'Tidak tersedia';
+
+    const diff = Math.max(Math.floor((Date.now() - timestamp) / 1000), 0);
+    if (diff < 5) return 'Baru saja';
     if (diff < 60) return `${diff} detik lalu`;
     if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;

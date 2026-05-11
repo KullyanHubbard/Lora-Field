@@ -269,7 +269,7 @@ const NODES = [
 
 const WEATHER_DATA = {
     location: 'Bantul, D.I. Yogyakarta',
-    status: 'Available',
+    status: 'Tersedia',
     lastUpdate: '10 menit lalu',
     current: {
         temp: 29,
@@ -301,7 +301,7 @@ const SYSTEM_STATUS = {
     nodeActive: { label: 'Node Aktif', value: '4 Node', status: 'Online', color: 'green' },
     gateway: { label: 'Gateway LoRa', value: 'Online', status: 'Connected', color: 'green' },
     mqtt: { label: 'MQTT Broker', value: 'Connected', status: 'Mosquitto', color: 'green' },
-    bmkg: { label: 'BMKG API', value: 'Available', status: 'Terhubung', color: 'green' }
+    bmkg: { label: 'BMKG API', value: 'Tersedia', status: 'Terhubung', color: 'green' }
 };
 
 // Urutan log terbaru ke terlama karena dashboard mengambil data dari awal array.
@@ -371,7 +371,7 @@ const DECISION_LOGS = [
         soilTemp: 0,
         weather: '-',
         weatherCode: '-',
-        decision: 'Warning',
+        decision: 'Peringatan',
         valve: '-',
         type: 'warning',
         note: 'Node offline, tidak ada data'

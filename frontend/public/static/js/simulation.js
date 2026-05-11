@@ -31,6 +31,7 @@ function randomPercent(min, max) {
 }
 
 function setForecast(code, temp = 27) {
+    if (typeof WEATHER_DATA === 'undefined' || !Array.isArray(WEATHER_DATA.forecast)) return;
     const info = getWeatherInfo(code);
     WEATHER_DATA.rainPrediction = info.isRain;
     WEATHER_DATA.forecast[FORECAST_TARGET_INDEX] = {
@@ -46,6 +47,7 @@ function setNoRainForecast(temp = 27) {
 }
 
 function simulateSensorData() {
+    if (typeof NODES === 'undefined' || !Array.isArray(NODES)) return;
     NODES.forEach(node => {
         if (node.status === 'offline') return;
 
@@ -55,6 +57,18 @@ function simulateSensorData() {
         node.airHumidity = randomInRange(...SENSOR_RANGES.airHumidity);
         node.lastUpdate = new Date();
     });
+}
+
+function getPrimarySimulationNode() {
+    if (typeof NODES === 'undefined' || !Array.isArray(NODES)) return null;
+
+    const farm = typeof getCurrentFarm === 'function' ? getCurrentFarm() : null;
+    const farmNodes = farm && typeof getFarmNodes === 'function' ? getFarmNodes(farm) : [];
+    const activeFarmNode = farmNodes.find(node => node.status !== 'offline') || null;
+    if (activeFarmNode) return activeFarmNode;
+    if (farmNodes.length) return null;
+
+    return NODES.find(node => node.status !== 'offline') || null;
 }
 
 function getScenarioSoilMoisture(type, lower, upper) {
@@ -73,7 +87,9 @@ function getScenarioSoilMoisture(type, lower, upper) {
 }
 
 function simulateCondition(type) {
-    const node = NODES[0];
+    const node = getPrimarySimulationNode();
+    if (!node) return;
+
     const lower = ThresholdManager.lower;
     const upper = ThresholdManager.upper;
     const soilMoisture = getScenarioSoilMoisture(type, lower, upper);
@@ -107,14 +123,20 @@ function resetRainOverride() {
 
 function isRainPredicted() {
     if (currentRainOverride !== null) return currentRainOverride;
+    if (typeof WEATHER_DATA === 'undefined' || !Array.isArray(WEATHER_DATA.forecast)) return false;
     return WEATHER_DATA.rainPrediction || WEATHER_DATA.forecast.some(item => getWeatherInfo(item.code).isRain);
 }
 
 function getPredictedRainItem() {
+    if (typeof WEATHER_DATA === 'undefined' || !Array.isArray(WEATHER_DATA.forecast)) return null;
     return WEATHER_DATA.forecast.find(item => getWeatherInfo(item.code).isRain) || null;
 }
 
 function getWeatherLogSnapshot() {
+    if (typeof WEATHER_DATA === 'undefined') {
+        return { weather: 'Tidak tersedia', weatherCode: '-' };
+    }
+
     const currentInfo = getWeatherInfo(WEATHER_DATA.current.code);
     const rainItem = getPredictedRainItem();
 
@@ -171,7 +193,7 @@ function updateAllUI() {
 
 function startSimulation() {
     if (simulationInterval) return;
-    if (!Array.isArray(NODES) || !NODES.length) return;
+    if (typeof NODES === 'undefined' || !Array.isArray(NODES) || !NODES.length) return;
     if (typeof WEATHER_DATA === 'undefined') return;
     simulationInterval = setInterval(() => {
         simulateSensorData();
@@ -186,8 +208,8 @@ function startSimulation() {
             }
         }
 
-        const node = NODES[0];
-        recordDecisionSnapshot(node);
+        const node = getPrimarySimulationNode();
+        if (node) recordDecisionSnapshot(node);
         updateAllUI();
     }, SIMULATION_INTERVAL_MS);
 }
@@ -199,9 +221,10 @@ function stopSimulation() {
     }
 }
 
-let lastLoggedDecisionType = DECISION_LOGS.length ? DECISION_LOGS[0].type : null;
+let lastLoggedDecisionType = typeof DECISION_LOGS !== 'undefined' && DECISION_LOGS.length ? DECISION_LOGS[0].type : null;
 
 function addLogEntry(node, soilMoisture, weather, weatherCode, decision, valve, type, note) {
+    if (typeof DECISION_LOGS === 'undefined' || !Array.isArray(DECISION_LOGS)) return;
     // Simpan hanya jika tipe keputusan berubah agar log tidak cepat penuh.
     if (lastLoggedDecisionType === type) return;
     lastLoggedDecisionType = type;
@@ -227,6 +250,18 @@ function addLogEntry(node, soilMoisture, weather, weatherCode, decision, valve, 
 }
 
 function pushSensorHistory(node) {
+    if (
+        typeof SENSOR_HISTORY_LABELS === 'undefined' ||
+        typeof SENSOR_HISTORY === 'undefined' ||
+        !Array.isArray(SENSOR_HISTORY_LABELS) ||
+        !Array.isArray(SENSOR_HISTORY.soilMoisture) ||
+        !Array.isArray(SENSOR_HISTORY.soilTemp) ||
+        !Array.isArray(SENSOR_HISTORY.airTemp) ||
+        !Array.isArray(SENSOR_HISTORY.airHumidity)
+    ) {
+        return;
+    }
+
     const now = new Date();
     const label = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     SENSOR_HISTORY_LABELS.push(label);

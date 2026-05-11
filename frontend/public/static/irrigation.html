@@ -62,7 +62,7 @@
             <p>LoRa-Based Precision Agriculture System</p>
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
-        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
+        <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
 
     <main class="main-content">
@@ -158,7 +158,21 @@
         function updateIrrigationUI() {
             const farm = getCurrentFarm();
             const farmNodes = getFarmNodes(farm);
-            const node = farmNodes.find(item => item.status !== 'offline') || farmNodes[0] || NODES[0];
+            const node = farmNodes.find(item => item.status !== 'offline');
+
+            if (!node) {
+                const valveEl = document.getElementById('irr-valve-text');
+                valveEl.textContent = 'TIDAK DIKETAHUI';
+                valveEl.className = 'valve-status closed';
+
+                const emblemEl = document.getElementById('irr-valve-emblem');
+                emblemEl.className = 'valve-emblem closed';
+
+                document.getElementById('dp-decision').textContent = 'Perlu cek gateway';
+                document.getElementById('dp-valve').textContent = 'Tidak diketahui';
+                return;
+            }
+
             const rain = farm.rainPrediction || isRainPredicted();
             const decision = makeIrrigationDecision(node.soilMoisture, rain);
 

@@ -58,7 +58,7 @@
             <p>LoRa-Based Precision Agriculture System</p>
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
-        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
+        <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
 
     <main class="main-content">
@@ -77,7 +77,7 @@
             <div class="card mb-24">
                 <div class="node-info-grid">
                     <div class="node-info-item"><span class="info-label">Wilayah</span><span class="info-value" id="w-region">-</span></div>
-                    <div class="node-info-item"><span class="info-label">Status Koneksi</span><span class="info-value"><span class="badge badge-green" id="w-api-status">Available</span></span></div>
+                    <div class="node-info-item"><span class="info-label">Status Koneksi</span><span class="info-value"><span class="badge badge-green" id="w-api-status">Tersedia</span></span></div>
                     <div class="node-info-item"><span class="info-label">Update Terakhir</span><span class="info-value" id="w-last-update">10 menit lalu</span></div>
                 </div>
             </div>
@@ -93,8 +93,8 @@
                 <div class="weather-details">
                     <div class="detail-row"><span class="detail-label">Kondisi</span><span class="detail-value" id="w-cond">Berawan</span></div>
                     <div class="detail-row"><span class="detail-label">Kelembapan</span><span class="detail-value" id="w-hum">80%</span></div>
-                    <div class="detail-row"><span class="detail-label">Kecepatan Angin</span><span class="detail-value" id="w-wind">12 km/h</span></div>
-                    <div class="detail-row"><span class="detail-label">Weather Code</span><span class="detail-value" id="w-code">3</span></div>
+                    <div class="detail-row"><span class="detail-label">Kecepatan Angin</span><span class="detail-value" id="w-wind">12 km/jam</span></div>
+                    <div class="detail-row"><span class="detail-label">Kode Cuaca</span><span class="detail-value" id="w-code">3</span></div>
                 </div>
             </div>
 
@@ -131,6 +131,7 @@
         function updateWeatherUI() {
             const weather = WEATHER_DATA;
             const farm = getCurrentFarm();
+            if (!farm) return;
             const rain = farm.rainPrediction || isRainPredicted();
             const info = getWeatherInfo(weather.current.code);
 
@@ -140,7 +141,7 @@
             document.getElementById('w-temp').textContent = weather.current.temp + DEG_C;
             document.getElementById('w-cond').textContent = weather.current.condition;
             document.getElementById('w-hum').textContent = weather.current.humidity + '%';
-            document.getElementById('w-wind').textContent = weather.current.windSpeed + ' km/h';
+            document.getElementById('w-wind').textContent = weather.current.windSpeed + ' km/jam';
             document.getElementById('w-code').textContent = weather.current.code;
             document.getElementById('w-last-update').textContent = weather.lastUpdate;
 
@@ -148,10 +149,10 @@
             forecastGrid.innerHTML = weather.forecast.map(item => {
                 const forecastInfo = getWeatherInfo(item.code);
                 return `<div class="card forecast-card">
-                    <div class="forecast-label">${item.label}</div>
+                    <div class="forecast-label">${escapeHtml(item.label)}</div>
                     <div class="forecast-icon">${renderWeatherIcon(forecastInfo)}</div>
                     <div class="forecast-temp">${item.temp}${DEG_C}</div>
-                    <div class="forecast-cond">${item.condition}</div>
+                    <div class="forecast-cond">${escapeHtml(item.condition)}</div>
                 </div>`;
             }).join('');
 
@@ -171,7 +172,7 @@
 
             tbody.innerHTML = WEATHER_CODES.map(item => `<tr>
                 <td><strong>${item.code}</strong></td>
-                <td>${item.label}</td>
+                <td>${escapeHtml(item.label)}</td>
                 <td><span class="weather-icon weather-icon-sm">${renderWeatherIcon(item)}</span></td>
                 <td>${item.isRain ? '<span class="badge badge-yellow">Menunda irigasi</span>' : '<span class="badge badge-green">Tidak mempengaruhi</span>'}</td>
             </tr>`).join('');

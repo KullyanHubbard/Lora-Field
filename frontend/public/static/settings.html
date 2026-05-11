@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Settings akun dan konfigurasi LoraField.">
+    <meta name="description" content="Pengaturan akun dan konfigurasi LoraField.">
     <meta name="color-scheme" content="dark light">
     <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
@@ -15,7 +15,7 @@
             document.documentElement.dataset.theme = 'dark';
         }
     </script>
-    <title>Settings - LoraField</title>
+    <title>Pengaturan Akun - LoraField</title>
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="css/style.css">
@@ -35,7 +35,7 @@
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand"><h2><i class="fas fa-seedling" aria-hidden="true"></i> LoraField</h2><p>LoRa-Based Precision Agriculture System</p></div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
-        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
+        <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
 
     <main class="main-content">
@@ -46,12 +46,184 @@
             <div class="topbar-right"><span class="topbar-clock" id="realtime-clock"></span></div>
         </header>
 
-        <div class="page-content">
+        <div class="page-content settings-page">
+            <div class="settings-grid mb-24">
+                <section class="card" aria-labelledby="settings-profile-title">
+                    <div class="card-header">
+                        <div>
+                            <h3 id="settings-profile-title">Profil Akun</h3>
+                            <p class="card-subtitle">Identitas operator yang tampil di dashboard.</p>
+                        </div>
+                    </div>
+                    <div class="node-info-grid settings-profile-grid">
+                        <div class="node-info-item">
+                            <span class="info-label">Nama</span>
+                            <span class="info-value" id="settings-user-name">-</span>
+                        </div>
+                        <div class="node-info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value" id="settings-user-email">-</span>
+                        </div>
+                        <div class="node-info-item">
+                            <span class="info-label">Peran</span>
+                            <span class="info-value" id="settings-user-role">-</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card" aria-labelledby="settings-threshold-title">
+                    <div class="card-header">
+                        <div>
+                            <h3 id="settings-threshold-title">Threshold Kelembapan</h3>
+                            <p class="card-subtitle">Rentang VWC yang dipakai keputusan irigasi otomatis.</p>
+                        </div>
+                    </div>
+
+                    <form class="threshold-form" id="threshold-form">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="settings-lower">Threshold Bawah (%)</label>
+                                <input class="form-control" id="settings-lower" name="lower" type="number" inputmode="numeric" min="0" max="99" step="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="settings-upper">Threshold Atas (%)</label>
+                                <input class="form-control" id="settings-upper" name="upper" type="number" inputmode="numeric" min="1" max="100" step="1" required>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-save" aria-hidden="true"></i> Simpan Threshold
+                            </button>
+                            <button class="btn btn-secondary" type="button" id="threshold-reset">
+                                <i class="fas fa-rotate-left" aria-hidden="true"></i> Pulihkan Default
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="threshold-preview" aria-live="polite">
+                        <p>Rentang aktif: <strong id="settings-range">40%-70%</strong></p>
+                        <div class="settings-progress-shell">
+                            <div class="progress-bar settings-threshold-track" id="settings-threshold-track" role="img"
+                                aria-label="Rentang threshold kelembapan tanah dari 0% sampai 100%">
+                                <span class="settings-threshold-window" aria-hidden="true"></span>
+                            </div>
+                            <div class="progress-range">
+                                <span>0%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="note-box threshold-feedback-hidden" id="settings-feedback" role="status" aria-live="polite">
+                        <i class="fas fa-circle-info" id="settings-feedback-icon" aria-hidden="true"></i>
+                        <span id="settings-feedback-text"></span>
+                    </div>
+                </section>
+            </div>
+
+            <section class="card" aria-labelledby="settings-session-title">
+                <div class="card-header">
+                    <div>
+                        <h3 id="settings-session-title">Sesi Demo</h3>
+                        <p class="card-subtitle">Pengaturan cepat untuk data lokal browser.</p>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <a class="btn btn-secondary" href="index.html">
+                        <i class="fas fa-map-location-dot" aria-hidden="true"></i> Pilih Kebun
+                    </a>
+                    <button class="btn btn-danger" type="button" id="settings-logout">
+                        <i class="fas fa-right-from-bracket" aria-hidden="true"></i> Keluar
+                    </button>
+                </div>
+            </section>
         </div>
     </main>
 
     <script src="js/dummy-data.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        const lowerInput = document.getElementById('settings-lower');
+        const upperInput = document.getElementById('settings-upper');
+        const rangeText = document.getElementById('settings-range');
+        const thresholdTrack = document.getElementById('settings-threshold-track');
+        const feedback = document.getElementById('settings-feedback');
+        const feedbackIcon = document.getElementById('settings-feedback-icon');
+        const feedbackText = document.getElementById('settings-feedback-text');
+
+        function readThresholdInput(input) {
+            const value = Number.parseInt(input.value, 10);
+            return Number.isFinite(value) ? value : null;
+        }
+
+        function updateThresholdPreview() {
+            const lower = readThresholdInput(lowerInput) ?? ThresholdManager.lower;
+            const upper = readThresholdInput(upperInput) ?? ThresholdManager.upper;
+            const safeLower = Math.min(Math.max(lower, 0), 100);
+            const safeUpper = Math.min(Math.max(upper, 0), 100);
+            const range = Math.max(safeUpper - safeLower, 0);
+
+            rangeText.textContent = `${safeLower}%-${safeUpper}%`;
+            thresholdTrack.style.setProperty('--settings-lower', `${safeLower}%`);
+            thresholdTrack.style.setProperty('--settings-range', `${range}%`);
+            thresholdTrack.setAttribute(
+                'aria-label',
+                `Rentang threshold kelembapan tanah ${safeLower}% sampai ${safeUpper}%, dari skala 0% sampai 100%`
+            );
+        }
+
+        function showThresholdFeedback(message, type) {
+            feedback.className = `note-box threshold-feedback-${type}`;
+            feedbackIcon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-circle-exclamation';
+            feedbackText.textContent = message;
+        }
+
+        function renderAccountSettings() {
+            const user = typeof CURRENT_USER !== 'undefined' ? CURRENT_USER : {};
+            document.getElementById('settings-user-name').textContent = user.name || 'Tidak tersedia';
+            document.getElementById('settings-user-email').textContent = user.email || 'Tidak tersedia';
+            document.getElementById('settings-user-role').textContent = user.role || 'Tidak tersedia';
+
+            lowerInput.value = ThresholdManager.lower;
+            upperInput.value = ThresholdManager.upper;
+            updateThresholdPreview();
+        }
+
+        document.getElementById('threshold-form').addEventListener('submit', event => {
+            event.preventDefault();
+
+            const lower = readThresholdInput(lowerInput);
+            const upper = readThresholdInput(upperInput);
+            if (lower === null || upper === null || lower < 0 || upper > 100 || lower >= upper) {
+                showThresholdFeedback('Threshold bawah harus lebih kecil dari threshold atas, dalam rentang 0%-100%.', 'error');
+                return;
+            }
+
+            ThresholdManager.lower = lower;
+            ThresholdManager.upper = upper;
+            updateThresholdPreview();
+            showThresholdFeedback(`Threshold aktif disimpan: ${ThresholdManager.getActiveString()}.`, 'success');
+        });
+
+        document.getElementById('threshold-reset').addEventListener('click', () => {
+            ThresholdManager.reset();
+            lowerInput.value = ThresholdManager.lower;
+            upperInput.value = ThresholdManager.upper;
+            updateThresholdPreview();
+            showThresholdFeedback('Threshold dikembalikan ke default 40%-70%.', 'success');
+        });
+
+        document.getElementById('settings-logout').addEventListener('click', () => {
+            removeLocalStorage('lf_auth_demo');
+            removeLocalStorage('lf_selected_farm');
+            window.location.href = 'login.html';
+        });
+
+        lowerInput.addEventListener('input', updateThresholdPreview);
+        upperInput.addEventListener('input', updateThresholdPreview);
+        document.addEventListener('DOMContentLoaded', renderAccountSettings);
+    </script>
 </body>
 
 </html>

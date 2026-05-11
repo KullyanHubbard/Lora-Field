@@ -86,6 +86,7 @@ video {
 
     .weather-card,
     .threshold-section,
+    .settings-grid,
     .irrigation-control-card,
     .location-map-layout,
     .field-command {
@@ -527,12 +528,14 @@ video {
     }
 
     .page-header-actions,
+    .settings-actions,
     .btn-group {
         width: 100%;
     }
 
     .page-header-actions .btn,
     .page-header-actions .status-pill,
+    .settings-actions .btn,
     .btn-group .btn,
     .sim-buttons .btn {
         width: 100%;

@@ -35,7 +35,7 @@
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand"><h2><i class="fas fa-seedling" aria-hidden="true"></i> LoraField</h2><p>LoRa-Based Precision Agriculture System</p></div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
-        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
+        <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
 
     <main class="main-content">
@@ -57,7 +57,7 @@
                                 <th>Internet</th>
                                 <th>Node</th>
                                 <th>Kualitas</th>
-                                <th>Last Seen</th>
+                                <th>Terakhir Terlihat</th>
                             </tr>
                         </thead>
                         <tbody id="gateway-table"></tbody>
@@ -72,15 +72,16 @@
     <script>
         function renderGateways() {
             const farm = getCurrentFarm();
+            if (!farm) return;
             document.getElementById('gateway-table').innerHTML = [farm].map(farm => {
                 const badge = getGatewayStatusBadge(farm.gateway.status);
                 const stats = getFarmNodeStats(farm);
                 return `<tr>
-                    <td class="data-value">${farm.gateway.id}</td>
+                    <td class="data-value">${escapeHtml(farm.gateway.id)}</td>
                     <td><span class="badge ${badge.className}">${badge.label}</span></td>
-                    <td>${farm.gateway.internet}</td>
+                    <td>${escapeHtml(farm.gateway.internet)}</td>
                     <td>${stats.active}/${stats.total}</td>
-                    <td>${farm.gateway.quality}</td>
+                    <td>${escapeHtml(farm.gateway.quality)}</td>
                     <td>${timeAgo(farm.gateway.lastSeen)}</td>
                 </tr>`;
             }).join('');

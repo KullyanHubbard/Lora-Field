@@ -58,7 +58,7 @@
             <p>LoRa-Based Precision Agriculture System</p>
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
-        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
+        <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
 
     <main class="main-content">
@@ -81,7 +81,7 @@
                         <button class="filter-btn" type="button" data-filter="open" aria-pressed="false">Irigasi Dijalankan</button>
                         <button class="filter-btn" type="button" data-filter="delayed" aria-pressed="false">Irigasi Ditunda</button>
                         <button class="filter-btn" type="button" data-filter="closed" aria-pressed="false">Valve Tertutup</button>
-                        <button class="filter-btn" type="button" data-filter="warning" aria-pressed="false">Warning</button>
+                        <button class="filter-btn" type="button" data-filter="warning" aria-pressed="false">Peringatan</button>
                     </div>
                     <div class="log-right">
                         <label class="search-box" for="log-search">
@@ -89,7 +89,7 @@
                             <input type="text" placeholder="Cari node, lokasi, atau keputusan..." id="log-search">
                         </label>
                         <button class="btn btn-secondary" type="button" id="btn-export-csv">
-                            <i class="fas fa-download" aria-hidden="true"></i> Export CSV
+                            <i class="fas fa-download" aria-hidden="true"></i> Ekspor CSV
                         </button>
                     </div>
                 </div>
@@ -153,16 +153,16 @@
             tbody.innerHTML = logs.map(log => {
                 const badge = getDecisionBadge(log.type);
                 return `<tr>
-                    <td class="data-value">${log.time}</td>
-                    <td>${log.node}</td>
-                    <td>${log.location}</td>
+                    <td class="data-value">${escapeHtml(log.time)}</td>
+                    <td>${escapeHtml(log.node)}</td>
+                    <td>${escapeHtml(log.location)}</td>
                     <td class="data-value">${log.soilMoisture}%</td>
-                    <td class="data-value">${log.threshold}</td>
+                    <td class="data-value">${escapeHtml(log.threshold)}</td>
                     <td class="data-value">${log.soilTemp}${DEG_C}</td>
-                    <td>${log.weather}</td>
-                    <td><span class="badge ${badge.className}">${log.decision}</span></td>
-                    <td>${log.valve}</td>
-                    <td class="text-sm text-muted">${log.note}</td>
+                    <td>${escapeHtml(log.weather)}</td>
+                    <td><span class="badge ${badge.className}">${escapeHtml(log.decision)}</span></td>
+                    <td>${escapeHtml(log.valve)}</td>
+                    <td class="text-sm text-muted">${escapeHtml(log.note)}</td>
                 </tr>`;
             }).join('');
         }

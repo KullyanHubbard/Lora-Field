@@ -35,7 +35,7 @@
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand"><h2><i class="fas fa-seedling" aria-hidden="true"></i> LoraField</h2><p>LoRa-Based Precision Agriculture System</p></div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
-        <div class="sidebar-footer">LoraField v0.1-alpha &middot; CDP 2025</div>
+        <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
 
     <main class="main-content">
@@ -57,7 +57,7 @@
                                 <th>Status</th>
                                 <th>Baterai</th>
                                 <th>RSSI LoRa</th>
-                                <th>Last Update</th>
+                                <th>Update Terakhir</th>
                             </tr>
                         </thead>
                         <tbody id="node-table"></tbody>
@@ -72,11 +72,12 @@
     <script>
         function renderNodes() {
             const farm = getCurrentFarm();
+            if (!farm) return;
             document.getElementById('node-table').innerHTML = getFarmNodes(farm).map(node => {
                 const badge = getNodeStatusBadge(node.status);
                 return `<tr>
-                    <td>${node.name}</td>
-                    <td>${node.location}</td>
+                    <td>${escapeHtml(node.name)}</td>
+                    <td>${escapeHtml(node.location)}</td>
                     <td><span class="badge ${badge.className}">${badge.label}</span></td>
                     <td>${node.battery}%</td>
                     <td>${node.rssi === null ? '-' : `${node.rssi} dBm`}</td>

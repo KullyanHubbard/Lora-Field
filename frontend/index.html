@@ -6,16 +6,21 @@
     <title>LoraField Dashboard</title>
   </head>
   <body>
-    <script>
-      const target = window.location.pathname.includes('/frontend/')
-        ? 'public/static/index.html'
-        : '/static/index.html';
-
-      window.location.replace(target);
-    </script>
     <p>
       Membuka dashboard...
-      <a href="public/static/index.html">Klik di sini jika tidak berpindah otomatis.</a>
+      <a id="dashboard-link" href="static/index.html">Klik di sini jika tidak berpindah otomatis.</a>
     </p>
+    <script>
+      const isSourceFile = window.location.pathname.includes('/frontend/');
+      const target = isSourceFile ? 'public/static/index.html' : 'static/index.html';
+      const targetUrl = new URL(target, window.location.href);
+      const fallbackLink = document.getElementById('dashboard-link');
+
+      if (fallbackLink) {
+        fallbackLink.href = targetUrl.href;
+      }
+
+      window.location.replace(targetUrl.href);
+    </script>
   </body>
 </html>
