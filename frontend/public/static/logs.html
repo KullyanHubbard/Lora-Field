@@ -120,16 +120,45 @@
     </main>
 
     <script src="js/dummy-data.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     <script src="js/simulation.js"></script>
     <script>
         let activeFilter = 'all';
         let searchQuery = '';
 
+        function mapApiLog(apiLog) {
+            const dt = new Date(apiLog.created_at);
+            const time = isNaN(dt) ? apiLog.created_at : dt.toLocaleTimeString('id-ID', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            let type = 'normal';
+            if (apiLog.valve_state === 'open') type = 'open';
+            else if (apiLog.decision && apiLog.decision.toLowerCase().includes('ditunda')) type = 'delayed';
+            else if (apiLog.valve_state === 'closed' && apiLog.decision && apiLog.decision.toLowerCase().includes('berhenti')) type = 'closed';
+            return {
+                time,
+                node: apiLog.node_id,
+                location: apiLog.node_id,
+                soilMoisture: apiLog.soil_moisture,
+                threshold: `${ThresholdManager.lower}%-${ThresholdManager.upper}%`,
+                soilTemp: '—',
+                weather: apiLog.weather || '—',
+                weatherCode: '-',
+                decision: apiLog.decision,
+                valve: apiLog.valve_state === 'open' ? 'Terbuka' : 'Tertutup',
+                type,
+                note: apiLog.reason || '—'
+            };
+        }
+
         function getScopedLogs() {
             const farm = getCurrentFarm();
+            const farmNodeIds = new Set(farm ? (farm.nodeIds || []) : []);
             const farmNodeNames = new Set(getFarmNodes(farm).map(node => node.name));
-            return DECISION_LOGS.filter(log => farmNodeNames.has(log.node));
+            return DECISION_LOGS.filter(log =>
+                farmNodeIds.has(log.node) || farmNodeNames.has(log.node)
+            );
         }
 
         function renderLogs() {
@@ -233,7 +262,30 @@
             URL.revokeObjectURL(url);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const farmId = urlParams.get('farm');
+
+            await loadFarmsFromAPI(CURRENT_USER_ID);
+            if (farmId) await loadFarmSummaryFromAPI(farmId);
+
+            try {
+                const logsRes = await fetch(`${API_BASE}/api/logs?limit=50`);
+                if (logsRes.ok) {
+                    const logsData = await logsRes.json();
+                    DECISION_LOGS.length = 0;
+                    (logsData.items || []).map(mapApiLog).forEach(l => DECISION_LOGS.push(l));
+                }
+            } catch (err) {
+                console.warn('[LoraField] Gagal load logs dari API, pakai data lokal:', err.message);
+            }
+
+            const oldSwitcher = document.getElementById('farm-switcher');
+            if (oldSwitcher) oldSwitcher.remove();
+            renderFarmSwitcher();
+            renderContextSidebar();
+            setActivePage();
+
             document.getElementById('btn-export-csv').addEventListener('click', exportLogsCSV);
             renderLogs();
             startSimulation();

@@ -130,6 +130,7 @@
     </main>
 
     <script src="js/dummy-data.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     <script src="js/simulation.js"></script>
     <script>
@@ -304,8 +305,30 @@
             renderNodeTable(farm);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Ambil farm_id dari URL sebelum data apapun di-load
+            const urlParams = new URLSearchParams(window.location.search);
+            const farmId = urlParams.get('farm');
+
+            // 1. Load daftar kebun user dari API (isi FARMS dengan data real)
+            await loadFarmsFromAPI(CURRENT_USER_ID);
+
+            // 2. Load summary kebun yang dipilih (isi NODES + WEATHER_DATA dengan data real)
+            if (farmId) {
+                await loadFarmSummaryFromAPI(farmId);
+            }
+
+            // 3. Render dengan data real (getCurrentFarm() sekarang bisa resolve farmId dari backend)
             renderFarmDetail();
+
+            // 4. Update ulang farm switcher & sidebar — main.js sempat render sebelum API selesai
+            const oldSwitcher = document.getElementById('farm-switcher');
+            if (oldSwitcher) oldSwitcher.remove();
+            renderFarmSwitcher();
+            renderContextSidebar();
+            setActivePage();
+
+            // 5. Mulai simulasi di atas data real (sampai WebSocket tersedia)
             startSimulation();
         });
     </script>

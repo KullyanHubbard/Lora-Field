@@ -4,9 +4,7 @@ Dashboard web frontend untuk monitoring sensor dan otomasi irigasi lahan pertani
 
 ## Deskripsi
 
-LoraField memakai node sensor berbasis LILYGO LoRa32 untuk membaca kelembapan tanah, suhu tanah, suhu udara, dan kelembapan udara. Data dikirim lewat LoRa P2P ke gateway, lalu ditampilkan di dashboard web secara real-time. Sistem juga memakai prakiraan cuaca BMKG untuk menunda irigasi jika hujan diprediksi turun dalam 3 jam ke depan.
-
-> Catatan: frontend statis masih memakai dummy dan simulasi JavaScript. Backend basic sudah tersedia di folder `backend/` sebagai fondasi awal API.
+LoraField memakai node sensor berbasis LILYGO LoRa32 untuk membaca kelembapan tanah, suhu tanah, suhu udara, dan kelembapan udara. Data dikirim lewat LoRa P2P ke gateway, lalu ditampilkan di dashboard web. Sistem mendukung banyak kebun per user dan menggunakan prakiraan cuaca BMKG per kebun untuk menunda irigasi jika hujan diprediksi turun dalam 3 jam ke depan.
 
 ## Struktur Folder
 
@@ -18,56 +16,46 @@ LoraField memakai node sensor berbasis LILYGO LoRa32 untuk membaca kelembapan ta
 |   |   |-- database.py
 |   |   |-- main.py
 |   |   `-- schemas.py
-|   |-- data/
+|   |-- data/                   # lorafield.db dibuat otomatis
 |   |-- requirements.txt
 |   `-- README.md
 |-- frontend/
 |   |-- public/
 |   |   `-- static/
 |   |       |-- index.html          # Dashboard statis lama
-|   |       |-- monitoring.html     # Monitoring detail sensor
-|   |       |-- irrigation.html     # Kontrol dan pengaturan irigasi
-|   |       |-- weather.html        # Prakiraan cuaca BMKG
-|   |       |-- logs.html           # Log keputusan sistem
-|   |       |-- image.png
+|   |       |-- monitoring.html
+|   |       |-- irrigation.html
+|   |       |-- weather.html
+|   |       |-- logs.html
 |   |       |-- css/
-|   |       |   |-- style.css       # Design system dan komponen UI
-|   |       |   |-- dashboard.css   # Style khusus halaman
-|   |       |   |-- premium.css
-|   |       |   `-- responsive.css  # Breakpoint responsif
 |   |       `-- js/
-|   |           |-- dummy-data.js   # Data dummy node, cuaca, dan log
-|   |           |-- main.js         # Logic utama, threshold, clock, sidebar
-|   |           |-- charts.js       # Helper Chart.js
-|   |           `-- simulation.js   # Simulasi data sensor real-time
-|   |-- src/
-|   |   |-- assets/
+|   |-- src/                        # React/Vite (dalam pengembangan)
 |   |   |-- components/
-|   |   |-- layout/
 |   |   |-- pages/
-|   |   |-- features/
-|   |   |-- hooks/
-|   |   |-- context/
-|   |   |-- redux/
 |   |   |-- services/
-|   |   |-- utils/
-|   |   |-- App.jsx
-|   |   |-- index.css
-|   |   `-- main.jsx
+|   |   `-- ...
 |   |-- index.html
 |   |-- package.json
-|   |-- README.md
 |   `-- vite.config.js
 `-- README.md
 ```
 
 ## Cara Menjalankan
 
-### Frontend
+### Backend
 
-1. Clone atau download repository ini.
-2. Masuk ke folder `frontend`.
-3. Jalankan frontend React/Vite.
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # Linux/Mac
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Backend tersedia di `http://127.0.0.1:8000`. Dokumentasi interaktif: `http://127.0.0.1:8000/docs`.
+
+### Frontend
 
 ```bash
 cd frontend
@@ -75,82 +63,123 @@ npm install
 npm run dev
 ```
 
-Versi halaman statis lama berada di `frontend/public/static/index.html`.
+Versi halaman statis lama: `frontend/public/static/index.html`.
 
-### Backend
+## API Endpoints
 
-```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+### Kebun (Farm)
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | `/api/farms?user_id=...` | Daftar semua kebun milik user |
+| GET | `/api/farms/{farm_id}` | Detail satu kebun |
+| POST | `/api/farms` | Tambah kebun baru |
+| GET | `/api/farms/{farm_id}/weather` | Cuaca BMKG untuk kebun (dari cache) |
+| GET | `/api/farms/{farm_id}/summary` | Ringkasan lengkap kebun: cuaca, node, keputusan irigasi |
+
+### Node Sensor
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | `/api/nodes` | Daftar semua node (opsional: `?farm_id=...`) |
+| PATCH | `/api/nodes/{node_id}/location` | Update lokasi node |
+| GET | `/api/nodes/{node_id}/readings` | Riwayat reading node |
+| POST | `/api/nodes/{node_id}/readings?adm4=...` | Kirim data sensor baru |
+
+### Cuaca & Keputusan
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | `/api/weather?adm4=...` | Test endpoint cuaca BMKG langsung (tanpa cache) |
+| GET | `/api/decision?soil_moisture=...&rain_next_3h=...` | Simulasi keputusan irigasi |
+| GET | `/api/logs` | Riwayat keputusan irigasi |
+
+### Legacy
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | `/api/summary?adm4=...` | Ringkasan node pertama (backward compatible) |
+
+## Model Data
+
+### Farm
+
+```json
+{
+  "id": "farm-01",
+  "user_id": "user-01",
+  "name": "Kebun Salak Bantul",
+  "owner": "Pak Budi",
+  "location": "Bantul, D.I. Yogyakarta",
+  "crop_type": "Salak",
+  "area_ha": 0.5,
+  "bmkg_adm4_code": "34.02.01.2001",
+  "latitude": -7.8881,
+  "longitude": 110.3289,
+  "status": "active"
+}
 ```
 
-Backend tersedia di `http://127.0.0.1:8000` dan dokumentasi API di `http://127.0.0.1:8000/docs`.
+### Akses per User
 
-## Fitur Frontend
+Setiap user hanya mengakses kebun miliknya sendiri:
 
-- **Dashboard** - Ringkasan sistem, sensor, irigasi, grafik, cuaca, dan log
-- **Monitoring** - Detail node sensor, progress bar, grafik riwayat, dan tabel data
-- **Irigasi** - Pengaturan threshold fleksibel, logika kendali, dan simulasi kondisi
-- **Cuaca** - Data BMKG, forecast 3 jam, weather code, dan pengaruh ke irigasi
-- **Log Sistem** - Filter, pencarian, dan tabel keputusan lengkap
+```text
+GET /api/farms?user_id=user-01
+```
 
-## Catatan Threshold
+```text
+user-01 (Pak Budi):
+  -> farm-01: Kebun Salak Bantul
+  -> farm-02: Kebun Cabai Sleman
 
-Nilai threshold kelembapan tanah tidak permanen:
+user-02 (Bu Sari):
+  -> farm-03: Kebun Melon Bantul
+```
 
-- Default bawah: 40% VWC
-- Default atas: 70% VWC
+## Cache Cuaca BMKG
 
-Threshold dapat diubah dari halaman Irigasi dan disimpan di `localStorage`. Nilai perlu dikalibrasi berdasarkan:
+Backend menyimpan hasil prakiraan BMKG ke tabel `weather_cache` per kode wilayah (`adm4`). TTL cache: **30 menit**. Endpoint `/api/farms/{farm_id}/weather` dan `/api/farms/{farm_id}/summary` menggunakan cache ini secara otomatis.
 
-- Jenis tanaman
-- Karakteristik tanah
-- Hasil pengujian lapangan
+Endpoint `/api/weather?adm4=...` selalu mengambil langsung dari BMKG (tanpa cache), dipakai untuk keperluan test dan debug.
 
-## Alur Data dan Logika Saat Ini
-
-Proyek masih memakai data dummy dan simulasi frontend.
-
-- `frontend/public/static/js/dummy-data.js` berisi data awal node, cuaca, log keputusan, dan riwayat sensor.
-- `frontend/public/static/js/main.js` berisi logic bersama: threshold, status valve, badge, clock, sidebar, dan keputusan irigasi.
-- `frontend/public/static/js/simulation.js` mengubah data dummy secara berkala, menambah riwayat sensor, dan menulis log baru saat keputusan berubah.
-- `frontend/public/static/js/charts.js` hanya bertugas menampilkan data riwayat ke grafik Chart.js.
-
-Aturan keputusan irigasi:
+## Logika Irigasi
 
 | Kondisi | Cuaca | Keputusan |
-| --- | --- | --- |
-| Kelembapan < threshold bawah | Tidak ada hujan | Valve terbuka |
-| Kelembapan < threshold bawah | Ada prediksi hujan | Irigasi ditunda |
-| Kelembapan > threshold atas | Apapun | Valve tertutup |
-| Kelembapan dalam rentang threshold | Apapun | Mengikuti status valve sebelumnya |
+|---------|-------|-----------|
+| Kelembapan < threshold bawah (40%) | Tidak ada prediksi hujan | Valve terbuka |
+| Kelembapan < threshold bawah (40%) | Prediksi hujan ≤ 3 jam | Irigasi ditunda |
+| Kelembapan > threshold atas (70%) | Apapun | Valve tertutup |
+| Kelembapan dalam rentang threshold | Apapun | Standby |
 
-Jika ada data yang terlihat tidak sesuai, cek urutannya dari `frontend/public/static/js/dummy-data.js`, lalu `makeIrrigationDecision()` di `frontend/public/static/js/main.js`, lalu `recordDecisionSnapshot()` di `frontend/public/static/js/simulation.js`.
+`rain_next_3h` mengecek slot prakiraan sekarang dan slot 3 jam berikutnya dari BMKG.
 
-## Status Integrasi Backend
+## Catatan Kode Wilayah BMKG
+
+`bmkg_adm4_code` di tiap farm adalah kode wilayah level desa dari sistem BMKG. Contoh kode yang sudah diverifikasi: `31.71.01.1001`. Kode untuk lokasi lain dapat dicari di [data.bmkg.go.id](https://data.bmkg.go.id/prakiraan-cuaca/) dan diperbarui lewat database atau API.
+
+## Status Integrasi
 
 | Komponen | Teknologi | Status |
-| --- | --- | --- |
-| Backend API | FastAPI | Basic tersedia |
-| Database | SQLite | Basic tersedia |
+|----------|-----------|--------|
+| Backend API | FastAPI | Tersedia v1.3 |
+| Database | SQLite | Tersedia, multi-farm |
+| Cache Cuaca | SQLite (in-process) | Tersedia, TTL 30 menit |
+| Data Cuaca | API BMKG | Terintegrasi |
 | Message Broker | Mosquitto MQTT | Belum diintegrasikan |
 | Real-time Update | WebSocket | Belum diintegrasikan |
-| Data Cuaca | API BMKG | Endpoint backend tersedia |
 | Node Sensor | LILYGO LoRa32 | Hardware terpisah |
+| Frontend React | React/Vite | Scaffold tersedia |
 
 ## Teknologi
 
-- HTML5
-- CSS3
-- JavaScript vanilla
-- React/Vite scaffold
-- FastAPI
-- SQLite
-- Chart.js v4 via CDN
-- Font Awesome 6 via CDN
+- FastAPI + Uvicorn
+- SQLite (via sqlite3 standar Python)
+- httpx (HTTP client untuk BMKG)
+- Pydantic v2
+- React/Vite (scaffold)
+- HTML/CSS/JS vanilla (frontend statis lama)
+- Chart.js v4
 
 ## Capstone Design Project
 

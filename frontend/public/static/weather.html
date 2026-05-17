@@ -125,6 +125,7 @@
     </main>
 
     <script src="js/dummy-data.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     <script src="js/simulation.js"></script>
     <script>
@@ -178,7 +179,19 @@
             </tr>`).join('');
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const farmId = urlParams.get('farm');
+
+            await loadFarmsFromAPI(CURRENT_USER_ID);
+            if (farmId) await loadFarmSummaryFromAPI(farmId);
+
+            const oldSwitcher = document.getElementById('farm-switcher');
+            if (oldSwitcher) oldSwitcher.remove();
+            renderFarmSwitcher();
+            renderContextSidebar();
+            setActivePage();
+
             renderWeatherCodes();
             updateWeatherUI();
             startSimulation();

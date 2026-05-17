@@ -94,6 +94,7 @@
     </main>
 
     <script src="js/dummy-data.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
@@ -253,7 +254,17 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Tampilkan loading sementara
+            const list = document.getElementById('farm-list');
+            if (list) list.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Memuat data kebun...</div>';
+
+            // Load data real dari backend; jika gagal, dummy-data.js tetap jadi fallback
+            await loadFarmsFromAPI(CURRENT_USER_ID);
+
+            // Perbarui selectedFarmId karena FARMS sudah berisi data real
+            selectedFarmId = getSelectedFarmId();
+
             renderFarmCards();
             initFarmMap();
             bindDashboardEvents();
