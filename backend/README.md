@@ -1,7 +1,10 @@
 # LoraField Backend
 
 Backend basic untuk dashboard LoraField. API ini memakai FastAPI dan SQLite
-sebagai fondasi awal sebelum integrasi MQTT, BMKG live API, dan hardware LoRa.
+sebagai fondasi awal sebelum integrasi MQTT dan hardware LoRa.
+
+Data cuaca diambil dari API publik BMKG:
+`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={kode_wilayah}`.
 
 ## Menjalankan
 
@@ -22,15 +25,20 @@ Dokumentasi otomatis FastAPI tersedia di `http://127.0.0.1:8000/docs`.
 | Method | Endpoint | Fungsi |
 | --- | --- | --- |
 | GET | `/health` | Cek status backend |
-| GET | `/api/summary` | Ringkasan node, sensor terbaru, cuaca, dan keputusan |
+| GET | `/api/summary?adm4={kode_wilayah}` | Ringkasan node, sensor terbaru, cuaca BMKG, dan keputusan |
 | GET | `/api/nodes` | Daftar node |
 | PATCH | `/api/nodes/{node_id}/location` | Simpan lokasi dan koordinat node |
 | GET | `/api/nodes/{node_id}/readings` | Riwayat pembacaan sensor |
 | POST | `/api/nodes/{node_id}/readings` | Simpan pembacaan sensor baru |
-| GET | `/api/weather` | Data cuaca aktif |
-| PUT | `/api/weather` | Update data cuaca dummy |
+| GET | `/api/weather?adm4={kode_wilayah}` | Data cuaca aktif dari BMKG |
 | GET | `/api/decision` | Simulasi keputusan irigasi |
 | GET | `/api/logs` | Log keputusan |
+
+## Contoh Ambil Cuaca BMKG
+
+```bash
+curl "http://127.0.0.1:8000/api/weather?adm4=31.71.01.1001"
+```
 
 ## Contoh Payload Sensor
 

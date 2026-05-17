@@ -98,17 +98,6 @@ def init_db() -> None:
                 FOREIGN KEY (node_id) REFERENCES nodes(id)
             );
 
-            CREATE TABLE IF NOT EXISTS weather (
-                id INTEGER PRIMARY KEY CHECK (id = 1),
-                location TEXT NOT NULL,
-                condition TEXT NOT NULL,
-                code INTEGER NOT NULL,
-                temperature REAL NOT NULL,
-                humidity INTEGER NOT NULL,
-                rain_next_3h INTEGER NOT NULL,
-                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-            );
-
             CREATE TABLE IF NOT EXISTS decision_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 node_id TEXT NOT NULL,
@@ -168,17 +157,6 @@ def init_db() -> None:
                     """,
                     (node["id"], *node["reading"]),
                 )
-
-        weather_count = connection.execute("SELECT COUNT(*) FROM weather").fetchone()[0]
-        if weather_count == 0:
-            connection.execute(
-                """
-                INSERT INTO weather
-                    (id, location, condition, code, temperature, humidity, rain_next_3h)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (1, "Bantul, D.I. Yogyakarta", "Berawan", 3, 29, 80, 0),
-            )
 
         log_count = connection.execute("SELECT COUNT(*) FROM decision_logs").fetchone()[0]
         if log_count == 0:

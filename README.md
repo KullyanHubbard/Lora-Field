@@ -138,7 +138,7 @@ Jika ada data yang terlihat tidak sesuai, cek urutannya dari `frontend/public/st
 | Database | SQLite | Basic tersedia |
 | Message Broker | Mosquitto MQTT | Belum diintegrasikan |
 | Real-time Update | WebSocket | Belum diintegrasikan |
-| Data Cuaca | API BMKG | Masih dummy |
+| Data Cuaca | API BMKG | Endpoint backend tersedia |
 | Node Sensor | LILYGO LoRa32 | Hardware terpisah |
 
 ## Teknologi

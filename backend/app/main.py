@@ -1,11 +1,14 @@
+import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import get_connection, init_db, row_to_dict
-from .schemas import NodeLocationUpdate, SensorReadingIn, ThresholdConfig, WeatherUpdate
+from .schemas import NodeLocationUpdate, SensorReadingIn, ThresholdConfig
 
 
 THRESHOLDS = ThresholdConfig()
+BMKG_FORECAST_URL = "https://api.bmkg.go.id/publik/prakiraan-cuaca"
+RAIN_KEYWORDS = ("hujan", "rain", "shower", "thunderstorm")
 
 app = FastAPI(
     title="LoraField Backend",
@@ -65,13 +68,65 @@ def calculate_decision(soil_moisture: float, rain_next_3h: bool) -> dict:
     }
 
 
-def get_latest_weather() -> dict:
-    with get_connection() as connection:
-        weather = row_to_dict(connection.execute("SELECT * FROM weather WHERE id = 1").fetchone())
-    if weather is None:
-        raise HTTPException(status_code=404, detail="Weather data belum tersedia")
-    weather["rain_next_3h"] = bool(weather["rain_next_3h"])
-    return weather
+def flatten_bmkg_forecasts(data: dict) -> list[dict]:
+    forecast_groups = data.get("data") or []
+    if not forecast_groups:
+        return []
+
+    forecast_days = forecast_groups[0].get("cuaca", [])
+    return [forecast for day in forecast_days for forecast in day]
+
+
+def is_rainy_forecast(forecast: dict) -> bool:
+    description = str(forecast.get("weather_desc", "")).lower()
+    return any(keyword in description for keyword in RAIN_KEYWORDS)
+
+
+def fetch_bmkg_weather(adm4: str) -> dict:
+    try:
+        with httpx.Client(timeout=10) as client:
+            response = client.get(BMKG_FORECAST_URL, params={"adm4": adm4})
+            response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"BMKG mengembalikan status {exc.response.status_code}",
+        ) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Gagal mengambil data cuaca dari BMKG",
+        ) from exc
+
+    data = response.json()
+    forecasts = flatten_bmkg_forecasts(data)
+    if not forecasts:
+        raise HTTPException(status_code=404, detail="Prakiraan BMKG tidak tersedia")
+
+    current = forecasts[0]
+    next_3h = forecasts[:2]
+    location = data.get("lokasi", {})
+
+    return {
+        "provider": "BMKG",
+        "adm4": adm4,
+        "location": location.get("desa") or location.get("kotkab") or adm4,
+        "region": {
+            "province": location.get("provinsi"),
+            "city": location.get("kotkab"),
+            "district": location.get("kecamatan"),
+            "village": location.get("desa"),
+        },
+        "condition": current.get("weather_desc"),
+        "code": current.get("weather"),
+        "temperature": current.get("t"),
+        "humidity": current.get("hu"),
+        "rain_next_3h": any(is_rainy_forecast(forecast) for forecast in next_3h),
+        "forecast_time": current.get("local_datetime") or current.get("datetime"),
+        "updated_at": current.get("analysis_date"),
+        "forecast": forecasts[:8],
+        "source": "https://data.bmkg.go.id/prakiraan-cuaca/",
+    }
 
 
 def get_latest_reading(node_id: str) -> dict:
@@ -108,13 +163,13 @@ def health() -> dict:
 
 
 @app.get("/api/summary")
-def get_summary() -> dict:
+def get_summary(adm4: str = Query(..., min_length=2, description="Kode wilayah adm4 BMKG")) -> dict:
     with get_connection() as connection:
         node = row_to_dict(connection.execute("SELECT * FROM nodes LIMIT 1").fetchone())
     if node is None:
         raise HTTPException(status_code=404, detail="Node belum tersedia")
 
-    weather = get_latest_weather()
+    weather = fetch_bmkg_weather(adm4)
     reading = get_latest_reading(node["id"])
     decision = calculate_decision(reading["soil_moisture"], weather["rain_next_3h"])
 
@@ -180,8 +235,12 @@ def list_readings(node_id: str, limit: int = Query(default=20, ge=1, le=100)) ->
 
 
 @app.post("/api/nodes/{node_id}/readings", status_code=201)
-def create_reading(node_id: str, payload: SensorReadingIn) -> dict:
-    weather = get_latest_weather()
+def create_reading(
+    node_id: str,
+    payload: SensorReadingIn,
+    adm4: str = Query(..., min_length=2, description="Kode wilayah adm4 BMKG"),
+) -> dict:
+    weather = fetch_bmkg_weather(adm4)
     decision = calculate_decision(payload.soil_moisture, weather["rain_next_3h"])
 
     with get_connection() as connection:
@@ -235,35 +294,8 @@ def create_reading(node_id: str, payload: SensorReadingIn) -> dict:
 
 
 @app.get("/api/weather")
-def get_weather() -> dict:
-    return get_latest_weather()
-
-
-@app.put("/api/weather")
-def update_weather(payload: WeatherUpdate) -> dict:
-    with get_connection() as connection:
-        connection.execute(
-            """
-            UPDATE weather
-            SET location = ?,
-                condition = ?,
-                code = ?,
-                temperature = ?,
-                humidity = ?,
-                rain_next_3h = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = 1
-            """,
-            (
-                payload.location,
-                payload.condition,
-                payload.code,
-                payload.temperature,
-                payload.humidity,
-                int(payload.rain_next_3h),
-            ),
-        )
-    return get_latest_weather()
+def get_weather(adm4: str = Query(..., min_length=2, description="Kode wilayah adm4 BMKG")) -> dict:
+    return fetch_bmkg_weather(adm4)
 
 
 @app.get("/api/decision")
