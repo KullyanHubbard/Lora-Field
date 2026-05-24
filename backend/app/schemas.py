@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 class SensorReadingIn(BaseModel):
@@ -22,7 +22,6 @@ class ThresholdConfig(BaseModel):
 
 class FarmCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
-    user_id: str = Field(..., min_length=1, max_length=50)
     owner: str = Field(default="", max_length=100)
     location: str = Field(default="", max_length=200)
     crop_type: str = Field(default="", max_length=100)
@@ -30,3 +29,47 @@ class FarmCreate(BaseModel):
     bmkg_adm4_code: str = Field(..., min_length=2, max_length=20)
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
+
+
+# ---------------------------------------------------------------------------
+# Auth schemas
+# ---------------------------------------------------------------------------
+
+class UserRegister(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    email: EmailStr
+    password: str = Field(..., min_length=6, max_length=128)
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+class UserPublic(BaseModel):
+    id: str
+    email: EmailStr
+    name: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserPublic
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetCodeVerifyRequest(BaseModel):
+    token: str = Field(..., pattern=r"^\d{6}$")
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., pattern=r"^\d{6}$")
+    new_password: str = Field(..., min_length=6, max_length=128)
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr

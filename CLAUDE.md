@@ -10,7 +10,7 @@ Alur utama revisi 1.3:
 
 ```text
 User membuka Web LoraField
--> Login menggunakan akun dan password
+-> Login menggunakan akun dan password (atau Daftar Akun jika belum punya)
 -> Sistem memverifikasi akun
 -> User masuk ke Dashboard Utama
 -> Dashboard menampilkan ringkasan semua kebun user
@@ -22,8 +22,8 @@ User membuka Web LoraField
 
 ## Stack dan Struktur Repo
 
-- Frontend scaffold: React/Vite di `frontend/`
-- Halaman statis lama: HTML/CSS/JS vanilla di `frontend/public/static/`
+- UI aktif: HTML/CSS/JS vanilla di `frontend/public/static/` — ini yang dipakai user saat ini
+- Scaffold React/Vite di `frontend/` (`frontend/src/`) — disiapkan untuk migrasi, belum aktif
 - Backend basic: FastAPI + SQLite di `backend/`
 - Root repo hanya untuk metadata proyek, dokumentasi, dan instruksi agent
 - Label UI memakai Bahasa Indonesia
@@ -33,7 +33,8 @@ User membuka Web LoraField
 
 Struktur utama web:
 
-- Login Page
+- Login Page (`login.html`) — form masuk, link Lupa Password (panel inline), link ke Daftar Akun
+- Daftar Akun (`register.html`) — halaman terpisah untuk membuat akun baru
 - Dashboard Utama
 - Peta Kebun Interaktif
 - Daftar Kebun / Kebun Saya
@@ -219,7 +220,8 @@ Node sensor membaca data
 
 ## Aturan UI
 
-- Gunakan dark theme proyek: background `#0d1117`, accent `#00e676`
+- Token warna ada di `frontend/public/static/css/premium.css` (dark mode) dan `style.css` (light mode); pakai CSS variables (`--color-bg`, `--color-primary`, `--text-main`, dsb) — jangan hardcode hex
+- Mendukung dark mode dan light mode lewat `data-theme` di `<html>`; pastikan style baru jalan di kedua mode
 - Gunakan badge status dengan warna konsisten: green/yellow/red
 - Jangan menampilkan raw code jika label manusiawi sudah tersedia
 - Progress bar selalu sertakan label range `0%` dan `100%`
@@ -227,11 +229,14 @@ Node sensor membaca data
 - Jangan membuat landing page marketing; dashboard adalah pengalaman utama
 - Untuk dashboard operasional, prioritaskan layout padat, rapi, mudah discan, dan tidak dekoratif berlebihan
 - Card kebun harus menjadi jalur alternatif selain map untuk masuk ke Detail Kebun
+- Logo proyek di `frontend/public/static/img/logo.svg` — dipakai sebagai favicon, sidebar brand, dan marker peta
 
 ## Catatan Implementasi
 
-- Jika mengubah halaman statis lama, cek file di `frontend/public/static/`
+- UI aktif ada di `frontend/public/static/` — edit di sini kecuali user meminta eksplisit untuk React app
 - Jika mengubah React app, gunakan struktur `frontend/src/`
 - Jika menambah API, cek `backend/app/main.py`, `backend/app/schemas.py`, dan `backend/app/database.py`
+- Data dummy sudah dihapus: `js/dummy-data.js` sekarang hanya berisi deklarasi kosong (`FARMS = []`, `NODES = []`, dst) plus tabel referensi `WEATHER_CODES`. Semua data diisi runtime via `js/api.js` (`loadFarmsFromAPI`, `loadFarmSummaryFromAPI`)
+- Logika simulasi sensor (`js/simulation.js`) sudah jadi no-op stubs; jangan tambahkan random sensor generator — data harus datang dari backend
 - Pertahankan naming convention yang sudah ada
 - Jangan melakukan refactor besar tanpa alasan langsung dari kebutuhan user

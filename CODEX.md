@@ -18,6 +18,95 @@ Revisi aktif: struktur web dashboard LoraField revisi 1.3 dengan fitur map pemil
 
 Jika membuat perubahan, baca file terkait terlebih dahulu dan ikuti pola lokal yang sudah ada.
 
+## Progres Auth Terkini (Apa Adanya)
+
+Status ini khusus progres login/register/forgot/reset yang sudah dikerjakan di sesi ini.
+
+Sudah jadi:
+
+- Register akun dari UI `register.html` sudah pakai API real `POST /api/auth/register`.
+- Login dari UI `login.html` sudah pakai API real `POST /api/auth/login`.
+- Error login `401` di UI sudah pakai copy: `Username atau password salah.`
+- Tombol show/hide password (ikon mata) sudah ada di login/register/reset.
+- Endpoint backend auth tambahan sudah ada:
+  - `POST /api/auth/forgot-password`
+  - `POST /api/auth/reset-password`
+  - `POST /api/auth/reset-password/verify`
+  - `POST /api/auth/resend-verification`
+- Reset code sudah diubah dari token panjang menjadi OTP 6 digit angka.
+- Halaman reset password khusus sudah ada: `frontend/public/static/reset-password.html`.
+- Flow reset di halaman reset sekarang 2 tahap:
+  1. verifikasi kode reset dulu
+  2. baru tampil form password baru + konfirmasi
+- Link email reset sekarang membuka halaman reset tanpa auto-fill token.
+- Input kode reset sekarang manual (tidak otomatis terisi dari URL), baik di `reset-password.html` maupun flow reset di `login.html`.
+- Backend sudah mount static frontend ke `/static` (di port backend), sehingga link email diarahkan ke base `http://localhost:8000/static`.
+- Cacat yang sudah ditutup: flow forgot password di `login.html` sebelumnya bisa loop kirim email terus saat provider email aktif; sekarang step reset lanjut normal tanpa ketergantungan auto-fill token.
+
+Yang perlu dicek ulang setelah perubahan terakhir:
+
+- Restart backend agar config/link email terbaru aktif.
+- Kirim ulang forgot password dan pastikan email baru mengarah ke:
+  - `http://localhost:8000/static/reset-password.html`
+- Uji end-to-end reset 2 tahap:
+  - verifikasi kode 6 digit
+  - ganti password
+  - login ulang dengan password baru
+- Uji flow forgot dari `login.html`: klik `Kirim Link Reset` sekali, lalu lanjut input kode manual + password baru tanpa kirim ulang terus.
+
+File utama yang tersentuh untuk fitur auth ini:
+
+- `backend/app/main.py`
+- `backend/app/schemas.py`
+- `backend/app/config.py`
+- `backend/.env`
+- `backend/.env.example`
+- `frontend/public/static/login.html`
+- `frontend/public/static/register.html`
+- `frontend/public/static/reset-password.html`
+- `frontend/public/static/css/dashboard.css`
+
+## Audit Proyek 2026-05-24 (Ringkas, Faktual)
+
+Temuan kritis dan status:
+
+- `FIXED` Frontend static `js/api.js` tidak selaras dengan backend auth:
+  - sebelumnya pakai `GET /api/farms?user_id=...` tanpa header `Authorization`
+  - sekarang pakai `GET /api/farms` + `Bearer token` dari `localStorage`
+  - ketika `401/403`, halaman non-auth diarahkan ke `login.html`
+- `FIXED` Flow forgot password sempat berpotensi loop kirim email di `login.html`:
+  - sekarang step state dipisah (`kirim link` -> `reset password`) tanpa ketergantungan auto-fill token
+- `FIXED` Link reset email dan UI token:
+  - link reset menuju halaman reset khusus
+  - token/kode reset wajib input manual
+  - reset page 2 tahap: verifikasi kode lalu ganti password
+- `OPEN` Endpoint `resend-verification` masih basic:
+  - token verifikasi dibuat dan dikirim, tapi belum ada penyimpanan token + endpoint verifikasi akun final
+- `OPEN` Rate limit/brute-force protection belum ada untuk endpoint auth sensitif (`login`, `forgot-password`, `reset-password/verify`, `reset-password`)
+- `OPEN` Drift dokumentasi backend:
+  - `backend/README.md` belum mencerminkan endpoint auth terbaru dan alur reset 2 tahap
+
+Risiko yang perlu dihindari ke depan:
+
+- Jangan ubah kontrak endpoint auth tanpa sinkronisasi langsung ke `login.html`, `register.html`, `reset-password.html`, dan `js/api.js`.
+- Jangan mengirim link reset yang mengandalkan auto-fill token URL; tetap manual input kode reset.
+- Jangan pakai parameter `user_id` di endpoint farm; sumber kebenaran user harus dari JWT backend.
+- Jangan simpan API key/secrets ke file yang ikut version control; `backend/.env` tetap lokal, `backend/.env.example` hanya placeholder.
+
+Quality Gate Wajib Sebelum Menutup Task:
+
+1. Backend smoke:
+   - import app sukses (`from app.main import app`)
+   - route auth utama tersedia (`/api/auth/login`, `/api/auth/me`, `/api/auth/forgot-password`, `/api/auth/reset-password/verify`, `/api/auth/reset-password`)
+2. Frontend static syntax:
+   - `node --check` untuk `frontend/public/static/js/*.js`
+3. Auth flow manual check:
+   - register -> login -> `/api/auth/me` valid
+   - forgot password -> email diterima -> verifikasi kode -> ganti password -> login dengan password baru
+4. URL consistency:
+   - reset link email harus konsisten dengan `FRONTEND_URL` aktif
+   - jika pakai backend static, target harus `http://localhost:8000/static/...`
+
 ## Alur Produk
 
 ```text

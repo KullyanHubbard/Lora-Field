@@ -1,18 +1,39 @@
-/**
- * api.js — Koneksi frontend LoraField ke FastAPI backend.
+﻿/**
+ * api.js â€” Koneksi frontend LoraField ke FastAPI backend.
  *
- * - loadFarmsFromAPI()       → GET /api/farms?user_id=...
- * - loadFarmSummaryFromAPI() → GET /api/farms/{id}/summary
+ * - loadFarmsFromAPI()       â†’ GET /api/farms
+ * - loadFarmSummaryFromAPI() â†’ GET /api/farms/{id}/summary
  *
  * Kedua fungsi mengisi array/object global (FARMS, NODES, WEATHER_DATA)
  * yang dideklarasikan di dummy-data.js.
  */
 
-const API_BASE = 'http://localhost:8000';
-const CURRENT_USER_ID = 'user-01';
+const API_BASE = (() => {
+    const manualBase = localStorage.getItem('lf_api_base');
+    if (manualBase) return manualBase;
+    if (window.location.port === '8000') return window.location.origin;
+    return 'http://localhost:8000';
+})();
+const CURRENT_USER_ID = 'legacy-ignored';
+
+function getAuthHeaders() {
+    const token = localStorage.getItem('lf_access_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+}
+
+function handleAuthFailure(statusCode) {
+    if (statusCode !== 401 && statusCode !== 403) return;
+    const path = (window.location.pathname || '').toLowerCase();
+    if (path.endsWith('/login.html') || path.endsWith('/register.html') || path.endsWith('/reset-password.html')) {
+        return;
+    }
+    window.location.href = 'login.html';
+}
 
 // ---------------------------------------------------------------------------
-// Normalisasi response API → format frontend
+// Normalisasi response API â†’ format frontend
 // ---------------------------------------------------------------------------
 
 /**
@@ -27,7 +48,7 @@ function normalizeFarm(apiFarm) {
         location: apiFarm.location || '',
         region: regionRaw,
         crop: apiFarm.crop_type || '',
-        area: apiFarm.area_ha != null ? apiFarm.area_ha + ' ha' : '—',
+        area: apiFarm.area_ha != null ? apiFarm.area_ha + ' ha' : 'â€”',
         bmkgCode: apiFarm.bmkg_adm4_code || '',
         latitude: apiFarm.latitude || 0,
         longitude: apiFarm.longitude || 0,
@@ -45,7 +66,7 @@ function normalizeFarm(apiFarm) {
         nodeIds: [],
         valve: 'Tertutup',
         irrigation: 'Normal',
-        weather: '—',
+        weather: 'â€”',
         rainPrediction: false,
         warning: null,
         lastUpdate: apiFarm.updated_at ? new Date(apiFarm.updated_at) : new Date()
@@ -94,7 +115,7 @@ function normalizeNode(nodeData) {
 
 /**
  * Normalisasi response cuaca BMKG dari summary ke shape WEATHER_DATA.
- * Mapping weather_desc → kode integer yang dipakai WEATHER_CODES frontend.
+ * Mapping weather_desc â†’ kode integer yang dipakai WEATHER_CODES frontend.
  */
 function normalizeWeather(apiWeather) {
     if (!apiWeather) return null;
@@ -152,10 +173,15 @@ function normalizeWeather(apiWeather) {
  * Muat daftar kebun user dari API dan isi array FARMS global.
  */
 async function loadFarmsFromAPI(userId) {
-    const uid = userId || CURRENT_USER_ID;
+    void userId;
     try {
-        const res = await fetch(`${API_BASE}/api/farms?user_id=${encodeURIComponent(uid)}`);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const res = await fetch(`${API_BASE}/api/farms`, {
+            headers: getAuthHeaders()
+        });
+        if (!res.ok) {
+            handleAuthFailure(res.status);
+            throw new Error('HTTP ' + res.status);
+        }
         const data = await res.json();
         const normalized = (data.items || []).map(normalizeFarm);
 
@@ -177,8 +203,13 @@ async function loadFarmsFromAPI(userId) {
  */
 async function loadFarmSummaryFromAPI(farmId) {
     try {
-        const res = await fetch(`${API_BASE}/api/farms/${encodeURIComponent(farmId)}/summary`);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const res = await fetch(`${API_BASE}/api/farms/${encodeURIComponent(farmId)}/summary`, {
+            headers: getAuthHeaders()
+        });
+        if (!res.ok) {
+            handleAuthFailure(res.status);
+            throw new Error('HTTP ' + res.status);
+        }
         const summary = await res.json();
 
         // --- Perbarui farm di FARMS ---
@@ -197,7 +228,7 @@ async function loadFarmSummaryFromAPI(farmId) {
 
                 if (summary.weather) {
                     farm.rainPrediction = summary.weather.rain_next_3h || false;
-                    farm.weather = summary.weather.condition || '—';
+                    farm.weather = summary.weather.condition || 'â€”';
                     farm.irrigation = summary.gateway_status === 'offline'
                         ? 'Perlu cek gateway'
                         : (summary.weather.rain_next_3h ? 'Ditunda (prediksi hujan)' : 'Normal');
@@ -232,3 +263,4 @@ async function loadFarmSummaryFromAPI(farmId) {
         return null;
     }
 }
+

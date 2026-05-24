@@ -1,23 +1,54 @@
 import json
+import secrets
 import uuid
-import httpx
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Annotated
 
+import httpx
+from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from .auth import (
+    create_access_token,
+    get_current_user,
+    hash_password,
+    verify_password,
+)
 from .database import get_connection, init_db, row_to_dict
-from .schemas import FarmCreate, NodeLocationUpdate, SensorReadingIn, ThresholdConfig
+from .schemas import (
+    FarmCreate,
+    NodeLocationUpdate,
+    SensorReadingIn,
+    ThresholdConfig,
+    TokenResponse,
+    ForgotPasswordRequest,
+    ResetCodeVerifyRequest,
+    ResetPasswordRequest,
+    ResendVerificationRequest,
+    UserLogin,
+    UserPublic,
+    UserRegister,
+)
+from .config import settings
 
 
 THRESHOLDS = ThresholdConfig()
 BMKG_FORECAST_URL = "https://api.bmkg.go.id/publik/prakiraan-cuaca"
 RAIN_KEYWORDS = ("hujan", "rain", "shower", "thunderstorm")
 WEATHER_CACHE_TTL_MINUTES = 30
+RESET_TOKEN_EXPIRE_MINUTES = 30
 
 app = FastAPI(
     title="LoraField Backend",
     description="API untuk dashboard monitoring pertanian LoraField.",
     version="1.3.0",
 )
+
+FRONTEND_STATIC_DIR = Path(__file__).resolve().parents[2] / "frontend" / "public" / "static"
+if FRONTEND_STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_STATIC_DIR)), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -208,6 +239,60 @@ def get_latest_reading(node_id: str) -> dict:
     return reading
 
 
+def send_email_via_resend(to_email: str, subject: str, html: str) -> bool:
+    if not settings.resend_api_key:
+        return False
+
+    payload = {
+        "from": settings.resend_from_email,
+        "to": [to_email],
+        "subject": subject,
+        "html": html,
+    }
+    headers = {
+        "Authorization": f"Bearer {settings.resend_api_key}",
+        "Content-Type": "application/json",
+    }
+    with httpx.Client(timeout=15) as client:
+        response = client.post("https://api.resend.com/emails", headers=headers, json=payload)
+        response.raise_for_status()
+    return True
+
+
+def generate_reset_code(connection) -> str:
+    # 6 digit OTP, ulangi jika kebetulan bentrok dengan token lain yang masih ada.
+    for _ in range(20):
+        code = f"{secrets.randbelow(1_000_000):06d}"
+        exists = connection.execute(
+            "SELECT 1 FROM password_resets WHERE token = ? LIMIT 1",
+            (code,),
+        ).fetchone()
+        if not exists:
+            return code
+    raise HTTPException(status_code=500, detail="Gagal membuat token reset. Silakan coba lagi.")
+
+
+def get_active_reset_row(connection, token: str) -> dict:
+    now_iso = datetime.now(timezone.utc).isoformat()
+    reset_row = row_to_dict(
+        connection.execute(
+            """
+            SELECT id, user_id, token, expires_at, used
+            FROM password_resets
+            WHERE token = ?
+            """,
+            (token,),
+        ).fetchone()
+    )
+    if reset_row is None:
+        raise HTTPException(status_code=400, detail="Kode reset tidak valid.")
+    if int(reset_row["used"]) == 1:
+        raise HTTPException(status_code=400, detail="Kode reset sudah digunakan.")
+    if str(reset_row["expires_at"]) <= now_iso:
+        raise HTTPException(status_code=400, detail="Kode reset sudah kedaluwarsa.")
+    return reset_row
+
+
 # ---------------------------------------------------------------------------
 # Root & health
 # ---------------------------------------------------------------------------
@@ -229,35 +314,216 @@ def health() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Auth endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/api/auth/register", response_model=UserPublic, status_code=201)
+def register(payload: UserRegister) -> dict:
+    email = payload.email.lower().strip()
+    with get_connection() as connection:
+        existing = connection.execute(
+            "SELECT id FROM users WHERE email = ?", (email,)
+        ).fetchone()
+        if existing:
+            raise HTTPException(status_code=409, detail="Email sudah terdaftar.")
+
+        user_id = f"user-{uuid.uuid4().hex[:12]}"
+        connection.execute(
+            """
+            INSERT INTO users (id, email, name, password_hash)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user_id, email, payload.name.strip(), hash_password(payload.password)),
+        )
+
+    return {"id": user_id, "email": email, "name": payload.name.strip()}
+
+
+@app.post("/api/auth/login", response_model=TokenResponse)
+def login(payload: UserLogin) -> dict:
+    email = payload.email.lower().strip()
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT id, email, name, password_hash FROM users WHERE email = ?",
+            (email,),
+        ).fetchone()
+
+    user = row_to_dict(row)
+    if not user or not verify_password(payload.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Email atau password salah.")
+
+    token = create_access_token(subject=user["id"])
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {"id": user["id"], "email": user["email"], "name": user["name"]},
+    }
+
+
+@app.get("/api/auth/me", response_model=UserPublic)
+def get_me(current_user: Annotated[dict, Depends(get_current_user)]) -> dict:
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+        "name": current_user["name"],
+    }
+
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(payload: ForgotPasswordRequest) -> dict:
+    email = payload.email.lower().strip()
+    with get_connection() as connection:
+        user = row_to_dict(
+            connection.execute(
+                "SELECT id, email, name FROM users WHERE email = ?",
+                (email,),
+            ).fetchone()
+        )
+
+        # Jangan bocorkan apakah email ada/tidak.
+        if user is None:
+            return {"message": "Jika email terdaftar, tautan reset password akan dikirim."}
+
+        reset_token = generate_reset_code(connection)
+        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)).isoformat()
+        connection.execute(
+            """
+            INSERT INTO password_resets (user_id, token, expires_at, used)
+            VALUES (?, ?, ?, 0)
+            """,
+            (user["id"], reset_token, expires_at),
+        )
+
+    frontend_base = settings.frontend_url.rstrip("/")
+    reset_link = f"{frontend_base}/reset-password.html"
+    email_html = (
+        "<div style='font-family:Arial,sans-serif;line-height:1.6;color:#111827'>"
+        "<h2 style='margin:0 0 12px 0;font-size:20px'>Reset Password LoraField</h2>"
+        "<p style='margin:0 0 12px 0'>Kami menerima permintaan untuk mengatur ulang password akun Anda.</p>"
+        f"<p style='margin:0 0 12px 0'>Masa berlaku kode: <strong>{RESET_TOKEN_EXPIRE_MINUTES} menit</strong>.</p>"
+        f"<p style='margin:0 0 14px 0'><a href=\"{reset_link}\" style='display:inline-block;padding:10px 14px;background:#10b981;color:#ffffff;text-decoration:none;border-radius:6px'>Buka Halaman Reset</a></p>"
+        f"<p style='margin:0 0 8px 0'>Masukkan kode reset berikut secara manual di halaman reset password:</p>"
+        f"<p style='margin:0 0 12px 0;font-family:monospace;font-size:14px;background:#f3f4f6;padding:8px 10px;border-radius:6px;display:inline-block'>{reset_token}</p>"
+        "<p style='margin:0;color:#6b7280;font-size:13px'>Jika Anda tidak merasa melakukan permintaan ini, abaikan email ini.</p>"
+        "</div>"
+    )
+
+    email_sent = False
+    try:
+        email_sent = send_email_via_resend(user["email"], "Reset Password LoraField", email_html)
+    except Exception:
+        email_sent = False
+
+    response = {"message": "Jika email terdaftar, tautan reset password akan dikirim."}
+    # Dev-friendly fallback jika Resend belum dikonfigurasi.
+    if not email_sent:
+        response["reset_token"] = reset_token
+        response["note"] = "Email provider belum aktif. Gunakan kode reset ini untuk pengujian."
+    return response
+
+
+@app.post("/api/auth/reset-password")
+def reset_password(payload: ResetPasswordRequest) -> dict:
+    token = payload.token.strip()
+    with get_connection() as connection:
+        reset_row = get_active_reset_row(connection, token)
+        connection.execute(
+            "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (hash_password(payload.new_password), reset_row["user_id"]),
+        )
+        connection.execute(
+            "UPDATE password_resets SET used = 1 WHERE id = ?",
+            (reset_row["id"],),
+        )
+
+    return {"message": "Password berhasil diperbarui."}
+
+
+@app.post("/api/auth/reset-password/verify")
+def verify_reset_code(payload: ResetCodeVerifyRequest) -> dict:
+    token = payload.token.strip()
+    with get_connection() as connection:
+        get_active_reset_row(connection, token)
+    return {"message": "Kode reset valid."}
+
+
+@app.post("/api/auth/resend-verification")
+def resend_verification(payload: ResendVerificationRequest) -> dict:
+    email = payload.email.lower().strip()
+    with get_connection() as connection:
+        user = row_to_dict(
+            connection.execute(
+                "SELECT id, email, name FROM users WHERE email = ?",
+                (email,),
+            ).fetchone()
+        )
+
+    if user is None:
+        return {"message": "Jika email terdaftar, email verifikasi akan dikirim."}
+
+    verify_token = secrets.token_urlsafe(24)
+    frontend_base = settings.frontend_url.rstrip("/")
+    verify_link = f"{frontend_base}/login.html?verify_token={verify_token}"
+    email_html = (
+        "<p>Halo,</p>"
+        "<p>Berikut tautan verifikasi akun LoraField Anda:</p>"
+        f"<p><a href=\"{verify_link}\">{verify_link}</a></p>"
+    )
+
+    email_sent = False
+    try:
+        email_sent = send_email_via_resend(user["email"], "Verifikasi Akun LoraField", email_html)
+    except Exception:
+        email_sent = False
+
+    response = {"message": "Jika email terdaftar, email verifikasi akan dikirim."}
+    if not email_sent:
+        response["verify_token"] = verify_token
+        response["note"] = "Email provider belum aktif. Ini token verifikasi untuk pengujian."
+    return response
+
+
+# ---------------------------------------------------------------------------
 # Farm endpoints
 # ---------------------------------------------------------------------------
 
+def _get_farm_owned(connection, farm_id: str, user_id: str) -> dict:
+    """Ambil farm + verifikasi kepemilikan. Lempar 404 jika tidak ada atau bukan milik user."""
+    farm = row_to_dict(
+        connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
+    )
+    if farm is None or farm["user_id"] != user_id:
+        raise HTTPException(status_code=404, detail="Kebun tidak ditemukan")
+    return farm
+
+
 @app.get("/api/farms")
-def list_farms(user_id: str = Query(..., min_length=1, description="ID user pemilik kebun")) -> dict:
+def list_farms(current_user: Annotated[dict, Depends(get_current_user)]) -> dict:
     with get_connection() as connection:
         farms = [
             dict(row)
             for row in connection.execute(
                 "SELECT * FROM farms WHERE user_id = ? ORDER BY name",
-                (user_id,),
+                (current_user["id"],),
             ).fetchall()
         ]
     return {"items": farms, "total": len(farms)}
 
 
 @app.get("/api/farms/{farm_id}")
-def get_farm(farm_id: str) -> dict:
+def get_farm(
+    farm_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
     with get_connection() as connection:
-        farm = row_to_dict(
-            connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
-        )
-    if farm is None:
-        raise HTTPException(status_code=404, detail="Kebun tidak ditemukan")
-    return farm
+        return _get_farm_owned(connection, farm_id, current_user["id"])
 
 
 @app.post("/api/farms", status_code=201)
-def create_farm(payload: FarmCreate) -> dict:
+def create_farm(
+    payload: FarmCreate,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
     farm_id = f"farm-{uuid.uuid4().hex[:8]}"
     with get_connection() as connection:
         connection.execute(
@@ -269,7 +535,7 @@ def create_farm(payload: FarmCreate) -> dict:
             """,
             (
                 farm_id,
-                payload.user_id,
+                current_user["id"],
                 payload.name,
                 payload.owner,
                 payload.location,
@@ -287,24 +553,22 @@ def create_farm(payload: FarmCreate) -> dict:
 
 
 @app.get("/api/farms/{farm_id}/weather")
-def get_farm_weather(farm_id: str) -> dict:
+def get_farm_weather(
+    farm_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
     with get_connection() as connection:
-        farm = row_to_dict(
-            connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
-        )
-    if farm is None:
-        raise HTTPException(status_code=404, detail="Kebun tidak ditemukan")
+        farm = _get_farm_owned(connection, farm_id, current_user["id"])
     return fetch_weather_with_cache(farm["bmkg_adm4_code"])
 
 
 @app.get("/api/farms/{farm_id}/summary")
-def get_farm_summary(farm_id: str) -> dict:
+def get_farm_summary(
+    farm_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
     with get_connection() as connection:
-        farm = row_to_dict(
-            connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
-        )
-        if farm is None:
-            raise HTTPException(status_code=404, detail="Kebun tidak ditemukan")
+        farm = _get_farm_owned(connection, farm_id, current_user["id"])
         nodes = [
             dict(row)
             for row in connection.execute(

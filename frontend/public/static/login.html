@@ -45,8 +45,25 @@
                 </div>
                 <div class="form-group">
                     <label for="login-password">Password</label>
-                    <input class="form-control" type="password" id="login-password" name="password"
-                        autocomplete="current-password" placeholder="Masukkan password" required>
+                    <div class="password-field">
+                        <input class="form-control password-input" type="password" id="login-password" name="password"
+                            autocomplete="current-password" placeholder="Masukkan password" required>
+                        <button class="password-toggle" type="button" data-target="login-password"
+                            aria-label="Tampilkan password" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <g class="icon-eye-open">
+                                    <path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" />
+                                    <circle cx="12" cy="12" r="3.2" />
+                                </g>
+                                <g class="icon-eye-closed password-icon-state-hidden">
+                                    <path d="M3 3l18 18" />
+                                    <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                                    <path d="M9.9 5.2A10.6 10.6 0 0 1 12 5c6.2 0 10 7 10 7a17.3 17.3 0 0 1-3.2 4.2" />
+                                    <path d="M6.3 6.3A17 17 0 0 0 2 12s3.8 7 10 7c1.3 0 2.4-.2 3.5-.6" />
+                                </g>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <button class="btn btn-primary login-submit" type="submit">
                     <svg class="login-submit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -68,9 +85,10 @@
                             placeholder="nama@email.com">
                     </div>
                     <div class="form-group" id="forgot-code-row" hidden>
-                        <label for="forgot-code">Kode Verifikasi</label>
+                        <label for="forgot-code">Kode Reset (6 Digit)</label>
                         <input class="form-control" type="text" id="forgot-code" inputmode="numeric"
-                            autocomplete="one-time-code" placeholder="Masukkan 6 digit kode">
+                            autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"
+                            placeholder="Masukkan kode 6 digit dari email">
                     </div>
                     <div class="form-group forgot-reset-field" hidden>
                         <label for="forgot-new-password">Password Baru</label>
@@ -83,7 +101,7 @@
                             autocomplete="new-password" placeholder="Ulangi password baru">
                     </div>
                     <button class="btn btn-secondary forgot-submit" id="forgot-submit" type="button">
-                        Kirim Kode
+                        Kirim Link Reset
                     </button>
                     <p class="forgot-feedback" id="forgot-feedback" role="status" aria-live="polite" hidden></p>
                 </section>
@@ -92,43 +110,23 @@
 
                 <p class="auth-switch">
                     Belum punya akun?
-                    <button class="auth-switch-link" id="register-toggle" type="button" aria-expanded="false"
-                        aria-controls="register-panel">Daftar Akun</button>
+                    <a class="auth-switch-link" href="register.html">Daftar Akun</a>
                 </p>
-                <section class="forgot-panel" id="register-panel" aria-label="Daftar akun baru" hidden>
-                    <div class="form-group">
-                        <label for="register-name">Nama Lengkap</label>
-                        <input class="form-control" type="text" id="register-name" autocomplete="name"
-                            placeholder="Nama lengkap kamu">
-                    </div>
-                    <div class="form-group">
-                        <label for="register-email">Email</label>
-                        <input class="form-control" type="email" id="register-email" autocomplete="email"
-                            placeholder="nama@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">Password</label>
-                        <input class="form-control" type="password" id="register-password" autocomplete="new-password"
-                            placeholder="Minimal 6 karakter">
-                    </div>
-                    <div class="form-group">
-                        <label for="register-confirm">Ulangi Password</label>
-                        <input class="form-control" type="password" id="register-confirm" autocomplete="new-password"
-                            placeholder="Ulangi password">
-                    </div>
-                    <button class="btn btn-primary forgot-submit" id="register-submit" type="button">
-                        Buat Akun
-                    </button>
-                    <p class="forgot-feedback" id="register-feedback" role="status" aria-live="polite" hidden></p>
-                </section>
             </form>
         </section>
     </main>
 
     <script src="js/main.js"></script>
     <script>
+        const API_BASE = (() => {
+            const manualBase = localStorage.getItem('lf_api_base');
+            if (manualBase) return manualBase;
+            if (window.location.port === '8000') return window.location.origin;
+            return 'http://localhost:8000';
+        })();
         const loginEmail = document.getElementById('login-email');
         const loginPassword = document.getElementById('login-password');
+        const loginForm = document.getElementById('login-form');
         const forgotButton = document.getElementById('forgot-password');
         const forgotPanel = document.getElementById('forgot-panel');
         const forgotEmail = document.getElementById('forgot-email');
@@ -139,16 +137,85 @@
         const forgotSubmit = document.getElementById('forgot-submit');
         const forgotFeedback = document.getElementById('forgot-feedback');
         const forgotResetFields = document.querySelectorAll('.forgot-reset-field');
-        let forgotCode = '';
+        const passwordToggles = document.querySelectorAll('.password-toggle');
+        let forgotResetStep = false;
 
-        document.getElementById('login-form').addEventListener('submit', event => {
+        try {
+            const prefillEmail = sessionStorage.getItem('lf_prefill_email');
+            if (prefillEmail) {
+                loginEmail.value = prefillEmail;
+                sessionStorage.removeItem('lf_prefill_email');
+            }
+        } catch (error) {
+            // Abaikan jika sessionStorage tidak tersedia.
+        }
+
+        passwordToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const targetId = toggle.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                if (!input) return;
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                toggle.setAttribute('aria-pressed', String(show));
+                toggle.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+                const openIcon = toggle.querySelector('.icon-eye-open');
+                const closedIcon = toggle.querySelector('.icon-eye-closed');
+                if (openIcon) openIcon.classList.toggle('password-icon-state-hidden', show);
+                if (closedIcon) closedIcon.classList.toggle('password-icon-state-hidden', !show);
+            });
+        });
+
+        loginForm.addEventListener('submit', async event => {
             event.preventDefault();
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value.trim();
+
+            if (!email || !password) {
+                setForgotFeedback('Email dan password wajib diisi.', 'error');
+                return;
+            }
+
+            const submitButton = loginForm.querySelector('.login-submit');
+            submitButton.disabled = true;
+            submitButton.setAttribute('aria-busy', 'true');
+
             try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const rawBody = await response.text();
+                let data = {};
+                try {
+                    data = rawBody ? JSON.parse(rawBody) : {};
+                } catch (parseError) {
+                    data = {};
+                }
+
+                if (!response.ok) {
+                    const detail = response.status === 401
+                        ? 'Username atau password salah.'
+                        : (data.detail || `Login gagal (HTTP ${response.status}).`);
+                    setForgotFeedback(detail, 'error');
+                    return;
+                }
+
                 localStorage.setItem('lf_auth_demo', 'true');
                 localStorage.removeItem('lf_selected_farm');
+                localStorage.setItem('lf_access_token', data.access_token || '');
+                localStorage.setItem('lf_token_type', data.token_type || 'bearer');
+                localStorage.setItem('lf_user', JSON.stringify(data.user || {}));
+                setForgotFeedback('Login berhasil. Mengarahkan ke dashboard...', 'success');
             } catch (error) {
-                // Login demo tetap lanjut tanpa penyimpanan lokal.
+                setForgotFeedback('Tidak bisa terhubung ke backend.', 'error');
+                return;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.removeAttribute('aria-busy');
             }
+
             window.location.href = 'index.html';
         });
 
@@ -159,7 +226,7 @@
         }
 
         function resetForgotState() {
-            forgotCode = '';
+            forgotResetStep = false;
             forgotCodeRow.hidden = true;
             forgotCodeInput.value = '';
             forgotNewPassword.value = '';
@@ -167,33 +234,13 @@
             forgotResetFields.forEach(field => {
                 field.hidden = true;
             });
-            forgotSubmit.textContent = 'Kirim Kode';
+            forgotSubmit.textContent = 'Kirim Link Reset';
             forgotFeedback.hidden = true;
             forgotFeedback.textContent = '';
         }
 
-        const registerToggle = document.getElementById('register-toggle');
-        const registerPanel = document.getElementById('register-panel');
-        const registerName = document.getElementById('register-name');
-        const registerEmail = document.getElementById('register-email');
-        const registerPassword = document.getElementById('register-password');
-        const registerConfirm = document.getElementById('register-confirm');
-        const registerSubmit = document.getElementById('register-submit');
-        const registerFeedback = document.getElementById('register-feedback');
-
-        function closeRegisterPanel() {
-            registerPanel.hidden = true;
-            registerToggle.setAttribute('aria-expanded', 'false');
-        }
-
-        function closeForgotPanel() {
-            forgotPanel.hidden = true;
-            forgotButton.setAttribute('aria-expanded', 'false');
-        }
-
         forgotButton.addEventListener('click', () => {
             const isOpening = forgotPanel.hidden;
-            if (isOpening) closeRegisterPanel();
             forgotPanel.hidden = !isOpening;
             forgotButton.setAttribute('aria-expanded', String(isOpening));
 
@@ -204,68 +251,9 @@
             forgotEmail.focus();
         });
 
-        function setRegisterFeedback(message, type) {
-            registerFeedback.hidden = false;
-            registerFeedback.className = `forgot-feedback forgot-feedback-${type}`;
-            registerFeedback.textContent = message;
-        }
-
-        function resetRegisterState() {
-            registerName.value = '';
-            registerEmail.value = '';
-            registerPassword.value = '';
-            registerConfirm.value = '';
-            registerFeedback.hidden = true;
-            registerFeedback.textContent = '';
-        }
-
-        registerToggle.addEventListener('click', () => {
-            const isOpening = registerPanel.hidden;
-            if (isOpening) closeForgotPanel();
-            registerPanel.hidden = !isOpening;
-            registerToggle.setAttribute('aria-expanded', String(isOpening));
-
-            if (!isOpening) return;
-
-            resetRegisterState();
-            registerName.focus();
-        });
-
-        registerSubmit.addEventListener('click', () => {
-            const name = registerName.value.trim();
-            const email = registerEmail.value.trim();
-            const password = registerPassword.value.trim();
-            const confirm = registerConfirm.value.trim();
-
-            if (!name) {
-                setRegisterFeedback('Nama lengkap wajib diisi.', 'error');
-                registerName.focus();
-                return;
-            }
-            if (!email || !email.includes('@')) {
-                setRegisterFeedback('Email belum valid.', 'error');
-                registerEmail.focus();
-                return;
-            }
-            if (password.length < 6) {
-                setRegisterFeedback('Password minimal 6 karakter.', 'error');
-                registerPassword.focus();
-                return;
-            }
-            if (password !== confirm) {
-                setRegisterFeedback('Ulangi password belum sama.', 'error');
-                registerConfirm.focus();
-                return;
-            }
-
-            loginEmail.value = email;
-            loginPassword.value = password;
-            setRegisterFeedback('Akun berhasil dibuat. Silakan masuk dengan akun baru kamu.', 'success');
-        });
-
-        forgotSubmit.addEventListener('click', () => {
+        forgotSubmit.addEventListener('click', async () => {
             const identifier = forgotEmail.value.trim() || loginEmail.value.trim();
-            const submittedCode = forgotCodeInput.value.trim();
+            const submittedToken = forgotCodeInput.value.trim();
             const nextPassword = forgotNewPassword.value.trim();
             const confirmPassword = forgotConfirmPassword.value.trim();
             if (!identifier) {
@@ -274,20 +262,55 @@
                 return;
             }
 
-            if (!forgotCode) {
-                forgotCode = String(Math.floor(100000 + Math.random() * 900000));
-                forgotCodeRow.hidden = false;
-                forgotResetFields.forEach(field => {
-                    field.hidden = false;
-                });
-                forgotSubmit.textContent = 'Simpan Password';
-                setForgotFeedback(`Kode verifikasi untuk ${identifier}: ${forgotCode}`, 'success');
-                forgotCodeInput.focus();
+            if (!forgotResetStep) {
+                forgotSubmit.disabled = true;
+                forgotSubmit.setAttribute('aria-busy', 'true');
+                try {
+                    const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: identifier })
+                    });
+                    const rawBody = await response.text();
+                    let data = {};
+                    try {
+                        data = rawBody ? JSON.parse(rawBody) : {};
+                    } catch (parseError) {
+                        data = {};
+                    }
+                    if (!response.ok) {
+                        setForgotFeedback(data.detail || `Gagal kirim reset (HTTP ${response.status}).`, 'error');
+                        return;
+                    }
+                    forgotResetStep = true;
+                    forgotCodeRow.hidden = false;
+                    forgotResetFields.forEach(field => {
+                        field.hidden = false;
+                    });
+                    forgotSubmit.textContent = 'Perbarui Password';
+                    setForgotFeedback(
+                        data.note
+                            ? 'Kode reset tersedia untuk pengujian. Lanjutkan dengan mengisi password baru.'
+                            : 'Link reset telah dikirim ke email. Masukkan kode reset lalu perbarui password Anda.',
+                        'success'
+                    );
+                    forgotCodeInput.focus();
+                } catch (error) {
+                    setForgotFeedback('Tidak bisa terhubung ke backend.', 'error');
+                } finally {
+                    forgotSubmit.disabled = false;
+                    forgotSubmit.removeAttribute('aria-busy');
+                }
                 return;
             }
 
-            if (submittedCode !== forgotCode) {
-                setForgotFeedback('Kode verifikasi belum sesuai.', 'error');
+            if (!submittedToken) {
+                setForgotFeedback('Masukkan kode reset password.', 'error');
+                forgotCodeInput.focus();
+                return;
+            }
+            if (!/^\d{6}$/.test(submittedToken)) {
+                setForgotFeedback('Kode reset harus 6 digit angka.', 'error');
                 forgotCodeInput.focus();
                 return;
             }
@@ -304,9 +327,32 @@
                 return;
             }
 
-            loginEmail.value = identifier;
-            loginPassword.value = nextPassword;
-            setForgotFeedback('Password berhasil disimpan untuk sesi demo. Silakan masuk dengan password baru.', 'success');
+            forgotSubmit.disabled = true;
+            forgotSubmit.setAttribute('aria-busy', 'true');
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: submittedToken, new_password: nextPassword })
+                });
+                const rawBody = await response.text();
+                let data = {};
+                try {
+                    data = rawBody ? JSON.parse(rawBody) : {};
+                } catch (parseError) {
+                    data = {};
+                }
+                if (!response.ok) {
+                    setForgotFeedback(data.detail || `Reset password gagal (HTTP ${response.status}).`, 'error');
+                    return;
+                }
+                setForgotFeedback(data.message || 'Password berhasil diperbarui. Silakan login.', 'success');
+            } catch (error) {
+                setForgotFeedback('Tidak bisa terhubung ke backend.', 'error');
+            } finally {
+                forgotSubmit.disabled = false;
+                forgotSubmit.removeAttribute('aria-busy');
+            }
         });
     </script>
 </body>
