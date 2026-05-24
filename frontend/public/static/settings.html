@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Pengaturan akun dan konfigurasi LoraField.">
+    <meta name="description" content="Pengaturan akun LoraField.">
     <meta name="color-scheme" content="dark light">
     <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
@@ -32,7 +32,7 @@
     <div class="ambient-bg"><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div><div class="ambient-orb orb-3"></div></div>
     <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
-        <div class="sidebar-brand"><h2><img src="img/logo.svg" class="brand-logo" alt="LoraField"></h2><p>LoRa-Based Precision Agriculture System</p></div>
+        <div class="sidebar-brand"><h2 class="sidebar-brand-title"><img src="img/logo.svg" class="brand-logo" alt=""><span class="brand-name">LoraField</span></h2></div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
         <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
@@ -46,92 +46,38 @@
         </header>
 
         <div class="page-content settings-page">
-            <div class="settings-grid mb-24">
-                <section class="card" aria-labelledby="settings-profile-title">
-                    <div class="card-header">
-                        <div>
-                            <h3 id="settings-profile-title">Profil Akun</h3>
-                            <p class="card-subtitle">Identitas operator yang tampil di dashboard.</p>
-                        </div>
+            <section class="settings-section" aria-labelledby="settings-profile-title">
+                <h3 class="settings-section-title" id="settings-profile-title">Profil Akun</h3>
+                <div class="settings-profile-flat">
+                    <div class="settings-field">
+                        <span class="settings-field-label">Nama</span>
+                        <span class="settings-field-value" id="settings-user-name">-</span>
                     </div>
-                    <div class="node-info-grid settings-profile-grid">
-                        <div class="node-info-item">
-                            <span class="info-label">Nama</span>
-                            <span class="info-value" id="settings-user-name">-</span>
-                        </div>
-                        <div class="node-info-item">
-                            <span class="info-label">Email</span>
-                            <span class="info-value" id="settings-user-email">-</span>
-                        </div>
-                        <div class="node-info-item">
-                            <span class="info-label">Peran</span>
-                            <span class="info-value" id="settings-user-role">-</span>
-                        </div>
+                    <div class="settings-field">
+                        <span class="settings-field-label">Email</span>
+                        <span class="settings-field-value" id="settings-user-email">-</span>
                     </div>
-                </section>
-
-                <section class="card" aria-labelledby="settings-threshold-title">
-                    <div class="card-header">
-                        <div>
-                            <h3 id="settings-threshold-title">Threshold Kelembapan</h3>
-                            <p class="card-subtitle">Rentang VWC yang dipakai keputusan irigasi otomatis.</p>
-                        </div>
-                    </div>
-
-                    <form class="threshold-form" id="threshold-form">
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label for="settings-lower">Threshold Bawah (%)</label>
-                                <input class="form-control" id="settings-lower" name="lower" type="number" inputmode="numeric" min="0" max="99" step="1" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="settings-upper">Threshold Atas (%)</label>
-                                <input class="form-control" id="settings-upper" name="upper" type="number" inputmode="numeric" min="1" max="100" step="1" required>
-                            </div>
-                        </div>
-
-                        <div class="settings-actions">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-save" aria-hidden="true"></i> Simpan Threshold
-                            </button>
-                            <button class="btn btn-secondary" type="button" id="threshold-reset">
-                                <i class="fas fa-rotate-left" aria-hidden="true"></i> Pulihkan Default
+                    <div class="settings-field settings-field-editable">
+                        <span class="settings-field-label">Nomor Handphone</span>
+                        <div class="settings-phone-row" id="settings-phone-view">
+                            <span class="settings-field-value" id="settings-user-phone">-</span>
+                            <button class="settings-edit-btn" type="button" id="settings-phone-edit-btn" aria-label="Edit nomor handphone">
+                                <i class="fas fa-pen" aria-hidden="true"></i>
                             </button>
                         </div>
-                    </form>
-
-                    <div class="threshold-preview" aria-live="polite">
-                        <p>Rentang aktif: <strong id="settings-range">40%-70%</strong></p>
-                        <div class="settings-progress-shell">
-                            <div class="progress-bar settings-threshold-track" id="settings-threshold-track" role="img"
-                                aria-label="Rentang threshold kelembapan tanah dari 0% sampai 100%">
-                                <span class="settings-threshold-window" aria-hidden="true"></span>
-                            </div>
-                            <div class="progress-range">
-                                <span>0%</span>
-                                <span>100%</span>
-                            </div>
+                        <div class="settings-phone-row settings-phone-edit-row" id="settings-phone-edit" hidden>
+                            <input class="form-control settings-phone-input" type="tel" id="settings-phone-input"
+                                placeholder="Contoh: 08123456789" maxlength="20" autocomplete="tel">
+                            <button class="btn btn-primary btn-sm" type="button" id="settings-phone-save-btn">Simpan</button>
+                            <button class="btn btn-secondary btn-sm" type="button" id="settings-phone-cancel-btn">Batal</button>
                         </div>
-                    </div>
-
-                    <div class="note-box threshold-feedback-hidden" id="settings-feedback" role="status" aria-live="polite">
-                        <i class="fas fa-circle-info" id="settings-feedback-icon" aria-hidden="true"></i>
-                        <span id="settings-feedback-text"></span>
-                    </div>
-                </section>
-            </div>
-
-            <section class="card" aria-labelledby="settings-session-title">
-                <div class="card-header">
-                    <div>
-                        <h3 id="settings-session-title">Sesi Demo</h3>
-                        <p class="card-subtitle">Pengaturan cepat untuk data lokal browser.</p>
+                        <p class="settings-phone-feedback" id="settings-phone-feedback" hidden></p>
                     </div>
                 </div>
-                <div class="settings-actions">
-                    <a class="btn btn-secondary" href="index.html">
-                        <i class="fas fa-map-location-dot" aria-hidden="true"></i> Pilih Kebun
-                    </a>
+                <div class="settings-actions settings-profile-actions">
+                    <button class="btn btn-secondary" type="button" id="settings-change-password">
+                        <i class="fas fa-key" aria-hidden="true"></i> Ganti Sandi
+                    </button>
                     <button class="btn btn-danger" type="button" id="settings-logout">
                         <i class="fas fa-right-from-bracket" aria-hidden="true"></i> Keluar
                     </button>
@@ -143,84 +89,100 @@
     <script src="js/dummy-data.js"></script>
     <script src="js/main.js"></script>
     <script>
-        const lowerInput = document.getElementById('settings-lower');
-        const upperInput = document.getElementById('settings-upper');
-        const rangeText = document.getElementById('settings-range');
-        const thresholdTrack = document.getElementById('settings-threshold-track');
-        const feedback = document.getElementById('settings-feedback');
-        const feedbackIcon = document.getElementById('settings-feedback-icon');
-        const feedbackText = document.getElementById('settings-feedback-text');
-
-        function readThresholdInput(input) {
-            const value = Number.parseInt(input.value, 10);
-            return Number.isFinite(value) ? value : null;
-        }
-
-        function updateThresholdPreview() {
-            const lower = readThresholdInput(lowerInput) ?? ThresholdManager.lower;
-            const upper = readThresholdInput(upperInput) ?? ThresholdManager.upper;
-            const safeLower = Math.min(Math.max(lower, 0), 100);
-            const safeUpper = Math.min(Math.max(upper, 0), 100);
-            const range = Math.max(safeUpper - safeLower, 0);
-
-            rangeText.textContent = `${safeLower}%-${safeUpper}%`;
-            thresholdTrack.style.setProperty('--settings-lower', `${safeLower}%`);
-            thresholdTrack.style.setProperty('--settings-range', `${range}%`);
-            thresholdTrack.setAttribute(
-                'aria-label',
-                `Rentang threshold kelembapan tanah ${safeLower}% sampai ${safeUpper}%, dari skala 0% sampai 100%`
-            );
-        }
-
-        function showThresholdFeedback(message, type) {
-            feedback.className = `note-box threshold-feedback-${type}`;
-            feedbackIcon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-circle-exclamation';
-            feedbackText.textContent = message;
+        function getStoredUser() {
+            try {
+                const raw = readLocalStorage('lf_user', null);
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (_) { return {}; }
         }
 
         function renderAccountSettings() {
-            const user = typeof CURRENT_USER !== 'undefined' ? CURRENT_USER : {};
+            const user = getStoredUser();
             document.getElementById('settings-user-name').textContent = user.name || 'Tidak tersedia';
             document.getElementById('settings-user-email').textContent = user.email || 'Tidak tersedia';
-            document.getElementById('settings-user-role').textContent = user.role || 'Tidak tersedia';
-
-            lowerInput.value = ThresholdManager.lower;
-            upperInput.value = ThresholdManager.upper;
-            updateThresholdPreview();
+            document.getElementById('settings-user-phone').textContent = user.phone || '-';
         }
 
-        document.getElementById('threshold-form').addEventListener('submit', event => {
-            event.preventDefault();
+        const API_BASE = (() => {
+            const manualBase = localStorage.getItem('lf_api_base');
+            if (manualBase) return manualBase;
+            if (window.location.port === '8000') return window.location.origin;
+            const h = window.location.hostname;
+            if (h !== 'localhost' && h !== '127.0.0.1') return window.location.origin;
+            return 'http://localhost:8000';
+        })();
 
-            const lower = readThresholdInput(lowerInput);
-            const upper = readThresholdInput(upperInput);
-            if (lower === null || upper === null || lower < 0 || upper > 100 || lower >= upper) {
-                showThresholdFeedback('Threshold bawah harus lebih kecil dari threshold atas, dalam rentang 0%-100%.', 'error');
-                return;
-            }
+        function setPhoneFeedback(msg, type) {
+            const el = document.getElementById('settings-phone-feedback');
+            el.hidden = false;
+            el.className = `settings-phone-feedback forgot-feedback-${type}`;
+            el.textContent = msg;
+        }
 
-            ThresholdManager.lower = lower;
-            ThresholdManager.upper = upper;
-            updateThresholdPreview();
-            showThresholdFeedback(`Threshold aktif disimpan: ${ThresholdManager.getActiveString()}.`, 'success');
+        document.getElementById('settings-phone-edit-btn').addEventListener('click', () => {
+            const current = document.getElementById('settings-user-phone').textContent;
+            document.getElementById('settings-phone-input').value = current === '-' ? '' : current;
+            document.getElementById('settings-phone-view').hidden = true;
+            document.getElementById('settings-phone-edit').hidden = false;
+            document.getElementById('settings-phone-feedback').hidden = true;
+            document.getElementById('settings-phone-input').focus();
         });
 
-        document.getElementById('threshold-reset').addEventListener('click', () => {
-            ThresholdManager.reset();
-            lowerInput.value = ThresholdManager.lower;
-            upperInput.value = ThresholdManager.upper;
-            updateThresholdPreview();
-            showThresholdFeedback('Threshold dikembalikan ke default 40%-70%.', 'success');
+        document.getElementById('settings-phone-cancel-btn').addEventListener('click', () => {
+            document.getElementById('settings-phone-view').hidden = false;
+            document.getElementById('settings-phone-edit').hidden = true;
+            document.getElementById('settings-phone-feedback').hidden = true;
+        });
+
+        document.getElementById('settings-phone-save-btn').addEventListener('click', async () => {
+            const phone = document.getElementById('settings-phone-input').value.trim();
+            const saveBtn = document.getElementById('settings-phone-save-btn');
+            saveBtn.disabled = true;
+
+            try {
+                const token = localStorage.getItem('lf_access_token');
+                const res = await fetch(`${API_BASE}/api/auth/profile`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    setPhoneFeedback(data.detail || 'Gagal menyimpan.', 'error');
+                    return;
+                }
+                const updatedUser = data.user || {};
+                document.getElementById('settings-user-phone').textContent = updatedUser.phone || '-';
+                try {
+                    const stored = JSON.parse(localStorage.getItem('lf_user') || '{}');
+                    stored.phone = updatedUser.phone || '';
+                    localStorage.setItem('lf_user', JSON.stringify(stored));
+                } catch (_) {}
+                document.getElementById('settings-phone-view').hidden = false;
+                document.getElementById('settings-phone-edit').hidden = true;
+                document.getElementById('settings-phone-feedback').hidden = true;
+            } catch (_) {
+                setPhoneFeedback('Tidak bisa terhubung ke backend.', 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
         });
 
         document.getElementById('settings-logout').addEventListener('click', () => {
             removeLocalStorage('lf_auth_demo');
             removeLocalStorage('lf_selected_farm');
+            removeLocalStorage('lf_access_token');
+            removeLocalStorage('lf_token_type');
+            removeLocalStorage('lf_user');
             window.location.href = 'login.html';
         });
 
-        lowerInput.addEventListener('input', updateThresholdPreview);
-        upperInput.addEventListener('input', updateThresholdPreview);
+        document.getElementById('settings-change-password').addEventListener('click', () => {
+            window.location.href = 'change-password.html';
+        });
+
         document.addEventListener('DOMContentLoaded', renderAccountSettings);
     </script>
 </body>

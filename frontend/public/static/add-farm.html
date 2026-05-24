@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Tambah kebun baru di LoraField.">
+    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+    <script>
+        try {
+            document.documentElement.dataset.theme = localStorage.getItem('lf_theme') === 'light' ? 'light' : 'dark';
+        } catch (error) {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
+    <title>Tambah Kebun - LoraField</title>
+    <link rel="icon" type="image/svg+xml" href="img/logo.svg">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/premium.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    </noscript>
+</head>
+
+<body class="auth-page">
+    <div class="page-topright" aria-label="Kontrol halaman">
+        <div class="auth-theme-slot" aria-label="Pengaturan tema"></div>
+        <div class="auth-user-slot"></div>
+    </div>
+
+    <main class="add-farm-shell" aria-labelledby="add-farm-title">
+        <section class="add-farm-card" aria-label="Form tambah kebun">
+            <div class="add-farm-header">
+                <a class="add-farm-back" href="index.html" aria-label="Kembali">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                </a>
+                <h1 id="add-farm-title">Tambah Kebun</h1>
+            </div>
+
+            <form id="add-farm-form" class="add-farm-form" novalidate>
+
+                <p class="settings-subsection-label">Profil Kebun</p>
+
+                <div class="settings-form-row">
+                    <div class="form-group">
+                        <label for="farm-name">Nama Kebun</label>
+                        <input class="form-control" type="text" id="farm-name" name="name"
+                            placeholder="Biarkan kosong untuk nama otomatis" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="farm-owner">Pemilik Kebun</label>
+                        <input class="form-control" type="text" id="farm-owner" name="owner"
+                            placeholder="Nama pemilik" maxlength="100">
+                    </div>
+                </div>
+
+                <div class="settings-form-row">
+                    <div class="form-group">
+                        <label for="farm-location">Lokasi / Alamat</label>
+                        <input class="form-control" type="text" id="farm-location" name="location"
+                            placeholder="Contoh: Jl. Parangtritis, Bantul" maxlength="200">
+                    </div>
+                    <div class="form-group">
+                        <label for="farm-crop-input">Jenis Tanaman</label>
+                        <div class="crop-select-wrap">
+                            <input class="form-control" type="text" id="farm-crop-input"
+                                placeholder="Cari atau ketik jenis tanaman..."
+                                autocomplete="off" maxlength="100"
+                                role="combobox" aria-expanded="false"
+                                aria-autocomplete="list" aria-controls="crop-dropdown" aria-haspopup="listbox">
+                            <ul class="crop-dropdown" id="crop-dropdown" role="listbox" hidden></ul>
+                        </div>
+                        <input type="hidden" id="farm-crop" name="crop_type">
+                        <p class="crop-threshold-hint" id="crop-threshold-hint" hidden></p>
+                    </div>
+                </div>
+
+                <div class="settings-form-row">
+                    <div class="form-group">
+                        <label for="farm-area">Luas Lahan (ha)</label>
+                        <input class="form-control" type="number" id="farm-area" name="area_ha"
+                            placeholder="Contoh: 1.5" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <p class="settings-subsection-label settings-subsection-label-gap">Koordinat Kebun</p>
+
+                <div class="settings-form-row">
+                    <div class="form-group">
+                        <label for="farm-lat-auto">Latitude</label>
+                        <input class="form-control" type="number" id="farm-lat-auto"
+                            placeholder="Contoh: -7.8014" min="-90" max="90" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="farm-lng-auto">Longitude</label>
+                        <input class="form-control" type="number" id="farm-lng-auto"
+                            placeholder="Contoh: 110.3647" min="-180" max="180" step="any">
+                    </div>
+                </div>
+                <div class="coord-auto-panel">
+                    <button type="button" class="btn btn-secondary" id="detect-location-btn">
+                        <i class="fas fa-location-dot" aria-hidden="true"></i> Deteksi Lokasi Sekarang
+                    </button>
+                    <p class="coord-auto-status" id="coord-auto-status" aria-live="polite"></p>
+                </div>
+
+                <p class="settings-form-note">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i>
+                    Koordinat digunakan untuk menampilkan kebun di peta. Kosongkan jika belum tersedia.
+                </p>
+
+                <div class="farm-incomplete-notice" id="farm-incomplete-notice" hidden>
+                    <i class="fas fa-circle-info" aria-hidden="true"></i>
+                    <div>
+                        <strong>Data kebun belum lengkap.</strong>
+                        <span id="farm-incomplete-fields"></span>
+                        Lengkapi data ini untuk hasil monitoring yang optimal.
+                    </div>
+                </div>
+
+                <p class="forgot-feedback" id="add-farm-feedback" role="status" aria-live="polite" hidden></p>
+
+                <div class="add-farm-actions">
+                    <button class="btn btn-primary" type="submit" id="add-farm-submit">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Tambah Kebun
+                    </button>
+                    <a class="btn btn-secondary" href="index.html">Batal</a>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        const API_BASE = (() => {
+            const manualBase = localStorage.getItem('lf_api_base');
+            if (manualBase) return manualBase;
+            if (window.location.port === '8000') return window.location.origin;
+            const h = window.location.hostname;
+            if (h !== 'localhost' && h !== '127.0.0.1') return window.location.origin;
+            return 'http://localhost:8000';
+        })();
+
+        function getStoredUser() {
+            try {
+                const raw = readLocalStorage('lf_user', null);
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (_) { return {}; }
+        }
+
+        let existingFarmCount = 0;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = getStoredUser();
+            const ownerInput = document.getElementById('farm-owner');
+            if (ownerInput && !ownerInput.value) ownerInput.value = user.name || '';
+
+            try {
+                const token = localStorage.getItem('lf_access_token');
+                const res = await fetch(`${API_BASE}/api/farms`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    existingFarmCount = (data.farms || []).length;
+                }
+            } catch (_) {}
+        });
+
+        document.getElementById('detect-location-btn').addEventListener('click', () => {
+            const statusEl = document.getElementById('coord-auto-status');
+            statusEl.textContent = 'Mendeteksi lokasi...';
+            statusEl.style.color = '';
+            if (!navigator.geolocation) {
+                statusEl.textContent = 'Browser tidak mendukung deteksi lokasi.';
+                statusEl.style.color = 'var(--color-danger, #ef4444)';
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                async pos => {
+                    const acc = Math.round(pos.coords.accuracy);
+                    if (acc > 100) {
+                        statusEl.textContent = `Gagal mendeteksi lokasi via GPS (akurasi terlalu rendah: ±${acc}m). Pastikan GPS aktif dan coba lagi.`;
+                        statusEl.style.color = 'var(--color-danger, #ef4444)';
+                        return;
+                    }
+                    const lat = parseFloat(pos.coords.latitude.toFixed(6));
+                    const lng = parseFloat(pos.coords.longitude.toFixed(6));
+                    document.getElementById('farm-lat-auto').value = lat;
+                    document.getElementById('farm-lng-auto').value = lng;
+                    statusEl.textContent = `Lokasi terdeteksi: ${lat}, ${lng} · GPS (±${acc}m) · Mengidentifikasi wilayah BMKG...`;
+
+                    try {
+                        const token = localStorage.getItem('lf_access_token');
+                        const res = await fetch(`${API_BASE}/api/utils/resolve-adm4?lat=${lat}&lon=${lng}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.found) {
+                                statusEl.textContent = `Lokasi terdeteksi: ${lat}, ${lng} · GPS (±${acc}m) · Wilayah BMKG: ${data.adm4}`;
+                            } else {
+                                statusEl.textContent = `Lokasi terdeteksi: ${lat}, ${lng} · GPS (±${acc}m) · Wilayah BMKG tidak teridentifikasi (akan dicoba saat simpan)`;
+                            }
+                        }
+                    } catch (_) {
+                        statusEl.textContent = `Lokasi terdeteksi: ${lat}, ${lng} · GPS (±${acc}m)`;
+                    }
+                },
+                err => {
+                    const msgs = {
+                        1: 'Izin lokasi ditolak. Aktifkan GPS dan izin lokasi di browser.',
+                        2: 'GPS tidak tersedia di perangkat ini.',
+                        3: 'Gagal mendeteksi lokasi. Pastikan GPS aktif dan coba lagi.'
+                    };
+                    statusEl.textContent = msgs[err.code] || 'Gagal mendeteksi lokasi.';
+                    statusEl.style.color = 'var(--color-danger, #ef4444)';
+                },
+                { timeout: 15000, enableHighAccuracy: true, maximumAge: 0 }
+            );
+        });
+
+        function setFeedback(msg, type) {
+            const el = document.getElementById('add-farm-feedback');
+            el.hidden = false;
+            el.className = `forgot-feedback forgot-feedback-${type}`;
+            el.textContent = msg;
+        }
+
+        // ── Crop Dropdown ──
+        let cropList = [];
+
+        async function loadCrops() {
+            try {
+                const res = await fetch(`${API_BASE}/api/crops`);
+                if (!res.ok) return;
+                const data = await res.json();
+                cropList = Array.isArray(data.crops) ? data.crops : [];
+            } catch (_) {}
+        }
+
+        const cropInput = document.getElementById('farm-crop-input');
+        const cropHidden = document.getElementById('farm-crop');
+        const cropDropdown = document.getElementById('crop-dropdown');
+        const cropHint = document.getElementById('crop-threshold-hint');
+
+        function renderCropDropdown(filter) {
+            const q = (filter || '').toLowerCase();
+            const filtered = q
+                ? cropList.filter(c => c.name.toLowerCase().includes(q))
+                : cropList;
+            if (!filtered.length) { cropDropdown.hidden = true; cropInput.setAttribute('aria-expanded', 'false'); return; }
+            cropDropdown.innerHTML = '';
+            filtered.slice(0, 12).forEach(crop => {
+                const li = document.createElement('li');
+                li.className = 'crop-option';
+                li.textContent = crop.name;
+                li.setAttribute('role', 'option');
+                li.addEventListener('mousedown', e => {
+                    e.preventDefault();
+                    selectCrop(crop);
+                });
+                cropDropdown.appendChild(li);
+            });
+            cropDropdown.hidden = false;
+            cropInput.setAttribute('aria-expanded', 'true');
+        }
+
+        function selectCrop(crop) {
+            cropInput.value = crop.name;
+            cropHidden.value = crop.name;
+            cropDropdown.hidden = true;
+            cropInput.setAttribute('aria-expanded', 'false');
+            if (crop.lower_threshold != null && crop.upper_threshold != null) {
+                cropHint.textContent = `Threshold VWC disarankan: ${crop.lower_threshold}% – ${crop.upper_threshold}%`;
+                cropHint.hidden = false;
+            } else {
+                cropHint.hidden = true;
+            }
+        }
+
+        cropInput.addEventListener('focus', () => renderCropDropdown(cropInput.value));
+        cropInput.addEventListener('input', () => {
+            cropHidden.value = cropInput.value;
+            cropHint.hidden = true;
+            renderCropDropdown(cropInput.value);
+        });
+        cropInput.addEventListener('blur', () => {
+            setTimeout(() => { cropDropdown.hidden = true; cropInput.setAttribute('aria-expanded', 'false'); }, 160);
+        });
+
+        loadCrops();
+
+        document.getElementById('add-farm-form').addEventListener('submit', async event => {
+            event.preventDefault();
+
+            const rawName = document.getElementById('farm-name').value.trim();
+            const name = rawName || `Kebun ${existingFarmCount + 1}`;
+            if (!rawName) document.getElementById('farm-name').value = name;
+
+            const location = document.getElementById('farm-location').value.trim();
+            const cropType = document.getElementById('farm-crop').value.trim();
+            const areaVal = document.getElementById('farm-area').value;
+
+            const missing = [];
+            if (!location) missing.push('Lokasi');
+            if (!cropType) missing.push('Jenis Tanaman');
+            if (areaVal === '') missing.push('Luas Lahan');
+
+            const notice = document.getElementById('farm-incomplete-notice');
+            const noticeFields = document.getElementById('farm-incomplete-fields');
+            const submitBtn = document.getElementById('add-farm-submit');
+
+            if (missing.length && !submitBtn.dataset.forceSubmit) {
+                noticeFields.textContent = ` ${missing.join(', ')} belum diisi. `;
+                notice.hidden = false;
+                submitBtn.dataset.forceSubmit = '1';
+                submitBtn.textContent = 'Tetap Simpan';
+                submitBtn.insertAdjacentHTML('afterbegin', '<i class="fas fa-plus" aria-hidden="true"></i> ');
+                return;
+            }
+            notice.hidden = true;
+            delete submitBtn.dataset.forceSubmit;
+            submitBtn.innerHTML = '<i class="fas fa-plus" aria-hidden="true"></i> Tambah Kebun';
+
+            const lv = document.getElementById('farm-lat-auto').value;
+            const lnv = document.getElementById('farm-lng-auto').value;
+            const lat = lv !== '' ? parseFloat(lv) : null;
+            const lng = lnv !== '' ? parseFloat(lnv) : null;
+
+            const payload = {
+                name,
+                owner: document.getElementById('farm-owner').value.trim(),
+                location,
+                crop_type: cropType,
+                area_ha: areaVal !== '' ? parseFloat(areaVal) : null,
+                bmkg_adm4_code: '',
+                latitude: lat,
+                longitude: lng,
+            };
+
+            submitBtn.disabled = true;
+            submitBtn.setAttribute('aria-busy', 'true');
+
+            try {
+                const token = localStorage.getItem('lf_access_token');
+                const response = await fetch(`${API_BASE}/api/farms`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                const rawBody = await response.text();
+                let data = {};
+                try { data = rawBody ? JSON.parse(rawBody) : {}; } catch (_) {}
+                if (!response.ok) {
+                    if (response.status === 401) { window.location.href = 'login.html'; return; }
+                    setFeedback(data.detail || `Gagal menambah kebun (HTTP ${response.status}).`, 'error');
+                    return;
+                }
+                window.location.href = 'index.html';
+            } catch (_) {
+                setFeedback('Tidak bisa terhubung ke backend.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.removeAttribute('aria-busy');
+            }
+        });
+    </script>
+</body>
+
+</html>

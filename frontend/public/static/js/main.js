@@ -57,6 +57,36 @@ const VALVE_STATE = {
     CLOSED: 'Tertutup'
 };
 
+// ---------------------------------------------------------------------------
+// Auth Guard — jalankan di setiap halaman secara otomatis
+// ---------------------------------------------------------------------------
+
+(function authGuard() {
+    const PUBLIC_PAGES = ['login.html', 'register.html', 'reset-password.html'];
+    const AUTH_PAGES   = ['login.html', 'register.html', 'reset-password.html'];
+
+    const page = window.location.pathname.split('/').pop() || 'index.html';
+    const token = localStorage.getItem('lf_access_token');
+    const devMode = localStorage.getItem('lf_dev_mode') === 'true';
+
+    // Developer bypass — aktifkan via console: localStorage.setItem('lf_dev_mode','true')
+    if (devMode) return;
+
+    const isPublic = PUBLIC_PAGES.some(p => page === p || page === '');
+
+    if (!isPublic && !token) {
+        // Belum login → paksa ke halaman login
+        window.location.replace('login.html');
+        return;
+    }
+
+    if (AUTH_PAGES.includes(page) && token) {
+        // Sudah login tapi buka halaman auth → langsung ke dashboard
+        window.location.replace('index.html');
+        return;
+    }
+})();
+
 const DECISION_TYPE = {
     OPEN: 'open',
     DELAYED: 'delayed',
@@ -540,17 +570,40 @@ function renderFarmSwitcher() {
     topbarLeft.appendChild(switcher);
 }
 
+function getCurrentUserProfile() {
+    try {
+        const raw = readLocalStorage('lf_user', null);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function getDisplayUserName() {
+    const user = getCurrentUserProfile();
+    const name = (user.name || '').trim();
+    if (name) return name;
+    const email = (user.email || '').trim();
+    if (email) return email.split('@')[0];
+    return 'Pengguna';
+}
+
 function renderTopbarUser() {
     const topbarRight = document.querySelector('.topbar-right');
     if (!topbarRight) return;
 
+    const displayName = getDisplayUserName();
+    const ariaLabel = `Akun ${displayName}`;
     const existingProfile = document.getElementById('topbar-user');
+
     if (existingProfile) {
         if (existingProfile.tagName.toLowerCase() === 'a') {
             existingProfile.className = 'topbar-user';
             existingProfile.href = 'settings.html';
-            existingProfile.setAttribute('aria-label', 'Akun Pak Budi');
-            existingProfile.innerHTML = getTopbarUserMarkup();
+            existingProfile.setAttribute('aria-label', ariaLabel);
+            existingProfile.innerHTML = getTopbarUserMarkup(displayName);
             return;
         }
 
@@ -558,8 +611,8 @@ function renderTopbarUser() {
         replacement.className = 'topbar-user';
         replacement.id = 'topbar-user';
         replacement.href = 'settings.html';
-        replacement.setAttribute('aria-label', 'Akun Pak Budi');
-        replacement.innerHTML = getTopbarUserMarkup();
+        replacement.setAttribute('aria-label', ariaLabel);
+        replacement.innerHTML = getTopbarUserMarkup(displayName);
         existingProfile.replaceWith(replacement);
         return;
     }
@@ -568,8 +621,8 @@ function renderTopbarUser() {
     profile.className = 'topbar-user';
     profile.id = 'topbar-user';
     profile.href = 'settings.html';
-    profile.setAttribute('aria-label', 'Akun Pak Budi');
-    profile.innerHTML = getTopbarUserMarkup();
+    profile.setAttribute('aria-label', ariaLabel);
+    profile.innerHTML = getTopbarUserMarkup(displayName);
 
     const switcher = document.getElementById('theme-switcher');
     if (switcher && switcher.parentElement === topbarRight) {
@@ -579,13 +632,13 @@ function renderTopbarUser() {
     }
 }
 
-function getTopbarUserMarkup() {
+function getTopbarUserMarkup(name) {
     return `
         <svg class="topbar-user-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M20 21a8 8 0 0 0-16 0"></path>
             <circle cx="12" cy="7" r="4"></circle>
         </svg>
-        <span>Pak Budi</span>
+        <span>${escapeHtml(name)}</span>
     `;
 }
 
@@ -711,5 +764,24 @@ document.addEventListener('DOMContentLoaded', () => {
     initSidebar();
     initThemeSwitcher();
     renderTopbarUser();
+    renderAuthUser();
     enableThemeTransitions();
 });
+
+function renderAuthUser() {
+    const slot = document.querySelector('.auth-user-slot');
+    if (!slot) return;
+    const name = getDisplayUserName();
+    if (!name || name === 'Pengguna') {
+        try {
+            const raw = readLocalStorage('lf_user', null);
+            if (!raw) return;
+        } catch (_) { return; }
+    }
+    const el = document.createElement('a');
+    el.className = 'auth-user-pill';
+    el.href = 'settings.html';
+    el.setAttribute('aria-label', `Akun ${name}`);
+    el.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg><span>${escapeHtml(name)}</span>`;
+    slot.appendChild(el);
+}
