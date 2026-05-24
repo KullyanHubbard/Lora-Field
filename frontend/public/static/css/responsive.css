@@ -1115,11 +1115,9 @@ video {
         transition-timing-function: ease-out;
     }
 
-    /* Ambient orbs: di mobile selalu instant — fade-out yang panjang
-       sambil blur 120px = paling berat untuk GPU mobile. */
+    /* Ambient orbs: transition opacity singkat, tidak ada animasi float. */
     .ambient-orb {
         transition: opacity 0.18s ease-out !important;
-        animation-duration: 30s; /* perlambat float, kurangi GPU load */
     }
 
     /* Light mode di mobile: orbs di-disable total dari compositing

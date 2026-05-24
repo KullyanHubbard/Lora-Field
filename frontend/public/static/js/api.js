@@ -1,13 +1,11 @@
 /**
  * api.js — Koneksi frontend LoraField ke FastAPI backend.
  *
- * Strategi:
- * - loadFarmsFromAPI()      → GET /api/farms?user_id=...
+ * - loadFarmsFromAPI()       → GET /api/farms?user_id=...
  * - loadFarmSummaryFromAPI() → GET /api/farms/{id}/summary
  *
- * Kedua fungsi memutasi array/object global (FARMS, NODES, WEATHER_DATA)
- * yang sudah didefinisikan oleh dummy-data.js. Jika backend tidak bisa
- * dijangkau, data dummy tetap dipakai sebagai fallback.
+ * Kedua fungsi mengisi array/object global (FARMS, NODES, WEATHER_DATA)
+ * yang dideklarasikan di dummy-data.js.
  */
 
 const API_BASE = 'http://localhost:8000';
@@ -151,9 +149,7 @@ function normalizeWeather(apiWeather) {
 // ---------------------------------------------------------------------------
 
 /**
- * Muat daftar kebun user dari API.
- * Mutasi array FARMS global (didefinisikan dummy-data.js) dengan data real.
- * Fallback ke data dummy jika API tidak bisa dijangkau.
+ * Muat daftar kebun user dari API dan isi array FARMS global.
  */
 async function loadFarmsFromAPI(userId) {
     const uid = userId || CURRENT_USER_ID;
@@ -163,8 +159,6 @@ async function loadFarmsFromAPI(userId) {
         const data = await res.json();
         const normalized = (data.items || []).map(normalizeFarm);
 
-        // Mutasi array FARMS yang sudah ada (const di dummy-data.js)
-        // Array adalah reference type, mutasi langsung tanpa reassign
         if (typeof FARMS !== 'undefined' && Array.isArray(FARMS)) {
             FARMS.length = 0;
             normalized.forEach(f => FARMS.push(f));
@@ -172,16 +166,14 @@ async function loadFarmsFromAPI(userId) {
 
         return normalized;
     } catch (err) {
-        console.warn('[LoraField] Gagal memuat kebun dari API, pakai data lokal:', err.message);
-        return typeof FARMS !== 'undefined' ? [...FARMS] : [];
+        console.warn('[LoraField] Gagal memuat kebun dari API:', err.message);
+        return [];
     }
 }
 
 /**
  * Muat summary lengkap satu kebun dari API.
- * Mutasi FARMS (gateway status, nodeIds), NODES (data sensor terbaru),
- * dan WEATHER_DATA dengan data real.
- * Fallback diam-diam jika API gagal.
+ * Mengisi FARMS, NODES, dan WEATHER_DATA dengan data dari backend.
  */
 async function loadFarmSummaryFromAPI(farmId) {
     try {
@@ -219,7 +211,6 @@ async function loadFarmSummaryFromAPI(farmId) {
             newNodes.forEach(newNode => {
                 const idx = NODES.findIndex(n => n.id === newNode.id);
                 if (idx >= 0) {
-                    // Update in-place agar referensi yang dipegang simulation.js tetap valid
                     Object.assign(NODES[idx], newNode);
                 } else {
                     NODES.push(newNode);
@@ -237,7 +228,7 @@ async function loadFarmSummaryFromAPI(farmId) {
 
         return summary;
     } catch (err) {
-        console.warn('[LoraField] Gagal memuat summary kebun dari API, pakai data lokal:', err.message);
+        console.warn('[LoraField] Gagal memuat summary kebun dari API:', err.message);
         return null;
     }
 }

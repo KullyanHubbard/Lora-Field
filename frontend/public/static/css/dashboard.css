@@ -544,13 +544,7 @@
 }
 
 .auth-page::before {
-    background:
-        linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
-    background-size: 44px 44px;
-    opacity: 0.7;
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), transparent 82%);
-    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), transparent 82%);
+    display: none;
 }
 
 .auth-page::after {
@@ -657,12 +651,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border: 1px solid rgba(16, 185, 129, 0.24);
+    width: 160px;
+    height: 160px;
     border-radius: var(--radius);
-    background: rgba(16, 185, 129, 0.12);
-    box-shadow: 0 10px 28px rgba(16, 185, 129, 0.16);
 }
 
 .login-mark svg {
@@ -873,11 +864,58 @@
     border-left-color: var(--color-red);
 }
 
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+}
+
+.auth-switch {
+    margin: 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+.auth-switch-link {
+    margin-left: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 700;
+}
+
+.auth-switch-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+.auth-switch-link:focus-visible {
+    border-radius: var(--radius-sm);
+    box-shadow: var(--ring);
+    outline: none;
+}
+
 :root[data-theme="light"] .auth-page::before {
-    background:
-        linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
-    opacity: 0.55;
+    display: none;
 }
 
 :root[data-theme="light"] .login-visual {

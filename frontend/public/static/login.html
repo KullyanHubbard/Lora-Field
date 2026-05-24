@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -16,8 +16,7 @@
         }
     </script>
     <title>Login - LoraField</title>
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f9f6e'/%3E%3Cpath d='M18 39c14-1 22-8 28-22 1 17-7 29-24 31-4-2-6-5-4-9z' fill='white'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="img/logo.svg">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
@@ -27,38 +26,12 @@
 <body class="auth-page">
     <header class="auth-brand-bar" aria-label="LoraField branding">
         <div class="auth-brand-link">
-            <span class="auth-brand-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                    <path d="M12 21v-8" />
-                    <path d="M12 13c-4.4 0-8-3.6-8-8v-.5h.5c4.4 0 8 3.6 8 8v.5H12Z" />
-                    <path d="M12 14c4.4 0 8-3.6 8-8v-.5h-.5c-4.4 0-8 3.6-8 8v.5H12Z" />
-                </svg>
-            </span>
             <span class="auth-brand-name">LoraField</span>
         </div>
         <div class="auth-theme-slot" aria-label="Pengaturan tema"></div>
     </header>
     <main class="login-shell" aria-labelledby="login-title">
         <section class="login-card login-card-center" aria-label="Form login">
-            <div class="login-logo login-logo-center">
-                <span class="login-mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" focusable="false">
-                        <path d="M12 21v-8" />
-                        <path d="M12 13c-4.4 0-8-3.6-8-8v-.5h.5c4.4 0 8 3.6 8 8v.5H12Z" />
-                        <path d="M12 14c4.4 0 8-3.6 8-8v-.5h-.5c-4.4 0-8 3.6-8 8v.5H12Z" />
-                    </svg>
-                </span>
-                <span>LoraField</span>
-            </div>
-
-            <div class="login-visual" aria-hidden="true">
-                <span class="login-field-line login-field-line-1"></span>
-                <span class="login-field-line login-field-line-2"></span>
-                <span class="login-field-line login-field-line-3"></span>
-                <span class="login-signal"></span>
-                <span class="login-node"></span>
-            </div>
-
             <div class="login-intro">
                 <h1 id="login-title">Masuk Akun</h1>
                 <p>Monitoring kebun LoRa dalam satu akses.</p>
@@ -68,12 +41,12 @@
                 <div class="form-group">
                     <label for="login-email">Email atau Username</label>
                     <input class="form-control" type="text" id="login-email" name="email" autocomplete="username"
-                        value="pak.budi@lorafield.local" required>
+                        placeholder="nama@email.com" required>
                 </div>
                 <div class="form-group">
                     <label for="login-password">Password</label>
                     <input class="form-control" type="password" id="login-password" name="password"
-                        autocomplete="current-password" value="password" required>
+                        autocomplete="current-password" placeholder="Masukkan password" required>
                 </div>
                 <button class="btn btn-primary login-submit" type="submit">
                     <svg class="login-submit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -83,9 +56,10 @@
                     </svg>
                     <span>Masuk</span>
                 </button>
+
                 <button class="forgot-link" id="forgot-password" type="button" aria-expanded="false"
                     aria-controls="forgot-panel">
-                    Lupa Password
+                    Lupa Password?
                 </button>
                 <section class="forgot-panel" id="forgot-panel" aria-label="Atur ulang password" hidden>
                     <div class="form-group">
@@ -112,6 +86,40 @@
                         Kirim Kode
                     </button>
                     <p class="forgot-feedback" id="forgot-feedback" role="status" aria-live="polite" hidden></p>
+                </section>
+
+                <div class="auth-divider" aria-hidden="true"><span>atau</span></div>
+
+                <p class="auth-switch">
+                    Belum punya akun?
+                    <button class="auth-switch-link" id="register-toggle" type="button" aria-expanded="false"
+                        aria-controls="register-panel">Daftar Akun</button>
+                </p>
+                <section class="forgot-panel" id="register-panel" aria-label="Daftar akun baru" hidden>
+                    <div class="form-group">
+                        <label for="register-name">Nama Lengkap</label>
+                        <input class="form-control" type="text" id="register-name" autocomplete="name"
+                            placeholder="Nama lengkap kamu">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input class="form-control" type="email" id="register-email" autocomplete="email"
+                            placeholder="nama@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input class="form-control" type="password" id="register-password" autocomplete="new-password"
+                            placeholder="Minimal 6 karakter">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-confirm">Ulangi Password</label>
+                        <input class="form-control" type="password" id="register-confirm" autocomplete="new-password"
+                            placeholder="Ulangi password">
+                    </div>
+                    <button class="btn btn-primary forgot-submit" id="register-submit" type="button">
+                        Buat Akun
+                    </button>
+                    <p class="forgot-feedback" id="register-feedback" role="status" aria-live="polite" hidden></p>
                 </section>
             </form>
         </section>
@@ -164,8 +172,28 @@
             forgotFeedback.textContent = '';
         }
 
+        const registerToggle = document.getElementById('register-toggle');
+        const registerPanel = document.getElementById('register-panel');
+        const registerName = document.getElementById('register-name');
+        const registerEmail = document.getElementById('register-email');
+        const registerPassword = document.getElementById('register-password');
+        const registerConfirm = document.getElementById('register-confirm');
+        const registerSubmit = document.getElementById('register-submit');
+        const registerFeedback = document.getElementById('register-feedback');
+
+        function closeRegisterPanel() {
+            registerPanel.hidden = true;
+            registerToggle.setAttribute('aria-expanded', 'false');
+        }
+
+        function closeForgotPanel() {
+            forgotPanel.hidden = true;
+            forgotButton.setAttribute('aria-expanded', 'false');
+        }
+
         forgotButton.addEventListener('click', () => {
             const isOpening = forgotPanel.hidden;
+            if (isOpening) closeRegisterPanel();
             forgotPanel.hidden = !isOpening;
             forgotButton.setAttribute('aria-expanded', String(isOpening));
 
@@ -174,6 +202,65 @@
             forgotEmail.value = loginEmail.value.trim();
             resetForgotState();
             forgotEmail.focus();
+        });
+
+        function setRegisterFeedback(message, type) {
+            registerFeedback.hidden = false;
+            registerFeedback.className = `forgot-feedback forgot-feedback-${type}`;
+            registerFeedback.textContent = message;
+        }
+
+        function resetRegisterState() {
+            registerName.value = '';
+            registerEmail.value = '';
+            registerPassword.value = '';
+            registerConfirm.value = '';
+            registerFeedback.hidden = true;
+            registerFeedback.textContent = '';
+        }
+
+        registerToggle.addEventListener('click', () => {
+            const isOpening = registerPanel.hidden;
+            if (isOpening) closeForgotPanel();
+            registerPanel.hidden = !isOpening;
+            registerToggle.setAttribute('aria-expanded', String(isOpening));
+
+            if (!isOpening) return;
+
+            resetRegisterState();
+            registerName.focus();
+        });
+
+        registerSubmit.addEventListener('click', () => {
+            const name = registerName.value.trim();
+            const email = registerEmail.value.trim();
+            const password = registerPassword.value.trim();
+            const confirm = registerConfirm.value.trim();
+
+            if (!name) {
+                setRegisterFeedback('Nama lengkap wajib diisi.', 'error');
+                registerName.focus();
+                return;
+            }
+            if (!email || !email.includes('@')) {
+                setRegisterFeedback('Email belum valid.', 'error');
+                registerEmail.focus();
+                return;
+            }
+            if (password.length < 6) {
+                setRegisterFeedback('Password minimal 6 karakter.', 'error');
+                registerPassword.focus();
+                return;
+            }
+            if (password !== confirm) {
+                setRegisterFeedback('Ulangi password belum sama.', 'error');
+                registerConfirm.focus();
+                return;
+            }
+
+            loginEmail.value = email;
+            loginPassword.value = password;
+            setRegisterFeedback('Akun berhasil dibuat. Silakan masuk dengan akun baru kamu.', 'success');
         });
 
         forgotSubmit.addEventListener('click', () => {

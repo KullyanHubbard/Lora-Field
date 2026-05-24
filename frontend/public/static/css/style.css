@@ -293,6 +293,46 @@ img {
     font-size: 1.3rem;
 }
 
+.brand-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.sidebar-brand h2 {
+    justify-content: center;
+}
+
+.sidebar-brand .brand-logo {
+    width: 140px;
+    height: 140px;
+}
+
+.sidebar-brand p {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.login-logo-img {
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+}
+
+.auth-brand-icon .brand-logo {
+    width: 80px;
+    height: 80px;
+}
+
+.marker-logo {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    display: block;
+}
+
 .sidebar-brand p {
     max-width: 190px;
     margin-top: 6px;

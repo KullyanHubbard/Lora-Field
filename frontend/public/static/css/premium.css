@@ -67,15 +67,11 @@
 .ambient-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.4;
-    animation: floatOrb 20s infinite linear alternate;
-    transition: opacity 0.88s cubic-bezier(0.16, 1, 0.3, 1), filter 0.88s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
-    contain: layout style;
-    /* Paksa GPU layer terpisah — eliminasi composite jitter di semua Hz */
-    backface-visibility: hidden;
-    transform: translateZ(0);
+    filter: blur(80px);
+    opacity: 0.35;
+    transition: opacity 0.88s cubic-bezier(0.16, 1, 0.3, 1);
+    contain: strict;
+    pointer-events: none;
 }
 
 :root[data-theme="light"] .ambient-orb {
@@ -100,7 +96,6 @@
     width: 70vw;
     height: 70vw;
     background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, rgba(0,0,0,0) 70%);
-    animation-delay: -10s;
 }
 
 .orb-3 {
@@ -109,13 +104,8 @@
     width: 40vw;
     height: 40vw;
     background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%);
-    animation-duration: 25s;
 }
 
-@keyframes floatOrb {
-    0%   { transform: translateZ(0) translate(0, 0) scale(1); }
-    100% { transform: translateZ(0) translate(5%, 5%) scale(1.08); }
-}
 
 /* Base Body Update */
 :root:not([data-theme="light"]) body,
@@ -143,8 +133,8 @@
 :root:not([data-theme="light"]) .sidebar,
 :root[data-theme="dark"] .sidebar {
     background: var(--color-sidebar);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-right: 1px solid var(--color-border);
 }
 
@@ -175,9 +165,9 @@
 /* Topbar Glassmorphism */
 :root:not([data-theme="light"]) .topbar,
 :root[data-theme="dark"] .topbar {
-    background: rgba(9, 9, 11, 0.5);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: rgba(9, 9, 11, 0.75);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -249,9 +239,7 @@
 /* Card Glassmorphism & Hover Effects */
 :root:not([data-theme="light"]) .card,
 :root[data-theme="dark"] .card {
-    background: var(--color-card);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(20, 30, 48, 0.85);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-sm);
     /* Samakan timing dengan light mode — hanya border & shadow, tidak ada lift */
@@ -276,7 +264,6 @@
     background: rgba(255, 255, 255, 0.1);
     color: var(--color-white);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(4px);
 }
 
 :root:not([data-theme="light"]) .badge-green,
@@ -326,8 +313,7 @@
 /* Status Pill */
 :root:not([data-theme="light"]) .status-pill,
 :root[data-theme="dark"] .status-pill {
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(8px);
+    background: rgba(30, 41, 59, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--color-white);
 }
@@ -430,11 +416,9 @@
 
 :root:not([data-theme="light"]) .filter-btn,
 :root[data-theme="dark"] .filter-btn {
-    background: rgba(30, 41, 59, 0.6);
+    background: rgba(30, 41, 59, 0.85);
     color: var(--color-gray-400);
     border: 1px solid var(--color-border);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
 }
 
 :root:not([data-theme="light"]) .filter-btn:hover,
@@ -925,11 +909,9 @@ table td {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    background: linear-gradient(135deg, var(--color-primary, #10b981) 0%, #34d399 100%);
-    border-radius: 8px;
-    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
 }
 
 .auth-brand-icon svg {
@@ -943,7 +925,7 @@ table td {
 }
 
 .auth-brand-name {
-    font-size: 1.1rem;
+    font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     background: linear-gradient(135deg, #ffffff 30%, #34d399 100%);
