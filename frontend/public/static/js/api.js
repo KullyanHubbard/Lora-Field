@@ -33,6 +33,50 @@ function handleAuthFailure(statusCode) {
     window.location.href = 'login.html';
 }
 
+function toNumberOrNull(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+}
+
+function pickNumber(...values) {
+    for (const value of values) {
+        const number = toNumberOrNull(value);
+        if (number !== null) return number;
+    }
+    return null;
+}
+
+function getWeatherCodeFromDescription(description, fallbackCode = null) {
+    const text = String(description || '').toLowerCase();
+    if (text.includes('hujan lebat') || text.includes('thunderstorm')) return 63;
+    if (text.includes('hujan sedang')) return 61;
+    if (text.includes('hujan ringan') || text.includes('hujan') || text.includes('shower')) return 60;
+    if (text.includes('berawan tebal')) return 4;
+    if (text.includes('cerah berawan')) return 2;
+    if (text.includes('cerah')) return 0;
+    if (text.includes('berawan')) return 3;
+    return fallbackCode;
+}
+
+function formatForecastLabel(item, index) {
+    const rawTime = item.local_datetime || item.datetime || item.utc_datetime;
+    if (!rawTime) return index === 0 ? 'Sekarang' : `+${index * 3} Jam`;
+
+    const normalized = String(rawTime).replace(' ', 'T');
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) {
+        const timePart = String(rawTime).split(' ')[1];
+        return timePart ? timePart.slice(0, 5) : (index === 0 ? 'Sekarang' : `+${index * 3} Jam`);
+    }
+
+    return date.toLocaleString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Normalisasi response API → format frontend
 // ---------------------------------------------------------------------------
@@ -51,23 +95,25 @@ function normalizeFarm(apiFarm) {
         crop: apiFarm.crop_type || '',
         area: apiFarm.area_ha != null ? apiFarm.area_ha + ' ha' : '—',
         bmkgCode: apiFarm.bmkg_adm4_code || '',
-        latitude: apiFarm.latitude || 0,
-        longitude: apiFarm.longitude || 0,
+        latitude: apiFarm.latitude ?? 0,
+        longitude: apiFarm.longitude ?? 0,
         status: apiFarm.status === 'active' ? 'normal' : (apiFarm.status || 'normal'),
-        // Gateway diisi sementara; diperbarui saat loadFarmSummaryFromAPI dipanggil
+        // Gateway diisi sementara dengan status tidak diketahui; diperbarui saat loadFarmSummaryFromAPI dipanggil
         gateway: {
             id: 'gw-' + apiFarm.id,
             name: 'Gateway ' + apiFarm.name,
             model: 'LoRa Gateway',
-            status: 'online',
-            internet: '4G LTE',
-            quality: 'Baik',
-            lastSeen: new Date()
+            status: 'unknown',
+            internet: '—',
+            quality: '—',
+            lastSeen: null
         },
         nodeIds: [],
         valve: 'Tertutup',
         irrigation: 'Normal',
         weather: '—',
+        weatherStatus: 'Belum tersedia',
+        weatherLocation: '',
         rainPrediction: false,
         warning: null,
         lastUpdate: apiFarm.updated_at ? new Date(apiFarm.updated_at) : new Date()
@@ -121,44 +167,43 @@ function normalizeNode(nodeData) {
 function normalizeWeather(apiWeather) {
     if (!apiWeather) return null;
 
-    const desc = (apiWeather.condition || '').toLowerCase();
-    let code = 3; // default berawan
-    if (desc.includes('hujan lebat') || desc.includes('thunderstorm')) code = 63;
-    else if (desc.includes('hujan sedang')) code = 61;
-    else if (desc.includes('hujan ringan') || desc.includes('hujan') || desc.includes('shower')) code = 60;
-    else if (desc.includes('berawan tebal')) code = 4;
-    else if (desc.includes('cerah berawan')) code = 2;
-    else if (desc.includes('cerah')) code = 0;
-
-    const rawForecast = Array.isArray(apiWeather.forecast) ? apiWeather.forecast.slice(0, 3) : [];
-    const forecast = rawForecast.length
-        ? rawForecast.map((f, i) => {
-              const fd = (f.weather_desc || '').toLowerCase();
-              let fc = 3;
-              if (fd.includes('hujan lebat')) fc = 63;
-              else if (fd.includes('hujan sedang')) fc = 61;
-              else if (fd.includes('hujan')) fc = 60;
-              else if (fd.includes('berawan tebal')) fc = 4;
-              else if (fd.includes('cerah berawan')) fc = 2;
-              else if (fd.includes('cerah')) fc = 0;
-              return {
-                  label: i === 0 ? 'Sekarang' : `+${i * 3} Jam`,
-                  condition: f.weather_desc || 'Berawan',
-                  code: fc,
-                  temp: f.t || apiWeather.temperature || 27
-              };
-          })
-        : [{ label: 'Sekarang', condition: apiWeather.condition || 'Berawan', code, temp: apiWeather.temperature || 27 }];
+    const condition = apiWeather.condition || 'Belum tersedia';
+    const code = pickNumber(apiWeather.code) ?? getWeatherCodeFromDescription(condition);
+    const rawForecast = Array.isArray(apiWeather.forecast) ? apiWeather.forecast.slice(0, 8) : [];
+    const firstForecast = rawForecast[0] || {};
+    const forecast = rawForecast.map((f, i) => {
+        const forecastCondition = f.weather_desc || f.condition || 'Belum tersedia';
+        return {
+            label: formatForecastLabel(f, i),
+            condition: forecastCondition,
+            code: pickNumber(f.weather, f.code) ?? getWeatherCodeFromDescription(forecastCondition),
+            temp: pickNumber(f.t, f.temperature),
+            humidity: pickNumber(f.hu, f.humidity),
+            windSpeed: pickNumber(f.ws, f.wind_speed),
+            windDirection: f.wd || f.wind_direction || '',
+            visibility: f.vs_text || f.visibility || '',
+            localDatetime: f.local_datetime || '',
+            utcDatetime: f.utc_datetime || f.datetime || ''
+        };
+    });
 
     return {
         location: apiWeather.location || '',
+        adm4: apiWeather.adm4 || '',
+        provider: apiWeather.provider || 'BMKG',
+        source: apiWeather.source || '',
+        region: apiWeather.region || {},
+        locationProfile: apiWeather.location_profile || {},
         status: 'Tersedia',
-        lastUpdate: apiWeather.updated_at || 'Baru saja',
+        lastUpdate: apiWeather.updated_at || apiWeather.forecast_time || 'Baru saja',
+        forecastTime: apiWeather.forecast_time || '',
         current: {
-            temp: apiWeather.temperature || 27,
-            humidity: apiWeather.humidity || 75,
-            windSpeed: 0,
-            condition: apiWeather.condition || 'Berawan',
+            temp: pickNumber(apiWeather.temperature, firstForecast.t),
+            humidity: pickNumber(apiWeather.humidity, firstForecast.hu),
+            windSpeed: pickNumber(apiWeather.wind_speed, firstForecast.ws),
+            windDirection: apiWeather.wind_direction || firstForecast.wd || '',
+            visibility: apiWeather.visibility || firstForecast.vs_text || '',
+            condition,
             code
         },
         forecast,
@@ -217,6 +262,12 @@ async function loadFarmSummaryFromAPI(farmId) {
         if (typeof FARMS !== 'undefined' && Array.isArray(FARMS)) {
             const farm = FARMS.find(f => f.id === farmId);
             if (farm) {
+                if (summary.farm) {
+                    farm.bmkgCode = summary.farm.bmkg_adm4_code || farm.bmkgCode || '';
+                    farm.latitude = summary.farm.latitude ?? farm.latitude;
+                    farm.longitude = summary.farm.longitude ?? farm.longitude;
+                    farm.location = summary.farm.location || farm.location;
+                }
                 farm.gateway.status = summary.gateway_status || 'offline';
                 farm.gateway.lastSeen = summary.gateway_status === 'online' ? new Date() : farm.gateway.lastSeen;
 
@@ -229,10 +280,16 @@ async function loadFarmSummaryFromAPI(farmId) {
 
                 if (summary.weather) {
                     farm.rainPrediction = summary.weather.rain_next_3h || false;
+                    farm.weatherStatus = 'Tersedia';
+                    farm.weatherLocation = summary.weather.location || '';
                     farm.weather = summary.weather.condition || '—';
                     farm.irrigation = summary.gateway_status === 'offline'
                         ? 'Perlu cek gateway'
                         : (summary.weather.rain_next_3h ? 'Ditunda (prediksi hujan)' : 'Normal');
+                } else {
+                    farm.rainPrediction = false;
+                    farm.weather = 'Belum tersedia';
+                    farm.weatherStatus = 'Belum tersedia';
                 }
             }
         }
@@ -251,10 +308,35 @@ async function loadFarmSummaryFromAPI(farmId) {
         }
 
         // --- Perbarui WEATHER_DATA ---
-        if (summary.weather && typeof WEATHER_DATA !== 'undefined' && WEATHER_DATA) {
-            const normalized = normalizeWeather(summary.weather);
-            if (normalized) {
-                Object.assign(WEATHER_DATA, normalized);
+        if (typeof WEATHER_DATA !== 'undefined' && WEATHER_DATA) {
+            if (summary.weather) {
+                const normalized = normalizeWeather(summary.weather);
+                if (normalized) {
+                    Object.assign(WEATHER_DATA, normalized);
+                }
+            } else {
+                Object.assign(WEATHER_DATA, {
+                    location: summary.farm ? summary.farm.location : '',
+                    adm4: summary.farm ? summary.farm.bmkg_adm4_code || '' : '',
+                    provider: 'BMKG',
+                    source: '',
+                    region: {},
+                    locationProfile: {},
+                    status: 'Belum tersedia',
+                    lastUpdate: 'Belum tersedia',
+                    forecastTime: '',
+                    current: {
+                        temp: null,
+                        humidity: null,
+                        windSpeed: null,
+                        windDirection: '',
+                        visibility: '',
+                        condition: 'Belum tersedia',
+                        code: null
+                    },
+                    forecast: [],
+                    rainPrediction: false
+                });
             }
         }
 
@@ -263,4 +345,14 @@ async function loadFarmSummaryFromAPI(farmId) {
         console.warn('[LoraField] Gagal memuat summary kebun dari API:', err.message);
         return null;
     }
+}
+
+async function loadSelectedFarmSummaryFromAPI(requestedFarmId = null) {
+    const targetFarmId = requestedFarmId && typeof getFarmById === 'function' && getFarmById(requestedFarmId)
+        ? requestedFarmId
+        : (typeof getCurrentFarm === 'function' && getCurrentFarm() ? getCurrentFarm().id : null);
+
+    if (!targetFarmId) return null;
+    if (typeof setSelectedFarmId === 'function') setSelectedFarmId(targetFarmId);
+    return loadFarmSummaryFromAPI(targetFarmId);
 }

@@ -67,13 +67,28 @@ Versi halaman statis lama: `frontend/public/static/index.html`.
 
 ## API Endpoints
 
+### Auth
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| POST | `/api/auth/register` | Buat akun baru |
+| POST | `/api/auth/login` | Login (mengembalikan JWT bearer token) |
+| GET | `/api/auth/me` | Profil user dari token, termasuk nomor HP |
+| PATCH | `/api/auth/profile` | Update profil user (nomor HP) |
+| POST | `/api/auth/forgot-password` | Kirim kode reset 6 digit ke email |
+| POST | `/api/auth/reset-password/verify` | Verifikasi kode reset (tahap 1) |
+| POST | `/api/auth/reset-password` | Set password baru (tahap 2) |
+| POST | `/api/auth/resend-verification` | Kirim ulang verifikasi akun |
+
 ### Kebun (Farm)
 
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| GET | `/api/farms?user_id=...` | Daftar semua kebun milik user |
-| GET | `/api/farms/{farm_id}` | Detail satu kebun |
-| POST | `/api/farms` | Tambah kebun baru |
+| GET | `/api/farms` | Daftar kebun milik user (butuh bearer token) |
+| GET | `/api/farms/{farm_id}` | Detail satu kebun (dibatasi pemilik) |
+| POST | `/api/farms` | Tambah kebun baru, auto-resolve kode BMKG dari koordinat jika kosong |
+| PATCH | `/api/farms/{farm_id}` | Update data kebun (dibatasi pemilik) |
+| DELETE | `/api/farms/{farm_id}` | Hapus kebun (dibatasi pemilik) |
 | GET | `/api/farms/{farm_id}/weather` | Cuaca BMKG untuk kebun (dari cache) |
 | GET | `/api/farms/{farm_id}/summary` | Ringkasan lengkap kebun: cuaca, node, keputusan irigasi |
 
@@ -91,6 +106,8 @@ Versi halaman statis lama: `frontend/public/static/index.html`.
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
 | GET | `/api/weather?adm4=...` | Test endpoint cuaca BMKG langsung (tanpa cache) |
+| GET | `/api/crops` | Daftar jenis tanaman dan threshold VWC |
+| GET | `/api/utils/resolve-adm4?lat=...&lon=...` | Resolve kode BMKG adm4 dari koordinat |
 | GET | `/api/decision?soil_moisture=...&rain_next_3h=...` | Simulasi keputusan irigasi |
 | GET | `/api/logs` | Riwayat keputusan irigasi |
 
@@ -122,10 +139,12 @@ Versi halaman statis lama: `frontend/public/static/index.html`.
 
 ### Akses per User
 
-Setiap user hanya mengakses kebun miliknya sendiri:
+Setiap user hanya mengakses kebun miliknya sendiri. Endpoint kebun memakai
+bearer token JWT — backend mengambil user dari token, bukan dari query string.
 
 ```text
-GET /api/farms?user_id=user-01
+GET /api/farms
+Authorization: Bearer <token-dari-login>
 ```
 
 ```text

@@ -125,6 +125,7 @@ def init_db() -> None:
         ensure_column(connection, "nodes", "latitude", "REAL")
         ensure_column(connection, "nodes", "longitude", "REAL")
         ensure_column(connection, "nodes", "farm_id", "TEXT REFERENCES farms(id)")
+        ensure_column(connection, "users", "phone", "TEXT NOT NULL DEFAULT ''")
 
 
 def row_to_dict(row: sqlite3.Row | None) -> dict | None:

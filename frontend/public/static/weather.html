@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -54,8 +54,11 @@
 
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand">
-            <h2><img src="img/logo.svg" class="brand-logo" alt="LoraField"></h2>
-            <p>LoRa-Based Precision Agriculture System</p>
+            <h2 class="sidebar-brand-title">
+                <img src="img/logo.svg" class="brand-logo" alt="">
+                <span class="brand-name">LoraField</span>
+            </h2>
+            
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
         <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
@@ -77,6 +80,9 @@
             <div class="card mb-24">
                 <div class="node-info-grid">
                     <div class="node-info-item"><span class="info-label">Wilayah</span><span class="info-value" id="w-region">-</span></div>
+                    <div class="node-info-item"><span class="info-label">Kode BMKG</span><span class="info-value" id="w-adm4">-</span></div>
+                    <div class="node-info-item"><span class="info-label">Koordinat Kebun</span><span class="info-value" id="w-coordinates">-</span></div>
+                    <div class="node-info-item"><span class="info-label">Altitude BMKG</span><span class="info-value" id="w-altitude">-</span></div>
                     <div class="node-info-item"><span class="info-label">Status Koneksi</span><span class="info-value"><span class="badge badge-green" id="w-api-status">Tersedia</span></span></div>
                     <div class="node-info-item"><span class="info-label">Update Terakhir</span><span class="info-value" id="w-last-update">10 menit lalu</span></div>
                 </div>
@@ -127,38 +133,67 @@
     <script src="js/dummy-data.js"></script>
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/simulation.js"></script>
     <script>
         function updateWeatherUI() {
             const weather = WEATHER_DATA;
             const farm = getCurrentFarm();
             if (!farm) return;
-            const rain = farm.rainPrediction || isRainPredicted();
-            const info = getWeatherInfo(weather.current.code);
+            const isAvailable = weather.status === 'Tersedia';
+            const rain = isAvailable && Boolean(weather.rainPrediction);
+            const current = weather.current || {};
+            const info = getWeatherInfo(current.code, current.condition);
+            const region = weather.region || {};
+            const locationProfile = weather.locationProfile || {};
+            const regionText = [
+                region.village || weather.location,
+                region.district,
+                region.city,
+                region.province
+            ].filter(Boolean).join(', ') || farm.location || '-';
+            const coordinateText = Number.isFinite(Number(farm.latitude)) && Number.isFinite(Number(farm.longitude))
+                ? `${Number(farm.latitude).toFixed(6)}, ${Number(farm.longitude).toFixed(6)}`
+                : '-';
+            const tempText = current.temp !== null && current.temp !== undefined && Number.isFinite(Number(current.temp)) ? `${current.temp}${DEG_C}` : '—';
+            const humidityText = current.humidity !== null && current.humidity !== undefined && Number.isFinite(Number(current.humidity)) ? `${current.humidity}%` : '—';
+            const windText = current.windSpeed !== null && current.windSpeed !== undefined && Number.isFinite(Number(current.windSpeed))
+                ? `${current.windSpeed} km/jam${current.windDirection ? ` (${current.windDirection})` : ''}`
+                : '—';
 
             setWeatherIcon('w-icon', info);
-            document.getElementById('w-region').textContent = farm.location;
-            document.getElementById('w-location').textContent = farm.location;
-            document.getElementById('w-temp').textContent = weather.current.temp + DEG_C;
-            document.getElementById('w-cond').textContent = weather.current.condition;
-            document.getElementById('w-hum').textContent = weather.current.humidity + '%';
-            document.getElementById('w-wind').textContent = weather.current.windSpeed + ' km/jam';
-            document.getElementById('w-code').textContent = weather.current.code;
-            document.getElementById('w-last-update').textContent = weather.lastUpdate;
+            document.getElementById('w-region').textContent = regionText;
+            document.getElementById('w-location').textContent = isAvailable ? (weather.location || farm.location) : farm.location;
+            document.getElementById('w-adm4').textContent = weather.adm4 || farm.bmkgCode || '-';
+            document.getElementById('w-coordinates').textContent = coordinateText;
+            document.getElementById('w-altitude').textContent = Number.isFinite(Number(locationProfile.altitude_m))
+                ? `${locationProfile.altitude_m} mdpl`
+                : '-';
+            document.getElementById('w-api-status').textContent = isAvailable ? `${weather.provider || 'BMKG'} tersedia` : 'Belum tersedia';
+            document.getElementById('w-api-status').className = `badge ${isAvailable ? 'badge-green' : 'badge-red'}`;
+            document.getElementById('w-temp').textContent = tempText;
+            document.getElementById('w-cond').textContent = isAvailable ? current.condition : 'Belum tersedia';
+            document.getElementById('w-hum').textContent = humidityText;
+            document.getElementById('w-wind').textContent = windText;
+            document.getElementById('w-code').textContent = current.code ?? '-';
+            document.getElementById('w-last-update').textContent = weather.forecastTime || weather.lastUpdate || 'Belum tersedia';
 
             const forecastGrid = document.getElementById('forecast-grid');
-            forecastGrid.innerHTML = weather.forecast.map(item => {
-                const forecastInfo = getWeatherInfo(item.code);
+            const forecastItems = Array.isArray(weather.forecast) ? weather.forecast : [];
+            forecastGrid.innerHTML = forecastItems.length ? forecastItems.map(item => {
+                const forecastInfo = getWeatherInfo(item.code, item.condition);
+                const itemTemp = item.temp !== null && item.temp !== undefined && Number.isFinite(Number(item.temp)) ? `${item.temp}${DEG_C}` : '—';
                 return `<div class="card forecast-card">
                     <div class="forecast-label">${escapeHtml(item.label)}</div>
                     <div class="forecast-icon">${renderWeatherIcon(forecastInfo)}</div>
-                    <div class="forecast-temp">${item.temp}${DEG_C}</div>
+                    <div class="forecast-temp">${itemTemp}</div>
                     <div class="forecast-cond">${escapeHtml(item.condition)}</div>
                 </div>`;
-            }).join('');
+            }).join('') : '<div class="card forecast-card"><div class="forecast-label">BMKG</div><div class="forecast-cond">Prakiraan belum tersedia untuk kebun ini.</div></div>';
 
             const impact = document.getElementById('w-impact');
-            if (rain) {
+            if (!isAvailable) {
+                impact.className = 'weather-impact deny';
+                impact.innerHTML = '<i class="fas fa-triangle-exclamation" aria-hidden="true"></i> Data BMKG belum tersedia. Pastikan kode BMKG kebun sudah terisi sesuai lokasi.';
+            } else if (rain) {
                 impact.className = 'weather-impact deny';
                 impact.innerHTML = '<i class="fas fa-cloud-rain" aria-hidden="true"></i> BMKG memprediksi hujan, sistem menunda irigasi untuk mencegah pemborosan air.';
             } else {
@@ -183,8 +218,8 @@
             const urlParams = new URLSearchParams(window.location.search);
             const farmId = urlParams.get('farm');
 
-            await loadFarmsFromAPI(CURRENT_USER_ID);
-            if (farmId) await loadFarmSummaryFromAPI(farmId);
+            await loadFarmsFromAPI();
+            await loadSelectedFarmSummaryFromAPI(farmId);
 
             const oldSwitcher = document.getElementById('farm-switcher');
             if (oldSwitcher) oldSwitcher.remove();

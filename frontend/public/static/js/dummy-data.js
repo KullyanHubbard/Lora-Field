@@ -1,18 +1,29 @@
 // Variabel global — diisi dari backend API via api.js.
 // Semua halaman bergantung pada deklarasi ini; data diisi saat runtime.
 
-const CURRENT_USER = null;
+const CURRENT_USER = {};
 const FARMS = [];
 const NODES = [];
-const WEATHER_DATA = null;
-const SYSTEM_STATUS = {};
+// WEATHER_DATA wajib berbentuk objek karena beberapa halaman mengakses
+// WEATHER_DATA.current.* dan WEATHER_DATA.rainPrediction langsung.
+// api.js akan mengisi field-field ini lewat Object.assign saat summary backend tersedia.
+const WEATHER_DATA = {
+    location: '',
+    status: 'Belum tersedia',
+    lastUpdate: '—',
+    adm4: '',
+    provider: 'BMKG',
+    source: '',
+    region: {},
+    locationProfile: {},
+    forecastTime: '',
+    current: { temp: null, humidity: null, windSpeed: null, windDirection: '', visibility: '', condition: 'Belum tersedia', code: null },
+    forecast: [],
+    rainPrediction: false
+};
 const DECISION_LOGS = [];
 const SENSOR_HISTORY_LABELS = [];
 const SENSOR_HISTORY = { soilMoisture: [], soilTemp: [], airTemp: [], airHumidity: [] };
-const TECH_STACK = [];
-const SENSORS_INFO = [];
-const ACTUATORS_INFO = [];
-const TOPOLOGY_STEPS = [];
 
 // Mapping kode cuaca BMKG → label dan ikon (bukan data dummy).
 const WEATHER_CODES = [

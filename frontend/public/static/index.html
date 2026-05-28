@@ -58,8 +58,11 @@
 
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand">
-            <h2><img src="img/logo.svg" class="brand-logo" alt="LoraField"></h2>
-            <p>LoRa-Based Precision Agriculture System</p>
+            <h2 class="sidebar-brand-title">
+                <img src="img/logo.svg" class="brand-logo" alt="">
+                <span class="brand-name">LoraField</span>
+            </h2>
+            
         </div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
         <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
@@ -80,10 +83,15 @@
 
         <div class="page-content">
             <section class="field-map-panel mb-24" aria-label="Peta pemilihan kebun">
-                <label class="search-box farm-search" for="farm-search">
-                    <i class="fas fa-search" aria-hidden="true"></i>
-                    <input type="text" id="farm-search" placeholder="Cari nama kebun, lokasi, atau tanaman">
-                </label>
+                <div class="farm-map-toolbar">
+                    <label class="search-box farm-search" for="farm-search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <input type="text" id="farm-search" placeholder="Cari nama kebun, lokasi, atau tanaman">
+                    </label>
+                    <a class="btn btn-primary btn-sm" href="add-farm.html">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Tambah Kebun
+                    </a>
+                </div>
 
                 <div class="field-osm-map farm-osm-map" id="farm-map" aria-label="Peta lokasi kebun"></div>
             </section>
@@ -91,6 +99,18 @@
             <section class="farm-card-grid" id="farm-list" aria-label="Daftar kebun milik user"></section>
         </div>
     </main>
+
+    <!-- Modal konfirmasi hapus kebun -->
+    <div class="confirm-overlay" id="delete-confirm-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="delete-confirm-title">
+        <div class="confirm-dialog">
+            <h3 class="confirm-title" id="delete-confirm-title"><i class="fas fa-triangle-exclamation"></i> Hapus Kebun</h3>
+            <p class="confirm-body" id="delete-confirm-body">Yakin ingin menghapus kebun ini? Data kebun akan hilang permanen dan tidak bisa dikembalikan.</p>
+            <div class="confirm-actions">
+                <button class="btn btn-secondary" id="delete-cancel-btn" type="button">Batal</button>
+                <button class="btn btn-danger" id="delete-confirm-btn" type="button">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/dummy-data.js"></script>
     <script src="js/api.js"></script>
@@ -138,6 +158,9 @@
                     <a class="btn btn-primary btn-sm" href="farm-detail.html?farm=${encodeURIComponent(farm.id)}" data-farm-detail="${escapeHtml(farm.id)}">
                         <i class="fas fa-arrow-right" aria-hidden="true"></i> Buka Dashboard
                     </a>
+                    <button class="btn btn-danger btn-sm" type="button" data-farm-delete="${escapeHtml(farm.id)}" aria-label="Hapus kebun ${escapeHtml(farm.name)}">
+                        <i class="fas fa-trash" aria-hidden="true"></i>
+                    </button>
                 </div>
             </article>`).join('') || '<div class="empty-state">Kebun tidak ditemukan.</div>';
         }
@@ -221,7 +244,57 @@
                 });
             }
 
+            let pendingDeleteId = null;
+
+            function openDeleteConfirm(farmId) {
+                const farm = FARMS.find(f => f.id === farmId);
+                pendingDeleteId = farmId;
+                const body = document.getElementById('delete-confirm-body');
+                if (body && farm) body.textContent = `Yakin ingin menghapus kebun "${farm.name}"? Data kebun akan hilang permanen dan tidak bisa dikembalikan.`;
+                document.getElementById('delete-confirm-overlay').hidden = false;
+                document.getElementById('delete-cancel-btn').focus();
+            }
+
+            function closeDeleteConfirm() {
+                pendingDeleteId = null;
+                document.getElementById('delete-confirm-overlay').hidden = true;
+            }
+
+            document.getElementById('delete-cancel-btn').addEventListener('click', closeDeleteConfirm);
+
+            document.getElementById('delete-confirm-overlay').addEventListener('click', e => {
+                if (e.target === e.currentTarget) closeDeleteConfirm();
+            });
+
+            document.getElementById('delete-confirm-btn').addEventListener('click', async () => {
+                if (!pendingDeleteId) return;
+                const farmId = pendingDeleteId;
+                closeDeleteConfirm();
+
+                try {
+                    const res = await fetch(`${API_BASE}/api/farms/${encodeURIComponent(farmId)}`, {
+                        method: 'DELETE',
+                        headers: getAuthHeaders()
+                    });
+                    if (res.ok) {
+                        await loadFarmsFromAPI();
+                        selectedFarmId = getSelectedFarmId();
+                        renderFarmCards();
+                        renderFarmMapMarkers();
+                    } else if (res.status === 401) {
+                        window.location.href = 'login.html';
+                    }
+                } catch (_) {}
+            });
+
             document.addEventListener('click', event => {
+                const deleteBtn = event.target.closest('[data-farm-delete]');
+                if (deleteBtn) {
+                    event.stopPropagation();
+                    openDeleteConfirm(deleteBtn.dataset.farmDelete);
+                    return;
+                }
+
                 const selectButton = event.target.closest('[data-farm-select]');
                 if (selectButton) {
                     selectFarm(selectButton.dataset.farmSelect);
@@ -259,7 +332,7 @@
             if (list) list.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Memuat data kebun...</div>';
 
             // Load data real dari backend; jika gagal, dummy-data.js tetap jadi fallback
-            await loadFarmsFromAPI(CURRENT_USER_ID);
+            await loadFarmsFromAPI();
 
             // Perbarui selectedFarmId karena FARMS sudah berisi data real
             selectedFarmId = getSelectedFarmId();

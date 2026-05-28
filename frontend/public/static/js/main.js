@@ -67,10 +67,6 @@ const VALVE_STATE = {
 
     const page = window.location.pathname.split('/').pop() || 'index.html';
     const token = localStorage.getItem('lf_access_token');
-    const devMode = localStorage.getItem('lf_dev_mode') === 'true';
-
-    // Developer bypass — aktifkan via console: localStorage.setItem('lf_dev_mode','true')
-    if (devMode) return;
 
     const isPublic = PUBLIC_PAGES.some(p => page === p || page === '');
 
@@ -442,7 +438,30 @@ function getDecisionBadge(type) {
     return map[type] || map[DECISION_TYPE.NORMAL];
 }
 
-function getWeatherInfo(code) {
+function getWeatherInfo(code, condition = '') {
+    const text = String(condition || '').toLowerCase();
+    if (text.includes('hujan lebat') || text.includes('thunderstorm')) {
+        return { code, label: 'Hujan Lebat', icon: 'fas fa-cloud-bolt', isRain: true };
+    }
+    if (text.includes('hujan sedang')) {
+        return { code, label: 'Hujan Sedang', icon: 'fas fa-cloud-showers-heavy', isRain: true };
+    }
+    if (text.includes('hujan ringan') || text.includes('hujan') || text.includes('shower')) {
+        return { code, label: 'Hujan Ringan', icon: 'fas fa-cloud-rain', isRain: true };
+    }
+    if (text.includes('berawan tebal')) {
+        return { code, label: 'Berawan Tebal', icon: 'fas fa-cloud', isRain: false };
+    }
+    if (text.includes('cerah berawan')) {
+        return { code, label: 'Cerah Berawan', icon: 'fas fa-cloud-sun', isRain: false };
+    }
+    if (text.includes('cerah')) {
+        return { code, label: 'Cerah', icon: 'fas fa-sun', isRain: false };
+    }
+    if (text.includes('berawan')) {
+        return { code, label: 'Berawan', icon: 'fas fa-cloud', isRain: false };
+    }
+
     const weatherCodes = typeof WEATHER_CODES !== 'undefined' && Array.isArray(WEATHER_CODES) ? WEATHER_CODES : [];
     return weatherCodes.find(w => w.code === code) || {
         code,

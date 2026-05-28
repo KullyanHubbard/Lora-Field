@@ -38,23 +38,13 @@
 
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
         <div class="sidebar-brand">
-            <h2><img src="img/logo.svg" class="brand-logo" alt="LoraField"></h2>
-            <p>LoRa-Based Precision Agriculture System</p>
+            <h2 class="sidebar-brand-title">
+                <img src="img/logo.svg" class="brand-logo" alt="">
+                <span class="brand-name">LoraField</span>
+            </h2>
+            
         </div>
-        <nav class="sidebar-nav" aria-label="Menu aplikasi">
-            <a href="farm-detail.html" class="sidebar-link"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard</a>
-            <a href="index.html" class="sidebar-link active" aria-current="page"><i class="fas fa-map-location-dot"
-                    aria-hidden="true"></i> Kebun Saya</a>
-            <a href="monitoring.html" class="sidebar-link"><i class="fas fa-chart-area" aria-hidden="true"></i>
-                Monitoring</a>
-            <a href="irrigation.html" class="sidebar-link"><i class="fas fa-tint" aria-hidden="true"></i> Irigasi</a>
-            <a href="gateway.html" class="sidebar-link"><i class="fas fa-tower-broadcast" aria-hidden="true"></i>
-                Gateway</a>
-            <a href="nodes.html" class="sidebar-link"><i class="fas fa-microchip" aria-hidden="true"></i> Node Sensor</a>
-            <a href="weather.html" class="sidebar-link"><i class="fas fa-cloud-sun" aria-hidden="true"></i> Cuaca</a>
-            <a href="logs.html" class="sidebar-link"><i class="fas fa-list-alt" aria-hidden="true"></i> Riwayat</a>
-            <a href="settings.html" class="sidebar-link"><i class="fas fa-user-gear" aria-hidden="true"></i> Pengaturan Akun</a>
-        </nav>
+        <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
         <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
 
@@ -86,6 +76,7 @@
     </main>
 
     <script src="js/dummy-data.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     <script>
         let farmFilter = '';
@@ -132,7 +123,11 @@
             if (detailLink) setSelectedFarmId(detailLink.dataset.farmDetail);
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const list = document.getElementById('farm-list');
+            if (list) list.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Memuat data kebun...</div>';
+
+            await loadFarmsFromAPI();
             renderFarmList();
             document.getElementById('farm-list-search').addEventListener('input', event => {
                 farmFilter = event.target.value;

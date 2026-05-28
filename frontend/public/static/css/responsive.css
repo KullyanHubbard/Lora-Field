@@ -776,8 +776,14 @@ video {
         padding: 22px 18px 18px;
     }
 
-    .sidebar-brand h2 {
-        font-size: 1.4rem;
+    .sidebar-brand h2,
+    .sidebar-brand .brand-name {
+        font-size: 1.55rem;
+    }
+
+    .sidebar-brand .brand-logo {
+        height: 112px;
+        width: auto;
     }
 
     .sidebar-brand p {
@@ -1215,8 +1221,14 @@ video {
         padding: 20px 16px 16px;
     }
 
-    .sidebar-brand h2 {
-        font-size: 1.4rem;
+    .sidebar-brand h2,
+    .sidebar-brand .brand-name {
+        font-size: 1.5rem;
+    }
+
+    .sidebar-brand .brand-logo {
+        height: 104px;
+        width: auto;
     }
 
     .sidebar-brand p {

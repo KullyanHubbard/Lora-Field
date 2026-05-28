@@ -106,51 +106,6 @@ function updateChartData(chart, newData, newLabels) {
     chart.update('active');
 }
 
-let dashSoilChart;
-let dashTempChart;
-let dashHumChart;
-
-function initDashboardCharts() {
-    dashSoilChart = createLineChart(
-        'chart-soil-moisture',
-        'Kelembapan Tanah',
-        SENSOR_HISTORY.soilMoisture,
-        SENSOR_HISTORY_LABELS,
-        CHART_COLORS.green,
-        0,
-        100,
-        '%'
-    );
-
-    dashTempChart = createLineChart(
-        'chart-soil-temp',
-        'Suhu Tanah',
-        SENSOR_HISTORY.soilTemp,
-        SENSOR_HISTORY_LABELS,
-        CHART_COLORS.orange,
-        15,
-        45,
-        DEG_C
-    );
-
-    dashHumChart = createLineChart(
-        'chart-air-humidity',
-        'Kelembapan Udara',
-        SENSOR_HISTORY.airHumidity,
-        SENSOR_HISTORY_LABELS,
-        CHART_COLORS.blue,
-        0,
-        100,
-        '%'
-    );
-}
-
-function updateDashboardCharts() {
-    updateChartData(dashSoilChart, SENSOR_HISTORY.soilMoisture, SENSOR_HISTORY_LABELS);
-    updateChartData(dashTempChart, SENSOR_HISTORY.soilTemp, SENSOR_HISTORY_LABELS);
-    updateChartData(dashHumChart, SENSOR_HISTORY.airHumidity, SENSOR_HISTORY_LABELS);
-}
-
 let monSoilChart;
 let monSoilTempChart;
 let monAirTempChart;

@@ -87,32 +87,41 @@
     </main>
 
     <script src="js/dummy-data.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     <script>
-        function getStoredUser() {
+        function storeUserProfile(user) {
             try {
-                const raw = readLocalStorage('lf_user', null);
-                if (!raw) return {};
-                const parsed = JSON.parse(raw);
-                return parsed && typeof parsed === 'object' ? parsed : {};
-            } catch (_) { return {}; }
+                const merged = Object.assign({}, getCurrentUserProfile(), user || {});
+                localStorage.setItem('lf_user', JSON.stringify(merged));
+                return merged;
+            } catch (_) {
+                return user || {};
+            }
         }
 
-        function renderAccountSettings() {
-            const user = getStoredUser();
+        function renderAccountSettings(user = getCurrentUserProfile()) {
             document.getElementById('settings-user-name').textContent = user.name || 'Tidak tersedia';
             document.getElementById('settings-user-email').textContent = user.email || 'Tidak tersedia';
             document.getElementById('settings-user-phone').textContent = user.phone || '-';
         }
 
-        const API_BASE = (() => {
-            const manualBase = localStorage.getItem('lf_api_base');
-            if (manualBase) return manualBase;
-            if (window.location.port === '8000') return window.location.origin;
-            const h = window.location.hostname;
-            if (h !== 'localhost' && h !== '127.0.0.1') return window.location.origin;
-            return 'http://localhost:8000';
-        })();
+        async function loadAccountSettings() {
+            renderAccountSettings();
+            if (!getAuthHeaders().Authorization) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/me`, { headers: getAuthHeaders() });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    if (res.status === 401) window.location.href = 'login.html';
+                    return;
+                }
+                renderAccountSettings(storeUserProfile(data));
+            } catch (_) {
+                // Tetap tampilkan profil terakhir dari localStorage jika backend belum terhubung.
+            }
+        }
 
         function setPhoneFeedback(msg, type) {
             const el = document.getElementById('settings-phone-feedback');
@@ -142,10 +151,9 @@
             saveBtn.disabled = true;
 
             try {
-                const token = localStorage.getItem('lf_access_token');
                 const res = await fetch(`${API_BASE}/api/auth/profile`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({ phone })
                 });
                 const data = await res.json().catch(() => ({}));
@@ -153,13 +161,7 @@
                     setPhoneFeedback(data.detail || 'Gagal menyimpan.', 'error');
                     return;
                 }
-                const updatedUser = data.user || {};
-                document.getElementById('settings-user-phone').textContent = updatedUser.phone || '-';
-                try {
-                    const stored = JSON.parse(localStorage.getItem('lf_user') || '{}');
-                    stored.phone = updatedUser.phone || '';
-                    localStorage.setItem('lf_user', JSON.stringify(stored));
-                } catch (_) {}
+                renderAccountSettings(storeUserProfile(data.user || {}));
                 document.getElementById('settings-phone-view').hidden = false;
                 document.getElementById('settings-phone-edit').hidden = true;
                 document.getElementById('settings-phone-feedback').hidden = true;
@@ -176,6 +178,9 @@
             removeLocalStorage('lf_access_token');
             removeLocalStorage('lf_token_type');
             removeLocalStorage('lf_user');
+            removeLocalStorage('lf_threshold_lower');
+            removeLocalStorage('lf_threshold_upper');
+            removeLocalStorage('lf_valve_state');
             window.location.href = 'login.html';
         });
 
@@ -183,7 +188,7 @@
             window.location.href = 'change-password.html';
         });
 
-        document.addEventListener('DOMContentLoaded', renderAccountSettings);
+        document.addEventListener('DOMContentLoaded', loadAccountSettings);
     </script>
 </body>
 

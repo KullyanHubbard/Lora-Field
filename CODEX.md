@@ -10,303 +10,244 @@ Revisi aktif: struktur web dashboard LoraField revisi 1.3 dengan fitur map pemil
 
 ## Konteks Repo
 
-- `frontend/`: scaffold React/Vite
-- `frontend/public/static/`: halaman statis lama berbasis HTML/CSS/JS
-- `backend/`: backend basic FastAPI + SQLite
-- `AGENTS.md`: aturan proyek singkat
+- `frontend/src/` — **React/Vite, UI aktif yang dikembangkan**
+- `frontend/public/static/` — HTML/CSS/JS vanilla lama, masih ada, jangan dihapus sampai Fase 5
+- `backend/` — backend FastAPI + SQLite
 - Root repo hanya untuk dokumentasi dan metadata proyek
 
 Jika membuat perubahan, baca file terkait terlebih dahulu dan ikuti pola lokal yang sudah ada.
 
-## Progres Auth Terkini (Apa Adanya)
+## Stack Teknis
 
-Status ini khusus progres login/register/forgot/reset yang sudah dikerjakan di sesi ini.
+- **Frontend:** Vite 5.4 + React 18.3 + React Router 7.15
+- **Peta:** Leaflet 1.9.4
+- **Grafik:** Chart.js 4.4.1 + react-chartjs-2 5.2.0
+- **Backend:** FastAPI + SQLite
+- **Auth:** JWT Bearer token (`lf_access_token` di localStorage)
+- **Dev:** `npm run dev` → port 5173 (proxy `/api` → port 8000)
+- **CSS:** file lama dari `frontend/public/static/css/` di-serve otomatis via Vite `public/` folder
 
-Sudah jadi:
+## Status Migrasi React
 
-- Register akun dari UI `register.html` sudah pakai API real `POST /api/auth/register`.
-- Login dari UI `login.html` sudah pakai API real `POST /api/auth/login`.
-- Error login `401` di UI sudah pakai copy: `Username atau password salah.`
-- Tombol show/hide password (ikon mata) sudah ada di login/register/reset.
-- Endpoint backend auth tambahan sudah ada:
-  - `POST /api/auth/forgot-password`
-  - `POST /api/auth/reset-password`
-  - `POST /api/auth/reset-password/verify`
-  - `POST /api/auth/resend-verification`
-- Reset code sudah diubah dari token panjang menjadi OTP 6 digit angka.
-- Halaman reset password khusus sudah ada: `frontend/public/static/reset-password.html`.
-- Flow reset di halaman reset sekarang 2 tahap:
-  1. verifikasi kode reset dulu
-  2. baru tampil form password baru + konfirmasi
-- Link email reset sekarang membuka halaman reset tanpa auto-fill token.
-- Input kode reset sekarang manual (tidak otomatis terisi dari URL), baik di `reset-password.html` maupun flow reset di `login.html`.
-- Backend sudah mount static frontend ke `/static` (di port backend), sehingga link email diarahkan ke base `http://localhost:8000/static`.
-- Cacat yang sudah ditutup: flow forgot password di `login.html` sebelumnya bisa loop kirim email terus saat provider email aktif; sekarang step reset lanjut normal tanpa ketergantungan auto-fill token.
+Per 2026-05-26, semua halaman utama sudah diport ke React (Fase 1–4b selesai). SPA bisa dijalankan via port 5173. HTML lama tetap ada di `frontend/public/static/` sampai Fase 5 selesai.
 
-Yang perlu dicek ulang setelah perubahan terakhir:
+**Fase 5 (BELUM):**
+- Cleanup `frontend/public/static/`
+- Update backend serve ke `frontend/dist/`
+- `npm run build` end-to-end test
 
-- Restart backend agar config/link email terbaru aktif.
-- Kirim ulang forgot password dan pastikan email baru mengarah ke:
-  - `http://localhost:8000/static/reset-password.html`
-- Uji end-to-end reset 2 tahap:
-  - verifikasi kode 6 digit
-  - ganti password
-  - login ulang dengan password baru
-- Uji flow forgot dari `login.html`: klik `Kirim Link Reset` sekali, lalu lanjut input kode manual + password baru tanpa kirim ulang terus.
+## Routes React (`src/App.jsx`)
 
-File utama yang tersentuh untuk fitur auth ini:
+Semua di-lazy-load dengan `React.lazy`:
 
-- `backend/app/main.py`
-- `backend/app/schemas.py`
-- `backend/app/config.py`
-- `backend/.env`
-- `backend/.env.example`
-- `frontend/public/static/login.html`
-- `frontend/public/static/register.html`
-- `frontend/public/static/reset-password.html`
-- `frontend/public/static/css/dashboard.css`
+| Route | Page | Keterangan |
+|-------|------|-----------|
+| `/login` | `LoginPage.jsx` | Login + inline forgot password 2-step |
+| `/register` | `RegisterPage.jsx` | Daftar akun baru |
+| `/reset-password` | `ResetPasswordPage.jsx` | Flow lupa password (OTP 2 tahap) |
+| `/dashboard` | `DashboardPage.jsx` | Peta Leaflet + card kebun + search + hapus |
+| `/farms` | `FarmsPage.jsx` | Daftar kebun tanpa peta |
+| `/farms/add` | `AddFarmPage.jsx` | Form tambah kebun baru |
+| `/farms/:id` | `FarmDetailPage.jsx` | Info + status + node table |
+| `/farms/:id/monitoring` | `MonitoringPage.jsx` | Grafik Chart.js + tabel reading |
+| `/farms/:id/irrigation` | `IrrigationPage.jsx` | Status valve + logika + keputusan |
+| `/farms/:id/weather` | `WeatherPage.jsx` | BMKG forecast + impact card |
+| `/farms/:id/gateway` | `GatewayPage.jsx` | Status gateway |
+| `/farms/:id/nodes` | `NodesPage.jsx` | Tabel node sensor |
+| `/farms/:id/logs` | `LogsPage.jsx` | Riwayat irigasi + filter + export CSV |
+| `/settings` | `SettingsPage.jsx` | Profil, edit HP, ganti sandi, logout |
+| `/change-password` | `ChangePasswordPage.jsx` | Ganti password (sudah login) |
 
-## Audit Proyek 2026-05-24 (Ringkas, Faktual)
+Route tidak dikenal: redirect ke `/dashboard`.
 
-Temuan kritis dan status:
+## Komponen dan Helpers
 
-- `FIXED` Frontend static `js/api.js` tidak selaras dengan backend auth:
-  - sebelumnya pakai `GET /api/farms?user_id=...` tanpa header `Authorization`
-  - sekarang pakai `GET /api/farms` + `Bearer token` dari `localStorage`
-  - ketika `401/403`, halaman non-auth diarahkan ke `login.html`
-- `FIXED` Flow forgot password sempat berpotensi loop kirim email di `login.html`:
-  - sekarang step state dipisah (`kirim link` -> `reset password`) tanpa ketergantungan auto-fill token
-- `FIXED` Link reset email dan UI token:
-  - link reset menuju halaman reset khusus
-  - token/kode reset wajib input manual
-  - reset page 2 tahap: verifikasi kode lalu ganti password
-- `OPEN` Endpoint `resend-verification` masih basic:
-  - token verifikasi dibuat dan dikirim, tapi belum ada penyimpanan token + endpoint verifikasi akun final
-- `OPEN` Rate limit/brute-force protection belum ada untuk endpoint auth sensitif (`login`, `forgot-password`, `reset-password/verify`, `reset-password`)
-- `OPEN` Drift dokumentasi backend:
-  - `backend/README.md` belum mencerminkan endpoint auth terbaru dan alur reset 2 tahap
+**Komponen (`src/components/`):**
 
-Risiko yang perlu dihindari ke depan:
+- `Sidebar.jsx` — context-aware: selector mode vs farm-context mode (otomatis switch)
+- `Topbar.jsx` — render `<FarmSwitcher />` saat farm context aktif
+- `FarmSwitcher.jsx` — pill nama kebun, fetch via `/api/farms/{id}`, link ke `/dashboard`
+- `FarmCard.jsx` — card kebun + tombol Lihat Detail + hapus (confirm dialog)
+- `FarmMap.jsx` — Leaflet wrapper; `invalidateSize` via ResizeObserver + rAF (wajib dipertahankan)
+- `ConfirmDialog.jsx` — modal konfirmasi hapus
+- `CropDropdown.jsx` — searchable dropdown dari `/api/crops`, tampil threshold VWC
+- `LocationDetector.jsx` — geolocation + auto-resolve ADM4 dari koordinat
+- `RequireAuth.jsx` / `RedirectIfAuth.jsx` — route guard
+- `PasswordToggle.jsx` — input password + ikon mata
+- `Clock.jsx`, `ThemeSwitcher.jsx`, `UserPill.jsx`
 
-- Jangan ubah kontrak endpoint auth tanpa sinkronisasi langsung ke `login.html`, `register.html`, `reset-password.html`, dan `js/api.js`.
-- Jangan mengirim link reset yang mengandalkan auto-fill token URL; tetap manual input kode reset.
-- Jangan pakai parameter `user_id` di endpoint farm; sumber kebenaran user harus dari JWT backend.
-- Jangan simpan API key/secrets ke file yang ikut version control; `backend/.env` tetap lokal, `backend/.env.example` hanya placeholder.
+**Helpers (`src/`):**
 
-Quality Gate Wajib Sebelum Menutup Task:
+- `utils/farmHelpers.js` — timeAgo, badge mappers, getSoilStatusFromMoisture, getWeatherInfo, formatAreaHa, valveLabelFromDecision, getFarmLastUpdate
+- `hooks/useFarmContext.js` — deteksi `/farms/:id/*` dari URL (exclude `add`/`new`)
+- `hooks/useBodyClass.js`
+- `context/AuthContext.jsx`
+- `services/api.js` — semua API call: auth, farms, nodes, readings, weather, logs, crops
+- `services/farms.js` — selected farm di localStorage
 
-1. Backend smoke:
-   - import app sukses (`from app.main import app`)
-   - route auth utama tersedia (`/api/auth/login`, `/api/auth/me`, `/api/auth/forgot-password`, `/api/auth/reset-password/verify`, `/api/auth/reset-password`)
-2. Frontend static syntax:
-   - `node --check` untuk `frontend/public/static/js/*.js`
-3. Auth flow manual check:
-   - register -> login -> `/api/auth/me` valid
-   - forgot password -> email diterima -> verifikasi kode -> ganti password -> login dengan password baru
-4. URL consistency:
-   - reset link email harus konsisten dengan `FRONTEND_URL` aktif
-   - jika pakai backend static, target harus `http://localhost:8000/static/...`
+**Layout (`src/layout/`):**
 
-## Alur Produk
+- `AuthPageLayout.jsx` — wrapper halaman auth (login, register, reset)
+- `DashboardLayout.jsx` — wrapper halaman dashboard (sidebar + topbar + main)
 
-```text
-Login
--> Dashboard Utama
--> Ringkasan seluruh kebun user
--> Peta Kebun Interaktif
--> Pilih kebun dari marker map atau card
--> Detail Kebun
--> Monitoring lengkap kebun terpilih
-```
+## Backend Endpoints
 
-Dashboard Utama tidak boleh langsung menjadi halaman monitoring detail. Dashboard hanya berisi ringkasan seluruh kebun dan pintu masuk ke detail per kebun.
+### Auth
 
-## Modul Web
+| Endpoint | Method | Auth | Keterangan |
+|----------|--------|------|-----------|
+| `/api/auth/register` | POST | — | Daftar akun baru |
+| `/api/auth/login` | POST | — | Login, return JWT |
+| `/api/auth/forgot-password` | POST | — | Kirim OTP ke email |
+| `/api/auth/verify-reset-code` | POST | — | Verifikasi OTP 6 digit |
+| `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password) |
+| `/api/auth/change-password` | POST | JWT | Ganti password (sudah login) |
+| `/api/auth/profile` | PATCH | JWT | Update phone, return `{user: {id, email, name, phone}}` |
 
-Modul utama:
+### Farms
 
-- Login Page
-- Dashboard Utama
-- Peta Kebun Interaktif
-- Daftar Kebun / Kebun Saya
-- Detail Kebun
-- Monitoring Sensor
-- Grafik Monitoring
-- Irigasi
-- Gateway
-- Node Sensor
-- Cuaca BMKG
-- Riwayat / Laporan
-- Settings
+| Endpoint | Method | Keterangan |
+|----------|--------|-----------|
+| `/api/farms` | GET | List kebun milik user (dari JWT) |
+| `/api/farms/{id}` | GET | Detail kebun |
+| `/api/farms` | POST | Buat kebun; auto-resolve `bmkg_adm4_code` dari koordinat via Nominatim |
+| `/api/farms/{id}` | DELETE | Hapus kebun (verifikasi kepemilikan) |
+| `/api/farms/{id}/summary` | GET | Summary: gateway, nodes, soil avg, valve, threshold, decision |
 
-Menu sidebar:
+### Data & Utils
+
+| Endpoint | Keterangan |
+|----------|-----------|
+| `GET /api/nodes?farm_id=X` | List node per kebun |
+| `GET /api/nodes/{id}/readings?limit=N` | Pembacaan sensor node |
+| `GET /api/weather/{adm4_code}` | Prakiraan cuaca BMKG (cache 30 menit) |
+| `GET /api/logs` | Decision logs (filter client-side per farm) |
+| `GET /api/crops?q=` | 30 jenis tanaman + threshold VWC lower/upper |
+| `GET /api/utils/resolve-adm4?lat=X&lon=Y` | Resolve kode BMKG adm4 dari GPS via Nominatim OSM |
+
+**Jangan pakai `user_id` di query params** — sumber kebenaran user selalu dari JWT.
+
+## Database Schema (SQLite) — `backend/data/lorafield.db`
 
 ```text
-Dashboard
-Kebun Saya
-Monitoring
-Irigasi
-Gateway
-Node Sensor
-Cuaca
-Riwayat
-Settings
+users           — id, email, name, password_hash, phone (DEFAULT ''), created_at, updated_at
+farms           — id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status
+nodes           — id, farm_id, name, location, region, latitude, longitude, status, battery, updated_at
+readings        — id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, created_at
+decision_logs   — id, node_id, soil_moisture, weather, decision, valve_state, reason, created_at
+weather_cache   — adm4 (PK), data (JSON), updated_at; TTL 30 menit
+password_resets — id, user_id, token (6-digit OTP), expires_at, used, created_at
 ```
 
-Jangan mengubah urutan atau konsep sidebar kecuali user meminta.
+Kolom `phone` ditambahkan via `ensure_column` (migration otomatis startup). Kolom `suhu_tanah` tidak ada di `decision_logs`.
 
-## Dashboard Utama
+## Dua Flow Ganti Password (JANGAN DICAMPUR)
 
-Dashboard Utama harus menampilkan:
+| Flow | Route | Endpoint | Auth | Kapan |
+|------|-------|----------|------|-------|
+| Lupa Password | `/reset-password` | `POST /api/auth/reset-password` | OTP 6 digit | User belum login |
+| Ganti Password | `/change-password` | `POST /api/auth/change-password` | JWT Bearer | User sudah login, dari Settings |
 
-- Sapaan user
-- Total kebun
-- Gateway online
-- Gateway offline
-- Node aktif
-- Node bermasalah
-- Rata-rata kelembapan tanah seluruh kebun
-- Status irigasi keseluruhan
-- Peringatan penting
-- Peta Kebun Interaktif
-- Card/daftar kebun
+- Tombol "Ganti Sandi" di `SettingsPage.jsx` → `/change-password` (tanpa OTP)
+- `LoginPage.jsx` forgot password → `/reset-password` → OTP 2 tahap wajib
 
-Card kebun harus berisi:
+## Sidebar Context-Aware
 
-- Nama kebun
-- Lokasi
-- Jenis tanaman
-- Status gateway
-- Rata-rata kelembapan tanah
-- Status valve
-- Status irigasi
-- Prediksi hujan singkat
-- Last update
-- Tombol `Lihat Detail`
+`Sidebar.jsx` otomatis ganti isi berdasarkan `useFarmContext()`:
 
-## Peta Kebun Interaktif
+- **Selector mode** (di `/dashboard`, `/farms`, `/settings`): Dashboard, Kebun Saya, Settings
+- **Farm context mode** (di `/farms/:id/*`): Monitoring, Irigasi, Gateway, Node Sensor, Cuaca, Riwayat
 
-Map adalah fitur revisi 1.3 dan wajib dipertahankan pada Dashboard Utama.
+`FarmSwitcher` di `Topbar.jsx` menampilkan nama kebun aktif + link kembali ke `/dashboard`.
 
-Perilaku map:
+## Fitur AddFarmPage
 
-- Tampilkan marker hanya untuk kebun milik user yang login
-- Klik marker membuka popup ringkasan kebun
-- Popup memiliki tombol `Lihat Detail`
-- Klik `Lihat Detail` membuka Detail Kebun untuk farm yang dipilih
-- Card dan marker harus menuju data detail yang sama
-- Kebun yang dipilih boleh diberi highlight
+- Nama Kebun opsional — auto-fill "Kebun N" (N = jumlah kebun + 1)
+- Pemilik Kebun — pre-fill dari user login
+- Jenis Tanaman — `CropDropdown` (searchable, tampil threshold VWC saat dipilih)
+- Koordinat — input manual lat/lng + tombol "Deteksi Lokasi Sekarang" (GPS `enableHighAccuracy`, tolak jika akurasi > 100m)
+- `bmkg_adm4_code` tidak di form — backend auto-resolve dari koordinat
+- Submit pertama dengan field penting kosong → warning kuning, tombol jadi "Tetap Simpan"
+- Submit kedua → lanjut meski belum lengkap
+- Berhasil → navigate ke `/dashboard`
 
-Data minimal untuk kebun:
+## Fitur SettingsPage
 
-```text
-id
-name
-location
-crop_type
-area
-latitude
-longitude
-bmkg_region_code
-gateway_status
-node_count
-average_soil_moisture
-valve_status
-irrigation_status
-weather_summary
-last_update
-```
+- Tampil: Nama, Email, Nomor HP
+- Nomor HP — editable inline (ikon pensil → input → Simpan/Batal)
+- Simpan → `PATCH /api/auth/profile` → update DB + localStorage
+- Tombol Ganti Sandi → `/change-password`
+- Tombol Keluar → clear localStorage → `/login`
 
-## Detail Kebun
+## MonitoringPage
 
-Detail Kebun hanya menampilkan data untuk satu kebun terpilih.
+- Dropdown pilih node, refresh manual
+- 4 chart Line (Chart.js): soil moisture, soil temp, air temp, air humidity
+- Readings dari `listNodeReadings(nodeId, 20)`: ascending untuk chart, descending top-10 untuk tabel
+- Data utama dari `getFarmSummary`
 
-Isi utama:
+## LogsPage
 
-- Informasi kebun
-- Status utama kebun
-- Gateway
-- Node sensor
-- Monitoring sensor
-- Grafik historis
-- Irigasi
-- Cuaca BMKG
-- Riwayat sistem
+- Filter bar 5 button: semua / buka valve / tutup valve / tunda / sensor offline
+- Search input, export CSV
+- Tabel 9 kolom (kolom Suhu Tanah tidak ada — backend tidak simpan di decision_logs)
+- Backend `/api/logs` lintas-farm → filter client-side berdasarkan `node_id ∈ farm node set`
 
-Status utama kebun:
+## WeatherPage
 
-- Gateway online/offline
-- Jumlah node aktif
-- Jumlah node bermasalah
-- Rata-rata kelembapan tanah
-- Status valve
-- Status irigasi
-- Prediksi hujan BMKG
-- Peringatan penting
+- Impact card di atas: 3 state (no-data / rain / ok)
+- Info card 6 kolom
+- Weather main card
+- Forecast grid 3-col (max 8 item BMKG)
+- Class `.weather-impact.deny/.allow` langsung tanpa wrapper `.card` (hindari double frame)
 
-## Data dan Akses
+## Aturan UI
 
-Model akses:
+- Pakai CSS variables (`--color-bg`, `--color-primary`, dll) — jangan hardcode hex
+- Dark mode + light mode via `data-theme` di `<html>`
+- Badge status: hijau = normal/online, kuning = peringatan, merah = offline/error
+- Hindari inline style; gunakan CSS class
+- Fix layout React: `<style>#root { display: contents; }</style>` di `frontend/index.html` WAJIB dipertahankan
+- Dashboard operasional: padat, rapi, mudah discan
 
-```text
-User -> Farm -> Gateway -> Node -> Sensor Data -> Irrigation Log -> Dashboard
-```
+## Aturan Wajib Saat Mengubah Kode
 
-Aturan penting:
+- Baca file terkait sebelum mengubah — jangan asumsi atau invent API/komponen yang tidak ada
+- Jangan ubah CSS lama (`frontend/public/static/css/`) kecuali perlu sinkronisasi
+- Jangan hapus HTML lama sampai Fase 5
+- Pakai pola yang sudah ada: `DashboardLayout` wrapper, `useParams` untuk `:id`, `getFarmSummary`, helper dari `farmHelpers.js`
+- Jangan campur dua flow ganti password
+- Jangan pakai `user_id` di query params endpoint farm
 
-- User biasa hanya melihat farm/kebun miliknya
-- Jangan mencampur data kebun lintas user
-- Admin pusat boleh memiliki akses semua kebun hanya jika fitur admin sedang dibuat
-- Setiap kebun diasumsikan memiliki satu gateway
-- Satu gateway menerima data dari beberapa node sensor
+## Quality Gate Sebelum Menutup Task
 
-## Logika Irigasi
+1. **Backend smoke:** import app sukses, semua route auth tersedia
+2. **Frontend syntax:** tidak ada error TypeScript/JSX saat `npm run dev`
+3. **Auth flow:** register → login → `/dashboard` valid; forgot → OTP → ganti → login ulang
+4. **Layout check:** halaman tidak pecah di dark mode + light mode
 
-Keputusan sistem:
+## Known Issues
 
-- Buka valve jika kelembapan tanah di bawah threshold dan tidak ada prediksi hujan
-- Tutup valve jika kelembapan tanah sudah cukup
-- Tunda irigasi jika BMKG memprediksi hujan
-- Tunggu data terbaru jika gateway offline
+- Vite dev server bisa mati sendiri tanpa warning jelas. Gejala: semua `/api/*` gagal tapi backend sehat. Fix: restart `npm run dev`. Root cause belum diinvestigasi.
+- RSSI tidak disimpan di backend — tampilkan `—` di semua tabel node.
+- `GET /api/auth/me` belum ada — `SettingsPage.jsx` baca profil dari localStorage.
+- `PATCH /api/farms/{id}` belum ada — hanya create + delete.
 
-Data irigasi:
+## Pending / Belum Selesai
 
-- Status valve
-- Mode otomatis/manual
-- Threshold bawah kelembapan tanah
-- Threshold atas kelembapan tanah
-- Keputusan sistem
-- Alasan keputusan
-- Durasi irigasi
-- Riwayat buka/tutup/tunda valve
-
-## UI dan Copywriting
-
-- UI label memakai Bahasa Indonesia
-- Pertahankan istilah teknis: LoRa, VWC, MQTT, Gateway, Node, BMKG, RSSI
-- Tema gelap proyek: `#0d1117`
-- Aksen utama: `#00e676`
-- Badge status konsisten: hijau untuk normal/online, kuning untuk peringatan, merah untuk masalah/offline
-- Hindari inline style, gunakan CSS class
-- Dashboard operasional harus ringkas, rapi, dan mudah discan
-- Jangan membuat hero/landing page kecuali user meminta eksplisit
-
-## Cara Kerja Codex
-
-- Baca struktur dan file terkait sebelum mengubah kode
-- Gunakan perubahan kecil yang langsung menjawab kebutuhan user
-- Jangan refactor luas tanpa alasan
-- Jangan menghapus perubahan user
-- Jika menyentuh frontend, pastikan tampilan responsive dan tidak ada teks saling tumpang tindih
-- Jika menyentuh backend, pertahankan struktur FastAPI yang sudah ada
-- Jika menjalankan test/build gagal karena dependency belum terpasang, laporkan dengan jelas
+1. Fase 5 migrasi React: cleanup HTML lama + build + update backend serve
+2. `PATCH /api/farms/{farm_id}` — endpoint update data kebun
+3. `GET /api/auth/me` — fetch profil lengkap dari backend
+4. Rate limit / brute-force protection untuk endpoint auth sensitif
+5. Nominatim resolve adm4 — belum diuji untuk semua wilayah Indonesia (tag `ref:BPS`)
 
 ## Referensi File
 
-- Static dashboard lama: `frontend/public/static/index.html`
-- CSS utama static: `frontend/public/static/css/style.css`
-- Logic static utama: `frontend/public/static/js/main.js`
-- Dummy data static: `frontend/public/static/js/dummy-data.js`
-- React entry: `frontend/src/App.jsx`
+- React entry: `frontend/src/main.jsx`
+- Routes: `frontend/src/App.jsx`
+- API service: `frontend/src/services/api.js`
+- Farm helpers: `frontend/src/utils/farmHelpers.js`
 - Backend API: `backend/app/main.py`
 - Backend schema: `backend/app/schemas.py`
+- CSS tokens: `frontend/public/static/css/premium.css` (dark) + `style.css` (light)
+- Logo: `frontend/public/static/img/logo.svg`

@@ -2,25 +2,35 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LoraField Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <script>
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem('lf_theme') === 'light' ? 'light' : 'dark';
+      } catch (error) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
+    <title>LoraField</title>
+    <link rel="icon" type="image/svg+xml" href="/static/img/logo.svg" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/dashboard.css" />
+    <link rel="stylesheet" href="/static/css/responsive.css" />
+    <link rel="stylesheet" href="/static/css/premium.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <style>
+      /* React mount node tidak boleh ikut campur layout flex body. */
+      #root { display: contents; }
+    </style>
   </head>
   <body>
-    <p>
-      Membuka dashboard...
-      <a id="dashboard-link" href="static/index.html">Klik di sini jika tidak berpindah otomatis.</a>
-    </p>
-    <script>
-      const isSourceFile = window.location.pathname.includes('/frontend/');
-      const target = isSourceFile ? 'public/static/index.html' : 'static/index.html';
-      const targetUrl = new URL(target, window.location.href);
-      const fallbackLink = document.getElementById('dashboard-link');
-
-      if (fallbackLink) {
-        fallbackLink.href = targetUrl.href;
-      }
-
-      window.location.replace(targetUrl.href);
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

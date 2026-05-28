@@ -103,6 +103,7 @@
                             placeholder="Contoh: 110.3647" min="-180" max="180" step="any">
                     </div>
                 </div>
+                <input type="hidden" id="farm-bmkg-adm4" name="bmkg_adm4_code">
                 <div class="coord-auto-panel">
                     <button type="button" class="btn btn-secondary" id="detect-location-btn">
                         <i class="fas fa-location-dot" aria-hidden="true"></i> Deteksi Lokasi Sekarang
@@ -136,96 +137,141 @@
         </section>
     </main>
 
+        <script src="js/dummy-data.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     <script>
-        const API_BASE = (() => {
-            const manualBase = localStorage.getItem('lf_api_base');
-            if (manualBase) return manualBase;
-            if (window.location.port === '8000') return window.location.origin;
-            const h = window.location.hostname;
-            if (h !== 'localhost' && h !== '127.0.0.1') return window.location.origin;
-            return 'http://localhost:8000';
-        })();
+        let existingFarmCount = 0;
+        let activeLocationRequest = null;
 
-        function getStoredUser() {
-            try {
-                const raw = readLocalStorage('lf_user', null);
-                if (!raw) return {};
-                const parsed = JSON.parse(raw);
-                return parsed && typeof parsed === 'object' ? parsed : {};
-            } catch (_) { return {}; }
+        function setCoordStatus(message, type = '') {
+            const statusEl = document.getElementById('coord-auto-status');
+            statusEl.textContent = message;
+            statusEl.style.color = type === 'error'
+                ? 'var(--color-danger, #ef4444)'
+                : (type === 'warning' ? 'var(--color-warning, #f59e0b)' : '');
         }
 
-        let existingFarmCount = 0;
+        function readCoordinates() {
+            const latRaw = document.getElementById('farm-lat-auto').value;
+            const lngRaw = document.getElementById('farm-lng-auto').value;
+            const lat = latRaw !== '' ? parseFloat(latRaw) : null;
+            const lng = lngRaw !== '' ? parseFloat(lngRaw) : null;
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return { lat: null, lng: null };
+            return { lat, lng };
+        }
+
+        async function resolveFarmAdm4(lat, lng) {
+            const locationHint = document.getElementById('farm-location').value.trim();
+            const query = new URLSearchParams({ lat, lon: lng, q: locationHint });
+            const res = await fetch(`${API_BASE}/api/utils/resolve-adm4?${query.toString()}`, {
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) return { found: false, adm4: '' };
+            const data = await res.json();
+            if (data.found && data.adm4) {
+                document.getElementById('farm-bmkg-adm4').value = data.adm4;
+                return { found: true, adm4: data.adm4 };
+            }
+            document.getElementById('farm-bmkg-adm4').value = '';
+            return { found: false, adm4: '' };
+        }
+
+        async function detectFarmLocation(mode = 'manual') {
+            if (activeLocationRequest) return activeLocationRequest;
+
+            const detectBtn = document.getElementById('detect-location-btn');
+            if (!navigator.geolocation) {
+                setCoordStatus('Browser tidak mendukung deteksi lokasi.', 'error');
+                return null;
+            }
+
+            detectBtn.disabled = true;
+            detectBtn.setAttribute('aria-busy', 'true');
+            setCoordStatus(mode === 'auto' ? 'Mendeteksi lokasi otomatis...' : 'Mendeteksi lokasi...');
+
+            activeLocationRequest = new Promise(resolve => {
+                navigator.geolocation.getCurrentPosition(
+                    async pos => {
+                        const acc = Math.round(pos.coords.accuracy || 0);
+                        const lat = parseFloat(pos.coords.latitude.toFixed(6));
+                        const lng = parseFloat(pos.coords.longitude.toFixed(6));
+                        document.getElementById('farm-lat-auto').value = lat;
+                        document.getElementById('farm-lng-auto').value = lng;
+                        document.getElementById('farm-bmkg-adm4').value = '';
+
+                        const accText = acc ? `GPS (±${acc}m)` : 'GPS';
+                        setCoordStatus(`Lokasi terdeteksi: ${lat}, ${lng} · ${accText} · Mengidentifikasi wilayah BMKG...`);
+
+                        try {
+                            const resolved = await resolveFarmAdm4(lat, lng);
+                            if (resolved.found) {
+                                setCoordStatus(`Lokasi terdeteksi: ${lat}, ${lng} · ${accText} · Wilayah BMKG: ${resolved.adm4}`);
+                            } else {
+                                setCoordStatus('Lokasi terdeteksi, tapi kode BMKG belum ditemukan. Isi alamat sampai desa/kecamatan/kabupaten lalu coba lagi.', 'warning');
+                            }
+                            resolve({ lat, lng, accuracy: acc, adm4: resolved.adm4, found: resolved.found });
+                        } catch (_) {
+                            setCoordStatus('Lokasi terdeteksi, tapi gagal menghubungkan ke resolver BMKG.', 'warning');
+                            resolve({ lat, lng, accuracy: acc, adm4: '', found: false });
+                        }
+                    },
+                    err => {
+                        const msgs = {
+                            1: 'Izin lokasi ditolak. Klik ikon lokasi di browser lalu izinkan akses lokasi.',
+                            2: 'GPS tidak tersedia di perangkat ini.',
+                            3: 'Gagal mendeteksi lokasi. Pastikan GPS aktif dan coba lagi.'
+                        };
+                        setCoordStatus(msgs[err.code] || 'Gagal mendeteksi lokasi.', 'error');
+                        resolve(null);
+                    },
+                    { timeout: 20000, enableHighAccuracy: true, maximumAge: 0 }
+                );
+            }).finally(() => {
+                activeLocationRequest = null;
+                detectBtn.disabled = false;
+                detectBtn.removeAttribute('aria-busy');
+            });
+
+            return activeLocationRequest;
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const user = getStoredUser();
+            const user = getCurrentUserProfile();
             const ownerInput = document.getElementById('farm-owner');
             if (ownerInput && !ownerInput.value) ownerInput.value = user.name || '';
+            ['farm-lat-auto', 'farm-lng-auto'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('input', () => {
+                        document.getElementById('farm-bmkg-adm4').value = '';
+                    });
+                }
+            });
+            const locationInput = document.getElementById('farm-location');
+            if (locationInput) {
+                locationInput.addEventListener('input', () => {
+                    document.getElementById('farm-bmkg-adm4').value = '';
+                });
+            }
 
             try {
-                const token = localStorage.getItem('lf_access_token');
-                const res = await fetch(`${API_BASE}/api/farms`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetch(`${API_BASE}/api/farms`, { headers: getAuthHeaders() });
                 if (res.ok) {
                     const data = await res.json();
-                    existingFarmCount = (data.farms || []).length;
+                    existingFarmCount = (data.items || []).length;
                 }
             } catch (_) {}
+
+            window.setTimeout(() => {
+                const { lat, lng } = readCoordinates();
+                if (lat === null || lng === null) detectFarmLocation('auto');
+            }, 350);
         });
 
-        document.getElementById('detect-location-btn').addEventListener('click', () => {
-            const statusEl = document.getElementById('coord-auto-status');
-            statusEl.textContent = 'Mendeteksi lokasi...';
-            statusEl.style.color = '';
-            if (!navigator.geolocation) {
-                statusEl.textContent = 'Browser tidak mendukung deteksi lokasi.';
-                statusEl.style.color = 'var(--color-danger, #ef4444)';
-                return;
-            }
-            navigator.geolocation.getCurrentPosition(
-                async pos => {
-                    const acc = Math.round(pos.coords.accuracy);
-                    if (acc > 100) {
-                        statusEl.textContent = `Gagal mendeteksi lokasi via GPS (akurasi terlalu rendah: ±${acc}m). Pastikan GPS aktif dan coba lagi.`;
-                        statusEl.style.color = 'var(--color-danger, #ef4444)';
-                        return;
-                    }
-                    const lat = parseFloat(pos.coords.latitude.toFixed(6));
-                    const lng = parseFloat(pos.coords.longitude.toFixed(6));
-                    document.getElementById('farm-lat-auto').value = lat;
-                    document.getElementById('farm-lng-auto').value = lng;
-                    statusEl.textContent = `Lokasi terdeteksi: ${lat}, ${lng} · GPS (±${acc}m) · Mengidentifikasi wilayah BMKG...`;
-
-                    try {
-                        const token = localStorage.getItem('lf_access_token');
-                        const res = await fetch(`${API_BASE}/api/utils/resolve-adm4?lat=${lat}&lon=${lng}`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.found) {
-                                statusEl.textContent = `Lokasi terdeteksi: ${lat}, ${lng} · GPS (±${acc}m) · Wilayah BMKG: ${data.adm4}`;
-                            } else {
-                                statusEl.textContent = `Lokasi terdeteksi: ${lat}, ${lng} · GPS (±${acc}m) · Wilayah BMKG tidak teridentifikasi (akan dicoba saat simpan)`;
-                            }
-                        }
-                    } catch (_) {
-                        statusEl.textContent = `Lokasi terdeteksi: ${lat}, ${lng} · GPS (±${acc}m)`;
-                    }
-                },
-                err => {
-                    const msgs = {
-                        1: 'Izin lokasi ditolak. Aktifkan GPS dan izin lokasi di browser.',
-                        2: 'GPS tidak tersedia di perangkat ini.',
-                        3: 'Gagal mendeteksi lokasi. Pastikan GPS aktif dan coba lagi.'
-                    };
-                    statusEl.textContent = msgs[err.code] || 'Gagal mendeteksi lokasi.';
-                    statusEl.style.color = 'var(--color-danger, #ef4444)';
-                },
-                { timeout: 15000, enableHighAccuracy: true, maximumAge: 0 }
-            );
+        document.getElementById('detect-location-btn').addEventListener('click', event => {
+            event.preventDefault();
+            detectFarmLocation('manual');
         });
 
         function setFeedback(msg, type) {
@@ -331,10 +377,33 @@
             delete submitBtn.dataset.forceSubmit;
             submitBtn.innerHTML = '<i class="fas fa-plus" aria-hidden="true"></i> Tambah Kebun';
 
-            const lv = document.getElementById('farm-lat-auto').value;
-            const lnv = document.getElementById('farm-lng-auto').value;
-            const lat = lv !== '' ? parseFloat(lv) : null;
-            const lng = lnv !== '' ? parseFloat(lnv) : null;
+            let { lat, lng } = readCoordinates();
+            if (lat === null || lng === null) {
+                await detectFarmLocation('submit');
+                ({ lat, lng } = readCoordinates());
+            }
+
+            if (lat === null || lng === null) {
+                setFeedback('Lokasi kebun belum terdeteksi. Izinkan akses lokasi browser atau isi koordinat kebun.', 'error');
+                document.getElementById('detect-location-btn').focus();
+                return;
+            }
+
+            let bmkgAdm4 = document.getElementById('farm-bmkg-adm4').value.trim();
+            if (!bmkgAdm4) {
+                try {
+                    const resolved = await resolveFarmAdm4(lat, lng);
+                    bmkgAdm4 = resolved.adm4;
+                } catch (_) {
+                    bmkgAdm4 = '';
+                }
+            }
+
+            if (!bmkgAdm4) {
+                setFeedback('Kode BMKG belum otomatis terdeteksi. Isi lokasi sampai nama desa, kecamatan, dan kabupaten, lalu klik Deteksi Lokasi Sekarang.', 'error');
+                document.getElementById('farm-location').focus();
+                return;
+            }
 
             const payload = {
                 name,
@@ -342,19 +411,19 @@
                 location,
                 crop_type: cropType,
                 area_ha: areaVal !== '' ? parseFloat(areaVal) : null,
-                bmkg_adm4_code: '',
+                bmkg_adm4_code: bmkgAdm4,
                 latitude: lat,
                 longitude: lng,
             };
 
             submitBtn.disabled = true;
             submitBtn.setAttribute('aria-busy', 'true');
+            let redirected = false;
 
             try {
-                const token = localStorage.getItem('lf_access_token');
                 const response = await fetch(`${API_BASE}/api/farms`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(payload)
                 });
                 const rawBody = await response.text();
@@ -365,12 +434,20 @@
                     setFeedback(data.detail || `Gagal menambah kebun (HTTP ${response.status}).`, 'error');
                     return;
                 }
-                window.location.href = 'index.html';
+                const createdFarm = data.farm || {};
+                if (createdFarm.id) {
+                    try { localStorage.setItem('lf_selected_farm', createdFarm.id); } catch (_) {}
+                }
+                redirected = true;
+                window.location.replace(new URL('index.html', window.location.href).href);
+                return;
             } catch (_) {
                 setFeedback('Tidak bisa terhubung ke backend.', 'error');
             } finally {
-                submitBtn.disabled = false;
-                submitBtn.removeAttribute('aria-busy');
+                if (!redirected) {
+                    submitBtn.disabled = false;
+                    submitBtn.removeAttribute('aria-busy');
+                }
             }
         });
     </script>

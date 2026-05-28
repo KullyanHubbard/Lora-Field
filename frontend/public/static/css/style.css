@@ -268,7 +268,8 @@ img {
 }
 
 .sidebar-brand {
-    padding: 24px 20px 20px;
+    /* padding-left 8px supaya logo lebih ke pojok kiri (dulu 20px) */
+    padding: 24px 20px 20px 8px;
 }
 
 .sidebar-brand h2 {
@@ -300,20 +301,37 @@ img {
     flex-shrink: 0;
 }
 
-.sidebar-brand h2 {
-    justify-content: center;
+.sidebar-brand-title {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    margin: 0;
+    /* Geser logo + teks sedikit ke atas supaya tidak terpaksa sejajar di tengah brand area */
+    margin-top: -12px;
 }
 
 .sidebar-brand .brand-logo {
-    width: 140px;
-    height: 140px;
+    height: 128px;
+    width: auto;
+    max-width: none;
 }
 
-.sidebar-brand p {
-    text-align: center;
-    margin-left: auto;
-    margin-right: auto;
+.sidebar-brand .brand-name {
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-gray-900);
+    line-height: 1;
+    /* ===== Geser manual teks "LoraField" di sidebar =====
+       Atur nilai margin-left untuk menggeser teks horizontal:
+         - lebih NEGATIF (mis. -28px) → teks makin DEKAT/menumpuk ke logo
+         - 0                          → menempel persis di sisi logo (default flex gap: 0)
+         - POSITIF (mis. 8px)         → teks makin JAUH dari logo
+       File: frontend/public/static/css/style.css */
+    margin-left: -20px;
 }
+
 
 .login-logo-img {
     width: 160px;
@@ -331,14 +349,6 @@ img {
     height: 22px;
     object-fit: contain;
     display: block;
-}
-
-.sidebar-brand p {
-    max-width: 190px;
-    margin-top: 6px;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    line-height: 1.45;
 }
 
 .sidebar-nav {
@@ -433,6 +443,24 @@ img {
     align-items: center;
     gap: 12px;
     min-width: 0;
+}
+
+.topbar-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.topbar-back:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-900);
 }
 
 .topbar-title {
@@ -1535,3 +1563,15 @@ select.form-control {
     gap: 12px;
 }
 .gap-16 { gap: 16px; }
+
+
+/* Hide browser default number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}

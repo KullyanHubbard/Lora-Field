@@ -32,7 +32,7 @@
     <div class="ambient-bg"><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div><div class="ambient-orb orb-3"></div></div>
     <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
-        <div class="sidebar-brand"><h2><img src="img/logo.svg" class="brand-logo" alt="LoraField"></h2><p>LoRa-Based Precision Agriculture System</p></div>
+        <div class="sidebar-brand"><h2 class="sidebar-brand-title"><img src="img/logo.svg" class="brand-logo" alt=""><span class="brand-name">LoraField</span></h2></div>
         <nav class="sidebar-nav" aria-label="Menu aplikasi"></nav>
         <div class="sidebar-footer">LoraField v1.5 Beta &middot; CDP 2026</div>
     </aside>
@@ -91,7 +91,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const farmId = urlParams.get('farm');
 
-            await loadFarmsFromAPI(CURRENT_USER_ID);
+            await loadFarmsFromAPI();
             if (farmId) await loadFarmSummaryFromAPI(farmId);
 
             const oldSwitcher = document.getElementById('farm-switcher');

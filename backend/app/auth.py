@@ -35,7 +35,7 @@ def create_access_token(subject: str, extra_claims: dict | None = None) -> str:
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
-def decode_token(token: str) -> dict:
+def _decode_token(token: str) -> dict:
     return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
 
 
@@ -52,7 +52,7 @@ def get_current_user(
         raise credentials_error
 
     try:
-        payload = decode_token(credentials.credentials)
+        payload = _decode_token(credentials.credentials)
         user_id = payload.get("sub")
         if not user_id:
             raise credentials_error
@@ -61,7 +61,7 @@ def get_current_user(
 
     with get_connection() as connection:
         row = connection.execute(
-            "SELECT id, email, name, created_at FROM users WHERE id = ?",
+            "SELECT id, email, name, phone, created_at FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
 

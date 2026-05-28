@@ -26,9 +26,21 @@ class FarmCreate(BaseModel):
     location: str = Field(default="", max_length=200)
     crop_type: str = Field(default="", max_length=100)
     area_ha: float | None = Field(default=None, ge=0)
-    bmkg_adm4_code: str = Field(..., min_length=2, max_length=20)
+    bmkg_adm4_code: str = Field(default="", max_length=20)
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
+
+
+class FarmUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=100)
+    owner: str | None = Field(default=None, max_length=100)
+    location: str | None = Field(default=None, max_length=200)
+    crop_type: str | None = Field(default=None, max_length=100)
+    area_ha: float | None = Field(default=None, ge=0)
+    bmkg_adm4_code: str | None = Field(default=None, max_length=20)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    status: str | None = Field(default=None, max_length=30)
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +62,7 @@ class UserPublic(BaseModel):
     id: str
     email: EmailStr
     name: str
+    phone: str = ""
 
 
 class TokenResponse(BaseModel):
@@ -71,5 +84,10 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=6, max_length=128)
 
 
-class ResendVerificationRequest(BaseModel):
-    email: EmailStr
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., min_length=6, max_length=128)
+
+
+class UpdateProfileRequest(BaseModel):
+    phone: str = Field(default="", max_length=20)
