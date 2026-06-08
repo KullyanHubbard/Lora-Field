@@ -166,3 +166,5 @@ export function SettingsPage() {
     </DashboardLayout>
   );
 }
+
+export default SettingsPage;

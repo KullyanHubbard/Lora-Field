@@ -399,29 +399,45 @@
     min-width: 0;
     min-height: 100%;
     flex-direction: column;
-    gap: 16px;
-    padding: 20px;
+    gap: 14px;
+    padding: 18px;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius);
+    border-radius: 4px;
     background: var(--color-card);
     box-shadow: var(--shadow-sm);
-    transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+    transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .farm-card:hover,
 .farm-card.is-selected {
-    border-color: rgba(16, 185, 129, 0.45);
+    border-color: rgba(16, 185, 129, 0.6);
     box-shadow: var(--shadow-md);
 }
 
-.farm-card[role="link"] {
-    cursor: pointer;
+/* Status dot indicator */
+.farm-status-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 3px;
 }
 
-.farm-card[role="link"]:focus-visible {
-    outline: 2px solid rgba(16, 185, 129, 0.85);
-    outline-offset: 3px;
+.farm-status-dot--active {
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
+
+.farm-status-dot--inactive {
+    background: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.farm-status-dot--warning {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
 
 .farm-card.is-selected {
     background:
@@ -2691,4 +2707,175 @@
 [data-theme="light"] .farm-incomplete-notice {
     background: rgba(245, 158, 11, 0.06);
     color: #1e293b;
+}
+
+/* ─────────────────────────────────────────────────────
+   Bento Grid Dashboard
+   ───────────────────────────────────────────────────── */
+
+/* Toolbar full-width (search + add button) */
+.dashboard-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.dashboard-toolbar .farm-search {
+    width: 380px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+/* Bento atas: peta full-width */
+.dashboard-bento-top {
+    margin-bottom: 24px;
+}
+
+.bento-map-cell {
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background:
+        linear-gradient(145deg, rgba(16, 185, 129, 0.07), transparent 40%),
+        var(--color-card);
+    box-shadow: var(--shadow-sm);
+    padding: 16px;
+}
+
+/* Kolom kanan: stat cells stacked */
+.bento-stats-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+}
+
+.bento-stat-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    padding: 18px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-card);
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.bento-stat-cell:hover {
+    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-md);
+}
+
+.bento-stat-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.bento-stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-gray-900);
+    line-height: 1.1;
+    font-family: var(--font-mono);
+    letter-spacing: -0.02em;
+}
+
+.bento-stat-sub {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* CTA cell tambah kebun */
+.bento-add-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1.5px dashed var(--color-border-hover);
+    border-radius: 14px;
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all var(--transition);
+    cursor: pointer;
+}
+
+.bento-add-cell:hover {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.bento-add-cell i {
+    font-size: 1rem;
+    color: var(--color-primary);
+}
+
+/* Section header kebun */
+.farm-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.farm-section-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--color-gray-900);
+    letter-spacing: -0.01em;
+}
+
+.farm-section-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 99px;
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+/* Bento farm card grid — semua kartu seragam */
+.farm-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+/* Responsive ─ tablet */
+@media (max-width: 1180px) {
+    .farm-bento-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Responsive ─ mobile */
+@media (max-width: 768px) {
+    .dashboard-toolbar .farm-search {
+        width: 100%;
+        flex-shrink: 1;
+    }
+
+    .farm-bento-grid {
+        grid-template-columns: 1fr;
+    }
 }

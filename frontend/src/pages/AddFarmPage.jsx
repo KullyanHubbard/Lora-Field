@@ -291,3 +291,5 @@ export function AddFarmPage() {
     </AuthPageLayout>
   );
 }
+
+export default AddFarmPage;

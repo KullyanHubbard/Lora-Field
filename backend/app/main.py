@@ -959,10 +959,10 @@ def delete_farm(
 
 @app.get("/api/utils/resolve-adm4")
 def resolve_adm4(
+    current_user: Annotated[dict, Depends(get_current_user)],
     lat: float = Query(..., ge=-90, le=90),
     lon: float = Query(..., ge=-180, le=180),
     q: str = Query(default="", max_length=200),
-    current_user: Annotated[dict, Depends(get_current_user)],
 ) -> dict:
     """Resolve kode BMKG adm4 dari koordinat GPS."""
     adm4 = resolve_bmkg_adm4(lat, lon, q)

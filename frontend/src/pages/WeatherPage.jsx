@@ -291,3 +291,5 @@ export function WeatherPage() {
     </DashboardLayout>
   );
 }
+
+export default WeatherPage;

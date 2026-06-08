@@ -94,3 +94,5 @@ export function FarmsPage() {
     </DashboardLayout>
   );
 }
+
+export default FarmsPage;

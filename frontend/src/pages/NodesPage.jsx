@@ -123,3 +123,5 @@ export function NodesPage() {
     </DashboardLayout>
   );
 }
+
+export default NodesPage;

@@ -306,3 +306,5 @@ export function LogsPage() {
     </DashboardLayout>
   );
 }
+
+export default LogsPage;

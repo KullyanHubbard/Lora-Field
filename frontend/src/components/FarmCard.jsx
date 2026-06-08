@@ -1,49 +1,39 @@
 import { formatAreaHa } from '../utils/farmHelpers';
 
-/**
- * Card kebun. Markup & class disamakan dengan farm-card di HTML lama
- * supaya CSS dashboard.css/premium.css langsung apply.
- *
- * Props:
- *   farm        — object farm dari backend (id, name, owner, location, crop_type, area_ha)
- *   selected    — bool, kasih class `is-selected`
- *   onOpen()    — callback klik card / tombol "Buka Dashboard"
- *   onDelete()  — callback klik tombol hapus (kalau null, tombol tidak muncul)
- */
-export function FarmCard({ farm, selected, onOpen, onDelete }) {
-  function handleCardClick(event) {
-    // Jangan trigger card click kalau klik di tombol/link di dalam card.
-    if (event.target.closest('a, button')) return;
-    if (onOpen) onOpen(farm);
-  }
+const STATUS_DOT = {
+  active:      { cls: 'farm-status-dot--active',   title: 'Aktif' },
+  inactive:    { cls: 'farm-status-dot--inactive',  title: 'Tidak Aktif' },
+  offline:     { cls: 'farm-status-dot--inactive',  title: 'Tidak Aktif' },
+  maintenance: { cls: 'farm-status-dot--warning',   title: 'Perlu Perhatian' },
+};
 
-  function handleCardKey(event) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    if (onOpen) onOpen(farm);
-  }
+function statusDot(status) {
+  return STATUS_DOT[status] || { cls: 'farm-status-dot--warning', title: 'Perlu Perhatian' };
+}
+
+export function FarmCard({ farm, selected, onOpen, onDelete }) {
+  const dot = statusDot(farm.status);
 
   return (
     <article
       className={`farm-card${selected ? ' is-selected' : ''}`}
       data-farm-card={farm.id}
-      tabIndex={0}
-      role="link"
-      aria-label={`Buka dashboard ${farm.name}`}
-      onClick={handleCardClick}
-      onKeyDown={handleCardKey}
     >
       <div className="farm-card-header">
         <div>
           <h3>{farm.name}</h3>
           <span>{farm.owner || ''}</span>
         </div>
-        <span className="badge badge-green">Akses Aktif</span>
+        <span className={`farm-status-dot ${dot.cls}`} title={dot.title} aria-label={dot.title} />
       </div>
       <div className="farm-card-body">
         <div>
           <span>Lokasi Kebun</span>
-          <strong>{farm.location || '—'}</strong>
+          <strong>
+            {farm.latitude != null && farm.longitude != null
+              ? `${parseFloat(farm.latitude).toFixed(4)}, ${parseFloat(farm.longitude).toFixed(4)}`
+              : '—'}
+          </strong>
         </div>
         <div>
           <span>Jenis Tanaman</span>

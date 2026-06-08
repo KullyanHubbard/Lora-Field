@@ -330,3 +330,5 @@ export function FarmDetailPage() {
     </DashboardLayout>
   );
 }
+
+export default FarmDetailPage;

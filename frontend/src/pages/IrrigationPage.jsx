@@ -186,3 +186,5 @@ export function IrrigationPage() {
     </DashboardLayout>
   );
 }
+
+export default IrrigationPage;

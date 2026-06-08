@@ -132,3 +132,5 @@ export function ChangePasswordPage() {
     </AuthPageLayout>
   );
 }
+
+export default ChangePasswordPage;

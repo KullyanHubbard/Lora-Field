@@ -367,3 +367,5 @@ export function MonitoringPage() {
     </DashboardLayout>
   );
 }
+
+export default MonitoringPage;

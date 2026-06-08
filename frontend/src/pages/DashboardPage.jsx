@@ -104,32 +104,43 @@ export function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <section className="field-map-panel mb-24" aria-label="Peta pemilihan kebun">
-        <div className="farm-map-toolbar">
-          <label className="search-box farm-search" htmlFor="farm-search">
-            <i className="fas fa-search" aria-hidden="true" />
-            <input
-              type="text"
-              id="farm-search"
-              placeholder="Cari nama kebun, lokasi, atau tanaman"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
-          </label>
-          <Link className="btn btn-primary btn-sm" to="/farms/add">
-            <i className="fas fa-plus" aria-hidden="true" /> Tambah Kebun
-          </Link>
-        </div>
+      {/* Toolbar: search + tambah kebun sejajar kiri */}
+      <div className="dashboard-toolbar">
+        <label className="search-box farm-search" htmlFor="farm-search">
+          <i className="fas fa-search" aria-hidden="true" />
+          <input
+            type="text"
+            id="farm-search"
+            placeholder="Cari nama kebun, lokasi, atau tanaman"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        </label>
+        <Link className="btn btn-primary btn-sm" to="/farms/add">
+          <i className="fas fa-plus" aria-hidden="true" /> Tambah Kebun
+        </Link>
+      </div>
 
-        <FarmMap
-          farms={visibleFarms}
-          selectedId={selectedId}
-          onSelect={handleSelect}
-          onOpen={handleOpen}
-        />
+      {/* Peta kebun full-width */}
+      <section className="dashboard-bento-top" aria-label="Peta pemilihan kebun">
+        <div className="bento-map-cell">
+          <FarmMap
+            farms={visibleFarms}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+            onOpen={handleOpen}
+          />
+        </div>
       </section>
 
-      <section className="farm-card-grid" aria-label="Daftar kebun milik user">
+      {/* Bento bawah: grid kartu kebun */}
+      <section aria-label="Daftar kebun milik user">
+        <div className="farm-section-header">
+          <h2 className="farm-section-title">Kebun Saya</h2>
+          {!loading && !loadError && (
+            <span className="farm-section-count">{visibleFarms.length}</span>
+          )}
+        </div>
         {loading ? (
           <div className="empty-state">
             <i className="fas fa-spinner fa-spin" /> Memuat data kebun...
@@ -141,15 +152,17 @@ export function DashboardPage() {
             {filter ? 'Kebun tidak ditemukan.' : 'Belum ada kebun. Klik "Tambah Kebun" untuk memulai.'}
           </div>
         ) : (
-          visibleFarms.map((farm) => (
-            <FarmCard
-              key={farm.id}
-              farm={farm}
-              selected={farm.id === selectedId}
-              onOpen={handleOpen}
-              onDelete={requestDelete}
-            />
-          ))
+          <div className="farm-bento-grid">
+            {visibleFarms.map((farm) => (
+              <FarmCard
+                key={farm.id}
+                farm={farm}
+                selected={farm.id === selectedId}
+                onOpen={handleOpen}
+                onDelete={requestDelete}
+              />
+            ))}
+          </div>
         )}
       </section>
 
@@ -169,3 +182,5 @@ export function DashboardPage() {
     </DashboardLayout>
   );
 }
+
+export default DashboardPage;

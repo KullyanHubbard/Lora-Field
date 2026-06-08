@@ -126,3 +126,5 @@ export function GatewayPage() {
     </DashboardLayout>
   );
 }
+
+export default GatewayPage;

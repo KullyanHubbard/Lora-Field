@@ -711,7 +711,9 @@ table td {
 .location-map-shell,
 .maps-key-panel,
 .table-wrap,
-.note-box {
+.note-box,
+.bento-map-cell,
+.bento-stat-cell {
     border-color: var(--color-border);
 }
 
@@ -1351,5 +1353,51 @@ table td {
         min-width: 30px;
         width: 30px;
     }
+}
+
+/* ─── Bento Grid — dark mode overrides ─────────────── */
+:root:not([data-theme="light"]) .bento-map-cell,
+:root[data-theme="dark"] .bento-map-cell {
+    background:
+        linear-gradient(145deg, rgba(16, 185, 129, 0.1), transparent 40%),
+        rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+:root:not([data-theme="light"]) .bento-stat-cell,
+:root[data-theme="dark"] .bento-stat-cell {
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+:root:not([data-theme="light"]) .bento-stat-value,
+:root[data-theme="dark"] .bento-stat-value {
+    color: var(--text-main);
+}
+
+:root:not([data-theme="light"]) .bento-add-cell,
+:root[data-theme="dark"] .bento-add-cell {
+    background: rgba(16, 185, 129, 0.06);
+    border-color: rgba(16, 185, 129, 0.22);
+    color: var(--color-primary-dark);
+}
+
+:root:not([data-theme="light"]) .bento-add-cell:hover,
+:root[data-theme="dark"] .bento-add-cell:hover {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: var(--color-primary);
+}
+
+:root:not([data-theme="light"]) .farm-section-title,
+:root[data-theme="dark"] .farm-section-title {
+    color: var(--text-main);
+}
+
+:root:not([data-theme="light"]) .farm-section-count,
+:root[data-theme="dark"] .farm-section-count {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--color-primary-dark);
 }
 

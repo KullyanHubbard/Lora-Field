@@ -327,3 +327,5 @@ export function LoginPage() {
     </AuthPageLayout>
   );
 }
+
+export default LoginPage;

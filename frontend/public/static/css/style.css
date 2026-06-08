@@ -1,4 +1,5 @@
 /* LoraField design system and shared UI components */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
 :root {
     --color-primary: #10b981;
@@ -50,7 +51,7 @@
     --ring: 0 0 0 4px rgba(16, 185, 129, 0.15);
 
     --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font: 'Open Sans', system-ui, -apple-system, sans-serif;
     --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
     --fs-xs: 0.72rem;
     --fs-sm: 0.78rem;
@@ -1205,12 +1206,10 @@ select.form-control {
 .btn-primary {
     color: var(--color-white);
     background: var(--color-primary);
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
 }
 
 .btn-primary:hover {
     background: var(--color-primary-dark);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
 }
 
 .btn-secondary {
