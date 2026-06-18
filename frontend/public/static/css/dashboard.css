@@ -2879,3 +2879,291 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ─────────────────────────────────────────────────────
+   FarmDetailPage — refactored components
+   ───────────────────────────────────────────────────── */
+
+/* Info card header */
+.fd-info-card {
+    padding: 20px 24px;
+}
+
+.fd-info-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+/* Meta row: chip-style items */
+.fd-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.fd-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.fd-meta-item i {
+    color: var(--color-primary);
+    font-size: 0.72rem;
+}
+
+/* 3-column metric grid */
+.fd-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+/* Base metric card */
+.fd-metric-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-card);
+}
+
+.fd-metric-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.fd-metric-header i {
+    color: var(--color-primary);
+}
+
+/* Metric rows (key-value list) */
+.fd-metric-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: auto;
+}
+
+.fd-metric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.8rem;
+}
+
+.fd-metric-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.fd-metric-row span {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.fd-metric-row strong {
+    color: var(--color-gray-900);
+    font-weight: 700;
+}
+
+/* Soil gauge */
+.fd-gauge-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fd-gauge-svg {
+    width: 120px;
+    height: 120px;
+}
+
+/* Gateway card — offline theme */
+.fd-gw-offline {
+    border-color: rgba(245, 158, 11, 0.35);
+    background: linear-gradient(145deg, rgba(245, 158, 11, 0.07), var(--color-card) 55%);
+}
+
+.fd-gw-degraded {
+    border-color: rgba(251, 191, 36, 0.3);
+    background: linear-gradient(145deg, rgba(251, 191, 36, 0.05), var(--color-card) 55%);
+}
+
+.fd-gw-status-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+}
+
+.fd-gw-icon {
+    width: 64px;
+    height: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.6rem;
+}
+
+.fd-gw-icon--online {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+}
+
+.fd-gw-icon--offline {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #f59e0b;
+}
+
+.fd-gw-icon--degraded {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+}
+
+.fd-gw-status-label {
+    font-size: 0.8rem;
+}
+
+/* Weather card */
+.fd-weather-clear {
+    border-color: rgba(251, 191, 36, 0.25);
+}
+
+.fd-weather-rain {
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+.fd-weather-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.fd-weather-icon {
+    width: 64px;
+    height: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 1.6rem;
+}
+
+.fd-weather-icon--clear {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+}
+
+.fd-weather-icon--rain {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
+
+.fd-weather-temp-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fd-weather-temp {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-gray-900);
+    font-family: var(--font-mono);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.fd-weather-cond {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Node empty state */
+.fd-node-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 48px 24px;
+    text-align: center;
+}
+
+.fd-node-empty-icon {
+    width: 64px;
+    height: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px dashed var(--color-border-hover);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+}
+
+.fd-node-empty-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+}
+
+.fd-node-empty-desc {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .fd-grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .fd-grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .fd-meta-row {
+        gap: 4px;
+    }
+}
