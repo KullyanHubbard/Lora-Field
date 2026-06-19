@@ -55,15 +55,15 @@ export const api = {
     }),
 
   register: (name: string, email: string, password: string) =>
-    // shape response belum diverifikasi dengan backend
-    apiFetch<unknown>('/auth/register', {
+    // Response: UserPublic { id, email, name, phone } (diverifikasi dari backend)
+    apiFetch<User>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password }),
     }),
 
   forgotPassword: (email: string) =>
-    // shape response belum diverifikasi dengan backend
-    apiFetch<unknown>('/auth/forgot-password', {
+    // Response { message } (+ reset_token/note saat dev mode). Diverifikasi backend.
+    apiFetch<{ message: string; reset_token?: string; note?: string }>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
@@ -72,22 +72,22 @@ export const api = {
   // (main.py:832 -> /api/auth/reset-password/verify). Catatan: tabel CLAUDE.md
   // menyebut /api/auth/verify-reset-code yang TIDAK ada di backend.
   verifyResetCode: (token: string) =>
-    // shape response belum diverifikasi dengan backend
-    apiFetch<unknown>('/auth/reset-password/verify', {
+    // Response { message: "Kode reset valid." }. Diverifikasi backend.
+    apiFetch<{ message: string }>('/auth/reset-password/verify', {
       method: 'POST',
       body: JSON.stringify({ token }),
     }),
 
   resetPassword: (token: string, newPassword: string) =>
-    // shape response belum diverifikasi dengan backend
-    apiFetch<unknown>('/auth/reset-password', {
+    // Response { message: "Password berhasil diperbarui." }. Diverifikasi backend.
+    apiFetch<{ message: string }>('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify({ token, new_password: newPassword }),
     }),
 
   changePassword: (currentPassword: string, newPassword: string) =>
-    // shape response belum diverifikasi dengan backend
-    apiFetch<unknown>('/auth/change-password', {
+    // Response { message: "Password berhasil diperbarui." }. Diverifikasi backend.
+    apiFetch<{ message: string }>('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
     }),
