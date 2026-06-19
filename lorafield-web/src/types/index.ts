@@ -85,7 +85,7 @@ export interface FarmSummary {
   thresholds: { lower: number; upper: number };
   nodes_problem: number;
   nodes: NodeSummary[];
-  weather: Weather;
+  weather: Weather | null;
 }
 
 // ASUMSI - verifikasi dengan backend (isi User belum kelihatan penuh)
@@ -94,4 +94,23 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+}
+
+// GET /api/crops → { crops: Crop[] } (diverifikasi dari backend main.py)
+export interface Crop {
+  name: string;
+  lower_threshold: number;
+  upper_threshold: number;
+}
+
+// Payload POST /api/farms (field dari AddFarmPage lama)
+export interface CreateFarmPayload {
+  name: string;
+  owner: string;
+  location: string;
+  crop_type: string;
+  area_ha: number | null;
+  bmkg_adm4_code: string;
+  latitude: number;
+  longitude: number;
 }

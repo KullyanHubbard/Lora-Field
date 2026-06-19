@@ -1,5 +1,14 @@
 import { getToken } from './token';
-import type { Farm, FarmSummary, Reading, IrrigationLog, User, Weather } from '@/types';
+import type {
+  Crop,
+  CreateFarmPayload,
+  Farm,
+  FarmSummary,
+  Reading,
+  IrrigationLog,
+  User,
+  Weather,
+} from '@/types';
 
 const BASE = '/api';
 
@@ -95,9 +104,8 @@ export const api = {
   getFarm: (id: string) => apiFetch<Farm>(`/farms/${id}`),
   getFarmSummary: (id: string) => apiFetch<FarmSummary>(`/farms/${id}/summary`),
 
-  createFarm: (payload: Record<string, unknown>) =>
-    // shape payload & response belum diverifikasi dengan backend
-    apiFetch<unknown>('/farms', {
+  createFarm: (payload: CreateFarmPayload) =>
+    apiFetch<{ farm: Farm }>('/farms', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -106,12 +114,10 @@ export const api = {
 
   // --- Utils ---
   getCrops: (q = '') =>
-    // shape response belum diverifikasi dengan backend
-    apiFetch<unknown>(`/crops${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+    apiFetch<{ crops: Crop[] }>(`/crops${q ? `?q=${encodeURIComponent(q)}` : ''}`),
 
   resolveAdm4: (lat: number, lon: number, q = '') =>
-    // shape response belum diverifikasi dengan backend
-    apiFetch<unknown>(
+    apiFetch<{ adm4: string; found: boolean }>(
       `/utils/resolve-adm4?${new URLSearchParams({
         lat: String(lat),
         lon: String(lon),
