@@ -21,8 +21,8 @@ API tersedia di `http://127.0.0.1:8000`.
 
 Dokumentasi otomatis FastAPI tersedia di `http://127.0.0.1:8000/docs`.
 
-Backend juga otomatis mount halaman statis frontend di `http://127.0.0.1:8000/static/`
-(diambil dari `frontend/public/static/`).
+Backend juga men-serve frontend React (`frontend/dist/`) di `/`: SPA fallback untuk
+route non-API dan aset build di `/assets/` (hasil `npm run build` di `frontend/`).
 
 ## Konfigurasi (.env)
 

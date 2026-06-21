@@ -19,23 +19,19 @@ User buka Web LoraField
 
 ## Konteks Rebuild & Struktur Repo
 
-Ini proyek rebuild frontend dengan pendekatan strangler migration. Frontend React lama sudah ada tapi berantakan (CSS monolit, fetch manual duplikatif, tanpa TypeScript); kita bangun ulang bersih di folder baru.
+Ini proyek rebuild frontend dengan pendekatan strangler migration. Frontend React lama yang berantakan (CSS monolit, fetch manual duplikatif, tanpa TypeScript) sudah digantikan sepenuhnya. Promote selesai (2026-06-21): folder rebuild di-rename menjadi `frontend/` (menggantikan frontend React lama yang dihapus) — `frontend/` kini satu-satunya frontend.
 
-- **Aktif (yang dikerjakan): `lorafield-web/`** — frontend baru. Semua perintah npm/npx dijalankan di sini.
-- **Referensi porting (READ-ONLY, jangan ubah/hapus): `frontend/src/`** — React/Vite lama yang berantakan. Dibaca untuk mengangkat logika dan domain rules, bukan diedit.
-- **Backup lama (jangan sentuh): `frontend/public/static/`** — UI vanilla HTML/CSS/JS generasi sebelumnya.
-- **Backend (tidak diubah dalam rebuild ini): `backend/`** — FastAPI + SQLite. Contract-nya ada di section "Backend Endpoints" + "Database Schema" di bawah; itu sumber kebenaran.
-- **Sumber kebenaran tunggal untuk langkah rebuild:** `lorafield-web/docs/Panduan-Rebuild-Frontend-LoraField.md`. Tiap fase ikuti bagian relevan; jangan menambah teknologi, library, atau langkah di luar panduan.
-
-Cleanup folder lama (`frontend/`) dilakukan nanti setelah `lorafield-web/` menggantikan sepenuhnya — di luar scope rebuild ini.
+- **Frontend tunggal: `frontend/`** — semua perintah npm/npx dijalankan di sini. `npm run build` menghasilkan `frontend/dist/`.
+- **Backend (tidak diubah dalam rebuild ini): `backend/`** — FastAPI + SQLite. Backend men-serve `frontend/dist/` di `/` (SPA fallback + asset di `/assets`). Contract-nya ada di section "Backend Endpoints" + "Database Schema" di bawah; itu sumber kebenaran.
+- **Sumber kebenaran tunggal untuk langkah rebuild:** `frontend/docs/Panduan-Rebuild-Frontend-LoraField.md`. Tiap fase ikuti bagian relevan; jangan menambah teknologi, library, atau langkah di luar panduan.
 
 Label UI: Bahasa Indonesia. Istilah teknis dipertahankan: LoRa, VWC, MQTT, Gateway, Node, BMKG, RSSI.
 
-Dev server: `cd lorafield-web && npm run dev` (port 5173, proxy `/api` ke port 8000). Backend: `uvicorn backend.app.main:app --host 0.0.0.0 --port 8000`.
+Dev server: `cd frontend && npm run dev` (port 5173, proxy `/api` ke port 8000). Backend: `uvicorn backend.app.main:app --host 0.0.0.0 --port 8000`.
 
 ## Stack
 
-Frontend baru (`lorafield-web/`) — kunci ke ini, jangan ganti:
+Frontend (`frontend/`) — kunci ke ini, jangan ganti:
 
 - Vite + React 19 + TypeScript strict
 - Tailwind v4 (@tailwindcss/vite) + shadcn/ui
@@ -44,7 +40,7 @@ Frontend baru (`lorafield-web/`) — kunci ke ini, jangan ganti:
 - Charts: Recharts via shadcn Chart. Map: react-leaflet.
 - Prettier + ESLint
 
-Referensi stack lama (`frontend/src/`, jangan dipakai di build baru): Vite 5.4, React 18.3, React Router 7.15, Leaflet 1.9.4, Chart.js 4.4 + react-chartjs-2 5.2. Warna tema lama (teal LoraField) ada di `frontend/public/static/css/premium.css`; boleh ambil nilai warnanya sebagai referensi, tapi di build baru warna lewat CSS variable shadcn, bukan file lama.
+Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.4, React Router 7.15, Leaflet 1.9.4, Chart.js 4.4 + react-chartjs-2 5.2. Warna tema teal LoraField kini hidup sebagai CSS variable shadcn di `frontend/src/index.css`, bukan file CSS lama.
 
 ## Aturan Anti-Halusinasi (WAJIB)
 
@@ -146,7 +142,7 @@ Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di fronte
 - Badge status warna konsisten: green/yellow/red.
 - Progress bar selalu sertakan label range `0%` dan `100%`.
 - Landing page marketing publik ADA di route `/` (lihat tabel Routes). Aturan lama "jangan buat landing page" sudah dicabut user (2026-06-21). Dashboard tetap pengalaman utama bagi user yang sudah login; landing hanya etalase di `/` (publik, tanpa auth guard, untuk semua pengunjung).
-- Logo: `frontend/public/static/img/logo.svg` (favicon, sidebar brand, marker peta) — salin ke aset build baru.
+- Logo/brand: ikon `Sprout` (lucide-react) + teks "LoraField" — lihat `BrandMark` di `frontend/src/components/layout/AppLayout.tsx` dan landing. Favicon: `frontend/public/favicon.svg`.
 
 ### Routes & Pages (target rebuild)
 
@@ -154,7 +150,7 @@ Route dan path dipertahankan sama. File `.jsx` lama = referensi porting.
 
 | Route | Page (referensi lama) | Keterangan |
 |-------|------|-----------|
-| `/` | `LandingPage.tsx` (port dari `saas-landing-page/`) | Landing marketing PUBLIK, tanpa auth guard. Tombol Login/CTA → `/login`. Dark-only. |
+| `/` | `LandingPage.tsx` | Landing marketing PUBLIK, tanpa auth guard. Tombol Login/CTA → `/login`. Dark-only. |
 | `/login` | `LoginPage.jsx` | Login + inline forgot password 2-step |
 | `/register` | `RegisterPage.jsx` | Daftar akun baru |
 | `/reset-password` | `ResetPasswordPage.jsx` | Flow lupa password (OTP 2 tahap) |

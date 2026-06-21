@@ -39,6 +39,7 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Logs
+# Logs (anchored ke output backend; `logs/` polos dulu ikut meng-ignore folder
+# source frontend/src/features/logs/)
 *.log
-logs/
+backend/logs/

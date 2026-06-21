@@ -126,11 +126,10 @@ app = FastAPI(
     version="1.3.0",
 )
 
-FRONTEND_STATIC_DIR = Path(__file__).resolve().parents[2] / "frontend" / "public" / "static"
 FRONTEND_DIST_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
-# Production: React build (frontend/dist/) jadi sumber utama untuk asset + index.html
-# Dev fallback: kalau dist/ belum di-build, pakai folder HTML lama (frontend/public/static/).
+# Frontend tunggal: React/Vite build (frontend/dist/) — sumber asset + index.html.
+# Vite menaruh asset di dist/assets/ (mount /assets). dist/static opsional (mount kalau ada).
 if FRONTEND_DIST_DIR.exists():
     dist_assets = FRONTEND_DIST_DIR / "assets"
     if dist_assets.exists():
@@ -138,12 +137,6 @@ if FRONTEND_DIST_DIR.exists():
     dist_static = FRONTEND_DIST_DIR / "static"
     if dist_static.exists():
         app.mount("/static", StaticFiles(directory=str(dist_static)), name="dist-static")
-elif FRONTEND_STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(FRONTEND_STATIC_DIR)), name="static")
-    for asset_dir in ("css", "js", "img"):
-        asset_path = FRONTEND_STATIC_DIR / asset_dir
-        if asset_path.exists():
-            app.mount(f"/{asset_dir}", StaticFiles(directory=str(asset_path)), name=f"frontend-{asset_dir}")
 
 _DEV_ORIGINS = [
     "http://127.0.0.1:5500",
@@ -586,38 +579,21 @@ def _serve_react_index() -> FileResponse | None:
     return FileResponse(index_path)
 
 
-def _serve_legacy_html(page_name: str) -> FileResponse:
-    if not re.fullmatch(r"[a-zA-Z0-9_-]+", page_name):
-        raise HTTPException(status_code=404, detail="Halaman tidak ditemukan")
-    page_path = (FRONTEND_STATIC_DIR / f"{page_name}.html").resolve()
-    try:
-        page_path.relative_to(FRONTEND_STATIC_DIR.resolve())
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Halaman tidak ditemukan")
-    if not page_path.exists() or not page_path.is_file():
-        raise HTTPException(status_code=404, detail="Halaman tidak ditemukan")
-    return FileResponse(page_path)
-
-
 @app.get("/")
 def root():
     react_index = _serve_react_index()
     if react_index is not None:
         return react_index
-    legacy_index = FRONTEND_STATIC_DIR / "index.html"
-    if legacy_index.exists():
-        return FileResponse(legacy_index)
     return {"service": "LoraField Backend", "status": "ready", "health": "/health"}
 
 
 @app.get("/{page_name}.html")
 def static_html_page(page_name: str):
-    # Kalau React build tersedia, semua URL halaman dirutekan client-side oleh React Router.
-    # Tetap fallback ke HTML lama kalau dist belum di-build.
+    # Kompat URL lama berakhiran .html: arahkan ke React index (routing client-side).
     react_index = _serve_react_index()
     if react_index is not None:
         return react_index
-    return _serve_legacy_html(page_name)
+    raise HTTPException(status_code=404, detail="Halaman tidak ditemukan")
 
 
 @app.get("/health")
@@ -783,7 +759,7 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
         )
 
     frontend_base = settings.frontend_url.rstrip("/")
-    reset_link = f"{frontend_base}/reset-password.html"
+    reset_link = f"{frontend_base}/reset-password"
     email_html = (
         "<div style='font-family:Arial,sans-serif;line-height:1.6;color:#111827'>"
         "<h2 style='margin:0 0 12px 0;font-size:20px'>Reset Password LoraField</h2>"

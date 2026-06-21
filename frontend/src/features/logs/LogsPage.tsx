@@ -1,0 +1,227 @@
+import { useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Download, Search } from 'lucide-react';
+import { useFarmSummary } from '@/features/farms/queries';
+import { useLogs } from './queries';
+import {
+  buildLogsCsv,
+  classifyLog,
+  formatLogTime,
+  getDecisionTone,
+  LOG_FILTER_OPTIONS,
+  type LogCsvRow,
+  type LogFilterKey,
+  type LogType,
+} from './logHelpers';
+import { StatusPill } from '@/components/ui/status-pill';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import type { IrrigationLog } from '@/types';
+
+interface ScopedLog extends IrrigationLog {
+  time: string;
+  type: LogType;
+  nodeName: string;
+  nodeLocation: string;
+  valveLabel: string;
+}
+
+// Side-effect download (Blob/anchor/BOM) tetap di komponen, bukan di helper.
+function downloadCsv(filename: string, content: string) {
+  const blob = new Blob(['﻿' + content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export default function LogsPage() {
+  const { id: farmId } = useParams();
+  const { data: summary, isLoading: summaryLoading, error: summaryError } = useFarmSummary(
+    farmId ?? '',
+  );
+  const { data: logsData, isLoading: logsLoading, error: logsError } = useLogs(farmId);
+
+  const [activeFilter, setActiveFilter] = useState<LogFilterKey>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  if (summaryLoading || logsLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-72 w-full" />
+      </div>
+    );
+  }
+
+  if (summaryError || logsError || !summary) {
+    const message = summaryError?.message ?? logsError?.message;
+    return (
+      <div className="space-y-3">
+        <p className="text-destructive">
+          {message ? `Gagal memuat riwayat: ${message}` : 'Data tidak tersedia.'}
+        </p>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/dashboard">Kembali ke Daftar Kebun</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const nodeLookup = new Map(
+    summary.nodes.map((ns) => [
+      ns.node.id,
+      { name: ns.node.name || ns.node.id, location: ns.node.location || '' },
+    ]),
+  );
+  const threshold = summary.thresholds
+    ? `${summary.thresholds.lower}%-${summary.thresholds.upper}%`
+    : '—';
+
+  const logs = logsData?.items ?? [];
+  const scopedLogs: ScopedLog[] = logs
+    .filter((log) => nodeLookup.has(log.node_id))
+    .map((log) => {
+      const node = nodeLookup.get(log.node_id);
+      return {
+        ...log,
+        time: formatLogTime(log.created_at),
+        type: classifyLog(log),
+        nodeName: node?.name || log.node_id,
+        nodeLocation: node?.location || '—',
+        valveLabel: log.valve_state === 'open' ? 'Terbuka' : 'Tertutup',
+      };
+    });
+
+  const q = searchQuery.trim().toLowerCase();
+  const filteredLogs = scopedLogs.filter((log) => {
+    const matchesFilter = activeFilter === 'all' || log.type === activeFilter;
+    const matchesSearch =
+      !q ||
+      log.nodeName.toLowerCase().includes(q) ||
+      log.nodeLocation.toLowerCase().includes(q) ||
+      String(log.decision || '').toLowerCase().includes(q);
+    return matchesFilter && matchesSearch;
+  });
+
+  const handleExportCsv = () => {
+    const rows: LogCsvRow[] = filteredLogs.map((log) => ({
+      time: log.created_at || log.time,
+      nodeName: log.nodeName,
+      nodeLocation: log.nodeLocation,
+      soilMoisture: log.soil_moisture,
+      weather: log.weather,
+      decision: log.decision,
+      valveLabel: log.valveLabel,
+      reason: log.reason,
+    }));
+    const csv = buildLogsCsv(rows, threshold);
+    const farmName = summary.farm.name || farmId || 'kebun';
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCsv(`lorafield-logs-${farmName}-${today}.csv`, csv);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter log">
+            {LOG_FILTER_OPTIONS.map((opt) => (
+              <Button
+                key={opt.key}
+                type="button"
+                size="sm"
+                variant={activeFilter === opt.key ? 'default' : 'outline'}
+                aria-pressed={activeFilter === opt.key}
+                onClick={() => setActiveFilter(opt.key)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Cari node, lokasi, atau keputusan..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64 pl-8"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleExportCsv}
+              disabled={!filteredLogs.length}
+            >
+              <Download className="size-4" /> Ekspor CSV
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Waktu</TableHead>
+                <TableHead>Node</TableHead>
+                <TableHead>Lokasi</TableHead>
+                <TableHead>Kelembapan</TableHead>
+                <TableHead>Threshold</TableHead>
+                <TableHead>Cuaca</TableHead>
+                <TableHead>Keputusan</TableHead>
+                <TableHead>Valve</TableHead>
+                <TableHead>Keterangan</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLogs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center text-muted-foreground">
+                    Tidak ada log yang cocok dengan filter.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredLogs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="tabular-nums">{log.time}</TableCell>
+                    <TableCell>{log.nodeName}</TableCell>
+                    <TableCell className="text-muted-foreground">{log.nodeLocation}</TableCell>
+                    <TableCell className="tabular-nums">{log.soil_moisture}%</TableCell>
+                    <TableCell className="tabular-nums text-muted-foreground">{threshold}</TableCell>
+                    <TableCell className="text-muted-foreground">{log.weather || '—'}</TableCell>
+                    <TableCell>
+                      <StatusPill tone={getDecisionTone(log.type)} label={log.decision} />
+                    </TableCell>
+                    <TableCell>{log.valveLabel}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {log.reason || '—'}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
