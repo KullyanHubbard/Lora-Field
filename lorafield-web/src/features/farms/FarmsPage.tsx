@@ -3,45 +3,59 @@ import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useFarms } from './queries';
 import { formatAreaHa, timeAgo } from '@/lib/format';
-import { type StatusTone } from '@/lib/status';
-import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 import type { Farm } from '@/types';
 
-// Sama dengan mapping status farm di FarmDetailPage (konsisten di build baru):
-// 'warning' -> kuning, selain itu -> hijau. Lihat LAPORAN soal status lain.
-function farmStatusBadge(status: string): { label: string; tone: StatusTone } {
-  return status === 'warning'
-    ? { label: 'Perlu Perhatian', tone: 'yellow' }
-    : { label: 'Normal', tone: 'green' };
+// Mapping status farm — konsisten dengan Dashboard (FarmListPage).
+// active=hijau; warning/maintenance=kuning; sisanya neutral (bukan merah, DESIGN.md).
+function farmStatusPill(status: string): { tone: PillTone; label: string } {
+  switch (status) {
+    case 'active':
+      return { tone: 'green', label: 'Aktif' };
+    case 'warning':
+      return { tone: 'yellow', label: 'Perlu Perhatian' };
+    case 'maintenance':
+      return { tone: 'yellow', label: 'Perawatan' };
+    case 'inactive':
+    case 'offline':
+      return { tone: 'neutral', label: 'Tidak Aktif' };
+    default:
+      return {
+        tone: 'neutral',
+        label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Tidak Diketahui',
+      };
+  }
 }
 
 function FarmListCard({ farm }: { farm: Farm }) {
-  const badge = farmStatusBadge(farm.status);
+  const pill = farmStatusPill(farm.status);
   return (
     <Link to={`/farms/${farm.id}`}>
-      <Card className="h-full p-4 transition hover:border-primary">
+      <Card className="h-full p-5 transition-colors hover:bg-accent/50">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col">
             <h3 className="font-semibold text-foreground">{farm.name}</h3>
             {farm.owner && <span className="text-xs text-muted-foreground">{farm.owner}</span>}
           </div>
-          <StatusBadge label={badge.label} tone={badge.tone} />
+          <StatusPill tone={pill.tone} label={pill.label} />
         </div>
         <div className="mt-3 space-y-1 text-sm">
           <div className="flex justify-between gap-2">
             <span className="text-muted-foreground">Lokasi</span>
-            <span className="text-right text-foreground">{farm.location || '—'}</span>
+            <span className="max-w-[60%] truncate text-right text-foreground">
+              {farm.location || '—'}
+            </span>
           </div>
           <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Jenis Tanaman</span>
+            <span className="text-muted-foreground">Komoditas</span>
             <span className="text-foreground">{farm.crop_type || '—'}</span>
           </div>
           <div className="flex justify-between gap-2">
             <span className="text-muted-foreground">Luas Lahan</span>
-            <span className="text-foreground">{formatAreaHa(farm.area_ha)}</span>
+            <span className="tabular-nums text-foreground">{formatAreaHa(farm.area_ha)}</span>
           </div>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">Update {timeAgo(farm.updated_at)}</p>
@@ -66,9 +80,9 @@ export default function FarmsPage() {
     : farms;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card>
-        <CardContent>
+        <CardContent className="p-4">
           <div className="relative max-w-md">
             <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -83,9 +97,9 @@ export default function FarmsPage() {
       </Card>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 w-full" />
+            <Skeleton key={i} className="h-40 w-full rounded-xl" />
           ))}
         </div>
       ) : error ? (
@@ -95,7 +109,7 @@ export default function FarmsPage() {
           {filter ? 'Kebun tidak ditemukan.' : 'Belum ada kebun.'}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visibleFarms.map((farm) => (
             <FarmListCard key={farm.id} farm={farm} />
           ))}

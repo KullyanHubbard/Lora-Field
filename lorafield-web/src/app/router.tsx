@@ -6,6 +6,7 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
 
 // Route-based code splitting — Leaflet (dashboard) dan chart (monitoring)
 // di-load hanya saat route pertama kali dikunjungi.
+const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/features/auth/RegisterPage'));
 const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'));
@@ -34,7 +35,8 @@ export function AppRouter() {
       }
     >
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Landing page publik — tanpa auth guard, untuk semua pengunjung */}
+        <Route path="/" element={<LandingPage />} />
 
         {/* Auth routes: kalau sudah login, lempar ke dashboard */}
         <Route

@@ -2,9 +2,9 @@ import { Link, useParams } from 'react-router-dom';
 import { Droplet, Zap } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { valveLabelFromDecision } from '@/features/farms/farmHelpers';
-import { getIrrigationStatusBadge, getValveStatusBadge, type StatusTone } from '@/lib/status';
+import { getIrrigationStatusBadge, getValveStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
-import { StatusBadge } from '@/components/StatusBadge';
+import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,15 +18,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-// Warna ikon/teks (bukan badge) — pakai utility Tailwind sehue dengan konvensi badge.
-const toneText: Record<StatusTone, string> = {
-  green: 'text-emerald-600',
-  yellow: 'text-amber-500',
-  red: 'text-red-600',
+type Pill = { label: string; tone: PillTone };
+
+// Warna ikon/teks emblem (bukan badge) — sehue dengan tone pill.
+const toneText: Record<PillTone, string> = {
+  green: 'text-emerald-600 dark:text-emerald-400',
+  yellow: 'text-amber-600 dark:text-amber-400',
+  red: 'text-red-600 dark:text-red-400',
+  neutral: 'text-muted-foreground',
 };
 
 // Tabel logika irigasi — dari aturan di CLAUDE.md (bukan dikarang).
-const LOGIC_ROWS: { soil: string; weather: string; tone: StatusTone; action: string }[] = [
+// Tone: buka=green, ditunda=amber; tutup & normal=neutral (bukan kondisi alarm).
+const LOGIC_ROWS: { soil: string; weather: string; tone: PillTone; action: string }[] = [
   {
     soil: 'Kelembapan < threshold bawah',
     weather: 'Tidak ada hujan',
@@ -42,22 +46,22 @@ const LOGIC_ROWS: { soil: string; weather: string; tone: StatusTone; action: str
   {
     soil: 'Kelembapan > threshold atas',
     weather: 'Apapun',
-    tone: 'yellow',
+    tone: 'neutral',
     action: 'Valve tutup',
   },
   {
     soil: 'Kelembapan di antara threshold',
     weather: 'Apapun',
-    tone: 'green',
+    tone: 'neutral',
     action: 'Normal, mengikuti status sebelumnya (Histeresis)',
   },
 ];
 
-function PanelRow({ label, children }: { label: string; children: React.ReactNode }) {
+function PanelRow({ label, pill }: { label: string; pill: Pill }) {
   return (
-    <div className="flex items-center justify-between border-b border-border py-2.5 text-sm last:border-b-0">
+    <div className="flex items-center justify-between gap-2 border-b border-border py-2.5 text-sm last:border-b-0">
       <span className="text-muted-foreground">{label}</span>
-      {children}
+      <StatusPill tone={pill.tone} label={pill.label} />
     </div>
   );
 }
@@ -69,8 +73,8 @@ export default function IrrigationPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
       </div>
     );
   }
@@ -91,18 +95,23 @@ export default function IrrigationPage() {
   const activeNode = summary.nodes.find((ns) => ns.node.status !== 'offline' && ns.decision);
   const decision = activeNode?.decision ?? null;
   const valveLabel = valveLabelFromDecision(decision);
-  const valveBadge = getValveStatusBadge(valveLabel);
-  const decisionText = decision ? decision.decision : 'Perlu cek gateway';
-  const irrigBadge = getIrrigationStatusBadge(decisionText);
+
+  // No-data (gateway/node belum aktif) → neutral, bukan merah (DESIGN.md).
+  const valvePill: Pill = decision
+    ? getValveStatusBadge(valveLabel)
+    : { label: 'Tidak Diketahui', tone: 'neutral' };
+  const irrigPill: Pill = decision
+    ? getIrrigationStatusBadge(decision.decision)
+    : { label: 'Menunggu Gateway', tone: 'neutral' };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card>
         <CardContent className="flex flex-col items-center gap-4 py-8 sm:flex-row sm:justify-center sm:gap-8">
           <div
             className={cn(
               'flex size-20 items-center justify-center rounded-full bg-muted',
-              toneText[valveBadge.tone],
+              toneText[valvePill.tone],
             )}
             aria-hidden="true"
           >
@@ -112,7 +121,9 @@ export default function IrrigationPage() {
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
               Status Valve
             </span>
-            <span className={cn('text-3xl font-bold', toneText[valveBadge.tone])}>
+            <span
+              className={cn('text-3xl font-semibold tracking-tight', toneText[valvePill.tone])}
+            >
               {valveLabel.toUpperCase()}
             </span>
             <Badge variant="secondary" className="gap-1">
@@ -138,10 +149,10 @@ export default function IrrigationPage() {
             <TableBody>
               {LOGIC_ROWS.map((row, i) => (
                 <TableRow key={i}>
-                  <TableCell>{row.soil}</TableCell>
-                  <TableCell>{row.weather}</TableCell>
+                  <TableCell className="text-muted-foreground">{row.soil}</TableCell>
+                  <TableCell className="text-muted-foreground">{row.weather}</TableCell>
                   <TableCell>
-                    <StatusBadge label={row.action} tone={row.tone} />
+                    <StatusPill tone={row.tone} label={row.action} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -155,12 +166,8 @@ export default function IrrigationPage() {
           <CardTitle className="text-base">Keputusan Sistem</CardTitle>
         </CardHeader>
         <CardContent>
-          <PanelRow label="Keputusan Sistem">
-            <StatusBadge label={irrigBadge.label} tone={irrigBadge.tone} />
-          </PanelRow>
-          <PanelRow label="Status Valve">
-            <StatusBadge label={valveBadge.label} tone={valveBadge.tone} />
-          </PanelRow>
+          <PanelRow label="Keputusan" pill={irrigPill} />
+          <PanelRow label="Status Valve" pill={valvePill} />
           {!decision && (
             <p className="pt-3 text-sm text-muted-foreground">
               Belum ada data dari node aktif. Pastikan gateway online.

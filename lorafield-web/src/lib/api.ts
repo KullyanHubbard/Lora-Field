@@ -93,8 +93,8 @@ export const api = {
     }),
 
   updateProfile: (phone: string) =>
-    // shape response belum diverifikasi dengan backend
-    apiFetch<unknown>('/auth/profile', {
+    // Response { user: User } (id, email, name, phone). Diverifikasi backend.
+    apiFetch<{ user: User }>('/auth/profile', {
       method: 'PATCH',
       body: JSON.stringify({ phone }),
     }),

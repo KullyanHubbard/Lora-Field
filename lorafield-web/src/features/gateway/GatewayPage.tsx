@@ -4,7 +4,7 @@ import { useFarmSummary } from '@/features/farms/queries';
 import { getFarmLastUpdate } from '@/features/farms/farmHelpers';
 import { getGatewayStatusBadge } from '@/lib/status';
 import { timeAgo } from '@/lib/format';
-import { StatusBadge } from '@/components/StatusBadge';
+import { StatusPill } from '@/components/ui/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -55,13 +55,13 @@ export default function GatewayPage() {
     <Card className="max-w-xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <RadioTower className="size-4 text-primary" /> Gateway
+          <RadioTower className="size-4 text-muted-foreground" /> Gateway
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col items-center gap-2 py-2">
           <GwIcon className="size-12 text-muted-foreground" />
-          <StatusBadge label={gwBadge.label} tone={gwBadge.tone} />
+          <StatusPill tone={gwBadge.tone} label={gwBadge.label} />
         </div>
         <div>
           <InfoRow label="ID Gateway">

@@ -5,6 +5,7 @@ import {
   Cpu,
   Droplets,
   History,
+  Home,
   LayoutDashboard,
   LineChart,
   LogOut,
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useFarmSummary } from '@/features/farms/queries';
 
 type NavItem = {
   to: string;
@@ -40,8 +42,13 @@ export function AppLayout() {
   const { pathname } = useLocation();
 
   // Context-aware: di dalam /farms/:id/* (kecuali /farms/add) → mode farm-context.
+  // farmId diambil dari path (AppLayout di atas route :id, jadi useParams tak punya
+  // id di sini). Nama kebun dari useFarmSummary (cache di-share dengan page; hanya
+  // fetch saat ada farmId).
   const farmMatch = pathname.match(/^\/farms\/([^/]+)/);
   const farmId = farmMatch && farmMatch[1] !== 'add' ? farmMatch[1] : null;
+  const { data: farmSummary } = useFarmSummary(farmId ?? '');
+  const farmName = farmSummary?.farm.name ?? 'Kebun';
 
   const selectorNav: NavItem[] = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -51,6 +58,7 @@ export function AppLayout() {
 
   const farmNav: NavItem[] = farmId
     ? [
+        { to: `/farms/${farmId}`, label: 'Ringkasan Kebun', icon: Home },
         { to: `/farms/${farmId}/monitoring`, label: 'Monitoring', icon: LineChart },
         { to: `/farms/${farmId}/irrigation`, label: 'Irigasi', icon: Droplets },
         { to: `/farms/${farmId}/gateway`, label: 'Gateway', icon: Radio },
@@ -87,6 +95,10 @@ export function AppLayout() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   </SidebarMenu>
+                  {/* FarmSwitcher: nama kebun yang sedang aktif. */}
+                  <div className="truncate px-2 pt-2 text-sm font-medium text-primary">
+                    {farmName}
+                  </div>
                 </SidebarGroupContent>
               </SidebarGroup>
 

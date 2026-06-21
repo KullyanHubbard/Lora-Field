@@ -49,7 +49,7 @@ Referensi stack lama (`frontend/src/`, jangan dipakai di build baru): Vite 5.4, 
 ## Aturan Anti-Halusinasi (WAJIB)
 
 - API contract = section "Backend Endpoints" + "Database Schema" di CLAUDE.md ini, plus `src/types/index.ts`. JANGAN mengarang endpoint, field, atau shape response.
-- Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada"). Khususnya `GET /api/auth/me` dan `PATCH /api/farms/{id}`.
+- Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada"). Khususnya `PATCH /api/farms/{id}`.
 - Field yang masih perlu verifikasi shape-nya terhadap response asli: kolom `weather` di decision_logs (kolom ada di schema, tipe perlu cek), struktur summary cuaca termasuk prediksi hujan, serta isi persis response `/summary` dan `/login`. Kalau tidak cocok dengan type, LAPORKAN — jangan diam-diam ubah.
 - Data dummy/mock harus ditandai jelas sebagai mock, jangan seolah dari backend.
 - Kalau ragu atau butuh keputusan desain: BERHENTI dan tanya.
@@ -75,6 +75,9 @@ Referensi stack lama (`frontend/src/`, jangan dipakai di build baru): Vite 5.4, 
 | `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password) |
 | `/api/auth/change-password` | POST | JWT | Ganti password (sudah login) |
 | `/api/auth/profile` | PATCH | JWT | Update phone number |
+| `/api/auth/me` | GET | JWT | Fetch profil user (return UserPublic). Sumber: main.py:701. |
+
+> Catatan: profil user saat ini diambil dari AuthContext (login response); penggunaan `/api/auth/me` untuk refresh profil ditunda ke fase polish.
 
 ### Farms
 
@@ -118,7 +121,6 @@ Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di fronte
 
 ## Endpoint Belum Ada (jangan panggil/karang)
 
-- `GET /api/auth/me` — BELUM ADA. Ambil profil user dari AuthContext (hasil login), bukan dari endpoint ini. (Inilah alasan SettingsPage lama baca dari localStorage.)
 - `PATCH /api/farms/{farm_id}` — update data kebun BELUM ADA (hanya create + delete).
 - Rate limit brute-force untuk endpoint auth sensitif belum ada.
 
@@ -143,7 +145,7 @@ Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di fronte
 - Dukung dark mode dan light mode (di build baru lewat tema shadcn, toggle via class/`data-theme` di `<html>`). Pastikan style jalan di kedua mode.
 - Badge status warna konsisten: green/yellow/red.
 - Progress bar selalu sertakan label range `0%` dan `100%`.
-- Jangan buat landing page marketing; dashboard adalah pengalaman utama.
+- Landing page marketing publik ADA di route `/` (lihat tabel Routes). Aturan lama "jangan buat landing page" sudah dicabut user (2026-06-21). Dashboard tetap pengalaman utama bagi user yang sudah login; landing hanya etalase di `/` (publik, tanpa auth guard, untuk semua pengunjung).
 - Logo: `frontend/public/static/img/logo.svg` (favicon, sidebar brand, marker peta) — salin ke aset build baru.
 
 ### Routes & Pages (target rebuild)
@@ -152,6 +154,7 @@ Route dan path dipertahankan sama. File `.jsx` lama = referensi porting.
 
 | Route | Page (referensi lama) | Keterangan |
 |-------|------|-----------|
+| `/` | `LandingPage.tsx` (port dari `saas-landing-page/`) | Landing marketing PUBLIK, tanpa auth guard. Tombol Login/CTA → `/login`. Dark-only. |
 | `/login` | `LoginPage.jsx` | Login + inline forgot password 2-step |
 | `/register` | `RegisterPage.jsx` | Daftar akun baru |
 | `/reset-password` | `ResetPasswordPage.jsx` | Flow lupa password (OTP 2 tahap) |

@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useFarmSummary } from '@/features/farms/queries';
 import { getNodeStatusBadge } from '@/lib/status';
 import { timeAgo } from '@/lib/format';
-import { StatusBadge } from '@/components/StatusBadge';
+import { StatusPill } from '@/components/ui/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -73,13 +73,13 @@ export default function NodesPage() {
                     </TableCell>
                     <TableCell>{node.location || '—'}</TableCell>
                     <TableCell>
-                      <StatusBadge label={badge.label} tone={badge.tone} />
+                      <StatusPill tone={badge.tone} label={badge.label} />
                     </TableCell>
-                    <TableCell className="font-mono">
+                    <TableCell className="tabular-nums">
                       {node.battery != null ? `${node.battery}%` : '—'}
                     </TableCell>
                     {/* RSSI tidak disimpan backend (tidak ada di type Node) → selalu "—" */}
-                    <TableCell className="font-mono text-muted-foreground">—</TableCell>
+                    <TableCell className="tabular-nums text-muted-foreground">—</TableCell>
                     <TableCell className="text-muted-foreground">
                       {timeAgo(node.updated_at)}
                     </TableCell>

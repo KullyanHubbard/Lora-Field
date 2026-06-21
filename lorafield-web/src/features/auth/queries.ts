@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useAuth } from './AuthContext';
 
 export interface RegisterPayload {
   name: string;
@@ -62,6 +63,23 @@ export function useResetPassword() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Gagal memperbarui password.');
+    },
+  });
+}
+
+// --- Profil: update nomor HP (PATCH /api/auth/profile, JWT) ---
+
+export function useUpdateProfile() {
+  const { updateUser } = useAuth();
+  return useMutation({
+    mutationFn: (phone: string) => api.updateProfile(phone),
+    onSuccess: (data) => {
+      // Sinkronkan user terbaru ke AuthContext + localStorage (topbar ikut update).
+      updateUser(data.user);
+      toast.success('Nomor handphone diperbarui.');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Gagal menyimpan nomor handphone.');
     },
   });
 }

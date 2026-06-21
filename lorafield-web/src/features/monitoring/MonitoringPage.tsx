@@ -7,7 +7,7 @@ import { useReadings } from './queries';
 import { getNodeStatusBadge } from '@/lib/status';
 import { DEG_C, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { StatusBadge } from '@/components/StatusBadge';
+import { StatusPill } from '@/components/ui/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -106,20 +106,20 @@ function ReadingRow({ reading, nodeName }: { reading: Reading; nodeName: string 
   const badge = getNodeStatusBadge('online');
   return (
     <TableRow>
-      <TableCell className="font-mono">{formatTimeLabel(reading.created_at) || '—'}</TableCell>
+      <TableCell className="tabular-nums">{formatTimeLabel(reading.created_at) || '—'}</TableCell>
       <TableCell>{nodeName}</TableCell>
-      <TableCell className="font-mono">{reading.soil_moisture}%</TableCell>
-      <TableCell className="font-mono">
+      <TableCell className="tabular-nums">{reading.soil_moisture}%</TableCell>
+      <TableCell className="tabular-nums">
         {reading.soil_temp}
         {DEG_C}
       </TableCell>
-      <TableCell className="font-mono">
+      <TableCell className="tabular-nums">
         {reading.air_temp}
         {DEG_C}
       </TableCell>
-      <TableCell className="font-mono">{reading.air_humidity}%</TableCell>
+      <TableCell className="tabular-nums">{reading.air_humidity}%</TableCell>
       <TableCell>
-        <StatusBadge label={badge.label} tone={badge.tone} />
+        <StatusPill tone={badge.tone} label={badge.label} />
       </TableCell>
     </TableRow>
   );
@@ -185,7 +185,7 @@ export default function MonitoringPage() {
   const tableRows = readings.slice(0, 10);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card>
         <CardContent className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-col gap-1.5">

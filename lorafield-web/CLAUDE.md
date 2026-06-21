@@ -49,7 +49,7 @@ Referensi stack lama (`frontend/src/`, jangan dipakai di build baru): Vite 5.4, 
 ## Aturan Anti-Halusinasi (WAJIB)
 
 - API contract = section "Backend Endpoints" + "Database Schema" di CLAUDE.md ini, plus `src/types/index.ts`. JANGAN mengarang endpoint, field, atau shape response.
-- Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada"). Khususnya `GET /api/auth/me` dan `PATCH /api/farms/{id}`.
+- Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada"). Khususnya `PATCH /api/farms/{id}`.
 - Field yang masih perlu verifikasi shape-nya terhadap response asli: kolom `weather` di decision_logs (kolom ada di schema, tipe perlu cek), struktur summary cuaca termasuk prediksi hujan, serta isi persis response `/summary` dan `/login`. Kalau tidak cocok dengan type, LAPORKAN — jangan diam-diam ubah.
 - Data dummy/mock harus ditandai jelas sebagai mock, jangan seolah dari backend.
 - Kalau ragu atau butuh keputusan desain: BERHENTI dan tanya.
@@ -75,6 +75,9 @@ Referensi stack lama (`frontend/src/`, jangan dipakai di build baru): Vite 5.4, 
 | `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password) |
 | `/api/auth/change-password` | POST | JWT | Ganti password (sudah login) |
 | `/api/auth/profile` | PATCH | JWT | Update phone number |
+| `/api/auth/me` | GET | JWT | Fetch profil user (return UserPublic). Sumber: main.py:701. |
+
+> Catatan: profil user saat ini diambil dari AuthContext (login response); penggunaan `/api/auth/me` untuk refresh profil ditunda ke fase polish.
 
 ### Farms
 
@@ -118,7 +121,6 @@ Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di fronte
 
 ## Endpoint Belum Ada (jangan panggil/karang)
 
-- `GET /api/auth/me` — BELUM ADA. Ambil profil user dari AuthContext (hasil login), bukan dari endpoint ini. (Inilah alasan SettingsPage lama baca dari localStorage.)
 - `PATCH /api/farms/{farm_id}` — update data kebun BELUM ADA (hanya create + delete).
 - Rate limit brute-force untuk endpoint auth sensitif belum ada.
 

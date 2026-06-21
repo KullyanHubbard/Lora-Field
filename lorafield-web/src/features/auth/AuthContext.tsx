@@ -32,6 +32,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -57,6 +58,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserState(null);
   }, []);
 
+  // Update user object (mis. setelah edit profil). Sync ke state + localStorage
+  // ('lf_user') supaya topbar dan tab lain ikut berubah.
+  const updateUser = useCallback((next: User) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(next));
+    setUserState(next);
+  }, []);
+
   // Sync antar tab: kalau user logout di tab lain, propagate ke tab ini.
   useEffect(() => {
     const handler = (event: StorageEvent) => {
@@ -76,8 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ token, user, isAuthenticated, login, logout }),
-    [token, user, isAuthenticated, login, logout],
+    () => ({ token, user, isAuthenticated, login, logout, updateUser }),
+    [token, user, isAuthenticated, login, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

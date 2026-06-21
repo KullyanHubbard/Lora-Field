@@ -18,9 +18,8 @@ import {
   type WeatherIconKey,
 } from './weatherHelpers';
 import { DEG_C } from '@/lib/format';
-import { type StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
-import { StatusBadge } from '@/components/StatusBadge';
+import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,15 +35,17 @@ const weatherIcon: Record<WeatherIconKey, typeof Sun> = {
   unknown: CloudOff,
 };
 
-const toneBorder: Record<StatusTone, string> = {
+const toneBorder: Record<PillTone, string> = {
   green: 'border-emerald-500/50',
   yellow: 'border-amber-500/50',
   red: 'border-red-500/50',
+  neutral: 'border-border',
 };
-const toneTextColor: Record<StatusTone, string> = {
+const toneTextColor: Record<PillTone, string> = {
   green: 'text-emerald-600 dark:text-emerald-400',
   yellow: 'text-amber-600 dark:text-amber-400',
   red: 'text-red-600 dark:text-red-400',
+  neutral: 'text-muted-foreground',
 };
 
 function InfoItem({ label, value }: { label: string; value: string }) {
@@ -57,9 +58,10 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 }
 
 function ImpactCard({ weather }: { weather: Weather | null }) {
-  const impact: { tone: StatusTone; Icon: typeof Sun; text: string } = !weather
+  // No-data BMKG → neutral (bukan merah). Hujan → amber (perhatian). Aman → green.
+  const impact: { tone: PillTone; Icon: typeof Sun; text: string } = !weather
     ? {
-        tone: 'red',
+        tone: 'neutral',
         Icon: TriangleAlert,
         text: 'Data BMKG belum tersedia. Pastikan kode BMKG kebun sudah terisi sesuai lokasi.',
       }
@@ -72,7 +74,7 @@ function ImpactCard({ weather }: { weather: Weather | null }) {
       : {
           tone: 'green',
           Icon: CircleCheck,
-          text: 'Tidak ada prediksi hujan, sistem mengizinkan irigasi jika kelembapan tanah berada di bawah threshold bawah.',
+          text: 'Tidak ada prediksi hujan, sistem mengizinkan irigasi jika kelembapan tanah di bawah threshold bawah.',
         };
   const Icon = impact.Icon;
 
@@ -110,9 +112,9 @@ function WeatherInfoCard({ weather, farm }: { weather: Weather | null; farm: Far
         <InfoItem label="Kode BMKG" value={adm4} />
         <InfoItem label="Koordinat Kebun" value={coord} />
         <InfoItem label="Altitude BMKG" value={altitudeText} />
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col items-start gap-1">
           <span className="text-xs text-muted-foreground">Status Koneksi</span>
-          <StatusBadge label={statusLabel} tone={available ? 'green' : 'red'} />
+          <StatusPill tone={available ? 'green' : 'neutral'} label={statusLabel} />
         </div>
         <InfoItem label="Update Terakhir" value={lastUpdate} />
       </CardContent>
@@ -120,7 +122,7 @@ function WeatherInfoCard({ weather, farm }: { weather: Weather | null; farm: Far
   );
 }
 
-function WeatherMainCard({ weather, farm }: { weather: Weather | null; farm: Farm }) {
+function WeatherMainCard({ weather }: { weather: Weather | null }) {
   const info = getWeatherCodeInfo(weather?.code, weather?.condition);
   const Icon = weatherIcon[info.iconKey];
   const temp = pickNumber(weather?.temperature);
@@ -132,28 +134,25 @@ function WeatherMainCard({ weather, farm }: { weather: Weather | null; farm: Far
     wind != null
       ? `${wind} km/jam${weather?.wind_direction ? ` (${weather.wind_direction})` : ''}`
       : '—';
-  const locationText = farm.location || '';
 
   return (
     <Card>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4">
-          <Icon className="size-12 text-primary" />
+          <Icon className="size-12 text-muted-foreground" />
           <div className="flex flex-col">
-            <span className="text-3xl font-semibold text-foreground">{tempText}</span>
-            <span className="text-sm text-muted-foreground">{locationText}</span>
+            <span className="text-4xl font-semibold tracking-tight tabular-nums text-foreground">
+              {tempText}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              {weather ? weather.condition : 'Belum tersedia'}
+            </span>
           </div>
         </div>
         <div className="space-y-2 border-t border-border pt-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Kondisi</span>
-            <span className="font-medium text-foreground">
-              {weather ? weather.condition : 'Belum tersedia'}
-            </span>
-          </div>
-          <div className="flex justify-between">
             <span className="text-muted-foreground">Kelembapan</span>
-            <span className="font-medium text-foreground">{humText}</span>
+            <span className="font-medium tabular-nums text-foreground">{humText}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Kecepatan Angin</span>
@@ -161,7 +160,7 @@ function WeatherMainCard({ weather, farm }: { weather: Weather | null; farm: Far
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Kode Cuaca</span>
-            <span className="font-medium text-foreground">{weather?.code ?? '—'}</span>
+            <span className="font-medium tabular-nums text-foreground">{weather?.code ?? '—'}</span>
           </div>
         </div>
       </CardContent>
@@ -191,8 +190,8 @@ function ForecastGrid({ weather }: { weather: Weather | null }) {
           <Card key={i}>
             <CardContent className="flex flex-col items-center gap-1.5 text-center">
               <span className="text-xs text-muted-foreground">{formatForecastLabel(f, i)}</span>
-              <Icon className="size-7 text-primary" />
-              <span className="text-base font-semibold text-foreground">{tempText}</span>
+              <Icon className="size-7 text-muted-foreground" />
+              <span className="text-lg font-semibold tabular-nums text-foreground">{tempText}</span>
               <span className="text-xs text-muted-foreground">
                 {f.weather_desc || f.condition || '—'}
               </span>
@@ -210,10 +209,10 @@ export default function WeatherPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-40 w-full" />
+      <div className="space-y-6">
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
   }
@@ -231,16 +230,15 @@ export default function WeatherPage() {
     );
   }
 
-  // Type menandai weather wajib, tapi backend bisa kirim null kalau adm4 belum resolve
-  // (lihat LAPORAN). Pertahankan guard no-data seperti page lama.
+  // Type menandai weather wajib, tapi backend bisa kirim null kalau adm4 belum resolve.
   const weather: Weather | null = summary.weather ?? null;
   const farm = summary.farm;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <ImpactCard weather={weather} />
       <WeatherInfoCard weather={weather} farm={farm} />
-      <WeatherMainCard weather={weather} farm={farm} />
+      <WeatherMainCard weather={weather} />
       <ForecastGrid weather={weather} />
     </div>
   );

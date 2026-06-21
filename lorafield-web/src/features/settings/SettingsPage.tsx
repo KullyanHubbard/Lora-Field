@@ -1,4 +1,102 @@
-// Placeholder — diisi di fase berikutnya (profil akun, edit HP, ganti sandi, logout).
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { KeyRound, LogOut, Pencil } from 'lucide-react';
+import { useAuth } from '@/features/auth/AuthContext';
+import { useUpdateProfile } from '@/features/auth/queries';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+
+function ProfileField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-border py-3 text-sm last:border-b-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
-  return <div className="p-6">SettingsPage (placeholder)</div>;
+  const { user, logout } = useAuth();
+  const updateProfile = useUpdateProfile();
+
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+
+  const startEdit = () => {
+    setPhoneInput(user?.phone ?? '');
+    setEditingPhone(true);
+  };
+
+  const savePhone = () => {
+    updateProfile.mutate(phoneInput.trim(), {
+      onSuccess: () => setEditingPhone(false),
+    });
+  };
+
+  return (
+    <Card className="mx-auto max-w-xl">
+      <CardHeader>
+        <CardTitle className="text-base">Profil Akun</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <ProfileField label="Nama" value={user?.name || 'Tidak tersedia'} />
+          <ProfileField label="Email" value={user?.email || 'Tidak tersedia'} />
+          <div className="flex items-center justify-between gap-3 border-b border-border py-3 text-sm last:border-b-0">
+            <span className="text-muted-foreground">Nomor Handphone</span>
+            {editingPhone ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="tel"
+                  autoComplete="tel"
+                  maxLength={20}
+                  placeholder="Contoh: 08123456789"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  className="h-8 w-44"
+                  autoFocus
+                />
+                <Button size="sm" onClick={savePhone} disabled={updateProfile.isPending}>
+                  Simpan
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditingPhone(false)}
+                  disabled={updateProfile.isPending}
+                >
+                  Batal
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-foreground">{user?.phone || '—'}</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={startEdit}
+                  aria-label="Edit nomor handphone"
+                >
+                  <Pencil className="size-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <Button asChild variant="outline">
+            <Link to="/change-password">
+              <KeyRound className="size-4" /> Ganti Sandi
+            </Link>
+          </Button>
+          <Button variant="destructive" onClick={logout}>
+            <LogOut className="size-4" /> Keluar
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
