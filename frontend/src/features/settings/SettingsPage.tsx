@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { KeyRound, LogOut, Pencil } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useUpdateProfile } from '@/features/auth/queries';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import i18n from '@/i18n/config';
 
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
@@ -17,6 +26,7 @@ function ProfileField({ label, value }: { label: string; value: string }) {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const updateProfile = useUpdateProfile();
 
@@ -32,6 +42,15 @@ export default function SettingsPage() {
     updateProfile.mutate(phoneInput.trim(), {
       onSuccess: () => setEditingPhone(false),
     });
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    void i18n.changeLanguage(lang);
+    try {
+      localStorage.setItem('lf_lang', lang);
+    } catch {
+      // localStorage tidak tersedia di sebagian konteks
+    }
   };
 
   return (
@@ -83,6 +102,18 @@ export default function SettingsPage() {
                 </Button>
               </div>
             )}
+          </div>
+          <div className="flex items-center justify-between gap-3 py-3 text-sm">
+            <span className="text-muted-foreground">{t('common.language')}</span>
+            <Select value={i18n.language} onValueChange={handleLanguageChange}>
+              <SelectTrigger className="h-8 w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="id">{t('common.languageId')}</SelectItem>
+                <SelectItem value="en">{t('common.languageEn')}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

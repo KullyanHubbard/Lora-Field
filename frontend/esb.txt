@@ -1,0 +1,4 @@
+npm warn exec The following package was not found and will be installed: esbuild@0.28.1
+✘ [ERROR] "loader" without extension only applies when reading from stdin
+
+1 error

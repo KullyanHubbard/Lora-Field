@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { RefreshCw } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
@@ -103,6 +104,7 @@ function MetricChart({
 }
 
 function ReadingRow({ reading, nodeName }: { reading: Reading; nodeName: string }) {
+  const { t } = useTranslation();
   const badge = getNodeStatusBadge('online');
   return (
     <TableRow>
@@ -119,7 +121,7 @@ function ReadingRow({ reading, nodeName }: { reading: Reading; nodeName: string 
       </TableCell>
       <TableCell className="tabular-nums">{reading.air_humidity}%</TableCell>
       <TableCell>
-        <StatusPill tone={badge.tone} label={badge.label} />
+        <StatusPill tone={badge.tone} label={t(badge.labelKey)} />
       </TableCell>
     </TableRow>
   );
@@ -127,6 +129,7 @@ function ReadingRow({ reading, nodeName }: { reading: Reading; nodeName: string 
 
 export default function MonitoringPage() {
   const { id: farmId } = useParams();
+  const { t } = useTranslation();
   const { data: summary, isLoading: summaryLoading, error: summaryError } = useFarmSummary(
     farmId ?? '',
   );
@@ -162,11 +165,11 @@ export default function MonitoringPage() {
       <div className="space-y-3">
         <p className="text-destructive">
           {summaryError
-            ? `Gagal memuat data kebun: ${summaryError.message}`
-            : 'Data tidak tersedia.'}
+            ? t('monitoring.errorLoadFarm', { message: summaryError.message })
+            : t('monitoring.noData')}
         </p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">Kembali ke Daftar Kebun</Link>
+          <Link to="/dashboard">{t('monitoring.backToList')}</Link>
         </Button>
       </div>
     );
@@ -192,7 +195,7 @@ export default function MonitoringPage() {
             <span className="text-sm text-muted-foreground">Node</span>
             <Select value={effectiveNodeId} onValueChange={setPicked} disabled={!nodes.length}>
               <SelectTrigger className="w-64">
-                <SelectValue placeholder={nodes.length ? 'Pilih node' : 'Tidak ada node'} />
+                <SelectValue placeholder={nodes.length ? t('monitoring.selectNode') : t('monitoring.noNodes')} />
               </SelectTrigger>
               <SelectContent>
                 {nodes.map((n) => (
@@ -210,13 +213,13 @@ export default function MonitoringPage() {
             disabled={!effectiveNodeId || readingsFetching}
           >
             <RefreshCw className={cn('size-4', readingsFetching && 'animate-spin')} />
-            Muat Ulang Data
+            {t('monitoring.reload')}
           </Button>
         </CardContent>
       </Card>
 
       {readingsError ? (
-        <p className="text-destructive">Gagal memuat pembacaan: {readingsError.message}</p>
+        <p className="text-destructive">{t('monitoring.errorLoadReadings', { message: readingsError.message })}</p>
       ) : readingsLoading && readings.length === 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -224,33 +227,33 @@ export default function MonitoringPage() {
           ))}
         </div>
       ) : readings.length === 0 ? (
-        <p className="text-muted-foreground">Belum ada data pembacaan sensor untuk node ini.</p>
+        <p className="text-muted-foreground">{t('monitoring.emptyReadings')}</p>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2">
             <MetricChart
-              title="Kelembapan Tanah"
+              title={t('monitoring.chartSoilMoisture')}
               data={point('soil_moisture')}
               colorVar="var(--chart-1)"
               yDomain={[0, 100]}
               unit="%"
             />
             <MetricChart
-              title="Suhu Tanah"
+              title={t('monitoring.chartSoilTemp')}
               data={point('soil_temp')}
               colorVar="var(--chart-2)"
               yDomain={[15, 45]}
               unit={DEG_C}
             />
             <MetricChart
-              title="Suhu Udara"
+              title={t('monitoring.chartAirTemp')}
               data={point('air_temp')}
               colorVar="var(--chart-3)"
               yDomain={[15, 45]}
               unit={DEG_C}
             />
             <MetricChart
-              title="Kelembapan Udara"
+              title={t('monitoring.chartAirHumidity')}
               data={point('air_humidity')}
               colorVar="var(--chart-4)"
               yDomain={[0, 100]}
@@ -263,13 +266,13 @@ export default function MonitoringPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Waktu</TableHead>
+                    <TableHead>{t('monitoring.colTime')}</TableHead>
                     <TableHead>Node</TableHead>
-                    <TableHead>Kelembapan Tanah</TableHead>
-                    <TableHead>Suhu Tanah</TableHead>
-                    <TableHead>Suhu Udara</TableHead>
-                    <TableHead>Kelembapan Udara</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t('monitoring.colSoilMoisture')}</TableHead>
+                    <TableHead>{t('monitoring.colSoilTemp')}</TableHead>
+                    <TableHead>{t('monitoring.colAirTemp')}</TableHead>
+                    <TableHead>{t('monitoring.colAirHumidity')}</TableHead>
+                    <TableHead>{t('monitoring.colStatus')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -280,7 +283,7 @@ export default function MonitoringPage() {
               </Table>
               {selectedNode && (
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Last update node: {timeAgo(selectedNode.updated_at)}
+                  {t('monitoring.lastUpdate')} {timeAgo(selectedNode.updated_at, t)}
                 </p>
               )}
             </CardContent>

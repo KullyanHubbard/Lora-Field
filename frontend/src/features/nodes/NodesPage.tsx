@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useFarmSummary } from '@/features/farms/queries';
 import { getNodeStatusBadge } from '@/lib/status';
 import { timeAgo } from '@/lib/format';
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/table';
 
 export default function NodesPage() {
+  const { t } = useTranslation();
   const { id: farmId } = useParams();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
 
@@ -31,10 +33,10 @@ export default function NodesPage() {
     return (
       <div className="space-y-3">
         <p className="text-destructive">
-          {error ? `Gagal memuat data node: ${error.message}` : 'Data tidak tersedia.'}
+          {error ? t('nodes.errorLoad', { message: error.message }) : t('nodes.noData')}
         </p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">Kembali ke Daftar Kebun</Link>
+          <Link to="/dashboard">{t('nodes.backToDashboard')}</Link>
         </Button>
       </div>
     );
@@ -48,19 +50,19 @@ export default function NodesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Node</TableHead>
-              <TableHead>Lokasi Titik</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Baterai</TableHead>
+              <TableHead>{t('nodes.colNode')}</TableHead>
+              <TableHead>{t('nodes.colLocation')}</TableHead>
+              <TableHead>{t('nodes.colStatus')}</TableHead>
+              <TableHead>{t('nodes.colBattery')}</TableHead>
               <TableHead>RSSI LoRa</TableHead>
-              <TableHead>Update Terakhir</TableHead>
+              <TableHead>{t('nodes.colLastUpdate')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {nodes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Belum ada node terdaftar untuk kebun ini.
+                  {t('nodes.empty')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -73,7 +75,7 @@ export default function NodesPage() {
                     </TableCell>
                     <TableCell>{node.location || '—'}</TableCell>
                     <TableCell>
-                      <StatusPill tone={badge.tone} label={badge.label} />
+                      <StatusPill tone={badge.tone} label={t(badge.labelKey)} />
                     </TableCell>
                     <TableCell className="tabular-nums">
                       {node.battery != null ? `${node.battery}%` : '—'}
@@ -81,7 +83,7 @@ export default function NodesPage() {
                     {/* RSSI tidak disimpan backend (tidak ada di type Node) → selalu "—" */}
                     <TableCell className="tabular-nums text-muted-foreground">—</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {timeAgo(node.updated_at)}
+                      {timeAgo(node.updated_at, t)}
                     </TableCell>
                   </TableRow>
                 );

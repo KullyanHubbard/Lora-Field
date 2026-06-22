@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Clock,
   Cloud,
@@ -21,7 +22,7 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { useFarmSummary } from './queries';
-import { getFarmLastUpdate, valveLabelFromDecision } from './farmHelpers';
+import { getFarmLastUpdate, valveKeyFromDecision } from './farmHelpers';
 import {
   getGatewayStatusBadge,
   getIrrigationStatusBadge,
@@ -93,13 +94,14 @@ function MetaItem({ icon, value }: { icon: typeof Leaf; value: string }) {
 }
 
 function FarmInfoBar({ summary }: { summary: FarmSummary }) {
+  const { t } = useTranslation();
   const { farm } = summary;
   const lastUpd = getFarmLastUpdate(farm, summary.nodes);
   const gw = getGatewayStatusBadge(summary.gateway_status);
   const farmPill: Pill =
     farm.status === 'warning'
-      ? { label: 'Perlu Perhatian', tone: 'yellow' }
-      : { label: 'Normal', tone: 'green' };
+      ? { label: t('farmDetail.statusWarning'), tone: 'yellow' }
+      : { label: t('farmDetail.statusNormal'), tone: 'green' };
 
   return (
     <Card>
@@ -108,14 +110,14 @@ function FarmInfoBar({ summary }: { summary: FarmSummary }) {
           <h2 className="text-lg font-semibold text-foreground">{farm.name}</h2>
           <div className="flex items-center gap-2">
             <StatusPill tone={farmPill.tone} label={farmPill.label} />
-            <StatusPill tone={gw.tone} label={`Gateway ${gw.label}`} />
+            <StatusPill tone={gw.tone} label={`Gateway ${t(gw.labelKey)}`} />
           </div>
         </div>
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <MetaItem icon={Leaf} value={farm.crop_type || '—'} />
           <MetaItem icon={Ruler} value={formatAreaHa(farm.area_ha)} />
           <MetaItem icon={MapPin} value={shortLocation(farm.location)} />
-          <MetaItem icon={Clock} value={timeAgo(lastUpd)} />
+          <MetaItem icon={Clock} value={timeAgo(lastUpd, t)} />
         </div>
       </CardContent>
     </Card>
@@ -123,37 +125,39 @@ function FarmInfoBar({ summary }: { summary: FarmSummary }) {
 }
 
 function IrrigasiCard({ summary }: { summary: FarmSummary }) {
+  const { t } = useTranslation();
   const avg = summary.average_soil_moisture;
   const { lower, upper } = summary.thresholds;
   const activeNode = summary.nodes.find((ns) => ns.node.status !== 'offline' && ns.decision);
 
-  // No-data → neutral (abu-abu), bukan merah (DESIGN.md).
   const soil: Pill =
-    avg > 0 ? getSoilStatusFromMoisture(avg, lower, upper) : { label: 'Tidak Ada Data', tone: 'neutral' };
+    avg > 0 ? { label: t(getSoilStatusFromMoisture(avg, lower, upper).labelKey), tone: getSoilStatusFromMoisture(avg, lower, upper).tone } : { label: t('farmDetail.noData'), tone: 'neutral' };
   const irrig: Pill = activeNode
-    ? getIrrigationStatusBadge(activeNode.decision.decision)
-    : { label: 'Menunggu Gateway', tone: 'neutral' };
-  const valve: Pill = activeNode
-    ? getValveStatusBadge(valveLabelFromDecision(activeNode.decision))
-    : { label: 'Tidak Diketahui', tone: 'neutral' };
+    ? { label: t(getIrrigationStatusBadge(activeNode.decision.decision).labelKey), tone: getIrrigationStatusBadge(activeNode.decision.decision).tone }
+    : { label: t('farmDetail.waitingGateway'), tone: 'neutral' };
+  const valveKey = activeNode ? valveKeyFromDecision(activeNode.decision) : null;
+  const valve: Pill = valveKey
+    ? { label: t(getValveStatusBadge(valveKey).labelKey), tone: getValveStatusBadge(valveKey).tone }
+    : { label: t('farmDetail.unknown'), tone: 'neutral' };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Droplet className="size-4 text-muted-foreground" /> Irigasi
+          <Droplet className="size-4 text-muted-foreground" /> {t('farmDetail.irrigationTitle')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <PillRow label="Status Tanah" pill={soil} />
-        <PillRow label="Status Irigasi" pill={irrig} />
-        <PillRow label="Status Valve" pill={valve} />
+        <PillRow label={t('farmDetail.soilStatus')} pill={soil} />
+        <PillRow label={t('farmDetail.irrigationStatus')} pill={irrig} />
+        <PillRow label={t('farmDetail.valveStatus')} pill={valve} />
       </CardContent>
     </Card>
   );
 }
 
 function GatewayCard({ summary }: { summary: FarmSummary }) {
+  const { t } = useTranslation();
   const gw = getGatewayStatusBadge(summary.gateway_status);
   const GwIcon = summary.gateway_status === 'offline' ? WifiOff : RadioTower;
 
@@ -167,11 +171,11 @@ function GatewayCard({ summary }: { summary: FarmSummary }) {
       <CardContent className="space-y-4">
         <div className="flex flex-col items-center gap-2 py-2">
           <GwIcon className="size-10 text-muted-foreground" />
-          <StatusPill tone={gw.tone} label={gw.label} />
+          <StatusPill tone={gw.tone} label={t(gw.labelKey)} />
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Terakhir Online</span>
-          <span className="font-medium text-foreground">{timeAgo(summary.farm.updated_at)}</span>
+          <span className="text-muted-foreground">{t('farmDetail.lastOnline')}</span>
+          <span className="font-medium text-foreground">{timeAgo(summary.farm.updated_at, t)}</span>
         </div>
       </CardContent>
     </Card>
@@ -179,22 +183,23 @@ function GatewayCard({ summary }: { summary: FarmSummary }) {
 }
 
 function WeatherCard({ summary }: { summary: FarmSummary }) {
+  const { t } = useTranslation();
   const weather = summary.weather;
-  const condition = weather?.condition || 'Belum tersedia';
+  const condition = weather?.condition || t('farmDetail.weatherUnavailable');
   const WeatherIcon = weatherIcon[getWeatherInfo(condition).iconKey];
   const temp =
     weather && Number.isFinite(Number(weather.temperature)) ? `${weather.temperature}${DEG_C}` : '—';
   const rain: Pill = !weather
-    ? { label: 'Belum Tersedia', tone: 'neutral' }
+    ? { label: t('farmDetail.weatherUnavailable'), tone: 'neutral' }
     : weather.rain_next_3h
-      ? { label: 'Prediksi Hujan', tone: 'yellow' }
-      : { label: 'Tidak Ada Hujan', tone: 'green' };
+      ? { label: t('farmDetail.rainPredicted'), tone: 'yellow' }
+      : { label: t('farmDetail.noRain'), tone: 'green' };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CloudSun className="size-4 text-muted-foreground" /> Cuaca
+          <CloudSun className="size-4 text-muted-foreground" /> {t('farmDetail.weatherTitle')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -205,26 +210,26 @@ function WeatherCard({ summary }: { summary: FarmSummary }) {
               {temp}
             </span>
             <span className="text-sm text-muted-foreground">
-              {weather ? condition : 'Belum tersedia'}
+              {weather ? t(getWeatherInfo(condition).label) : t('farmDetail.weatherUnavailable')}
             </span>
           </div>
         </div>
-        <PillRow label="Prediksi Hujan (3 jam)" pill={rain} />
+        <PillRow label={t('farmDetail.rainForecast')} pill={rain} />
       </CardContent>
     </Card>
   );
 }
 
 function NodeTableRow({ ns }: { ns: NodeSummary }) {
+  const { t } = useTranslation();
   const node = ns.node;
   const reading = ns.latest_reading;
   const offline = node.status === 'offline';
-  const valveLabel = valveLabelFromDecision(ns.decision);
-  const valve: Pill =
-    valveLabel === 'Tidak diketahui'
-      ? { label: 'Tidak diketahui', tone: 'neutral' }
-      : { label: valveLabel, tone: getValveStatusBadge(valveLabel).tone };
-  const status = getNodeStatusBadge(node.status);
+  const valveKey = valveKeyFromDecision(ns.decision);
+  const valveBadge = getValveStatusBadge(valveKey);
+  const valve: Pill = { label: t(valveBadge.labelKey), tone: valveBadge.tone };
+  const statusBadge = getNodeStatusBadge(node.status);
+  const status: Pill = { label: t(statusBadge.labelKey), tone: statusBadge.tone };
 
   return (
     <TableRow>
@@ -247,13 +252,14 @@ function NodeTableRow({ ns }: { ns: NodeSummary }) {
       <TableCell>
         <StatusPill tone={status.tone} label={status.label} />
       </TableCell>
-      <TableCell className="text-muted-foreground">{timeAgo(node.updated_at)}</TableCell>
+      <TableCell className="text-muted-foreground">{timeAgo(node.updated_at, t)}</TableCell>
     </TableRow>
   );
 }
 
 export default function FarmDetailPage() {
   const { id: farmId } = useParams();
+  const { t } = useTranslation();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
 
   if (isLoading) {
@@ -278,10 +284,10 @@ export default function FarmDetailPage() {
     return (
       <div className="space-y-3">
         <p className="text-destructive">
-          {error ? `Gagal memuat ringkasan kebun: ${error.message}` : 'Data tidak tersedia.'}
+          {error ? t('farmDetail.errorLoad', { message: error.message }) : t('farmDetail.noData2')}
         </p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">Kembali ke Daftar Kebun</Link>
+          <Link to="/dashboard">{t('farmDetail.backToList')}</Link>
         </Button>
       </div>
     );
@@ -292,7 +298,7 @@ export default function FarmDetailPage() {
   const avg = summary.average_soil_moisture;
   const weather = summary.weather;
   const activeCount = nodes.filter((ns) => ns.node.status !== 'offline').length;
-  const warning = summary.nodes_problem > 0 ? `${summary.nodes_problem} node bermasalah` : null;
+  const warning = summary.nodes_problem > 0 ? t('farmDetail.nodesProblem', { count: summary.nodes_problem }) : null;
 
   const kelembapanText = avg > 0 ? `${avg}%` : '—';
   const suhuText =
@@ -314,19 +320,19 @@ export default function FarmDetailPage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          label="Kelembapan Rata-rata"
+          label={t('farmDetail.avgMoisture')}
           value={kelembapanText}
           sublabel={`Threshold ${lower}–${upper}%`}
           icon={<Droplet className="size-4" />}
         />
         <StatCard
-          label="Node Aktif"
+          label={t('farmDetail.activeNodes')}
           value={`${activeCount}/${nodes.length}`}
           icon={<Cpu className="size-4" />}
         />
-        <StatCard label="Suhu Udara" value={suhuText} icon={<Thermometer className="size-4" />} />
+        <StatCard label={t('farmDetail.airTemp')} value={suhuText} icon={<Thermometer className="size-4" />} />
         <StatCard
-          label="Kelembapan Udara"
+          label={t('farmDetail.airHumidity')}
           value={humidityText}
           icon={<Droplets className="size-4" />}
         />
@@ -341,11 +347,11 @@ export default function FarmDetailPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Cpu className="size-4 text-muted-foreground" /> Status Node Sensor
+            <Cpu className="size-4 text-muted-foreground" /> {t('farmDetail.nodeTableTitle')}
           </CardTitle>
           <Button asChild variant="outline" size="sm">
             <Link to={`/farms/${encodeURIComponent(farmId ?? '')}/monitoring`}>
-              <LineChart className="size-4" /> Lihat Monitoring
+              <LineChart className="size-4" /> {t('farmDetail.viewMonitoring')}
             </Link>
           </Button>
         </CardHeader>
@@ -353,22 +359,20 @@ export default function FarmDetailPage() {
           {nodes.length === 0 ? (
             <div className="flex flex-col items-center gap-1 py-8 text-center">
               <Cpu className="size-8 text-muted-foreground" />
-              <p className="font-medium text-foreground">Belum ada sensor terhubung</p>
-              <p className="text-sm text-muted-foreground">
-                Kebun ini belum memiliki node sensor yang terdaftar
-              </p>
+              <p className="font-medium text-foreground">{t('farmDetail.noNodes')}</p>
+              <p className="text-sm text-muted-foreground">{t('farmDetail.noNodesDesc')}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Node</TableHead>
-                  <TableHead>Kelembapan</TableHead>
-                  <TableHead>Suhu Tanah</TableHead>
-                  <TableHead>Valve</TableHead>
-                  <TableHead>Baterai</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Update</TableHead>
+                  <TableHead>{t('farmDetail.colNode')}</TableHead>
+                  <TableHead>{t('farmDetail.colMoisture')}</TableHead>
+                  <TableHead>{t('farmDetail.colSoilTemp')}</TableHead>
+                  <TableHead>{t('farmDetail.colValve')}</TableHead>
+                  <TableHead>{t('farmDetail.colBattery')}</TableHead>
+                  <TableHead>{t('farmDetail.colStatus')}</TableHead>
+                  <TableHead>{t('farmDetail.colUpdate')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

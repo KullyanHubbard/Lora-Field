@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
+import { Check, LogIn } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
 import { PasswordInput } from '@/components/PasswordInput';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState(readPrefillEmail);
   const [password, setPassword] = useState('');
@@ -36,7 +38,7 @@ export default function LoginPage() {
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
     if (!trimmedEmail || !trimmedPassword) {
-      setError('Email dan password wajib diisi.');
+      setError(t('auth.login.errorRequired'));
       return;
     }
     setError('');
@@ -46,7 +48,7 @@ export default function LoginPage() {
       const redirectTo = location.state?.from?.pathname ?? '/dashboard';
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError((err as Error).message || 'Login gagal. Coba lagi.');
+      setError((err as Error).message || t('auth.login.errorFallback'));
       setSubmitting(false);
     }
   };
@@ -62,7 +64,7 @@ export default function LoginPage() {
 
         <Link
           to="/"
-          aria-label="Kembali ke beranda LoraField"
+          aria-label={t('auth.login.backToHome')}
           className="relative z-10 -mx-2 flex self-start items-center rounded-lg px-2 py-1.5 transition-colors hover:bg-primary-foreground/10 active:bg-primary-foreground/20"
         >
           <span className="text-2xl font-semibold text-primary-foreground">LoraField</span>
@@ -75,15 +77,15 @@ export default function LoginPage() {
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
             <h1 className="text-6xl font-bold leading-tight tracking-tight text-primary-foreground">
-              Pantau kebun Anda<br />dalam satu sistem.
+              {t('auth.login.headlineLine1')}<br />{t('auth.login.headlineLine2')}
             </h1>
           </motion.div>
         </div>
 
         <div className="relative z-10 flex items-center justify-between text-xs text-primary-foreground/70">
-          <span>© 2026 LoraField</span>
+          <span>{t('auth.login.copyright')}</span>
           <a href="#" className="transition-colors hover:text-primary-foreground">
-            Kebijakan Privasi
+            {t('auth.login.privacyPolicy')}
           </a>
         </div>
       </div>
@@ -94,13 +96,13 @@ export default function LoginPage() {
           {/* Logo hanya tampil di mobile */}
           <Link
             to="/"
-            aria-label="Kembali ke beranda LoraField"
+            aria-label={t('auth.login.backToHome')}
             className="-mx-2 mb-8 flex self-start items-center rounded-lg px-2 py-1.5 transition-colors hover:bg-accent active:bg-accent/80 lg:hidden"
           >
             <span className="text-lg font-semibold text-foreground">LoraField</span>
           </Link>
 
-          <h2 className="text-2xl font-bold text-foreground">Masuk Akun</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t('auth.login.title')}</h2>
 
           <form
             onSubmit={(e) => {
@@ -110,12 +112,12 @@ export default function LoginPage() {
             className="mt-6 space-y-4"
           >
             <div className="space-y-1.5">
-              <Label htmlFor="login-email">Email</Label>
+              <Label htmlFor="login-email">{t('auth.login.emailLabel')}</Label>
               <Input
                 id="login-email"
                 type="email"
                 autoComplete="username"
-                placeholder="nama@email.com"
+                placeholder={t('auth.login.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -123,11 +125,11 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="login-password">Password</Label>
+              <Label htmlFor="login-password">{t('auth.login.passwordLabel')}</Label>
               <PasswordInput
                 id="login-password"
                 autoComplete="current-password"
-                placeholder="Masukkan password"
+                placeholder={t('auth.login.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -136,19 +138,22 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between">
               <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="size-4 rounded border-input accent-primary"
-                />
-                Ingat Saya
+                <span className="relative inline-flex">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="peer size-4 cursor-pointer appearance-none rounded border border-input bg-transparent transition-colors checked:border-primary checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  />
+                  <Check className="pointer-events-none absolute inset-0 m-auto hidden size-3 text-primary-foreground peer-checked:block" />
+                </span>
+                {t('auth.login.rememberMe')}
               </label>
               <Link
                 to="/reset-password"
                 className="text-sm text-primary hover:underline"
               >
-                Lupa Password?
+                {t('auth.login.forgotPassword')}
               </Link>
             </div>
 
@@ -165,7 +170,7 @@ export default function LoginPage() {
               aria-busy={submitting}
             >
               <LogIn className="size-4" />
-              {submitting ? 'Memproses…' : 'Masuk'}
+              {submitting ? t('auth.login.submitting') : t('auth.login.submit')}
             </Button>
           </form>
 
@@ -176,7 +181,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center">
               <span className="bg-background px-3 text-xs uppercase tracking-wide text-muted-foreground">
-                Atau masuk dengan
+                {t('auth.login.orLoginWith')}
               </span>
             </div>
           </div>
@@ -194,9 +199,9 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Belum punya akun?{' '}
+            {t('auth.login.noAccount')}{' '}
             <Link to="/register" className="font-medium text-primary hover:underline">
-              Daftar Akun
+              {t('auth.login.registerLink')}
             </Link>
           </p>
         </div>

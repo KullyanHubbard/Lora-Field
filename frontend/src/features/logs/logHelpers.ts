@@ -5,12 +5,19 @@ import type { IrrigationLog } from '@/types';
 import type { StatusTone } from '@/lib/status';
 
 export const LOG_FILTER_OPTIONS = [
-  { key: 'all', label: 'Semua Log' },
-  { key: 'open', label: 'Irigasi Dijalankan' },
-  { key: 'delayed', label: 'Irigasi Ditunda' },
-  { key: 'closed', label: 'Valve Tertutup' },
-  { key: 'warning', label: 'Peringatan' },
+  { key: 'all', label: 'logFilter.all' },
+  { key: 'open', label: 'logFilter.open' },
+  { key: 'delayed', label: 'logFilter.delayed' },
+  { key: 'closed', label: 'logFilter.closed' },
+  { key: 'warning', label: 'logFilter.warning' },
 ] as const;
+
+export const LOG_TYPE_LABEL: Record<LogType, string> = {
+  open: 'logClass.open',
+  delayed: 'logClass.delayed',
+  closed: 'logClass.closed',
+  normal: 'logClass.normal',
+};
 
 export type LogFilterKey = (typeof LOG_FILTER_OPTIONS)[number]['key'];
 

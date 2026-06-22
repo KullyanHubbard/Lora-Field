@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { useForgotPassword, useResetPassword, useVerifyResetCode } from './queries';
 import { PasswordInput } from '@/components/PasswordInput';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ export default function ResetPasswordPage() {
   const forgot = useForgotPassword();
   const verify = useVerifyResetCode();
   const reset = useResetPassword();
+  const { t } = useTranslation();
 
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -25,7 +27,7 @@ export default function ResetPasswordPage() {
   const submitEmail = () => {
     const trimmed = email.trim();
     if (!trimmed || !trimmed.includes('@')) {
-      setError('Email belum valid.');
+      setError(t('auth.resetPassword.errorEmailInvalid'));
       return;
     }
     setError('');
@@ -35,7 +37,7 @@ export default function ResetPasswordPage() {
   const submitOtp = () => {
     const tokenTrim = otp.trim();
     if (!/^\d{6}$/.test(tokenTrim)) {
-      setError('Kode reset harus 6 digit angka.');
+      setError(t('auth.resetPassword.errorOtpInvalid'));
       return;
     }
     setError('');
@@ -49,11 +51,11 @@ export default function ResetPasswordPage() {
 
   const submitPassword = () => {
     if (password.length < 6) {
-      setError('Password baru minimal 6 karakter.');
+      setError(t('auth.resetPassword.errorPasswordTooShort'));
       return;
     }
     if (password !== confirm) {
-      setError('Konfirmasi password belum sama.');
+      setError(t('auth.resetPassword.errorPasswordMismatch'));
       return;
     }
     setError('');
@@ -62,10 +64,10 @@ export default function ResetPasswordPage() {
 
   const description =
     step === 'email'
-      ? 'Masukkan email akun Anda untuk menerima kode reset 6 digit.'
+      ? t('auth.resetPassword.descEmail')
       : step === 'otp'
-        ? `Masukkan kode 6 digit yang dikirim ke ${email}.`
-        : 'Buat password baru untuk akun Anda.';
+        ? t('auth.resetPassword.descOtp', { email })
+        : t('auth.resetPassword.descPassword');
 
   return (
     <div className="flex min-h-svh">
@@ -78,7 +80,7 @@ export default function ResetPasswordPage() {
 
         <Link
           to="/"
-          aria-label="Kembali ke beranda LoraField"
+          aria-label={t('auth.resetPassword.backToHome')}
           className="relative z-10 -mx-2 flex self-start items-center rounded-lg px-2 py-1.5 transition-colors hover:bg-primary-foreground/10 active:bg-primary-foreground/20"
         >
           <span className="text-2xl font-semibold text-primary-foreground">LoraField</span>
@@ -91,15 +93,15 @@ export default function ResetPasswordPage() {
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
             <h1 className="text-6xl font-bold leading-tight tracking-tight text-primary-foreground">
-              Pulihkan akses ke kebun Anda.
+              {t('auth.resetPassword.headline')}
             </h1>
           </motion.div>
         </div>
 
         <div className="relative z-10 flex items-center justify-between text-xs text-primary-foreground/70">
-          <span>© 2026 LoraField</span>
+          <span>{t('auth.resetPassword.copyright')}</span>
           <a href="#" className="transition-colors hover:text-primary-foreground">
-            Kebijakan Privasi
+            {t('auth.resetPassword.privacyPolicy')}
           </a>
         </div>
       </div>
@@ -110,13 +112,13 @@ export default function ResetPasswordPage() {
           {/* Logo hanya tampil di mobile */}
           <Link
             to="/"
-            aria-label="Kembali ke beranda LoraField"
+            aria-label={t('auth.resetPassword.backToHome')}
             className="-mx-2 mb-8 flex self-start items-center rounded-lg px-2 py-1.5 transition-colors hover:bg-accent active:bg-accent/80 lg:hidden"
           >
             <span className="text-lg font-semibold text-foreground">LoraField</span>
           </Link>
 
-          <h2 className="text-2xl font-bold text-foreground">Atur Ulang Password</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t('auth.resetPassword.title')}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
 
           <div className="mt-6">
@@ -129,12 +131,12 @@ export default function ResetPasswordPage() {
                 className="space-y-4"
               >
                 <div className="space-y-1.5">
-                  <Label htmlFor="reset-email">Email Akun</Label>
+                  <Label htmlFor="reset-email">{t('auth.resetPassword.emailLabel')}</Label>
                   <Input
                     id="reset-email"
                     type="email"
                     autoComplete="email"
-                    placeholder="nama@email.com"
+                    placeholder={t('auth.resetPassword.emailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -146,7 +148,7 @@ export default function ResetPasswordPage() {
                   </p>
                 )}
                 <Button type="submit" className="w-full" disabled={forgot.isPending}>
-                  Kirim Kode Reset
+                  {t('auth.resetPassword.sendCode')}
                 </Button>
               </form>
             )}
@@ -160,14 +162,14 @@ export default function ResetPasswordPage() {
                 className="space-y-4"
               >
                 <div className="space-y-1.5">
-                  <Label htmlFor="reset-otp">Kode Reset (6 Digit)</Label>
+                  <Label htmlFor="reset-otp">{t('auth.resetPassword.otpLabel')}</Label>
                   <Input
                     id="reset-otp"
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     pattern="[0-9]{6}"
                     maxLength={6}
-                    placeholder="Contoh: 123456"
+                    placeholder={t('auth.resetPassword.otpPlaceholder')}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     required
@@ -179,7 +181,7 @@ export default function ResetPasswordPage() {
                   </p>
                 )}
                 <Button type="submit" className="w-full" disabled={verify.isPending}>
-                  Verifikasi Kode
+                  {t('auth.resetPassword.verifyCode')}
                 </Button>
                 <button
                   type="button"
@@ -189,7 +191,7 @@ export default function ResetPasswordPage() {
                     setStep('email');
                   }}
                 >
-                  Ganti email
+                  {t('auth.resetPassword.changeEmail')}
                 </button>
               </form>
             )}
@@ -203,22 +205,22 @@ export default function ResetPasswordPage() {
                 className="space-y-4"
               >
                 <div className="space-y-1.5">
-                  <Label htmlFor="reset-password">Password Baru</Label>
+                  <Label htmlFor="reset-password">{t('auth.resetPassword.newPasswordLabel')}</Label>
                   <PasswordInput
                     id="reset-password"
                     autoComplete="new-password"
-                    placeholder="Minimal 6 karakter"
+                    placeholder={t('auth.resetPassword.newPasswordPlaceholder')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="reset-confirm">Ulangi Password Baru</Label>
+                  <Label htmlFor="reset-confirm">{t('auth.resetPassword.confirmLabel')}</Label>
                   <PasswordInput
                     id="reset-confirm"
                     autoComplete="new-password"
-                    placeholder="Ulangi password baru"
+                    placeholder={t('auth.resetPassword.confirmPlaceholder')}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     required
@@ -230,7 +232,7 @@ export default function ResetPasswordPage() {
                   </p>
                 )}
                 <Button type="submit" className="w-full" disabled={reset.isPending}>
-                  Perbarui Password
+                  {t('auth.resetPassword.updatePassword')}
                 </Button>
                 <button
                   type="button"
@@ -242,16 +244,16 @@ export default function ResetPasswordPage() {
                     setStep('otp');
                   }}
                 >
-                  Ganti kode
+                  {t('auth.resetPassword.changeCode')}
                 </button>
               </form>
             )}
           </div>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Kembali ke{' '}
+            {t('auth.resetPassword.backToLoginText')}{' '}
             <Link to="/login" className="font-medium text-primary hover:underline">
-              Masuk
+              {t('auth.resetPassword.loginLink')}
             </Link>
           </p>
         </div>

@@ -11,45 +11,54 @@
 export type StatusTone = 'green' | 'yellow' | 'red';
 
 export interface StatusBadge {
-  label: string;
+  labelKey: string;
   tone: StatusTone;
 }
 
 export function getGatewayStatusBadge(status: string): StatusBadge {
   const map: Record<string, StatusBadge> = {
-    online: { label: 'Online', tone: 'green' },
-    offline: { label: 'Offline', tone: 'red' },
-    degraded: { label: 'Gangguan', tone: 'yellow' },
+    online: { labelKey: 'status.online', tone: 'green' },
+    offline: { labelKey: 'status.offline', tone: 'red' },
+    degraded: { labelKey: 'status.degraded', tone: 'yellow' },
   };
   return map[status] ?? map.offline;
 }
 
 export function getNodeStatusBadge(status: string): StatusBadge {
   const map: Record<string, StatusBadge> = {
-    online: { label: 'Online', tone: 'green' },
-    standby: { label: 'Standby', tone: 'yellow' },
-    offline: { label: 'Offline', tone: 'red' },
+    online: { labelKey: 'status.online', tone: 'green' },
+    standby: { labelKey: 'status.standby', tone: 'yellow' },
+    offline: { labelKey: 'status.offline', tone: 'red' },
   };
   return map[status] ?? map.offline;
 }
 
-export function getValveStatusBadge(valveLabel: string): StatusBadge {
+export function getValveStatusBadge(valveKey: string): StatusBadge {
   const map: Record<string, StatusBadge> = {
-    Terbuka: { label: 'Terbuka', tone: 'green' },
-    Tertutup: { label: 'Tertutup', tone: 'yellow' },
-    'Tidak diketahui': { label: 'Tidak diketahui', tone: 'red' },
+    'valve.open': { labelKey: 'valve.open', tone: 'green' },
+    'valve.closed': { labelKey: 'valve.closed', tone: 'yellow' },
+    'valve.unknown': { labelKey: 'valve.unknown', tone: 'red' },
   };
-  return map[valveLabel] ?? map['Tidak diketahui'];
+  return map[valveKey] ?? map['valve.unknown'];
 }
 
-export function getIrrigationStatusBadge(label: string): StatusBadge {
-  if (label === 'Aktif' || label === 'Irigasi aktif' || label === 'Normal') {
-    return { label, tone: 'green' };
+// decision = raw backend string (e.g. "Irigasi dijalankan", "Irigasi ditunda").
+// We classify by tone and return a stable labelKey for i18n display.
+export function getIrrigationStatusBadge(decision: string): StatusBadge {
+  const d = String(decision || '').toLowerCase();
+  if (d.includes('dijalankan') || d.includes('aktif') || d === 'open') {
+    return { labelKey: 'irrigationStatus.active', tone: 'green' };
   }
-  if (label === 'Perlu cek gateway') {
-    return { label, tone: 'red' };
+  if (d.includes('ditunda') || d.includes('delay')) {
+    return { labelKey: 'irrigationStatus.delayed', tone: 'yellow' };
   }
-  return { label: label || 'Perlu cek', tone: 'yellow' };
+  if (d.includes('berhenti') || d.includes('tutup') || d === 'closed') {
+    return { labelKey: 'irrigationStatus.closed', tone: 'yellow' };
+  }
+  if (d.includes('normal')) {
+    return { labelKey: 'irrigationStatus.normal', tone: 'green' };
+  }
+  return { labelKey: 'irrigationStatus.needsCheck', tone: 'yellow' };
 }
 
 export function getSoilStatusFromMoisture(
@@ -58,11 +67,11 @@ export function getSoilStatusFromMoisture(
   upper = 70,
 ): StatusBadge {
   if (value == null || value <= 0) {
-    return { label: 'Tidak Ada Data', tone: 'red' };
+    return { labelKey: 'soilStatus.noData', tone: 'red' };
   }
-  if (value < lower) return { label: 'Butuh Irigasi', tone: 'red' };
-  if (value > upper) return { label: 'Terlalu Basah', tone: 'yellow' };
-  return { label: 'Normal', tone: 'green' };
+  if (value < lower) return { labelKey: 'soilStatus.dry', tone: 'red' };
+  if (value > upper) return { labelKey: 'soilStatus.wet', tone: 'yellow' };
+  return { labelKey: 'soilStatus.normal', tone: 'green' };
 }
 
 // Gauge tanah: state semantik dari nilai kelembapan. Versi lama meng-hardcode hex

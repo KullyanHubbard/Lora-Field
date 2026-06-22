@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { RadioTower, WifiOff } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { getFarmLastUpdate } from '@/features/farms/farmHelpers';
@@ -19,6 +20,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 export default function GatewayPage() {
+  const { t } = useTranslation();
   const { id: farmId } = useParams();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
 
@@ -34,10 +36,10 @@ export default function GatewayPage() {
     return (
       <div className="space-y-3">
         <p className="text-destructive">
-          {error ? `Gagal memuat data gateway: ${error.message}` : 'Data tidak tersedia.'}
+          {error ? t('gateway.errorLoad', { message: error.message }) : t('gateway.noData')}
         </p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">Kembali ke Daftar Kebun</Link>
+          <Link to="/dashboard">{t('gateway.backToDashboard')}</Link>
         </Button>
       </div>
     );
@@ -55,22 +57,22 @@ export default function GatewayPage() {
     <Card className="max-w-xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <RadioTower className="size-4 text-muted-foreground" /> Gateway
+          <RadioTower className="size-4 text-muted-foreground" /> {t('gateway.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col items-center gap-2 py-2">
           <GwIcon className="size-12 text-muted-foreground" />
-          <StatusPill tone={gwBadge.tone} label={gwBadge.label} />
+          <StatusPill tone={gwBadge.tone} label={t(gwBadge.labelKey)} />
         </div>
         <div>
-          <InfoRow label="ID Gateway">
+          <InfoRow label={t('gateway.idLabel')}>
             <span className="font-mono">{gatewayId}</span>
           </InfoRow>
-          <InfoRow label="Node Aktif">
+          <InfoRow label={t('gateway.activeNodes')}>
             {nodesActive}/{nodesTotal}
           </InfoRow>
-          <InfoRow label="Terakhir Terlihat">{timeAgo(lastSeen)}</InfoRow>
+          <InfoRow label={t('gateway.lastSeen')}>{timeAgo(lastSeen, t)}</InfoRow>
         </div>
       </CardContent>
     </Card>

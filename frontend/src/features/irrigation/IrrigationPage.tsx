@@ -1,7 +1,8 @@
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Droplet, Zap } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
-import { valveLabelFromDecision } from '@/features/farms/farmHelpers';
+import { valveKeyFromDecision } from '@/features/farms/farmHelpers';
 import { getIrrigationStatusBadge, getValveStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
@@ -30,32 +31,6 @@ const toneText: Record<PillTone, string> = {
 
 // Tabel logika irigasi — dari aturan di CLAUDE.md (bukan dikarang).
 // Tone: buka=green, ditunda=amber; tutup & normal=neutral (bukan kondisi alarm).
-const LOGIC_ROWS: { soil: string; weather: string; tone: PillTone; action: string }[] = [
-  {
-    soil: 'Kelembapan < threshold bawah',
-    weather: 'Tidak ada hujan',
-    tone: 'green',
-    action: 'Valve buka',
-  },
-  {
-    soil: 'Kelembapan < threshold bawah',
-    weather: 'Ada prediksi hujan',
-    tone: 'yellow',
-    action: 'Irigasi ditunda',
-  },
-  {
-    soil: 'Kelembapan > threshold atas',
-    weather: 'Apapun',
-    tone: 'neutral',
-    action: 'Valve tutup',
-  },
-  {
-    soil: 'Kelembapan di antara threshold',
-    weather: 'Apapun',
-    tone: 'neutral',
-    action: 'Normal, mengikuti status sebelumnya (Histeresis)',
-  },
-];
 
 function PanelRow({ label, pill }: { label: string; pill: Pill }) {
   return (
@@ -68,7 +43,15 @@ function PanelRow({ label, pill }: { label: string; pill: Pill }) {
 
 export default function IrrigationPage() {
   const { id: farmId } = useParams();
+  const { t } = useTranslation();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
+
+  const logicRows: { soil: string; weather: string; tone: PillTone; action: string }[] = [
+    { soil: t('irrigation.logic.soil1'), weather: t('irrigation.logic.weather1'), tone: 'green', action: t('irrigation.logic.action1') },
+    { soil: t('irrigation.logic.soil2'), weather: t('irrigation.logic.weather2'), tone: 'yellow', action: t('irrigation.logic.action2') },
+    { soil: t('irrigation.logic.soil3'), weather: t('irrigation.logic.weather3'), tone: 'neutral', action: t('irrigation.logic.action3') },
+    { soil: t('irrigation.logic.soil4'), weather: t('irrigation.logic.weather4'), tone: 'neutral', action: t('irrigation.logic.action4') },
+  ];
 
   if (isLoading) {
     return (
@@ -83,10 +66,10 @@ export default function IrrigationPage() {
     return (
       <div className="space-y-3">
         <p className="text-destructive">
-          {error ? `Gagal memuat data irigasi: ${error.message}` : 'Data tidak tersedia.'}
+          {error ? t('irrigation.errorLoad', { message: error.message }) : t('irrigation.noData')}
         </p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">Kembali ke Daftar Kebun</Link>
+          <Link to="/dashboard">{t('irrigation.backToList')}</Link>
         </Button>
       </div>
     );
@@ -94,15 +77,14 @@ export default function IrrigationPage() {
 
   const activeNode = summary.nodes.find((ns) => ns.node.status !== 'offline' && ns.decision);
   const decision = activeNode?.decision ?? null;
-  const valveLabel = valveLabelFromDecision(decision);
+  const valveKey = valveKeyFromDecision(decision);
 
-  // No-data (gateway/node belum aktif) → neutral, bukan merah (DESIGN.md).
   const valvePill: Pill = decision
-    ? getValveStatusBadge(valveLabel)
-    : { label: 'Tidak Diketahui', tone: 'neutral' };
+    ? { label: t(getValveStatusBadge(valveKey).labelKey), tone: getValveStatusBadge(valveKey).tone }
+    : { label: t('irrigation.unknown'), tone: 'neutral' };
   const irrigPill: Pill = decision
-    ? getIrrigationStatusBadge(decision.decision)
-    : { label: 'Menunggu Gateway', tone: 'neutral' };
+    ? { label: t(getIrrigationStatusBadge(decision.decision).labelKey), tone: getIrrigationStatusBadge(decision.decision).tone }
+    : { label: t('irrigation.waitingGateway'), tone: 'neutral' };
 
   return (
     <div className="space-y-6">
@@ -119,15 +101,15 @@ export default function IrrigationPage() {
           </div>
           <div className="flex flex-col items-center gap-1.5 sm:items-start">
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              Status Valve
+              {t('irrigation.valveStatusLabel')}
             </span>
             <span
               className={cn('text-3xl font-semibold tracking-tight', toneText[valvePill.tone])}
             >
-              {valveLabel.toUpperCase()}
+              {valvePill.label.toUpperCase()}
             </span>
             <Badge variant="secondary" className="gap-1">
-              <Zap className="size-3" /> Mode Otomatis
+              <Zap className="size-3" /> {t('irrigation.autoMode')}
             </Badge>
           </div>
         </CardContent>
@@ -135,19 +117,19 @@ export default function IrrigationPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Logika Irigasi</CardTitle>
+          <CardTitle className="text-base">{t('irrigation.logicTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Kondisi Tanah</TableHead>
-                <TableHead>Kondisi Cuaca</TableHead>
-                <TableHead>Aksi Sistem</TableHead>
+                <TableHead>{t('irrigation.colSoil')}</TableHead>
+                <TableHead>{t('irrigation.colWeather')}</TableHead>
+                <TableHead>{t('irrigation.colAction')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {LOGIC_ROWS.map((row, i) => (
+              {logicRows.map((row, i) => (
                 <TableRow key={i}>
                   <TableCell className="text-muted-foreground">{row.soil}</TableCell>
                   <TableCell className="text-muted-foreground">{row.weather}</TableCell>
@@ -163,14 +145,14 @@ export default function IrrigationPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Keputusan Sistem</CardTitle>
+          <CardTitle className="text-base">{t('irrigation.decisionTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <PanelRow label="Keputusan" pill={irrigPill} />
-          <PanelRow label="Status Valve" pill={valvePill} />
+          <PanelRow label={t('irrigation.decisionLabel')} pill={irrigPill} />
+          <PanelRow label={t('irrigation.valveStatusLabel')} pill={valvePill} />
           {!decision && (
             <p className="pt-3 text-sm text-muted-foreground">
-              Belum ada data dari node aktif. Pastikan gateway online.
+              {t('irrigation.noDecision')}
             </p>
           )}
         </CardContent>

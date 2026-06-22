@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { useRegister } from './queries';
 import { PasswordInput } from '@/components/PasswordInput';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label';
 
 export default function RegisterPage() {
   const register = useRegister();
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,19 +23,19 @@ export default function RegisterPage() {
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
     if (!trimmedName) {
-      setError('Nama lengkap wajib diisi.');
+      setError(t('auth.register.errorNameRequired'));
       return;
     }
     if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      setError('Email belum valid.');
+      setError(t('auth.register.errorEmailInvalid'));
       return;
     }
     if (password.length < 6) {
-      setError('Password minimal 6 karakter.');
+      setError(t('auth.register.errorPasswordTooShort'));
       return;
     }
     if (password !== confirm) {
-      setError('Ulangi password belum sama.');
+      setError(t('auth.register.errorPasswordMismatch'));
       return;
     }
     setError('');
@@ -51,7 +53,7 @@ export default function RegisterPage() {
 
         <Link
           to="/"
-          aria-label="Kembali ke beranda LoraField"
+          aria-label={t('auth.register.backToHome')}
           className="relative z-10 -mx-2 flex self-start items-center rounded-lg px-2 py-1.5 transition-colors hover:bg-primary-foreground/10 active:bg-primary-foreground/20"
         >
           <span className="text-2xl font-semibold text-primary-foreground">LoraField</span>
@@ -64,15 +66,15 @@ export default function RegisterPage() {
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
             <h1 className="text-6xl font-bold leading-tight tracking-tight text-primary-foreground">
-              Mulai pantau kebun Anda.
+              {t('auth.register.headline')}
             </h1>
           </motion.div>
         </div>
 
         <div className="relative z-10 flex items-center justify-between text-xs text-primary-foreground/70">
-          <span>© 2026 LoraField</span>
+          <span>{t('auth.register.copyright')}</span>
           <a href="#" className="transition-colors hover:text-primary-foreground">
-            Kebijakan Privasi
+            {t('auth.register.privacyPolicy')}
           </a>
         </div>
       </div>
@@ -83,13 +85,13 @@ export default function RegisterPage() {
           {/* Logo hanya tampil di mobile */}
           <Link
             to="/"
-            aria-label="Kembali ke beranda LoraField"
+            aria-label={t('auth.register.backToHome')}
             className="-mx-2 mb-8 flex self-start items-center rounded-lg px-2 py-1.5 transition-colors hover:bg-accent active:bg-accent/80 lg:hidden"
           >
             <span className="text-lg font-semibold text-foreground">LoraField</span>
           </Link>
 
-          <h2 className="text-2xl font-bold text-foreground">Daftar Akun</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t('auth.register.title')}</h2>
 
           <form
             onSubmit={(e) => {
@@ -99,45 +101,45 @@ export default function RegisterPage() {
             className="mt-6 space-y-4"
           >
             <div className="space-y-1.5">
-              <Label htmlFor="register-name">Nama Lengkap</Label>
+              <Label htmlFor="register-name">{t('auth.register.nameLabel')}</Label>
               <Input
                 id="register-name"
                 autoComplete="name"
-                placeholder="Nama lengkap kamu"
+                placeholder={t('auth.register.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="register-email">Email</Label>
+              <Label htmlFor="register-email">{t('auth.register.emailLabel')}</Label>
               <Input
                 id="register-email"
                 type="email"
                 autoComplete="email"
-                placeholder="nama@email.com"
+                placeholder={t('auth.register.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="register-password">Password</Label>
+              <Label htmlFor="register-password">{t('auth.register.passwordLabel')}</Label>
               <PasswordInput
                 id="register-password"
                 autoComplete="new-password"
-                placeholder="Minimal 6 karakter"
+                placeholder={t('auth.register.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="register-confirm">Ulangi Password</Label>
+              <Label htmlFor="register-confirm">{t('auth.register.confirmLabel')}</Label>
               <PasswordInput
                 id="register-confirm"
                 autoComplete="new-password"
-                placeholder="Ulangi password"
+                placeholder={t('auth.register.confirmPlaceholder')}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
@@ -157,14 +159,14 @@ export default function RegisterPage() {
               aria-busy={register.isPending}
             >
               <UserPlus className="size-4" />
-              {register.isPending ? 'Memproses…' : 'Buat Akun'}
+              {register.isPending ? t('auth.register.submitting') : t('auth.register.submit')}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Sudah punya akun?{' '}
+            {t('auth.register.haveAccount')}{' '}
             <Link to="/login" className="font-medium text-primary hover:underline">
-              Masuk
+              {t('auth.register.loginLink')}
             </Link>
           </p>
         </div>

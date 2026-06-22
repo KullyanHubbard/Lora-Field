@@ -13,6 +13,7 @@ import {
   Settings,
   Sprout,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Sidebar,
   SidebarContent,
@@ -33,42 +34,40 @@ import { useFarmSummary } from '@/features/farms/queries';
 
 type NavItem = {
   to: string;
-  label: string;
+  labelKey: string;
   icon: typeof LayoutDashboard;
 };
 
 export function AppLayout() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
+  const { t } = useTranslation();
 
   // Context-aware: di dalam /farms/:id/* (kecuali /farms/add) → mode farm-context.
-  // farmId diambil dari path (AppLayout di atas route :id, jadi useParams tak punya
-  // id di sini). Nama kebun dari useFarmSummary (cache di-share dengan page; hanya
-  // fetch saat ada farmId).
   const farmMatch = pathname.match(/^\/farms\/([^/]+)/);
   const farmId = farmMatch && farmMatch[1] !== 'add' ? farmMatch[1] : null;
   const { data: farmSummary } = useFarmSummary(farmId ?? '');
-  const farmName = farmSummary?.farm.name ?? 'Kebun';
+  const farmName = farmSummary?.farm.name ?? t('layout.fallbackFarm');
 
   const selectorNav: NavItem[] = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/farms', label: 'Kebun Saya', icon: Sprout },
-    { to: '/settings', label: 'Settings', icon: Settings },
+    { to: '/dashboard', labelKey: 'layout.nav.dashboard', icon: LayoutDashboard },
+    { to: '/farms', labelKey: 'layout.nav.myFarms', icon: Sprout },
+    { to: '/settings', labelKey: 'layout.nav.settings', icon: Settings },
   ];
 
   const farmNav: NavItem[] = farmId
     ? [
-        { to: `/farms/${farmId}`, label: 'Ringkasan Kebun', icon: Home },
-        { to: `/farms/${farmId}/monitoring`, label: 'Monitoring', icon: LineChart },
-        { to: `/farms/${farmId}/irrigation`, label: 'Irigasi', icon: Droplets },
-        { to: `/farms/${farmId}/gateway`, label: 'Gateway', icon: Radio },
-        { to: `/farms/${farmId}/nodes`, label: 'Node Sensor', icon: Cpu },
-        { to: `/farms/${farmId}/weather`, label: 'Cuaca', icon: CloudSun },
-        { to: `/farms/${farmId}/logs`, label: 'Riwayat', icon: History },
+        { to: `/farms/${farmId}`, labelKey: 'layout.nav.farmSummary', icon: Home },
+        { to: `/farms/${farmId}/monitoring`, labelKey: 'layout.nav.monitoring', icon: LineChart },
+        { to: `/farms/${farmId}/irrigation`, labelKey: 'layout.nav.irrigation', icon: Droplets },
+        { to: `/farms/${farmId}/gateway`, labelKey: 'layout.nav.gateway', icon: Radio },
+        { to: `/farms/${farmId}/nodes`, labelKey: 'layout.nav.sensorNode', icon: Cpu },
+        { to: `/farms/${farmId}/weather`, labelKey: 'layout.nav.weather', icon: CloudSun },
+        { to: `/farms/${farmId}/logs`, labelKey: 'layout.nav.history', icon: History },
       ]
     : [];
 
-  const title = farmId ? 'Detail Kebun' : 'Dashboard';
+  const title = farmId ? t('layout.farmContext') : t('layout.nav.dashboard');
 
   return (
     <SidebarProvider>
@@ -90,7 +89,7 @@ export function AppLayout() {
                       <SidebarMenuButton asChild>
                         <Link to="/dashboard">
                           <ArrowLeft />
-                          <span>Kembali ke Dashboard</span>
+                          <span>{t('layout.backToDashboard')}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -103,7 +102,7 @@ export function AppLayout() {
               </SidebarGroup>
 
               <SidebarGroup>
-                <SidebarGroupLabel>Kebun</SidebarGroupLabel>
+                <SidebarGroupLabel>{t('layout.farm')}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {farmNav.map((item) => {
@@ -113,7 +112,7 @@ export function AppLayout() {
                           <SidebarMenuButton asChild isActive={pathname === item.to}>
                             <Link to={item.to}>
                               <Icon />
-                              <span>{item.label}</span>
+                              <span>{t(item.labelKey)}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -125,7 +124,7 @@ export function AppLayout() {
             </>
           ) : (
             <SidebarGroup>
-              <SidebarGroupLabel>Menu</SidebarGroupLabel>
+              <SidebarGroupLabel>{t('layout.menu')}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {selectorNav.map((item) => {
@@ -135,7 +134,7 @@ export function AppLayout() {
                         <SidebarMenuButton asChild isActive={pathname === item.to}>
                           <Link to={item.to}>
                             <Icon />
-                            <span>{item.label}</span>
+                            <span>{t(item.labelKey)}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -154,11 +153,11 @@ export function AppLayout() {
           <h1 className="text-sm font-semibold text-foreground">{title}</h1>
           <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
-              {user?.name ?? user?.email ?? 'Pengguna'}
+              {user?.name ?? user?.email ?? t('layout.fallbackUser')}
             </span>
             <Button variant="outline" size="sm" onClick={logout}>
               <LogOut className="size-4" />
-              Logout
+              {t('layout.logout')}
             </Button>
           </div>
         </header>

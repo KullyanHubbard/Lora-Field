@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useChangePassword } from './queries';
 import { PasswordInput } from '@/components/PasswordInput';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Label } from '@/components/ui/label';
 
 export default function ChangePasswordPage() {
   const changePassword = useChangePassword();
+  const { t } = useTranslation();
 
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
@@ -16,19 +18,19 @@ export default function ChangePasswordPage() {
 
   const submit = () => {
     if (!currentPw) {
-      setError('Password saat ini wajib diisi.');
+      setError(t('auth.changePassword.errorCurrentRequired'));
       return;
     }
     if (newPw.length < 6) {
-      setError('Password baru minimal 6 karakter.');
+      setError(t('auth.changePassword.errorNewTooShort'));
       return;
     }
     if (newPw === currentPw) {
-      setError('Password baru tidak boleh sama dengan password lama.');
+      setError(t('auth.changePassword.errorSamePassword'));
       return;
     }
     if (newPw !== confirmPw) {
-      setError('Konfirmasi password belum sama.');
+      setError(t('auth.changePassword.errorMismatch'));
       return;
     }
     setError('');
@@ -38,8 +40,8 @@ export default function ChangePasswordPage() {
   return (
     <Card className="mx-auto max-w-md">
       <CardHeader>
-        <CardTitle className="text-base">Ganti Password</CardTitle>
-        <CardDescription>Masukkan password baru untuk akun Anda.</CardDescription>
+        <CardTitle className="text-base">{t('auth.changePassword.title')}</CardTitle>
+        <CardDescription>{t('auth.changePassword.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form
@@ -50,31 +52,31 @@ export default function ChangePasswordPage() {
           className="space-y-4"
         >
           <div className="space-y-1.5">
-            <Label htmlFor="current-password">Password Saat Ini</Label>
+            <Label htmlFor="current-password">{t('auth.changePassword.currentLabel')}</Label>
             <PasswordInput
               id="current-password"
               autoComplete="current-password"
-              placeholder="Masukkan password saat ini"
+              placeholder={t('auth.changePassword.currentPlaceholder')}
               value={currentPw}
               onChange={(e) => setCurrentPw(e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="new-password">Password Baru</Label>
+            <Label htmlFor="new-password">{t('auth.changePassword.newLabel')}</Label>
             <PasswordInput
               id="new-password"
               autoComplete="new-password"
-              placeholder="Minimal 6 karakter"
+              placeholder={t('auth.changePassword.newPlaceholder')}
               value={newPw}
               onChange={(e) => setNewPw(e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="confirm-password">Ulangi Password Baru</Label>
+            <Label htmlFor="confirm-password">{t('auth.changePassword.confirmLabel')}</Label>
             <PasswordInput
               id="confirm-password"
               autoComplete="new-password"
-              placeholder="Ulangi password baru"
+              placeholder={t('auth.changePassword.confirmPlaceholder')}
               value={confirmPw}
               onChange={(e) => setConfirmPw(e.target.value)}
             />
@@ -88,10 +90,10 @@ export default function ChangePasswordPage() {
 
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={changePassword.isPending}>
-              Simpan Password Baru
+              {t('auth.changePassword.submit')}
             </Button>
             <Button asChild variant="outline">
-              <Link to="/settings">Kembali ke Pengaturan</Link>
+              <Link to="/settings">{t('auth.changePassword.backToSettings')}</Link>
             </Button>
           </div>
         </form>

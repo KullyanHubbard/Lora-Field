@@ -1,32 +1,32 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useFarms } from './queries';
 import { FarmMap } from './components/FarmMap';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 
-// Status farm → pill. 'active' hijau; warning/maintenance kuning; sisanya neutral
-// (no-data/unknown bukan merah, sesuai DESIGN.md).
-function farmStatusPill(status: string): { tone: PillTone; label: string } {
+function farmStatusPill(status: string, t: (key: string) => string): { tone: PillTone; label: string } {
   switch (status) {
     case 'active':
-      return { tone: 'green', label: 'Aktif' };
+      return { tone: 'green', label: t('farmStatus.active') };
     case 'warning':
-      return { tone: 'yellow', label: 'Perlu Perhatian' };
+      return { tone: 'yellow', label: t('farmStatus.warning') };
     case 'maintenance':
-      return { tone: 'yellow', label: 'Perawatan' };
+      return { tone: 'yellow', label: t('farmStatus.maintenance') };
     case 'inactive':
     case 'offline':
-      return { tone: 'neutral', label: 'Tidak Aktif' };
+      return { tone: 'neutral', label: t('farmStatus.inactive') };
     default:
       return {
         tone: 'neutral',
-        label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Tidak Diketahui',
+        label: status ? status.charAt(0).toUpperCase() + status.slice(1) : t('farmStatus.unknown'),
       };
   }
 }
 
 export default function FarmListPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data, isLoading, error } = useFarms();
 
   if (isLoading) {
@@ -43,7 +43,7 @@ export default function FarmListPage() {
   }
 
   if (error) {
-    return <p className="text-destructive">Gagal memuat kebun: {error.message}</p>;
+    return <p className="text-destructive">{t('dashboard.errorLoad', { message: error.message })}</p>;
   }
 
   const farms = data?.items ?? [];
@@ -56,12 +56,12 @@ export default function FarmListPage() {
 
       {farms.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
-          Belum ada kebun.
+          {t('dashboard.empty')}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {farms.map((farm) => {
-            const pill = farmStatusPill(farm.status);
+            const pill = farmStatusPill(farm.status, t);
             return (
               <div
                 key={farm.id}
@@ -71,7 +71,7 @@ export default function FarmListPage() {
                 }}
                 tabIndex={0}
                 role="button"
-                aria-label={`Buka ${farm.name}`}
+                aria-label={t('dashboard.openFarm', { name: farm.name })}
                 className="cursor-pointer rounded-xl border border-border bg-card p-5 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex items-start justify-between gap-3">

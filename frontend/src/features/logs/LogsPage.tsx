@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Download, Search } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { useLogs } from './queries';
@@ -9,6 +10,7 @@ import {
   formatLogTime,
   getDecisionTone,
   LOG_FILTER_OPTIONS,
+  LOG_TYPE_LABEL,
   type LogCsvRow,
   type LogFilterKey,
   type LogType,
@@ -50,6 +52,7 @@ function downloadCsv(filename: string, content: string) {
 }
 
 export default function LogsPage() {
+  const { t } = useTranslation();
   const { id: farmId } = useParams();
   const { data: summary, isLoading: summaryLoading, error: summaryError } = useFarmSummary(
     farmId ?? '',
@@ -73,10 +76,10 @@ export default function LogsPage() {
     return (
       <div className="space-y-3">
         <p className="text-destructive">
-          {message ? `Gagal memuat riwayat: ${message}` : 'Data tidak tersedia.'}
+          {message ? t('logs.errorLoad', { message }) : t('logs.noData')}
         </p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">Kembali ke Daftar Kebun</Link>
+          <Link to="/dashboard">{t('logs.backToDashboard')}</Link>
         </Button>
       </div>
     );
@@ -103,7 +106,7 @@ export default function LogsPage() {
         type: classifyLog(log),
         nodeName: node?.name || log.node_id,
         nodeLocation: node?.location || '—',
-        valveLabel: log.valve_state === 'open' ? 'Terbuka' : 'Tertutup',
+        valveLabel: log.valve_state === 'open' ? t('logs.valveOpen') : t('logs.valveClosed'),
       };
     });
 
@@ -149,7 +152,7 @@ export default function LogsPage() {
                 aria-pressed={activeFilter === opt.key}
                 onClick={() => setActiveFilter(opt.key)}
               >
-                {opt.label}
+                {t(opt.label)}
               </Button>
             ))}
           </div>
@@ -158,7 +161,7 @@ export default function LogsPage() {
               <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Cari node, lokasi, atau keputusan..."
+                placeholder={t('logs.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-64 pl-8"
@@ -170,7 +173,7 @@ export default function LogsPage() {
               onClick={handleExportCsv}
               disabled={!filteredLogs.length}
             >
-              <Download className="size-4" /> Ekspor CSV
+              <Download className="size-4" /> {t('logs.exportCsv')}
             </Button>
           </div>
         </CardContent>
@@ -181,22 +184,22 @@ export default function LogsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Waktu</TableHead>
-                <TableHead>Node</TableHead>
-                <TableHead>Lokasi</TableHead>
-                <TableHead>Kelembapan</TableHead>
-                <TableHead>Threshold</TableHead>
-                <TableHead>Cuaca</TableHead>
-                <TableHead>Keputusan</TableHead>
-                <TableHead>Valve</TableHead>
-                <TableHead>Keterangan</TableHead>
+                <TableHead>{t('logs.colTime')}</TableHead>
+                <TableHead>{t('logs.colNode')}</TableHead>
+                <TableHead>{t('logs.colLocation')}</TableHead>
+                <TableHead>{t('logs.colMoisture')}</TableHead>
+                <TableHead>{t('logs.colThreshold')}</TableHead>
+                <TableHead>{t('logs.colWeather')}</TableHead>
+                <TableHead>{t('logs.colDecision')}</TableHead>
+                <TableHead>{t('logs.colValve')}</TableHead>
+                <TableHead>{t('logs.colReason')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredLogs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-muted-foreground">
-                    Tidak ada log yang cocok dengan filter.
+                    {t('logs.empty')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -209,7 +212,7 @@ export default function LogsPage() {
                     <TableCell className="tabular-nums text-muted-foreground">{threshold}</TableCell>
                     <TableCell className="text-muted-foreground">{log.weather || '—'}</TableCell>
                     <TableCell>
-                      <StatusPill tone={getDecisionTone(log.type)} label={log.decision} />
+                      <StatusPill tone={getDecisionTone(log.type)} label={t(LOG_TYPE_LABEL[log.type])} />
                     </TableCell>
                     <TableCell>{log.valveLabel}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">

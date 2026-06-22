@@ -1,12 +1,12 @@
 // Domain logic agregasi farm summary — diport dari frontend React lama (utils/farmHelpers.js)
-// (valveLabelFromDecision, getFarmLastUpdate). Murni, tanpa side effect.
+// (valveKeyFromDecision, getFarmLastUpdate). Murni, tanpa side effect.
 import type { Farm, NodeSummary } from '@/types';
 
-export function valveLabelFromDecision(
+export function valveKeyFromDecision(
   decision: NodeSummary['decision'] | null | undefined,
 ): string {
-  if (!decision) return 'Tidak diketahui';
-  return decision.valve_state === 'open' ? 'Terbuka' : 'Tertutup';
+  if (!decision) return 'valve.unknown';
+  return decision.valve_state === 'open' ? 'valve.open' : 'valve.closed';
 }
 
 /**

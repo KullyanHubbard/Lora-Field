@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
 import { useFarms } from './queries';
 import { formatAreaHa, timeAgo } from '@/lib/format';
@@ -11,27 +12,28 @@ import type { Farm } from '@/types';
 
 // Mapping status farm — konsisten dengan Dashboard (FarmListPage).
 // active=hijau; warning/maintenance=kuning; sisanya neutral (bukan merah, DESIGN.md).
-function farmStatusPill(status: string): { tone: PillTone; label: string } {
+function farmStatusPill(status: string, t: (key: string) => string): { tone: PillTone; label: string } {
   switch (status) {
     case 'active':
-      return { tone: 'green', label: 'Aktif' };
+      return { tone: 'green', label: t('farmStatus.active') };
     case 'warning':
-      return { tone: 'yellow', label: 'Perlu Perhatian' };
+      return { tone: 'yellow', label: t('farmStatus.warning') };
     case 'maintenance':
-      return { tone: 'yellow', label: 'Perawatan' };
+      return { tone: 'yellow', label: t('farmStatus.maintenance') };
     case 'inactive':
     case 'offline':
-      return { tone: 'neutral', label: 'Tidak Aktif' };
+      return { tone: 'neutral', label: t('farmStatus.inactive') };
     default:
       return {
         tone: 'neutral',
-        label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Tidak Diketahui',
+        label: status ? status.charAt(0).toUpperCase() + status.slice(1) : t('farmStatus.unknown'),
       };
   }
 }
 
 function FarmListCard({ farm }: { farm: Farm }) {
-  const pill = farmStatusPill(farm.status);
+  const { t } = useTranslation();
+  const pill = farmStatusPill(farm.status, t);
   return (
     <Link to={`/farms/${farm.id}`}>
       <Card className="h-full p-5 transition-colors hover:bg-accent/50">
@@ -44,21 +46,21 @@ function FarmListCard({ farm }: { farm: Farm }) {
         </div>
         <div className="mt-3 space-y-1 text-sm">
           <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Lokasi</span>
+            <span className="text-muted-foreground">{t('farms.cardLocation')}</span>
             <span className="max-w-[60%] truncate text-right text-foreground">
               {farm.location || '—'}
             </span>
           </div>
           <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Komoditas</span>
+            <span className="text-muted-foreground">{t('farms.cardCrop')}</span>
             <span className="text-foreground">{farm.crop_type || '—'}</span>
           </div>
           <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Luas Lahan</span>
+            <span className="text-muted-foreground">{t('farms.cardArea')}</span>
             <span className="tabular-nums text-foreground">{formatAreaHa(farm.area_ha)}</span>
           </div>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">Update {timeAgo(farm.updated_at)}</p>
+        <p className="mt-3 text-xs text-muted-foreground">{t('farms.cardUpdated')} {timeAgo(farm.updated_at, t)}</p>
       </Card>
     </Link>
   );
@@ -66,6 +68,7 @@ function FarmListCard({ farm }: { farm: Farm }) {
 
 export default function FarmsPage() {
   const { data, isLoading, error } = useFarms();
+  const { t } = useTranslation();
   const [filter, setFilter] = useState('');
 
   const farms = data?.items ?? [];
@@ -87,7 +90,7 @@ export default function FarmsPage() {
             <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Cari kebun, lokasi, atau tanaman"
+              placeholder={t('farms.searchPlaceholder')}
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="pl-8"
@@ -103,10 +106,10 @@ export default function FarmsPage() {
           ))}
         </div>
       ) : error ? (
-        <p className="text-destructive">Gagal memuat kebun: {error.message}</p>
+        <p className="text-destructive">{t('farms.errorLoad', { message: error.message })}</p>
       ) : visibleFarms.length === 0 ? (
         <p className="text-muted-foreground">
-          {filter ? 'Kebun tidak ditemukan.' : 'Belum ada kebun.'}
+          {filter ? t('farms.emptyFiltered') : t('farms.empty')}
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   CircleCheck,
   Cloud,
@@ -58,23 +59,24 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 }
 
 function ImpactCard({ weather }: { weather: Weather | null }) {
+  const { t } = useTranslation();
   // No-data BMKG → neutral (bukan merah). Hujan → amber (perhatian). Aman → green.
   const impact: { tone: PillTone; Icon: typeof Sun; text: string } = !weather
     ? {
         tone: 'neutral',
         Icon: TriangleAlert,
-        text: 'Data BMKG belum tersedia. Pastikan kode BMKG kebun sudah terisi sesuai lokasi.',
+        text: t('weather.impactNoData'),
       }
     : weather.rain_next_3h
       ? {
           tone: 'yellow',
           Icon: CloudRain,
-          text: 'BMKG memprediksi hujan, sistem menunda irigasi untuk mencegah pemborosan air.',
+          text: t('weather.impactRain'),
         }
       : {
           tone: 'green',
           Icon: CircleCheck,
-          text: 'Tidak ada prediksi hujan, sistem mengizinkan irigasi jika kelembapan tanah di bawah threshold bawah.',
+          text: t('weather.impactClear'),
         };
   const Icon = impact.Icon;
 
@@ -89,6 +91,7 @@ function ImpactCard({ weather }: { weather: Weather | null }) {
 }
 
 function WeatherInfoCard({ weather, farm }: { weather: Weather | null; farm: Farm }) {
+  const { t } = useTranslation();
   const r = weather?.region;
   const regionText =
     [r?.village, r?.district, r?.city, r?.province].filter(Boolean).join(', ') ||
@@ -101,28 +104,29 @@ function WeatherInfoCard({ weather, farm }: { weather: Weather | null; farm: Far
     Number.isFinite(lat) && Number.isFinite(lng) ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : '—';
   const altitude = pickNumber(weather?.location_profile?.altitude_m);
   const altitudeText = altitude != null ? `${altitude} mdpl` : '—';
-  const lastUpdate = weather?.forecast_time || weather?.updated_at || 'Belum tersedia';
+  const lastUpdate = weather?.forecast_time || weather?.updated_at || t('weather.notAvailable');
   const available = Boolean(weather);
-  const statusLabel = available ? `${weather?.provider || 'BMKG'} tersedia` : 'Belum tersedia';
+  const statusLabel = available ? `${weather?.provider || 'BMKG'} ${t('weather.statusAvailable')}` : t('weather.notAvailable');
 
   return (
     <Card>
       <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <InfoItem label="Wilayah" value={regionText} />
-        <InfoItem label="Kode BMKG" value={adm4} />
-        <InfoItem label="Koordinat Kebun" value={coord} />
-        <InfoItem label="Altitude BMKG" value={altitudeText} />
+        <InfoItem label={t('weather.labelRegion')} value={regionText} />
+        <InfoItem label={t('weather.labelBmkgCode')} value={adm4} />
+        <InfoItem label={t('weather.labelCoord')} value={coord} />
+        <InfoItem label={t('weather.labelAltitude')} value={altitudeText} />
         <div className="flex flex-col items-start gap-1">
-          <span className="text-xs text-muted-foreground">Status Koneksi</span>
+          <span className="text-xs text-muted-foreground">{t('weather.labelConnStatus')}</span>
           <StatusPill tone={available ? 'green' : 'neutral'} label={statusLabel} />
         </div>
-        <InfoItem label="Update Terakhir" value={lastUpdate} />
+        <InfoItem label={t('weather.labelLastUpdate')} value={lastUpdate} />
       </CardContent>
     </Card>
   );
 }
 
 function WeatherMainCard({ weather }: { weather: Weather | null }) {
+  const { t } = useTranslation();
   const info = getWeatherCodeInfo(weather?.code, weather?.condition);
   const Icon = weatherIcon[info.iconKey];
   const temp = pickNumber(weather?.temperature);
@@ -145,21 +149,21 @@ function WeatherMainCard({ weather }: { weather: Weather | null }) {
               {tempText}
             </span>
             <span className="text-sm text-muted-foreground">
-              {weather ? weather.condition : 'Belum tersedia'}
+              {weather ? t(info.label) : t('weather.notAvailable')}
             </span>
           </div>
         </div>
         <div className="space-y-2 border-t border-border pt-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Kelembapan</span>
+            <span className="text-muted-foreground">{t('weather.labelHumidity')}</span>
             <span className="font-medium tabular-nums text-foreground">{humText}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Kecepatan Angin</span>
+            <span className="text-muted-foreground">{t('weather.labelWindSpeed')}</span>
             <span className="font-medium text-foreground">{windText}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Kode Cuaca</span>
+            <span className="text-muted-foreground">{t('weather.labelWeatherCode')}</span>
             <span className="font-medium tabular-nums text-foreground">{weather?.code ?? '—'}</span>
           </div>
         </div>
@@ -169,12 +173,13 @@ function WeatherMainCard({ weather }: { weather: Weather | null }) {
 }
 
 function ForecastGrid({ weather }: { weather: Weather | null }) {
+  const { t } = useTranslation();
   const forecast = weather?.forecast;
   if (!Array.isArray(forecast) || forecast.length === 0) {
     return (
       <Card>
         <CardContent className="text-sm text-muted-foreground">
-          Prakiraan belum tersedia untuk kebun ini.
+          {t('weather.forecastEmpty')}
         </CardContent>
       </Card>
     );
@@ -193,7 +198,7 @@ function ForecastGrid({ weather }: { weather: Weather | null }) {
               <Icon className="size-7 text-muted-foreground" />
               <span className="text-lg font-semibold tabular-nums text-foreground">{tempText}</span>
               <span className="text-xs text-muted-foreground">
-                {f.weather_desc || f.condition || '—'}
+                {t(info.label)}
               </span>
             </CardContent>
           </Card>
@@ -204,6 +209,7 @@ function ForecastGrid({ weather }: { weather: Weather | null }) {
 }
 
 export default function WeatherPage() {
+  const { t } = useTranslation();
   const { id: farmId } = useParams();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
 
@@ -221,10 +227,10 @@ export default function WeatherPage() {
     return (
       <div className="space-y-3">
         <p className="text-destructive">
-          {error ? `Gagal memuat data cuaca: ${error.message}` : 'Data tidak tersedia.'}
+          {error ? t('weather.errorLoad', { message: error.message }) : t('weather.noData')}
         </p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">Kembali ke Daftar Kebun</Link>
+          <Link to="/dashboard">{t('weather.backToDashboard')}</Link>
         </Button>
       </div>
     );
