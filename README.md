@@ -19,24 +19,18 @@ LoraField memakai node sensor berbasis LILYGO LoRa32 untuk membaca kelembapan ta
 |   |-- data/                   # lorafield.db dibuat otomatis
 |   |-- requirements.txt
 |   `-- README.md
-|-- frontend/
+|-- frontend/                   # Frontend utama: React 19 + Vite + TS + Tailwind v4 + shadcn/ui
+|   |-- src/
+|   |   |-- app/                    # providers, router
+|   |   |-- components/             # ui (shadcn) + layout
+|   |   |-- features/               # auth, farms, monitoring, irrigation, weather, gateway, nodes, logs, settings, landing
+|   |   |-- lib/                    # token, api, helpers
+|   |   `-- types/
 |   |-- public/
-|   |   `-- static/
-|   |       |-- index.html          # Dashboard statis lama
-|   |       |-- monitoring.html
-|   |       |-- irrigation.html
-|   |       |-- weather.html
-|   |       |-- logs.html
-|   |       |-- css/
-|   |       `-- js/
-|   |-- src/                        # React/Vite (dalam pengembangan)
-|   |   |-- components/
-|   |   |-- pages/
-|   |   |-- services/
-|   |   `-- ...
+|   |-- dist/                       # output `npm run build`, di-serve backend di /
 |   |-- index.html
 |   |-- package.json
-|   `-- vite.config.js
+|   `-- vite.config.ts
 `-- README.md
 ```
 
@@ -63,7 +57,7 @@ npm install
 npm run dev
 ```
 
-Versi halaman statis lama: `frontend/public/static/index.html`.
+Dev server di `http://localhost:5173` (proxy `/api` ke backend port 8000). Build produksi: `npm run build` menghasilkan `frontend/dist/`, yang di-serve langsung oleh backend di `/`.
 
 ## API Endpoints
 
@@ -188,7 +182,7 @@ Endpoint `/api/weather?adm4=...` selalu mengambil langsung dari BMKG (tanpa cach
 | Message Broker | Mosquitto MQTT | Belum diintegrasikan |
 | Real-time Update | WebSocket | Belum diintegrasikan |
 | Node Sensor | LILYGO LoRa32 | Hardware terpisah |
-| Frontend React | React/Vite | Scaffold tersedia |
+| Frontend | React 19 + Vite + Tailwind v4 + shadcn/ui | Tersedia, frontend utama |
 
 ## Teknologi
 
@@ -196,9 +190,9 @@ Endpoint `/api/weather?adm4=...` selalu mengambil langsung dari BMKG (tanpa cach
 - SQLite (via sqlite3 standar Python)
 - httpx (HTTP client untuk BMKG)
 - Pydantic v2
-- React/Vite (scaffold)
-- HTML/CSS/JS vanilla (frontend statis lama)
-- Chart.js v4
+- React 19 + Vite + TypeScript (frontend di `frontend/`)
+- Tailwind v4 + shadcn/ui
+- TanStack Query, react-router v7, Recharts, react-leaflet
 
 ## Capstone Design Project
 

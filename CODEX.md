@@ -10,31 +10,27 @@ Revisi aktif: struktur web dashboard LoraField revisi 1.3 dengan fitur map pemil
 
 ## Konteks Repo
 
-- `frontend/src/` — **React/Vite, UI aktif yang dikembangkan**
-- `frontend/public/static/` — HTML/CSS/JS vanilla lama, masih ada, jangan dihapus sampai Fase 5
-- `backend/` — backend FastAPI + SQLite
-- Root repo hanya untuk dokumentasi dan metadata proyek
+> Catatan: detail frontend di file ini sebagian historis (era pra-rebuild, banyak file `.jsx`/Chart.js). Sumber kebenaran frontend sekarang = `frontend/CLAUDE.md`.
+
+- `frontend/` — **frontend tunggal: React 19 + Vite + TypeScript + Tailwind v4 + shadcn/ui (UI aktif)**
+- `backend/` — backend FastAPI + SQLite; men-serve `frontend/dist/` di `/`
+- Root repo untuk dokumentasi dan metadata proyek
 
 Jika membuat perubahan, baca file terkait terlebih dahulu dan ikuti pola lokal yang sudah ada.
 
 ## Stack Teknis
 
-- **Frontend:** Vite 5.4 + React 18.3 + React Router 7.15
-- **Peta:** Leaflet 1.9.4
-- **Grafik:** Chart.js 4.4.1 + react-chartjs-2 5.2.0
+- **Frontend:** Vite + React 19 + TypeScript + react-router v7 (`frontend/`)
+- **Peta:** react-leaflet
+- **Grafik:** Recharts (via shadcn Chart)
 - **Backend:** FastAPI + SQLite
 - **Auth:** JWT Bearer token (`lf_access_token` di localStorage)
 - **Dev:** `npm run dev` → port 5173 (proxy `/api` → port 8000)
-- **CSS:** file lama dari `frontend/public/static/css/` di-serve otomatis via Vite `public/` folder
+- **Styling:** Tailwind v4 + CSS variable shadcn (`frontend/src/index.css`)
 
-## Status Migrasi React
+## Status Frontend
 
-Per 2026-05-26, semua halaman utama sudah diport ke React (Fase 1–4b selesai). SPA bisa dijalankan via port 5173. HTML lama tetap ada di `frontend/public/static/` sampai Fase 5 selesai.
-
-**Fase 5 (BELUM):**
-- Cleanup `frontend/public/static/`
-- Update backend serve ke `frontend/dist/`
-- `npm run build` end-to-end test
+Migrasi React selesai. `frontend/` (TypeScript + shadcn) adalah satu-satunya frontend; frontend HTML/JSX lama sudah dihapus dari repo (2026-06-21, folder rebuild di-rename menjadi `frontend/`). Backend men-serve `frontend/dist/` (hasil `npm run build`) di `/`, asset di `/assets`, dengan SPA fallback untuk route non-API.
 
 ## Routes React (`src/App.jsx`)
 
@@ -206,16 +202,13 @@ Kolom `phone` ditambahkan via `ensure_column` (migration otomatis startup). Kolo
 - Pakai CSS variables (`--color-bg`, `--color-primary`, dll) — jangan hardcode hex
 - Dark mode + light mode via `data-theme` di `<html>`
 - Badge status: hijau = normal/online, kuning = peringatan, merah = offline/error
-- Hindari inline style; gunakan CSS class
-- Fix layout React: `<style>#root { display: contents; }</style>` di `frontend/index.html` WAJIB dipertahankan
+- Hindari inline style; gunakan CSS class / utility Tailwind
 - Dashboard operasional: padat, rapi, mudah discan
 
 ## Aturan Wajib Saat Mengubah Kode
 
 - Baca file terkait sebelum mengubah — jangan asumsi atau invent API/komponen yang tidak ada
-- Jangan ubah CSS lama (`frontend/public/static/css/`) kecuali perlu sinkronisasi
-- Jangan hapus HTML lama sampai Fase 5
-- Pakai pola yang sudah ada: `DashboardLayout` wrapper, `useParams` untuk `:id`, `getFarmSummary`, helper dari `farmHelpers.js`
+- Pakai pola yang sudah ada di `frontend/`: layout `AppLayout`, `useParams` untuk `:id`, TanStack Query hooks (`features/*/queries.ts`), helper dari `farmHelpers.ts`
 - Jangan campur dua flow ganti password
 - Jangan pakai `user_id` di query params endpoint farm
 
@@ -243,11 +236,11 @@ Kolom `phone` ditambahkan via `ensure_column` (migration otomatis startup). Kolo
 
 ## Referensi File
 
-- React entry: `frontend/src/main.jsx`
-- Routes: `frontend/src/App.jsx`
-- API service: `frontend/src/services/api.js`
-- Farm helpers: `frontend/src/utils/farmHelpers.js`
+- React entry: `frontend/src/main.tsx`
+- Routes: `frontend/src/app/router.tsx`
+- API service: `frontend/src/lib/api.ts`
+- Farm helpers: `frontend/src/features/farms/farmHelpers.ts`
 - Backend API: `backend/app/main.py`
 - Backend schema: `backend/app/schemas.py`
-- CSS tokens: `frontend/public/static/css/premium.css` (dark) + `style.css` (light)
-- Logo: `frontend/public/static/img/logo.svg`
+- CSS tokens: `frontend/src/index.css` (CSS variable shadcn, dark-only)
+- Logo/brand: ikon `Sprout` (lucide) + favicon `frontend/public/favicon.svg`
