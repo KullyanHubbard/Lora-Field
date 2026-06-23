@@ -7,33 +7,11 @@ import { formatAreaHa, timeAgo } from '@/lib/format';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatusPill, type PillTone } from '@/components/ui/status-pill';
+import { StatusLights, farmStatusTone, farmStatusLabelKey } from '@/components/ui/status-lights';
 import type { Farm } from '@/types';
-
-// Mapping status farm — konsisten dengan Dashboard (FarmListPage).
-// active=hijau; warning/maintenance=kuning; sisanya neutral (bukan merah, DESIGN.md).
-function farmStatusPill(status: string, t: (key: string) => string): { tone: PillTone; label: string } {
-  switch (status) {
-    case 'active':
-      return { tone: 'green', label: t('farmStatus.active') };
-    case 'warning':
-      return { tone: 'yellow', label: t('farmStatus.warning') };
-    case 'maintenance':
-      return { tone: 'yellow', label: t('farmStatus.maintenance') };
-    case 'inactive':
-    case 'offline':
-      return { tone: 'neutral', label: t('farmStatus.inactive') };
-    default:
-      return {
-        tone: 'neutral',
-        label: status ? status.charAt(0).toUpperCase() + status.slice(1) : t('farmStatus.unknown'),
-      };
-  }
-}
 
 function FarmListCard({ farm }: { farm: Farm }) {
   const { t } = useTranslation();
-  const pill = farmStatusPill(farm.status, t);
   return (
     <Link to={`/farms/${farm.id}`}>
       <Card className="h-full p-5 transition-colors hover:bg-accent/50">
@@ -42,7 +20,7 @@ function FarmListCard({ farm }: { farm: Farm }) {
             <h3 className="font-semibold text-foreground">{farm.name}</h3>
             {farm.owner && <span className="text-xs text-muted-foreground">{farm.owner}</span>}
           </div>
-          <StatusPill tone={pill.tone} label={pill.label} />
+          <StatusLights tone={farmStatusTone(farm.status)} label={t(farmStatusLabelKey(farm.status))} />
         </div>
         <div className="mt-3 space-y-1 text-sm">
           <div className="flex justify-between gap-2">

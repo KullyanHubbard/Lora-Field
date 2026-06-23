@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import csv
 from pathlib import Path
 import sqlite3
 from typing import Generator
@@ -7,6 +8,10 @@ from typing import Generator
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "lorafield.db"
+
+# Aset sumber (di-commit) untuk daftar wilayah Kemendagri/BMKG, dipisah dari
+# runtime DB. Lihat seed_wilayah().
+WILAYAH_CSV = Path(__file__).resolve().parent / "data" / "wilayah.csv"
 
 
 @contextmanager
@@ -118,6 +123,17 @@ def init_db() -> None:
                 data TEXT NOT NULL,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS wilayah (
+                kode TEXT PRIMARY KEY,
+                nama TEXT NOT NULL,
+                nama_norm TEXT NOT NULL,
+                level INTEGER NOT NULL,
+                parent TEXT NOT NULL DEFAULT ''
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_wilayah_level_norm ON wilayah(level, nama_norm);
+            CREATE INDEX IF NOT EXISTS idx_wilayah_parent ON wilayah(parent);
             """
         )
 
@@ -126,6 +142,46 @@ def init_db() -> None:
         ensure_column(connection, "nodes", "longitude", "REAL")
         ensure_column(connection, "nodes", "farm_id", "TEXT REFERENCES farms(id)")
         ensure_column(connection, "users", "phone", "TEXT NOT NULL DEFAULT ''")
+
+        seed_wilayah(connection)
+
+
+def seed_wilayah(connection: sqlite3.Connection) -> None:
+    """Isi tabel wilayah dari aset CSV (kode,nama) sekali saja (idempoten).
+
+    Kode sudah format dotted = adm4 BMKG. Level = jumlah segmen titik
+    (1=prov, 2=kab/kota, 3=kec, 4=desa). parent = kode tanpa segmen terakhir.
+    nama_norm dihitung dengan normalisasi yang sama seperti saat query
+    (normalize_region_name) supaya pencocokan konsisten.
+    """
+    already = connection.execute("SELECT COUNT(*) FROM wilayah").fetchone()[0]
+    if already:
+        return
+    if not WILAYAH_CSV.exists():
+        return
+
+    # Import di sini untuk hindari circular import (wilayah_resolver -> database).
+    from .wilayah_resolver import normalize_region_name
+
+    rows = []
+    with open(WILAYAH_CSV, encoding="utf-8", newline="") as handle:
+        reader = csv.reader(handle)
+        next(reader, None)  # header
+        for record in reader:
+            if len(record) < 2:
+                continue
+            kode, nama = record[0].strip(), record[1].strip()
+            if not kode or not nama:
+                continue
+            level = kode.count(".") + 1
+            parent = kode.rsplit(".", 1)[0] if level > 1 else ""
+            rows.append((kode, nama, normalize_region_name(nama, level), level, parent))
+
+    connection.executemany(
+        "INSERT OR IGNORE INTO wilayah (kode, nama, nama_norm, level, parent) "
+        "VALUES (?, ?, ?, ?, ?)",
+        rows,
+    )
 
 
 def row_to_dict(row: sqlite3.Row | None) -> dict | None:

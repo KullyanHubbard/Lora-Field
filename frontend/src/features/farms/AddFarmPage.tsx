@@ -258,10 +258,13 @@ export default function AddFarmPage() {
   const [forceSubmit, setForceSubmit] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [feedback, setFeedback] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const existingCount = farmsData?.items.length ?? 0;
+  const busy = submitting || createFarm.isPending;
 
   const submit = async () => {
+    if (busy) return;
     setFeedback('');
 
     const rawName = name.trim();
@@ -289,30 +292,36 @@ export default function AddFarmPage() {
       return;
     }
 
-    let resolvedAdm4 = adm4.trim();
-    if (!resolvedAdm4) {
-      try {
-        const res = await api.resolveAdm4(parsedLat, parsedLng, trimmedLocation);
-        resolvedAdm4 = res.found && res.adm4 ? res.adm4 : '';
-      } catch {
-        resolvedAdm4 = '';
+    setSubmitting(true);
+    try {
+      // Best-effort resolve kode BMKG dari koordinat + alamat. Kalau belum ketemu,
+      // kebun TETAP dibuat dengan kode kosong; backend meng-resolve otomatis nanti
+      // (ensure_farm_bmkg_adm4) saat detail/cuaca kebun pertama dibuka.
+      let resolvedAdm4 = adm4.trim();
+      if (!resolvedAdm4) {
+        try {
+          const res = await api.resolveAdm4(parsedLat, parsedLng, trimmedLocation);
+          resolvedAdm4 = res.found && res.adm4 ? res.adm4 : '';
+        } catch {
+          resolvedAdm4 = '';
+        }
       }
-    }
-    if (!resolvedAdm4) {
-      setFeedback(t('farms.addForm.errorNoAdm4'));
-      return;
-    }
 
-    createFarm.mutate({
-      name: effectiveName,
-      owner: owner.trim(),
-      location: trimmedLocation,
-      crop_type: trimmedCrop,
-      area_ha: areaHa !== '' ? parseFloat(areaHa) : null,
-      bmkg_adm4_code: resolvedAdm4,
-      latitude: parsedLat,
-      longitude: parsedLng,
-    });
+      await createFarm.mutateAsync({
+        name: effectiveName,
+        owner: owner.trim(),
+        location: trimmedLocation,
+        crop_type: trimmedCrop,
+        area_ha: areaHa !== '' ? parseFloat(areaHa) : null,
+        bmkg_adm4_code: resolvedAdm4,
+        latitude: parsedLat,
+        longitude: parsedLng,
+      });
+    } catch {
+      // Kegagalan request sudah ditangani lewat toast di useCreateFarm.onError.
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const submitLabel =
@@ -322,7 +331,7 @@ export default function AddFarmPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
-      <DashboardBar />
+      <DashboardBar title="Registrasi Kebun" />
       <Card className="mx-auto max-w-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -437,7 +446,7 @@ export default function AddFarmPage() {
             )}
 
             <div className="flex items-center gap-3">
-              <Button type="submit" disabled={createFarm.isPending}>
+              <Button type="submit" disabled={busy}>
                 <Plus className="size-4" /> {submitLabel}
               </Button>
               <Button asChild variant="outline">

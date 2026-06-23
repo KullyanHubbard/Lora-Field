@@ -4,14 +4,17 @@ import {
   CloudSun,
   Cpu,
   Droplets,
+  HelpCircle,
   History,
   Home,
   LayoutDashboard,
   LineChart,
   LogOut,
+  Plus,
   Radio,
   Settings,
   Sprout,
+  UserCog,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -53,7 +56,6 @@ export function AppLayout() {
   const selectorNav: NavItem[] = [
     { to: '/dashboard', labelKey: 'layout.nav.dashboard', icon: LayoutDashboard },
     { to: '/farms', labelKey: 'layout.nav.myFarms', icon: Sprout },
-    { to: '/settings', labelKey: 'layout.nav.settings', icon: Settings },
   ];
 
   const farmNav: NavItem[] = farmId
@@ -68,7 +70,18 @@ export function AppLayout() {
       ]
     : [];
 
-  const title = farmId ? t('layout.farmContext') : t('layout.nav.dashboard');
+  const selectorTitles: Record<string, string> = {
+    '/dashboard': t('layout.nav.dashboard'),
+    '/farms': t('layout.nav.myFarms'),
+    '/farms/add': t('farms.addForm.pageTitle'),
+    '/settings': t('layout.nav.settings'),
+    '/change-password': t('layout.nav.changePassword'),
+  };
+  // Judul header farm-context ikut halaman aktif: ambil label dari farmNav,
+  // termasuk route ringkasan (/farms/:id) → "Ringkasan Kebun".
+  const farmActiveNav = farmId ? farmNav.find((item) => item.to === pathname) : undefined;
+  const farmTitle = farmActiveNav ? t(farmActiveNav.labelKey) : t('layout.farmContext');
+  const title = farmId ? farmTitle : (selectorTitles[pathname] ?? t('layout.nav.dashboard'));
 
   return (
     <SidebarProvider>
@@ -80,7 +93,7 @@ export function AppLayout() {
         <SidebarContent>
           {farmId ? (
             <>
-              <SidebarGroup>
+              <SidebarGroup className="pb-1">
                 <SidebarGroupContent>
                   {/* Back link — sengaja bukan SidebarMenuButton, bobot visual rendah
                       supaya tidak bersaing dengan judul nama kebun di bawahnya. */}
@@ -91,16 +104,19 @@ export function AppLayout() {
                     <ArrowLeft className="size-3.5" />
                     <span>{t('layout.backToDashboard')}</span>
                   </Link>
-                  {/* Nama kebun = judul halaman farm-context, dipisah border bawah dari menu. */}
-                  <div className="mt-1 truncate border-b border-border px-2 pb-3 text-base font-semibold text-foreground">
+                  {/* Nama kebun = judul halaman farm-context. */}
+                  <div className="mt-1 truncate px-2 pb-1 text-base font-semibold text-foreground">
                     {farmName}
                   </div>
                 </SidebarGroupContent>
               </SidebarGroup>
 
-              <SidebarGroup>
+              {/* Separator identik dengan mode selector (Home / Menu Navigasi). */}
+              <div className="mx-4 my-1 h-px bg-sidebar-border" />
+
+              <SidebarGroup className="pt-1">
                 <SidebarGroupContent>
-                  <SidebarMenu>
+                  <SidebarMenu className="gap-1.5 px-3">
                     {farmNav.map((item) => {
                       const Icon = item.icon;
                       return (
@@ -119,26 +135,85 @@ export function AppLayout() {
               </SidebarGroup>
             </>
           ) : (
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('layout.menu')}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {selectorNav.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <SidebarMenuItem key={item.to}>
-                        <SidebarMenuButton asChild isActive={pathname === item.to}>
-                          <Link to={item.to}>
-                            <Icon />
-                            <span>{t(item.labelKey)}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            <>
+              {/* HOME — link ke landing page */}
+              <SidebarGroup className="pb-1">
+                <SidebarGroupContent>
+                  <SidebarMenu className="gap-1.5 px-3">
+                    <SidebarMenuItem>
+                      {/* Link keluar ke landing publik; AppLayout tak pernah aktif di "/",
+                          jadi tidak ada state isActive. */}
+                      <SidebarMenuButton asChild>
+                        <Link to="/">
+                          <Home />
+                          <span>{t('layout.nav.home')}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+
+              <div className="mx-4 my-1 h-px bg-sidebar-border" />
+
+              {/* Menu Navigasi */}
+              <SidebarGroup className="pt-1">
+                <SidebarGroupLabel>{t('layout.menuNav')}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu className="gap-1.5 px-3">
+                    {selectorNav.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <SidebarMenuItem key={item.to}>
+                          <SidebarMenuButton asChild isActive={pathname === item.to}>
+                            <Link to={item.to}>
+                              <Icon />
+                              <span>{t(item.labelKey)}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+
+                    {/* Registrasi Kebun */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={pathname === '/farms/add'}>
+                        <Link to="/farms/add">
+                          <Plus />
+                          <span>{t('layout.nav.registerFarm')}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Pengaturan */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={pathname === '/settings'}>
+                        <Link to="/settings">
+                          <Settings />
+                          <span>{t('layout.nav.settings')}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* TODO: route pusat bantuan belum ada — disable agar tidak navigasi ke "#". */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton disabled>
+                        <HelpCircle />
+                        <span>{t('layout.nav.helpCenter')}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Ganti Akun — clear sesi → kembali ke /login */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton onClick={logout}>
+                        <UserCog />
+                        <span>{t('layout.nav.switchAccount')}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </>
           )}
         </SidebarContent>
       </Sidebar>
@@ -146,7 +221,7 @@ export function AppLayout() {
       <SidebarInset>
         <header className="flex h-14 items-center gap-2 border-b border-border bg-background px-4">
           <SidebarTrigger />
-          <h1 className="text-sm font-semibold text-foreground">{title}</h1>
+          <h1 className="text-xl font-semibold text-primary">{title}</h1>
           <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
               {user?.name ?? user?.email ?? t('layout.fallbackUser')}

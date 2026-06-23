@@ -64,15 +64,7 @@ export function AppRouter() {
           }
         />
 
-        {/* Dashboard & Tambah Kebun: full-bleed tanpa AppLayout (sidebar/topbar), tetap di balik RequireAuth */}
-        <Route
-          path="/dashboard"
-          element={
-            <RequireAuth>
-              <DashboardPage />
-            </RequireAuth>
-          }
-        />
+        {/* Tambah Kebun: full-bleed tanpa AppLayout, tetap di balik RequireAuth */}
         <Route
           path="/farms/add"
           element={
@@ -90,6 +82,7 @@ export function AppRouter() {
             </RequireAuth>
           }
         >
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/farms" element={<FarmsPage />} />
           <Route path="/farms/:id" element={<FarmDetailPage />} />
           <Route path="/farms/:id/monitoring" element={<MonitoringPage />} />

@@ -51,6 +51,7 @@ from .auth import (
     verify_password,
 )
 from .database import get_connection, init_db, row_to_dict
+from .wilayah_resolver import resolve_adm4_from_freetext, resolve_adm4_from_region_names
 from .schemas import (
     FarmCreate,
     FarmUpdate,
@@ -516,9 +517,38 @@ def resolve_bmkg_adm4(lat: float, lng: float, location_hint: str = "") -> str:
         adm4 = extract_adm4_from_nominatim(data)
         if adm4:
             return adm4
+
+        # Fallback: OSM tak punya tag kode BPS di titik ini. Pakai nama wilayah
+        # resmi hasil reverse-geocode (bukan alamat ketikan user) lalu cocokkan
+        # ke daftar Kemendagri offline. Field Nominatim Indonesia bervariasi,
+        # jadi kirim beberapa kandidat per level; matcher menyempitkan sendiri.
+        address = data.get("address") or {}
+        adm4 = resolve_adm4_from_region_names(
+            province=address.get("state", ""),
+            regency=address.get("county") or address.get("city") or address.get("region") or "",
+            district=(
+                address.get("municipality")
+                or address.get("city_district")
+                or address.get("subdistrict")
+                or address.get("suburb")
+                or ""
+            ),
+            village=(
+                address.get("village")
+                or address.get("hamlet")
+                or address.get("neighbourhood")
+                or address.get("suburb")
+                or ""
+            ),
+        )
+        if adm4:
+            return adm4
     except Exception:
         pass
-    return ""
+
+    # Fallback terakhir (offline): alamat ketikan user. Berguna saat Nominatim
+    # gagal/timeout dan user mengisi alamat yang konsisten.
+    return resolve_adm4_from_freetext(location_hint)
 
 
 def ensure_farm_bmkg_adm4(farm: dict) -> dict:
@@ -952,12 +982,10 @@ def create_farm(
 ) -> dict:
     adm4 = payload.bmkg_adm4_code
     if not adm4 and payload.latitude is not None and payload.longitude is not None:
+        # Best-effort resolve saat create. Kalau belum ketemu, kebun TETAP dibuat
+        # dengan kode BMKG kosong; ensure_farm_bmkg_adm4() meng-resolve otomatis
+        # tiap kali summary/cuaca kebun dimuat (auto-generate setelah buat kebun).
         adm4 = resolve_bmkg_adm4(payload.latitude, payload.longitude, payload.location)
-    if not adm4:
-        raise HTTPException(
-            status_code=422,
-            detail="Kode BMKG belum terdeteksi. Izinkan lokasi browser atau isi alamat sampai desa, kecamatan, dan kabupaten.",
-        )
 
     farm_id = f"farm-{uuid.uuid4().hex[:8]}"
     with get_connection() as connection:

@@ -114,11 +114,11 @@
     --chart-5: oklch(0.269 0 0);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    /* State aktif & hover sidebar: turunan hijau brand --primary (#00C896 = oklch 0.739 0.152 167). */
-    --sidebar-accent: oklch(0.42 0.1 167);
-    --sidebar-accent-foreground: oklch(0.97 0.02 167);
+    --sidebar-primary: #00C896;
+    --sidebar-primary-foreground: #00120c;
+    /* State aktif sidebar pakai --sidebar-primary (hijau brand cerah). Hover pakai --sidebar-accent (hijau redup). */
+    --sidebar-accent: oklch(0.28 0.07 167);
+    --sidebar-accent-foreground: oklch(0.82 0.08 167);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
 }
