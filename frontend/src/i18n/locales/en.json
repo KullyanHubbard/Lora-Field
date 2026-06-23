@@ -306,15 +306,15 @@
     "unknown": "Unknown"
   },
   "dashboard": {
+    "title": "Farm List",
     "errorLoad": "Failed to load farms: {{message}}",
     "empty": "No farms yet.",
     "openFarm": "Open {{name}}"
   },
   "layout": {
     "menu": "Menu",
-    "farm": "Farm",
     "farmContext": "Farm Detail",
-    "backToDashboard": "Back to Dashboard",
+    "backToDashboard": "Dashboard",
     "logout": "Logout",
     "fallbackFarm": "Farm",
     "fallbackUser": "User",

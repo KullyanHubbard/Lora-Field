@@ -29,6 +29,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import { BrandMark } from '@/components/layout/BrandMark';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useFarmSummary } from '@/features/farms/queries';
 
@@ -73,10 +74,7 @@ export function AppLayout() {
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-          <div className="flex items-center gap-2 px-2 py-1">
-            <Sprout className="size-5 text-primary" />
-            <span className="text-base font-semibold text-foreground">LoraField</span>
-          </div>
+          <BrandMark className="px-2 py-1" />
         </SidebarHeader>
 
         <SidebarContent>
@@ -84,25 +82,23 @@ export function AppLayout() {
             <>
               <SidebarGroup>
                 <SidebarGroupContent>
-                  <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard">
-                          <ArrowLeft />
-                          <span>{t('layout.backToDashboard')}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                  {/* FarmSwitcher: nama kebun yang sedang aktif. */}
-                  <div className="truncate px-2 pt-2 text-sm font-medium text-primary">
+                  {/* Back link — sengaja bukan SidebarMenuButton, bobot visual rendah
+                      supaya tidak bersaing dengan judul nama kebun di bawahnya. */}
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    <span>{t('layout.backToDashboard')}</span>
+                  </Link>
+                  {/* Nama kebun = judul halaman farm-context, dipisah border bawah dari menu. */}
+                  <div className="mt-1 truncate border-b border-border px-2 pb-3 text-base font-semibold text-foreground">
                     {farmName}
                   </div>
                 </SidebarGroupContent>
               </SidebarGroup>
 
               <SidebarGroup>
-                <SidebarGroupLabel>{t('layout.farm')}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {farmNav.map((item) => {

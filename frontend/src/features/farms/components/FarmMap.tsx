@@ -55,10 +55,11 @@ export function FarmMap({ farms }: { farms: Farm[] }) {
   const plottable = useMemo(
     () =>
       farms
-        .filter(
-          (f) => Number.isFinite(Number(f.latitude)) && Number.isFinite(Number(f.longitude)),
-        )
-        .map((f) => ({ farm: f, pos: [Number(f.latitude), Number(f.longitude)] as [number, number] })),
+        .filter((f) => Number.isFinite(Number(f.latitude)) && Number.isFinite(Number(f.longitude)))
+        .map((f) => ({
+          farm: f,
+          pos: [Number(f.latitude), Number(f.longitude)] as [number, number],
+        })),
     [farms],
   );
   const positions = useMemo(() => plottable.map((p) => p.pos), [plottable]);
@@ -68,7 +69,7 @@ export function FarmMap({ farms }: { farms: Farm[] }) {
       center={DEFAULT_CENTER}
       zoom={DEFAULT_ZOOM}
       scrollWheelZoom={false}
-      className="h-[420px] w-full rounded-xl border border-border"
+      className="h-[520px] w-full rounded-lg"
       aria-label="Peta lokasi kebun"
     >
       <TileLayer

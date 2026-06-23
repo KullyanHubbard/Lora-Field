@@ -302,15 +302,15 @@
     "unknown": "Tidak Diketahui"
   },
   "dashboard": {
+    "title": "Daftar Kebun",
     "errorLoad": "Gagal memuat kebun: {{message}}",
     "empty": "Belum ada kebun.",
     "openFarm": "Buka {{name}}"
   },
   "layout": {
     "menu": "Menu",
-    "farm": "Kebun",
     "farmContext": "Detail Kebun",
-    "backToDashboard": "Kembali ke Dashboard",
+    "backToDashboard": "Dashboard",
     "logout": "Logout",
     "fallbackFarm": "Kebun",
     "fallbackUser": "Pengguna",
