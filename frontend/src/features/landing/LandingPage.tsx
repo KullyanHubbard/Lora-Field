@@ -275,11 +275,11 @@ export default function LandingPage() {
               </a>
               <div className="flex flex-col gap-2 border-t pt-2">
                 <Link to="/login" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  Log in
+                  Masuk
                 </Link>
                 <Button asChild className="rounded-lg">
                   <Link to="/register">
-                    Get Started
+                    Mulai Sekarang
                     <ChevronRight className="ml-1 size-4" />
                   </Link>
                 </Button>
@@ -334,7 +334,7 @@ export default function LandingPage() {
                   src="https://cdn.dribbble.com/userupload/12302729/file/original-fa372845e394ee85bebe0389b9d86871.png?resize=1504x1128&vertical=center"
                   width={1280}
                   height={720}
-                  alt="SaaSify dashboard"
+                  alt="Pratinjau dashboard LoraField"
                   className="h-auto w-full"
                 />
                 <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-foreground/10"></div>
@@ -564,7 +564,7 @@ export default function LandingPage() {
       </main>
       <footer className="w-full border-t bg-background/95 backdrop-blur-sm">
         <div className={`${SHELL} flex flex-col gap-8 py-10 lg:py-16`}>
-          <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2">
             <div className="space-y-4">
               <span className="text-lg font-bold">LoraField</span>
               <p className="text-sm text-muted-foreground">
@@ -572,7 +572,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="space-y-4">
-              <h4 className="text-sm font-bold">Product</h4>
+              <h4 className="text-sm font-bold">Navigasi</h4>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a href="#features" className="text-muted-foreground transition-colors hover:text-foreground">
@@ -580,82 +580,16 @@ export default function LandingPage() {
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Integrasi
+                  <a href="#testimonials" className="text-muted-foreground transition-colors hover:text-foreground">
+                    Testimoni
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    API
+                  <a href="#faq" className="text-muted-foreground transition-colors hover:text-foreground">
+                    FAQ
                   </a>
                 </li>
               </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold">Resources</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Dokumentasi
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Panduan Pengguna
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Dukungan
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold">Company</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Tentang
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Perjalanan
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Kebijakan Privasi
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-                    Syarat dan Ketentuan
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-border/40 pt-8 sm:flex-row">
-            <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} LoraField. All rights reserved.
-            </p>
-            <div className="flex gap-4">
-              <a href="#" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                Kebijakan Privasi
-              </a>
-              <a href="#" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                Syarat dan Ketentuan
-              </a>
-              <a href="#" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                Kebijakan Cookie
-              </a>
             </div>
           </div>
         </div>
