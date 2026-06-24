@@ -8,7 +8,7 @@ import { useReadings } from './queries';
 import { getNodeStatusBadge } from '@/lib/status';
 import { DEG_C, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { StatusPill } from '@/components/ui/status-pill';
+import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -103,6 +103,14 @@ function MetricChart({
   );
 }
 
+// CATATAN: backend tidak menyimpan riwayat baterai (tabel readings tanpa kolom battery).
+// Tampilkan nilai terkini saja. Grafik historis menyusul jika backend menambah kolom/endpoint riwayat baterai.
+function batteryTone(pct: number): PillTone {
+  if (pct < 20) return 'red';
+  if (pct <= 50) return 'yellow';
+  return 'green';
+}
+
 function ReadingRow({ reading, nodeName }: { reading: Reading; nodeName: string }) {
   const { t } = useTranslation();
   const badge = getNodeStatusBadge('online');
@@ -186,13 +194,17 @@ export default function MonitoringPage() {
     ? `${selectedNode.name}${selectedNode.location ? ` - ${selectedNode.location}` : ''}`
     : '—';
   const tableRows = readings.slice(0, 10);
+  const isMock = summary.is_mock_data === true;
 
   return (
     <div className="space-y-6">
       <Card>
         <CardContent className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm text-muted-foreground">Node</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Node</span>
+              {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
+            </div>
             <Select value={effectiveNodeId} onValueChange={setPicked} disabled={!nodes.length}>
               <SelectTrigger className="w-64">
                 <SelectValue placeholder={nodes.length ? t('monitoring.selectNode') : t('monitoring.noNodes')} />
@@ -215,6 +227,70 @@ export default function MonitoringPage() {
             <RefreshCw className={cn('size-4', readingsFetching && 'animate-spin')} />
             {t('monitoring.reload')}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t('monitoring.batteryTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {summary.nodes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('monitoring.batteryEmpty')}</p>
+          ) : (
+            <ul className="space-y-3">
+              {summary.nodes.map((ns) => {
+                const bat = ns.node.battery;
+                const pct = bat != null ? Math.min(Math.max(bat, 0), 100) : null;
+                const tone = pct != null ? batteryTone(pct) : 'neutral';
+                return (
+                  <li key={ns.node.id} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-foreground">
+                        {ns.node.name || ns.node.id}
+                        {ns.node.location ? (
+                          <span className="ml-1.5 font-normal text-muted-foreground">
+                            {ns.node.location}
+                          </span>
+                        ) : null}
+                      </span>
+                      {pct != null ? (
+                        <StatusPill tone={tone} label={`${pct}%`} />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </div>
+                    {pct != null && (
+                      <>
+                        <div
+                          className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                          role="progressbar"
+                          aria-valuenow={pct}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          {/* lebar bar = nilai dinamis → inline style untuk width diperbolehkan */}
+                          <div
+                            className={cn(
+                              'h-full rounded-full',
+                              tone === 'green' && 'bg-emerald-500',
+                              tone === 'yellow' && 'bg-amber-500',
+                              tone === 'red' && 'bg-red-500',
+                            )}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>0%</span>
+                          <span>100%</span>
+                        </div>
+                      </>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </CardContent>
       </Card>
 

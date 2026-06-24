@@ -124,6 +124,17 @@ def init_db() -> None:
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
 
+            CREATE TABLE IF NOT EXISTS gateway_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                farm_id TEXT NOT NULL,
+                event TEXT NOT NULL,
+                detail TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (farm_id) REFERENCES farms(id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_gateway_logs_farm ON gateway_logs(farm_id);
+
             CREATE TABLE IF NOT EXISTS wilayah (
                 kode TEXT PRIMARY KEY,
                 nama TEXT NOT NULL,

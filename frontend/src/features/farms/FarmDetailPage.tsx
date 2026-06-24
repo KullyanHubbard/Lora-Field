@@ -1,7 +1,7 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Clock,
   Cloud,
   CloudLightning,
   CloudOff,
@@ -11,18 +11,18 @@ import {
   Cpu,
   Droplet,
   Droplets,
-  Leaf,
   LineChart,
-  MapPin,
+  Pencil,
   RadioTower,
-  Ruler,
   Sun,
   Thermometer,
   TriangleAlert,
   WifiOff,
+  Zap,
 } from 'lucide-react';
 import { useFarmSummary } from './queries';
-import { getFarmLastUpdate, valveKeyFromDecision } from './farmHelpers';
+import { useUpdateFarm } from './queries';
+import { valveKeyFromDecision } from './farmHelpers';
 import {
   getGatewayStatusBadge,
   getIrrigationStatusBadge,
@@ -30,12 +30,22 @@ import {
   getSoilStatusFromMoisture,
   getValveStatusBadge,
 } from '@/lib/status';
-import { DEG_C, formatAreaHa, timeAgo } from '@/lib/format';
+import { DEG_C, timeAgo } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { getWeatherInfo, type WeatherIconKey } from '@/features/weather/weatherHelpers';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -49,6 +59,201 @@ import type { FarmSummary, NodeSummary } from '@/types';
 
 type Pill = { label: string; tone: PillTone };
 
+// ─── EditFarmSheet ────────────────────────────────────────────────────────────
+
+interface EditFarmFields {
+  name: string;
+  owner: string;
+  location: string;
+  crop_type: string;
+  area_ha: string;
+}
+
+function EditFarmSheet({ farmId, farm, open, onOpenChange }: {
+  farmId: string;
+  farm: FarmSummary['farm'];
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  // key di EditFarmForm dibuat dari `open`: tiap sheet dibuka, komponen remount
+  // dan state form ter-reset fresh, jadi tidak perlu setState di dalam useEffect.
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>{t('farms.editForm.title')}</SheetTitle>
+        </SheetHeader>
+        <EditFarmForm
+          key={String(open)}
+          farmId={farmId}
+          farm={farm}
+          onClose={() => onOpenChange(false)}
+        />
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function EditFarmForm({
+  farmId,
+  farm,
+  onClose,
+}: {
+  farmId: string;
+  farm: FarmSummary['farm'];
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const { mutate, isPending } = useUpdateFarm(farmId);
+
+  const [fields, setFields] = useState<EditFarmFields>({
+    name: farm.name ?? '',
+    owner: farm.owner ?? '',
+    location: farm.location ?? '',
+    crop_type: farm.crop_type ?? '',
+    area_ha: farm.area_ha != null ? String(farm.area_ha) : '',
+  });
+  const [nameError, setNameError] = useState('');
+
+  const set = (key: keyof EditFarmFields) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFields((prev) => ({ ...prev, [key]: e.target.value }));
+    if (key === 'name') setNameError('');
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedName = fields.name.trim();
+    if (trimmedName.length < 2) {
+      setNameError(t('farms.editForm.errorNameTooShort'));
+      return;
+    }
+
+    // Kirim hanya field yang berubah dari nilai asli (partial update).
+    const payload: Record<string, string | number> = {};
+    if (trimmedName !== (farm.name ?? '')) payload.name = trimmedName;
+    const trimOwner = fields.owner.trim();
+    if (trimOwner !== (farm.owner ?? '')) payload.owner = trimOwner;
+    const trimLocation = fields.location.trim();
+    if (trimLocation !== (farm.location ?? '')) payload.location = trimLocation;
+    const trimCrop = fields.crop_type.trim();
+    if (trimCrop !== (farm.crop_type ?? '')) payload.crop_type = trimCrop;
+    const areaNum = fields.area_ha.trim() !== '' ? Number(fields.area_ha) : null;
+    if (areaNum !== farm.area_ha && areaNum != null && Number.isFinite(areaNum)) {
+      payload.area_ha = areaNum;
+    }
+
+    mutate(payload as Parameters<typeof mutate>[0], {
+      onSuccess: () => onClose(),
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-name">{t('farms.editForm.nameLabel')}</Label>
+            <Input
+              id="edit-name"
+              value={fields.name}
+              onChange={set('name')}
+              placeholder={t('farms.editForm.namePlaceholder')}
+            />
+            {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-owner">{t('farms.editForm.ownerLabel')}</Label>
+            <Input
+              id="edit-owner"
+              value={fields.owner}
+              onChange={set('owner')}
+              placeholder={t('farms.editForm.ownerPlaceholder')}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-location">{t('farms.editForm.locationLabel')}</Label>
+            <Input
+              id="edit-location"
+              value={fields.location}
+              onChange={set('location')}
+              placeholder={t('farms.editForm.locationPlaceholder')}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-crop">{t('farms.editForm.cropLabel')}</Label>
+            <Input
+              id="edit-crop"
+              value={fields.crop_type}
+              onChange={set('crop_type')}
+              placeholder={t('farms.editForm.cropPlaceholder')}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-area">{t('farms.editForm.areaLabel')}</Label>
+            <Input
+              id="edit-area"
+              type="number"
+              min="0"
+              step="0.01"
+              value={fields.area_ha}
+              onChange={set('area_ha')}
+              placeholder={t('farms.editForm.areaPlaceholder')}
+            />
+          </div>
+          <SheetFooter className="flex-row justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isPending}
+            >
+              {t('farms.editForm.cancel')}
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? t('farms.editForm.submitting') : t('farms.editForm.submit')}
+            </Button>
+          </SheetFooter>
+        </form>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+const toneTextClass: Record<string, string> = {
+  green: 'text-emerald-500 dark:text-emerald-400',
+  yellow: 'text-amber-500 dark:text-amber-400',
+  red: 'text-red-500 dark:text-red-400',
+  neutral: 'text-muted-foreground',
+};
+
+function ValveStatCard({ summary }: { summary: FarmSummary }) {
+  const { t } = useTranslation();
+  const activeNode = summary.nodes.find((ns) => ns.node.status !== 'offline' && ns.decision);
+  const valveKey = activeNode ? valveKeyFromDecision(activeNode.decision) : null;
+  const valveBadge = getValveStatusBadge(valveKey ?? 'valve.unknown');
+  const textClass = toneTextClass[valveBadge.tone] ?? toneTextClass.neutral;
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Status Valve
+      </span>
+      <div className="mt-4 flex items-center gap-5">
+        <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-muted">
+          <Droplet className={cn('size-9', textClass)} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <span className={cn('text-3xl font-bold uppercase tracking-wide', textClass)}>
+            {t(valveBadge.labelKey)}
+          </span>
+          <span className="flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-xs text-muted-foreground w-fit">
+            <Zap className="size-3" /> Mode Otomatis
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const weatherIcon: Record<WeatherIconKey, typeof Sun> = {
   sun: Sun,
   'cloud-sun': CloudSun,
@@ -59,22 +264,6 @@ const weatherIcon: Record<WeatherIconKey, typeof Sun> = {
   unknown: CloudOff,
 };
 
-// Singkat alamat panjang → "Sleman, DIY".
-function shortLocation(loc: string | null | undefined): string {
-  if (!loc) return '—';
-  const kabMatch = loc.match(/Kabupaten\s+(\w+)/i);
-  const kotaMatch = loc.match(/Kota\s+(\w+)/i);
-  const city = kabMatch?.[1] || kotaMatch?.[1];
-  let province: string | null = null;
-  if (/yogyakarta/i.test(loc)) province = 'DIY';
-  else if (/jawa\s+tengah/i.test(loc)) province = 'Jateng';
-  else if (/jawa\s+timur/i.test(loc)) province = 'Jatim';
-  else if (/jawa\s+barat/i.test(loc)) province = 'Jabar';
-  if (city && province) return `${city}, ${province}`;
-  if (city) return city;
-  return loc.length > 28 ? loc.slice(0, 26) + '…' : loc;
-}
-
 function PillRow({ label, pill }: { label: string; pill: Pill }) {
   return (
     <div className="flex items-center justify-between gap-2 text-sm">
@@ -84,51 +273,12 @@ function PillRow({ label, pill }: { label: string; pill: Pill }) {
   );
 }
 
-function MetaItem({ icon, value }: { icon: typeof Leaf; value: string }) {
-  const Icon = icon;
-  return (
-    <span className="flex items-center gap-1.5">
-      <Icon className="size-4" /> {value}
-    </span>
-  );
-}
-
-function FarmInfoBar({ summary }: { summary: FarmSummary }) {
-  const { t } = useTranslation();
-  const { farm } = summary;
-  const lastUpd = getFarmLastUpdate(farm, summary.nodes);
-  const gw = getGatewayStatusBadge(summary.gateway_status);
-  const farmPill: Pill =
-    farm.status === 'warning'
-      ? { label: t('farmDetail.statusWarning'), tone: 'yellow' }
-      : { label: t('farmDetail.statusNormal'), tone: 'green' };
-
-  return (
-    <Card>
-      <CardContent className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground">{farm.name}</h2>
-          <div className="flex items-center gap-2">
-            <StatusPill tone={farmPill.tone} label={farmPill.label} />
-            <StatusPill tone={gw.tone} label={`Gateway ${t(gw.labelKey)}`} />
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-          <MetaItem icon={Leaf} value={farm.crop_type || '—'} />
-          <MetaItem icon={Ruler} value={formatAreaHa(farm.area_ha)} />
-          <MetaItem icon={MapPin} value={shortLocation(farm.location)} />
-          <MetaItem icon={Clock} value={timeAgo(lastUpd, t)} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function IrrigasiCard({ summary }: { summary: FarmSummary }) {
   const { t } = useTranslation();
   const avg = summary.average_soil_moisture;
   const { lower, upper } = summary.thresholds;
   const activeNode = summary.nodes.find((ns) => ns.node.status !== 'offline' && ns.decision);
+  const isMock = summary.is_mock_data === true;
 
   const soil: Pill =
     avg > 0 ? { label: t(getSoilStatusFromMoisture(avg, lower, upper).labelKey), tone: getSoilStatusFromMoisture(avg, lower, upper).tone } : { label: t('farmDetail.noData'), tone: 'neutral' };
@@ -145,6 +295,7 @@ function IrrigasiCard({ summary }: { summary: FarmSummary }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Droplet className="size-4 text-muted-foreground" /> {t('farmDetail.irrigationTitle')}
+          {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -160,12 +311,14 @@ function GatewayCard({ summary }: { summary: FarmSummary }) {
   const { t } = useTranslation();
   const gw = getGatewayStatusBadge(summary.gateway_status);
   const GwIcon = summary.gateway_status === 'offline' ? WifiOff : RadioTower;
+  const isMock = summary.is_mock_data === true;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <RadioTower className="size-4 text-muted-foreground" /> Gateway
+          {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -261,6 +414,7 @@ export default function FarmDetailPage() {
   const { id: farmId } = useParams();
   const { t } = useTranslation();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
+  const [editOpen, setEditOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -299,6 +453,7 @@ export default function FarmDetailPage() {
   const weather = summary.weather;
   const activeCount = nodes.filter((ns) => ns.node.status !== 'offline').length;
   const warning = summary.nodes_problem > 0 ? t('farmDetail.nodesProblem', { count: summary.nodes_problem }) : null;
+  const isMock = summary.is_mock_data === true;
 
   const kelembapanText = avg > 0 ? `${avg}%` : '—';
   const suhuText =
@@ -308,8 +463,14 @@ export default function FarmDetailPage() {
 
   return (
     <div className="space-y-4">
-      <FarmInfoBar summary={summary} />
-
+      {summary && (
+        <EditFarmSheet
+          farmId={farmId ?? ''}
+          farm={summary.farm}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
       {warning && (
         <Card className="border-amber-500/50">
           <CardContent className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
@@ -318,7 +479,8 @@ export default function FarmDetailPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <ValveStatCard summary={summary} />
         <StatCard
           label={t('farmDetail.avgMoisture')}
           value={kelembapanText}
@@ -348,12 +510,18 @@ export default function FarmDetailPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <Cpu className="size-4 text-muted-foreground" /> {t('farmDetail.nodeTableTitle')}
+            {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
           </CardTitle>
-          <Button asChild variant="outline" size="sm">
-            <Link to={`/farms/${encodeURIComponent(farmId ?? '')}/monitoring`}>
-              <LineChart className="size-4" /> {t('farmDetail.viewMonitoring')}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="size-4" /> {t('farms.editForm.trigger')}
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/farms/${encodeURIComponent(farmId ?? '')}/monitoring`}>
+                <LineChart className="size-4" /> {t('farmDetail.viewMonitoring')}
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {nodes.length === 0 ? (

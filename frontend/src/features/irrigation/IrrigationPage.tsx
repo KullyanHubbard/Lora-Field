@@ -1,12 +1,12 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Droplet, Zap } from 'lucide-react';
+import { AlertTriangle, Droplet, Zap } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { valveKeyFromDecision } from '@/features/farms/farmHelpers';
 import { getIrrigationStatusBadge, getValveStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,6 +46,12 @@ export default function IrrigationPage() {
   const { t } = useTranslation();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
 
+  // TODO (future): kontrol manual valve butuh backend.
+  // Rencana endpoint (BELUM ADA, jangan dipanggil):
+  //   POST /api/farms/{farm_id}/valve/mode  body: { mode: "auto" | "manual" }
+  //   POST /api/farms/{farm_id}/valve       body: { state: "open" | "closed" }  (hanya saat mode manual)
+  const [mode, setMode] = useState<'auto' | 'manual'>('auto');
+
   const logicRows: { soil: string; weather: string; tone: PillTone; action: string }[] = [
     { soil: t('irrigation.logic.soil1'), weather: t('irrigation.logic.weather1'), tone: 'green', action: t('irrigation.logic.action1') },
     { soil: t('irrigation.logic.soil2'), weather: t('irrigation.logic.weather2'), tone: 'yellow', action: t('irrigation.logic.action2') },
@@ -79,6 +85,11 @@ export default function IrrigationPage() {
   const decision = activeNode?.decision ?? null;
   const valveKey = valveKeyFromDecision(decision);
 
+  const { lower, upper } = summary.thresholds;
+  // average_soil_moisture BISA null → tampilkan "—" dan sembunyikan bar.
+  const avg = summary.average_soil_moisture;
+  const avgPct = avg != null ? Math.min(Math.max(avg, 0), 100) : null;
+
   const valvePill: Pill = decision
     ? { label: t(getValveStatusBadge(valveKey).labelKey), tone: getValveStatusBadge(valveKey).tone }
     : { label: t('irrigation.unknown'), tone: 'neutral' };
@@ -108,9 +119,81 @@ export default function IrrigationPage() {
             >
               {valvePill.label.toUpperCase()}
             </span>
-            <Badge variant="secondary" className="gap-1">
-              <Zap className="size-3" /> {t('irrigation.autoMode')}
-            </Badge>
+            <div className="flex items-center gap-1 rounded-full border border-border bg-muted p-0.5" role="group" aria-label={t('irrigation.modeLabel')}>
+              <button
+                type="button"
+                onClick={() => setMode('auto')}
+                className={cn(
+                  'flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  mode === 'auto'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+                aria-pressed={mode === 'auto'}
+              >
+                <Zap className="size-3" /> {t('irrigation.autoMode')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('manual')}
+                className={cn(
+                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  mode === 'manual'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+                aria-pressed={mode === 'manual'}
+              >
+                {t('irrigation.manualMode')}
+              </button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {mode === 'manual' && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span>{t('irrigation.manualBanner')}</span>
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t('irrigation.thresholdTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{t('irrigation.thresholdRange')}</span>
+            <span className="font-medium tabular-nums text-foreground">
+              {lower}%–{upper}%
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{t('irrigation.avgMoisture')}</span>
+              <span className="font-medium tabular-nums text-foreground">
+                {avgPct != null ? `${avg}%` : '—'}
+              </span>
+            </div>
+            {avgPct != null && (
+              <>
+                <div
+                  className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  aria-valuenow={avgPct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  {/* lebar bar = nilai dinamis → inline style untuk width diperbolehkan */}
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${avgPct}%` }} />
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>0%</span>
+                  <span>100%</span>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -155,6 +238,72 @@ export default function IrrigationPage() {
               {t('irrigation.noDecision')}
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t('irrigation.perNodeTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('irrigation.colNode')}</TableHead>
+                <TableHead>{t('irrigation.colMoisture')}</TableHead>
+                <TableHead>{t('irrigation.colDecision')}</TableHead>
+                <TableHead>{t('irrigation.colValve')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {summary.nodes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    {t('irrigation.perNodeEmpty')}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                summary.nodes.map((ns) => {
+                  // latest_reading & decision BISA null → guard masing-masing.
+                  const reading = ns.latest_reading;
+                  const dec = ns.decision;
+                  const irrBadge = dec ? getIrrigationStatusBadge(dec.decision) : null;
+                  const valveBadge = dec ? getValveStatusBadge(valveKeyFromDecision(dec)) : null;
+                  return (
+                    <TableRow key={ns.node.id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">
+                            {ns.node.name || ns.node.id}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {ns.node.location || ''}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {reading ? `${reading.soil_moisture}%` : '—'}
+                      </TableCell>
+                      <TableCell>
+                        {irrBadge ? (
+                          <StatusPill tone={irrBadge.tone} label={t(irrBadge.labelKey)} />
+                        ) : (
+                          <StatusPill tone="neutral" label={t('irrigation.waitingData')} />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {valveBadge ? (
+                          <StatusPill tone={valveBadge.tone} label={t(valveBadge.labelKey)} />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -184,38 +185,38 @@ export function AppLayout() {
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-
-                    {/* Pengaturan */}
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === '/settings'}>
-                        <Link to="/settings">
-                          <Settings />
-                          <span>{t('layout.nav.settings')}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-
-                    {/* TODO: route pusat bantuan belum ada — disable agar tidak navigasi ke "#". */}
-                    <SidebarMenuItem>
-                      <SidebarMenuButton disabled>
-                        <HelpCircle />
-                        <span>{t('layout.nav.helpCenter')}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-
-                    {/* Ganti Akun — clear sesi → kembali ke /login */}
-                    <SidebarMenuItem>
-                      <SidebarMenuButton onClick={logout}>
-                        <UserCog />
-                        <span>{t('layout.nav.switchAccount')}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
             </>
           )}
         </SidebarContent>
+
+        <SidebarFooter>
+          <div className="mx-4 h-px bg-sidebar-border" />
+          <SidebarMenu className="gap-1.5 px-3 py-2">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === '/settings'}>
+                <Link to="/settings">
+                  <Settings />
+                  <span>{t('layout.nav.settings')}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton disabled>
+                <HelpCircle />
+                <span>{t('layout.nav.helpCenter')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={logout}>
+                <UserCog />
+                <span>{t('layout.nav.switchAccount')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
 
       <SidebarInset>

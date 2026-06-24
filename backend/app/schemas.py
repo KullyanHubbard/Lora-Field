@@ -20,6 +20,11 @@ class ThresholdConfig(BaseModel):
     upper: float = Field(default=70, ge=0, le=100)
 
 
+class GatewayLogIn(BaseModel):
+    event: str = Field(..., min_length=1, max_length=50)
+    detail: str = Field(default="", max_length=300)
+
+
 class FarmCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     owner: str = Field(default="", max_length=100)

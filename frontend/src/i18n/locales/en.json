@@ -105,6 +105,9 @@
     "waitingGateway": "Waiting for Gateway",
     "valveStatusLabel": "Valve Status",
     "autoMode": "Automatic Mode",
+    "manualMode": "Manual Mode",
+    "modeLabel": "Mode",
+    "manualBanner": "Manual mode is not yet active. Manual valve control requires a backend endpoint that is not yet available.",
     "logicTitle": "Irrigation Logic",
     "colSoil": "Soil Condition",
     "colWeather": "Weather Condition",
@@ -112,6 +115,16 @@
     "decisionTitle": "System Decision",
     "decisionLabel": "Decision",
     "noDecision": "No data from active node yet. Make sure the gateway is online.",
+    "thresholdTitle": "Soil Moisture Threshold",
+    "thresholdRange": "Threshold Range",
+    "avgMoisture": "Average Moisture",
+    "perNodeTitle": "Per-Node Detail",
+    "perNodeEmpty": "No nodes for this farm yet.",
+    "colNode": "Node",
+    "colMoisture": "Moisture",
+    "colDecision": "Decision",
+    "colValve": "Valve Status",
+    "waitingData": "Waiting for data",
     "logic": {
       "soil1": "Moisture < lower threshold",
       "weather1": "No rain",
@@ -146,7 +159,9 @@
     "colAirTemp": "Air Temp",
     "colAirHumidity": "Air Humidity",
     "colStatus": "Status",
-    "lastUpdate": "Last update:"
+    "lastUpdate": "Last update:",
+    "batteryTitle": "Node Battery",
+    "batteryEmpty": "No nodes."
   },
   "farmDetail": {
     "statusWarning": "Needs Attention",
@@ -236,6 +251,24 @@
       "geoError2": "GPS is not available on this device.",
       "geoError3": "Failed to detect location. Make sure GPS is on and try again.",
       "geoErrorFallback": "Failed to detect location."
+    },
+    "editForm": {
+      "title": "Edit Farm",
+      "trigger": "Edit Farm",
+      "nameLabel": "Farm Name",
+      "namePlaceholder": "Farm name",
+      "ownerLabel": "Farm Owner",
+      "ownerPlaceholder": "Owner name",
+      "locationLabel": "Location / Address",
+      "locationPlaceholder": "e.g. Jl. Parangtritis, Bantul",
+      "cropLabel": "Crop Type",
+      "cropPlaceholder": "Crop type",
+      "areaLabel": "Area (ha)",
+      "areaPlaceholder": "e.g. 1.5",
+      "submit": "Save Changes",
+      "submitting": "Saving…",
+      "cancel": "Cancel",
+      "errorNameTooShort": "Farm name must be at least 2 characters."
     }
   },
   "logFilter": {
@@ -343,6 +376,14 @@
     "backToDashboard": "Back to Farm List",
     "searchPlaceholder": "Search node, location, or decision...",
     "exportCsv": "Export CSV",
+    "problemTitle": "Problem Nodes",
+    "problemCount": "{{count}} node(s) offline",
+    "allActive": "All nodes active",
+    "farmContext": "Farm: {{name}}",
+    "dateFilterLabel": "Date Filter",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "dateFilterNote": "Date filter only applies to the {{count}} most recent logs loaded (max 100). For older ranges, a date param in the backend is needed (not yet available).",
     "valveOpen": "Open",
     "valveClosed": "Closed",
     "colTime": "Time",
@@ -383,6 +424,10 @@
     "colNode": "Node",
     "colLocation": "Point Location",
     "colStatus": "Status",
+    "colSoilMoisture": "Soil Moisture",
+    "colSoilTemp": "Soil Temp",
+    "colAirTemp": "Air Temp",
+    "colAirHumidity": "Air Humidity",
     "colBattery": "Battery",
     "colLastUpdate": "Last Update",
     "empty": "No nodes registered for this farm yet."
@@ -394,6 +439,10 @@
     "backToDashboard": "Back to Farm List",
     "idLabel": "Gateway ID",
     "activeNodes": "Active Nodes",
-    "lastSeen": "Last Seen"
+    "lastSeen": "Last Seen",
+    "internetConn": "Internet Connection",
+    "internetNotMonitored": "Not monitored",
+    "logsTitle": "Gateway Connection Log",
+    "logsEmpty": "No gateway connection logs yet."
   }
 }

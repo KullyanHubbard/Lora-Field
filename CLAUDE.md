@@ -45,7 +45,7 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 ## Aturan Anti-Halusinasi (WAJIB)
 
 - API contract = section "Backend Endpoints" + "Database Schema" di CLAUDE.md ini, plus `src/types/index.ts`. JANGAN mengarang endpoint, field, atau shape response.
-- Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada"). Khususnya `PATCH /api/farms/{id}`.
+- Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada").
 - Field yang masih perlu verifikasi shape-nya terhadap response asli: kolom `weather` di decision_logs (kolom ada di schema, tipe perlu cek), struktur summary cuaca termasuk prediksi hujan, serta isi persis response `/summary` dan `/login`. Kalau tidak cocok dengan type, LAPORKAN — jangan diam-diam ubah.
 - Data dummy/mock harus ditandai jelas sebagai mock, jangan seolah dari backend.
 - Kalau ragu atau butuh keputusan desain: BERHENTI dan tanya.
@@ -79,9 +79,10 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 
 | Endpoint | Method | Keterangan |
 |----------|--------|-----------|
-| `/api/farms` | GET | List kebun milik user (dari JWT) |
-| `/api/farms/{farm_id}` | GET | Detail kebun |
-| `/api/farms` | POST | Buat kebun baru; auto-resolve `bmkg_adm4_code` dari koordinat |
+| `/api/farms` | GET | List kebun milik user (dari JWT). Return `{ items, total }` |
+| `/api/farms/{farm_id}` | GET | Detail kebun. Return `{ farm }` |
+| `/api/farms` | POST | Buat kebun baru; auto-resolve `bmkg_adm4_code` dari koordinat. Return `{ farm }` |
+| `/api/farms/{farm_id}` | PATCH | Update kebun (partial, `exclude_unset`); re-resolve `bmkg_adm4_code` kalau koordinat berubah. Return `{ farm }`. Schema body: `FarmUpdate` (main.py:897) |
 | `/api/farms/{farm_id}` | DELETE | Hapus kebun (verifikasi kepemilikan) |
 
 ### Utils
@@ -96,10 +97,16 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | Endpoint | Keterangan |
 |----------|-----------|
 | `GET /api/farms/{id}/summary` | Summary kebun (gateway, nodes, soil avg, valve, threshold, decision) |
-| `GET /api/nodes` | List node (filter `?farm_id=`) |
-| `GET /api/nodes/{id}/readings` | Pembacaan sensor node (limit param) |
-| `GET /api/weather/{adm4_code}` | Prakiraan cuaca BMKG (cache 30 menit) |
-| `GET /api/logs` | Decision logs (filter client-side per farm) |
+| `GET /api/farms/{id}/weather` | Prakiraan cuaca BMKG untuk kebun (auto-resolve adm4, cache 30 menit). **Ini endpoint cuaca yang dipakai frontend.** main.py:1018 |
+| `GET /api/nodes` | List node (filter `?farm_id=`). Return `{ items, total }` |
+| `PATCH /api/nodes/{id}/location` | Update lokasi/region/koordinat node. Return `{ node }`. main.py:1124 |
+| `GET /api/nodes/{id}/readings` | Pembacaan sensor node (`limit` 1–100, default 20) |
+| `POST /api/nodes/{id}/readings` | Insert reading + hitung decision + tulis decision_log. Query wajib `?adm4=`. Return `{ reading, decision }`. main.py:1176 |
+| `GET /api/weather?adm4=X` | Cuaca BMKG mentah by adm4 (debug, butuh auth). main.py:1238 |
+| `GET /api/decision?soil_moisture=X&rain_next_3h=bool` | Simulator keputusan irigasi (stateless, butuh auth). main.py:1250 |
+| `GET /api/logs` | Decision logs milik user (`limit` 1–100, default 20; filter client-side per farm) |
+| `GET /api/farms/{id}/gateway-logs` | Log koneksi gateway kebun (`limit` 1–100, default 20). Verifikasi kepemilikan. Return `{ items, total }`. Kosong sampai hardware gateway lapor |
+| `POST /api/farms/{id}/gateway-logs` | Insert log koneksi gateway (scaffolding hardware). Body `GatewayLogIn` (`event`, `detail`). Return `{ log }`, status 201 |
 
 ## Database Schema (SQLite)
 
@@ -109,6 +116,7 @@ farms           — id, user_id, name, owner, location, crop_type, area_ha, bmkg
 nodes           — id, farm_id, name, location, region, latitude, longitude, status, battery, updated_at
 readings        — id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, created_at
 decision_logs   — id, node_id, soil_moisture, weather, decision, valve_state, reason, created_at
+gateway_logs    — id, farm_id, event, detail, created_at; log koneksi gateway (kosong sampai hardware lapor)
 weather_cache   — adm4 (PK), data (JSON), updated_at; TTL 30 menit
 password_resets — id, user_id, token (6-digit OTP), expires_at, used, created_at
 ```
@@ -117,8 +125,9 @@ Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di fronte
 
 ## Endpoint Belum Ada (jangan panggil/karang)
 
-- `PATCH /api/farms/{farm_id}` — update data kebun BELUM ADA (hanya create + delete).
 - Rate limit brute-force untuk endpoint auth sensitif belum ada.
+
+> Catatan (2026-06-24): `PATCH /api/farms/{farm_id}` SUDAH ADA di backend (main.py:897) — sebelumnya tertulis belum ada. Frontend `src/lib/api.ts` belum memanggilnya; kalau mau pakai fitur edit kebun, tambahkan method-nya dulu sesuai schema `FarmUpdate`.
 
 ## Logika Irigasi
 

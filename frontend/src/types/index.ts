@@ -42,6 +42,16 @@ export interface IrrigationLog {
   created_at: string;
 }
 
+// GET /api/farms/{id}/gateway-logs → { items: GatewayLog[], total }
+// Cocok dengan kolom tabel gateway_logs backend (id, farm_id, event, detail, created_at).
+export interface GatewayLog {
+  id: string | number;
+  farm_id: string;
+  event: string;
+  detail: string;
+  created_at: string;
+}
+
 export interface WeatherForecastPoint {
   local_datetime?: string;
   datetime?: string;
@@ -86,6 +96,7 @@ export interface FarmSummary {
   nodes_problem: number;
   nodes: NodeSummary[];
   weather: Weather | null;
+  is_mock_data?: boolean; // flag client-side saja, TIDAK ada di response backend asli — jangan dikira field API
 }
 
 // ASUMSI - verifikasi dengan backend (isi User belum kelihatan penuh)

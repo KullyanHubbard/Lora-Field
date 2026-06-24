@@ -55,6 +55,7 @@ from .wilayah_resolver import resolve_adm4_from_freetext, resolve_adm4_from_regi
 from .schemas import (
     FarmCreate,
     FarmUpdate,
+    GatewayLogIn,
     NodeLocationUpdate,
     SensorReadingIn,
     ThresholdConfig,
@@ -1084,6 +1085,54 @@ def get_farm_summary(
         "nodes_problem": len(nodes_problem),
         "nodes": node_summaries,
     }
+
+
+# ---------------------------------------------------------------------------
+# Gateway connection logs
+# CATATAN: belum ada integrasi hardware gateway. Tabel gateway_logs akan kosong
+# sampai gateway/perangkat melapor via POST ini. Frontend harus menampilkan
+# empty state jujur.
+# ---------------------------------------------------------------------------
+
+@app.get("/api/farms/{farm_id}/gateway-logs")
+def list_gateway_logs(
+    farm_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+    limit: int = Query(default=20, ge=1, le=100),
+) -> dict:
+    with get_connection() as connection:
+        _get_farm_owned(connection, farm_id, current_user["id"])
+        rows = connection.execute(
+            """
+            SELECT * FROM gateway_logs
+            WHERE farm_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            """,
+            (farm_id, limit),
+        ).fetchall()
+    items = [dict(row) for row in rows]
+    return {"items": items, "total": len(items)}
+
+
+@app.post("/api/farms/{farm_id}/gateway-logs", status_code=201)
+def create_gateway_log(
+    farm_id: str,
+    payload: GatewayLogIn,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    with get_connection() as connection:
+        _get_farm_owned(connection, farm_id, current_user["id"])
+        cursor = connection.execute(
+            "INSERT INTO gateway_logs (farm_id, event, detail) VALUES (?, ?, ?)",
+            (farm_id, payload.event.strip(), payload.detail.strip()),
+        )
+        log = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateway_logs WHERE id = ?", (cursor.lastrowid,)
+            ).fetchone()
+        )
+    return {"log": log}
 
 
 # ---------------------------------------------------------------------------

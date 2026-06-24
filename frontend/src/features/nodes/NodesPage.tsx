@@ -1,11 +1,12 @@
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Cpu } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { getNodeStatusBadge } from '@/lib/status';
-import { timeAgo } from '@/lib/format';
+import { DEG_C, timeAgo } from '@/lib/format';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -42,10 +43,17 @@ export default function NodesPage() {
     );
   }
 
-  const nodes = summary.nodes.map((ns) => ns.node);
+  const nodeSummaries = summary.nodes;
+  const isMock = summary.is_mock_data === true;
 
   return (
     <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Cpu className="size-4 text-muted-foreground" /> {t('nodes.title', 'Node Sensor')}
+          {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
+        </CardTitle>
+      </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
@@ -53,20 +61,27 @@ export default function NodesPage() {
               <TableHead>{t('nodes.colNode')}</TableHead>
               <TableHead>{t('nodes.colLocation')}</TableHead>
               <TableHead>{t('nodes.colStatus')}</TableHead>
+              <TableHead>{t('nodes.colSoilMoisture')}</TableHead>
+              <TableHead>{t('nodes.colSoilTemp')}</TableHead>
+              <TableHead>{t('nodes.colAirTemp')}</TableHead>
+              <TableHead>{t('nodes.colAirHumidity')}</TableHead>
               <TableHead>{t('nodes.colBattery')}</TableHead>
               <TableHead>RSSI LoRa</TableHead>
               <TableHead>{t('nodes.colLastUpdate')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {nodes.length === 0 ? (
+            {nodeSummaries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={10} className="text-center text-muted-foreground">
                   {t('nodes.empty')}
                 </TableCell>
               </TableRow>
             ) : (
-              nodes.map((node) => {
+              nodeSummaries.map((ns) => {
+                const node = ns.node;
+                // latest_reading BISA null (node tanpa reading) → semua kolom sensor "—"
+                const reading = ns.latest_reading;
                 const badge = getNodeStatusBadge(node.status);
                 return (
                   <TableRow key={node.id}>
@@ -76,6 +91,18 @@ export default function NodesPage() {
                     <TableCell>{node.location || '—'}</TableCell>
                     <TableCell>
                       <StatusPill tone={badge.tone} label={t(badge.labelKey)} />
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {reading ? `${reading.soil_moisture}%` : '—'}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {reading ? `${reading.soil_temp}${DEG_C}` : '—'}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {reading ? `${reading.air_temp}${DEG_C}` : '—'}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {reading ? `${reading.air_humidity}%` : '—'}
                     </TableCell>
                     <TableCell className="tabular-nums">
                       {node.battery != null ? `${node.battery}%` : '—'}

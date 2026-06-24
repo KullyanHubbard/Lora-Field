@@ -105,6 +105,9 @@
     "waitingGateway": "Menunggu Gateway",
     "valveStatusLabel": "Status Valve",
     "autoMode": "Mode Otomatis",
+    "manualMode": "Mode Manual",
+    "modeLabel": "Mode",
+    "manualBanner": "Mode manual belum aktif. Kontrol valve manual butuh endpoint backend yang belum tersedia.",
     "logicTitle": "Logika Irigasi",
     "colSoil": "Kondisi Tanah",
     "colWeather": "Kondisi Cuaca",
@@ -112,6 +115,16 @@
     "decisionTitle": "Keputusan Sistem",
     "decisionLabel": "Keputusan",
     "noDecision": "Belum ada data dari node aktif. Pastikan gateway online.",
+    "thresholdTitle": "Threshold Kelembapan Tanah",
+    "thresholdRange": "Rentang Threshold",
+    "avgMoisture": "Kelembapan Rata-rata",
+    "perNodeTitle": "Detail per Node",
+    "perNodeEmpty": "Belum ada node untuk kebun ini.",
+    "colNode": "Node",
+    "colMoisture": "Kelembapan",
+    "colDecision": "Keputusan",
+    "colValve": "Status Valve",
+    "waitingData": "Menunggu data",
     "logic": {
       "soil1": "Kelembapan < threshold bawah",
       "weather1": "Tidak ada hujan",
@@ -146,7 +159,9 @@
     "colAirTemp": "Suhu Udara",
     "colAirHumidity": "Kelembapan Udara",
     "colStatus": "Status",
-    "lastUpdate": "Last update node:"
+    "lastUpdate": "Last update node:",
+    "batteryTitle": "Baterai Node",
+    "batteryEmpty": "Tidak ada node."
   },
   "farmDetail": {
     "statusWarning": "Perlu Perhatian",
@@ -236,6 +251,24 @@
       "geoError2": "GPS tidak tersedia di perangkat ini.",
       "geoError3": "Gagal mendeteksi lokasi. Pastikan GPS aktif dan coba lagi.",
       "geoErrorFallback": "Gagal mendeteksi lokasi."
+    },
+    "editForm": {
+      "title": "Edit Kebun",
+      "trigger": "Edit Kebun",
+      "nameLabel": "Nama Kebun",
+      "namePlaceholder": "Nama kebun",
+      "ownerLabel": "Pemilik Kebun",
+      "ownerPlaceholder": "Nama pemilik",
+      "locationLabel": "Lokasi / Alamat",
+      "locationPlaceholder": "Contoh: Jl. Parangtritis, Bantul",
+      "cropLabel": "Jenis Tanaman",
+      "cropPlaceholder": "Jenis tanaman",
+      "areaLabel": "Luas Lahan (ha)",
+      "areaPlaceholder": "Contoh: 1.5",
+      "submit": "Simpan Perubahan",
+      "submitting": "Menyimpan…",
+      "cancel": "Batal",
+      "errorNameTooShort": "Nama kebun minimal 2 karakter."
     }
   },
   "logFilter": {
@@ -339,6 +372,14 @@
     "backToDashboard": "Kembali ke Daftar Kebun",
     "searchPlaceholder": "Cari node, lokasi, atau keputusan...",
     "exportCsv": "Ekspor CSV",
+    "problemTitle": "Node Bermasalah",
+    "problemCount": "{{count}} node offline",
+    "allActive": "Semua node aktif",
+    "farmContext": "Kebun: {{name}}",
+    "dateFilterLabel": "Filter Tanggal",
+    "dateFrom": "Dari",
+    "dateTo": "Sampai",
+    "dateFilterNote": "Filter tanggal hanya berlaku pada {{count}} log terbaru yang dimuat (maks 100). Untuk rentang lebih lama, dibutuhkan param tanggal di backend (belum ada).",
     "valveOpen": "Terbuka",
     "valveClosed": "Tertutup",
     "colTime": "Waktu",
@@ -379,6 +420,10 @@
     "colNode": "Node",
     "colLocation": "Lokasi Titik",
     "colStatus": "Status",
+    "colSoilMoisture": "Kelembapan Tanah",
+    "colSoilTemp": "Suhu Tanah",
+    "colAirTemp": "Suhu Udara",
+    "colAirHumidity": "Kelembapan Udara",
     "colBattery": "Baterai",
     "colLastUpdate": "Update Terakhir",
     "empty": "Belum ada node terdaftar untuk kebun ini."
@@ -390,6 +435,10 @@
     "backToDashboard": "Kembali ke Daftar Kebun",
     "idLabel": "ID Gateway",
     "activeNodes": "Node Aktif",
-    "lastSeen": "Terakhir Terlihat"
+    "lastSeen": "Terakhir Terlihat",
+    "internetConn": "Koneksi Internet",
+    "internetNotMonitored": "Belum dipantau",
+    "logsTitle": "Log Koneksi Gateway",
+    "logsEmpty": "Belum ada log koneksi gateway."
   }
 }

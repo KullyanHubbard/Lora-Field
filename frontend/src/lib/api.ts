@@ -4,6 +4,7 @@ import type {
   CreateFarmPayload,
   Farm,
   FarmSummary,
+  GatewayLog,
   Reading,
   IrrigationLog,
   User,
@@ -112,6 +113,14 @@ export const api = {
 
   deleteFarm: (id: string) => apiFetch<void>(`/farms/${id}`, { method: 'DELETE' }),
 
+  // PATCH /api/farms/{id} — backend main.py:897, schema FarmUpdate (schemas.py:34)
+  // Semua field opsional (exclude_unset). Re-resolve bmkg_adm4_code kalau koordinat berubah.
+  updateFarm: (id: string, payload: Partial<CreateFarmPayload>) =>
+    apiFetch<{ farm: Farm }>(`/farms/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
   // --- Utils ---
   getCrops: (q = '') =>
     apiFetch<{ crops: Crop[] }>(`/crops${q ? `?q=${encodeURIComponent(q)}` : ''}`),
@@ -130,6 +139,10 @@ export const api = {
     apiFetch<{ items: Reading[] }>(`/nodes/${nodeId}/readings?limit=${limit}`),
 
   getWeather: (adm4_code: string) => apiFetch<Weather>(`/weather/${adm4_code}`),
+
+  // GET /api/farms/{id}/gateway-logs — backend main.py. Empty sampai hardware gateway lapor.
+  getGatewayLogs: (farmId: string, limit = 20) =>
+    apiFetch<{ items: GatewayLog[] }>(`/farms/${farmId}/gateway-logs?limit=${limit}`),
 
   getLogs: (limit = 50) => apiFetch<{ items: IrrigationLog[] }>(`/logs?limit=${limit}`),
 };
