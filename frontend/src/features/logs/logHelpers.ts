@@ -86,7 +86,7 @@ export interface LogCsvRow {
   reason: string;
 }
 
-export function escapeCsv(value: unknown): string {
+function escapeCsv(value: unknown): string {
   const str = String(value ?? '');
   if (/[",\n\r]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
   return str;

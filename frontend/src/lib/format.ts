@@ -23,9 +23,3 @@ export function formatAreaHa(areaHa: number | string | null | undefined): string
   if (areaHa == null || areaHa === '') return '—';
   return `${areaHa} ha`;
 }
-
-// Koordinat ringkas "{lat}, {lon}" dibulatkan 4 desimal (mis. "-7.7956, 110.3695").
-// Dipakai sebagai pengganti teks lokasi yang terlalu panjang di daftar kebun.
-export function formatCoords(lat: number, lon: number): string {
-  return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-}

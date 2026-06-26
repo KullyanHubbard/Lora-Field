@@ -1,13 +1,13 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { RadioTower, WifiOff } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { useGatewayLogs } from './queries';
 import { getFarmLastUpdate } from '@/features/farms/farmHelpers';
-import { getGatewayStatusBadge } from '@/lib/status';
+import { getGatewayStatusBadge, isMock } from '@/lib/status';
 import { timeAgo } from '@/lib/format';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
-import { Button } from '@/components/ui/button';
+import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -45,14 +45,11 @@ export default function GatewayPage() {
 
   if (error || !summary) {
     return (
-      <div className="space-y-3">
-        <p className="text-destructive">
-          {error ? t('gateway.errorLoad', { message: error.message }) : t('gateway.noData')}
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">{t('gateway.backToDashboard')}</Link>
-        </Button>
-      </div>
+      <FarmSummaryError
+        message={
+          error ? t('gateway.errorLoad', { message: error.message }) : t('gateway.noData')
+        }
+      />
     );
   }
 
@@ -63,7 +60,7 @@ export default function GatewayPage() {
   const nodesTotal = summary.nodes.length;
   const nodesActive = summary.nodes.filter((ns) => ns.node.status !== 'offline').length;
   const lastSeen = getFarmLastUpdate(summary.farm, summary.nodes);
-  const isMock = summary.is_mock_data === true;
+  const isMockData = isMock(summary);
   const logs = gatewayLogs?.items ?? [];
 
   return (
@@ -72,7 +69,7 @@ export default function GatewayPage() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <RadioTower className="size-4 text-muted-foreground" /> {t('gateway.title')}
-          {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
+          {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

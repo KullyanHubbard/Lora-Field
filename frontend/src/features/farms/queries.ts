@@ -21,7 +21,7 @@ export function useFarmSummary(farmId: string) {
     select: (summary: FarmSummary): FarmSummary => {
       if (summary.nodes.length === 0) {
         const mockNodes = mockNodeSummaries();
-        const mockMoistures = mockNodes.map((ns) => ns.latest_reading.soil_moisture);
+        const mockMoistures = mockNodes.map((ns) => ns.latest_reading?.soil_moisture ?? 0);
         const avgMock = Math.round(mockMoistures.reduce((a, b) => a + b, 0) / mockMoistures.length);
         return {
           ...summary,

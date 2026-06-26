@@ -74,8 +74,8 @@ export interface Weather {
   humidity: number;
   wind_speed: number;
   wind_direction: string;
-  // ASUMSI - verifikasi dengan backend (number atau boolean?)
-  rain_next_3h: number;
+  // boolean dari backend (main.py:335 → hasil any(...) berupa bool)
+  rain_next_3h: boolean;
   forecast_time: string;
   updated_at: string;
   location_profile: { altitude_m: number };
@@ -84,14 +84,16 @@ export interface Weather {
 
 export interface NodeSummary {
   node: Node;
-  latest_reading: Reading;
-  decision: { decision: string; valve_state: string };
+  // backend kirim null kalau node belum punya reading (main.py:1063)
+  latest_reading: Reading | null;
+  decision: { decision: string; valve_state: string } | null;
 }
 
 export interface FarmSummary {
   farm: Farm;
-  gateway_status: 'online' | 'degraded' | 'offline';
-  average_soil_moisture: number;
+  gateway_status: 'online' | 'offline';
+  // null kalau belum ada reading sama sekali (main.py:1070)
+  average_soil_moisture: number | null;
   thresholds: { lower: number; upper: number };
   nodes_problem: number;
   nodes: NodeSummary[];

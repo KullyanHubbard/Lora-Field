@@ -8,7 +8,6 @@ import type {
   Reading,
   IrrigationLog,
   User,
-  Weather,
 } from '@/types';
 
 const BASE = '/api';
@@ -102,7 +101,6 @@ export const api = {
 
   // --- Farms ---
   getFarms: () => apiFetch<{ items: Farm[] }>('/farms'),
-  getFarm: (id: string) => apiFetch<Farm>(`/farms/${id}`),
   getFarmSummary: (id: string) => apiFetch<FarmSummary>(`/farms/${id}/summary`),
 
   createFarm: (payload: CreateFarmPayload) =>
@@ -137,8 +135,6 @@ export const api = {
   // --- Data ---
   getReadings: (nodeId: string, limit = 50) =>
     apiFetch<{ items: Reading[] }>(`/nodes/${nodeId}/readings?limit=${limit}`),
-
-  getWeather: (adm4_code: string) => apiFetch<Weather>(`/weather/${adm4_code}`),
 
   // GET /api/farms/{id}/gateway-logs — backend main.py. Empty sampai hardware gateway lapor.
   getGatewayLogs: (farmId: string, limit = 20) =>

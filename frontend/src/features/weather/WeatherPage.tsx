@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   CircleCheck,
@@ -21,7 +21,7 @@ import {
 import { DEG_C } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
-import { Button } from '@/components/ui/button';
+import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Farm, Weather } from '@/types';
@@ -225,14 +225,11 @@ export default function WeatherPage() {
 
   if (error || !summary) {
     return (
-      <div className="space-y-3">
-        <p className="text-destructive">
-          {error ? t('weather.errorLoad', { message: error.message }) : t('weather.noData')}
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">{t('weather.backToDashboard')}</Link>
-        </Button>
-      </div>
+      <FarmSummaryError
+        message={
+          error ? t('weather.errorLoad', { message: error.message }) : t('weather.noData')
+        }
+      />
     );
   }
 

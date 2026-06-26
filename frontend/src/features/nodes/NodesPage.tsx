@@ -1,11 +1,11 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Cpu } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
-import { getNodeStatusBadge } from '@/lib/status';
+import { getNodeStatusBadge, isMock } from '@/lib/status';
 import { DEG_C, timeAgo } from '@/lib/format';
 import { StatusPill } from '@/components/ui/status-pill';
-import { Button } from '@/components/ui/button';
+import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -32,26 +32,23 @@ export default function NodesPage() {
 
   if (error || !summary) {
     return (
-      <div className="space-y-3">
-        <p className="text-destructive">
-          {error ? t('nodes.errorLoad', { message: error.message }) : t('nodes.noData')}
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">{t('nodes.backToDashboard')}</Link>
-        </Button>
-      </div>
+      <FarmSummaryError
+        message={
+          error ? t('nodes.errorLoad', { message: error.message }) : t('nodes.noData')
+        }
+      />
     );
   }
 
   const nodeSummaries = summary.nodes;
-  const isMock = summary.is_mock_data === true;
+  const isMockData = isMock(summary);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Cpu className="size-4 text-muted-foreground" /> {t('nodes.title', 'Node Sensor')}
-          {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
+          {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
         </CardTitle>
       </CardHeader>
       <CardContent>

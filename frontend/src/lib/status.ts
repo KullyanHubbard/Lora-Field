@@ -8,6 +8,8 @@
 // pemetaan tone -> kelas/token tema dilakukan di lapisan UI (komponen Badge),
 // bukan di sini. Perilaku keputusan (status -> warna) dipertahankan apa adanya.
 
+import type { FarmSummary } from '@/types';
+
 export type StatusTone = 'green' | 'yellow' | 'red';
 
 export interface StatusBadge {
@@ -19,7 +21,6 @@ export function getGatewayStatusBadge(status: string): StatusBadge {
   const map: Record<string, StatusBadge> = {
     online: { labelKey: 'status.online', tone: 'green' },
     offline: { labelKey: 'status.offline', tone: 'red' },
-    degraded: { labelKey: 'status.degraded', tone: 'yellow' },
   };
   return map[status] ?? map.offline;
 }
@@ -74,18 +75,9 @@ export function getSoilStatusFromMoisture(
   return { labelKey: 'soilStatus.normal', tone: 'green' };
 }
 
-// Gauge tanah: state semantik dari nilai kelembapan. Versi lama meng-hardcode hex
-// (value<lower -> #ef4444, value>upper -> #3b82f6, normal -> #10b981, no-data ->
-// abu). Di build baru kembalikan state; SoilGauge memetakan state -> token tema.
-export type SoilGaugeState = 'no-data' | 'dry' | 'wet' | 'normal';
-
-export function getSoilGaugeState(
-  value: number | null | undefined,
-  lower = 40,
-  upper = 70,
-): SoilGaugeState {
-  if (value == null || value <= 0) return 'no-data';
-  if (value < lower) return 'dry';
-  if (value > upper) return 'wet';
-  return 'normal';
+// True kalau summary memakai data mock (fallback demo saat kebun belum punya node
+// asli). Flag is_mock_data hanya ada di sisi client — di-set oleh select
+// useFarmSummary, bukan field dari backend.
+export function isMock(summary: FarmSummary): boolean {
+  return summary.is_mock_data === true;
 }

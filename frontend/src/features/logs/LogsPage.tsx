@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Download, Search } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
@@ -16,6 +16,7 @@ import {
   type LogType,
 } from './logHelpers';
 import { StatusPill } from '@/components/ui/status-pill';
+import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -77,14 +78,9 @@ export default function LogsPage() {
   if (summaryError || logsError || !summary) {
     const message = summaryError?.message ?? logsError?.message;
     return (
-      <div className="space-y-3">
-        <p className="text-destructive">
-          {message ? t('logs.errorLoad', { message }) : t('logs.noData')}
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">{t('logs.backToDashboard')}</Link>
-        </Button>
-      </div>
+      <FarmSummaryError
+        message={message ? t('logs.errorLoad', { message }) : t('logs.noData')}
+      />
     );
   }
 

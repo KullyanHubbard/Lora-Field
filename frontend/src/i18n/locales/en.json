@@ -309,8 +309,7 @@
   "status": {
     "online": "Online",
     "offline": "Offline",
-    "standby": "Standby",
-    "degraded": "Disrupted"
+    "standby": "Standby"
   },
   "valve": {
     "open": "Open",

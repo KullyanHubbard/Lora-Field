@@ -61,7 +61,7 @@ export function getWeatherInfo(condition: string = ''): WeatherCodeInfo {
   return { label: 'weatherCode.unknown', iconKey: 'unknown', isRain: false };
 }
 
-export const WEATHER_CODES: WeatherCodeEntry[] = [
+const WEATHER_CODES: WeatherCodeEntry[] = [
   { code: 0, label: 'weatherCode.clear', iconKey: 'sun', isRain: false },
   { code: 1, label: 'weatherCode.partlyCloudy', iconKey: 'cloud-sun', isRain: false },
   { code: 2, label: 'weatherCode.partlyCloudy', iconKey: 'cloud-sun', isRain: false },

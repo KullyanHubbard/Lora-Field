@@ -29,12 +29,14 @@ import {
   getNodeStatusBadge,
   getSoilStatusFromMoisture,
   getValveStatusBadge,
+  isMock,
 } from '@/lib/status';
 import { DEG_C, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { getWeatherInfo, type WeatherIconKey } from '@/features/weather/weatherHelpers';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
+import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -278,14 +280,15 @@ function IrrigasiCard({ summary }: { summary: FarmSummary }) {
   const avg = summary.average_soil_moisture;
   const { lower, upper } = summary.thresholds;
   const activeNode = summary.nodes.find((ns) => ns.node.status !== 'offline' && ns.decision);
-  const isMock = summary.is_mock_data === true;
+  const decision = activeNode?.decision ?? null;
+  const isMockData = isMock(summary);
 
   const soil: Pill =
-    avg > 0 ? { label: t(getSoilStatusFromMoisture(avg, lower, upper).labelKey), tone: getSoilStatusFromMoisture(avg, lower, upper).tone } : { label: t('farmDetail.noData'), tone: 'neutral' };
-  const irrig: Pill = activeNode
-    ? { label: t(getIrrigationStatusBadge(activeNode.decision.decision).labelKey), tone: getIrrigationStatusBadge(activeNode.decision.decision).tone }
+    avg != null && avg > 0 ? { label: t(getSoilStatusFromMoisture(avg, lower, upper).labelKey), tone: getSoilStatusFromMoisture(avg, lower, upper).tone } : { label: t('farmDetail.noData'), tone: 'neutral' };
+  const irrig: Pill = decision
+    ? { label: t(getIrrigationStatusBadge(decision.decision).labelKey), tone: getIrrigationStatusBadge(decision.decision).tone }
     : { label: t('farmDetail.waitingGateway'), tone: 'neutral' };
-  const valveKey = activeNode ? valveKeyFromDecision(activeNode.decision) : null;
+  const valveKey = decision ? valveKeyFromDecision(decision) : null;
   const valve: Pill = valveKey
     ? { label: t(getValveStatusBadge(valveKey).labelKey), tone: getValveStatusBadge(valveKey).tone }
     : { label: t('farmDetail.unknown'), tone: 'neutral' };
@@ -295,7 +298,7 @@ function IrrigasiCard({ summary }: { summary: FarmSummary }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Droplet className="size-4 text-muted-foreground" /> {t('farmDetail.irrigationTitle')}
-          {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
+          {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -311,14 +314,14 @@ function GatewayCard({ summary }: { summary: FarmSummary }) {
   const { t } = useTranslation();
   const gw = getGatewayStatusBadge(summary.gateway_status);
   const GwIcon = summary.gateway_status === 'offline' ? WifiOff : RadioTower;
-  const isMock = summary.is_mock_data === true;
+  const isMockData = isMock(summary);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <RadioTower className="size-4 text-muted-foreground" /> Gateway
-          {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
+          {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -436,14 +439,11 @@ export default function FarmDetailPage() {
 
   if (error || !summary) {
     return (
-      <div className="space-y-3">
-        <p className="text-destructive">
-          {error ? t('farmDetail.errorLoad', { message: error.message }) : t('farmDetail.noData2')}
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">{t('farmDetail.backToList')}</Link>
-        </Button>
-      </div>
+      <FarmSummaryError
+        message={
+          error ? t('farmDetail.errorLoad', { message: error.message }) : t('farmDetail.noData2')
+        }
+      />
     );
   }
 
@@ -453,9 +453,9 @@ export default function FarmDetailPage() {
   const weather = summary.weather;
   const activeCount = nodes.filter((ns) => ns.node.status !== 'offline').length;
   const warning = summary.nodes_problem > 0 ? t('farmDetail.nodesProblem', { count: summary.nodes_problem }) : null;
-  const isMock = summary.is_mock_data === true;
+  const isMockData = isMock(summary);
 
-  const kelembapanText = avg > 0 ? `${avg}%` : '—';
+  const kelembapanText = avg != null && avg > 0 ? `${avg}%` : '—';
   const suhuText =
     weather && Number.isFinite(Number(weather.temperature)) ? `${weather.temperature}${DEG_C}` : '—';
   const humidityText =
@@ -510,7 +510,7 @@ export default function FarmDetailPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <Cpu className="size-4 text-muted-foreground" /> {t('farmDetail.nodeTableTitle')}
-            {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
+            {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>

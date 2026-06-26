@@ -305,8 +305,7 @@
   "status": {
     "online": "Online",
     "offline": "Offline",
-    "standby": "Standby",
-    "degraded": "Gangguan"
+    "standby": "Standby"
   },
   "valve": {
     "open": "Terbuka",

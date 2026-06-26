@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { RefreshCw } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { useReadings } from './queries';
-import { getNodeStatusBadge } from '@/lib/status';
+import { getNodeStatusBadge, isMock } from '@/lib/status';
 import { DEG_C, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -170,16 +171,13 @@ export default function MonitoringPage() {
 
   if (summaryError || !summary) {
     return (
-      <div className="space-y-3">
-        <p className="text-destructive">
-          {summaryError
+      <FarmSummaryError
+        message={
+          summaryError
             ? t('monitoring.errorLoadFarm', { message: summaryError.message })
-            : t('monitoring.noData')}
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">{t('monitoring.backToList')}</Link>
-        </Button>
-      </div>
+            : t('monitoring.noData')
+        }
+      />
     );
   }
 
@@ -194,7 +192,7 @@ export default function MonitoringPage() {
     ? `${selectedNode.name}${selectedNode.location ? ` - ${selectedNode.location}` : ''}`
     : '—';
   const tableRows = readings.slice(0, 10);
-  const isMock = summary.is_mock_data === true;
+  const isMockData = isMock(summary);
 
   return (
     <div className="space-y-6">
@@ -203,7 +201,7 @@ export default function MonitoringPage() {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Node</span>
-              {isMock && <StatusPill tone="yellow" label="Data Contoh" />}
+              {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
             </div>
             <Select value={effectiveNodeId} onValueChange={setPicked} disabled={!nodes.length}>
               <SelectTrigger className="w-64">

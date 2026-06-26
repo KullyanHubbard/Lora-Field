@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Droplet, Zap } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { valveKeyFromDecision } from '@/features/farms/farmHelpers';
-import { getIrrigationStatusBadge, getValveStatusBadge } from '@/lib/status';
+import { getIrrigationStatusBadge, getValveStatusBadge, isMock } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
-import { Button } from '@/components/ui/button';
+import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -70,20 +70,18 @@ export default function IrrigationPage() {
 
   if (error || !summary) {
     return (
-      <div className="space-y-3">
-        <p className="text-destructive">
-          {error ? t('irrigation.errorLoad', { message: error.message }) : t('irrigation.noData')}
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard">{t('irrigation.backToList')}</Link>
-        </Button>
-      </div>
+      <FarmSummaryError
+        message={
+          error ? t('irrigation.errorLoad', { message: error.message }) : t('irrigation.noData')
+        }
+      />
     );
   }
 
   const activeNode = summary.nodes.find((ns) => ns.node.status !== 'offline' && ns.decision);
   const decision = activeNode?.decision ?? null;
   const valveKey = valveKeyFromDecision(decision);
+  const isMockData = isMock(summary);
 
   const { lower, upper } = summary.thresholds;
   // average_soil_moisture BISA null → tampilkan "—" dan sembunyikan bar.
@@ -111,9 +109,12 @@ export default function IrrigationPage() {
             <Droplet className="size-9" />
           </div>
           <div className="flex flex-col items-center gap-1.5 sm:items-start">
-            <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t('irrigation.valveStatusLabel')}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                {t('irrigation.valveStatusLabel')}
+              </span>
+              {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
+            </div>
             <span
               className={cn('text-3xl font-semibold tracking-tight', toneText[valvePill.tone])}
             >
