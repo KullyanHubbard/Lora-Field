@@ -21,15 +21,36 @@ export function useFarmSummary(farmId: string) {
     select: (summary: FarmSummary): FarmSummary => {
       if (summary.nodes.length === 0) {
         const mockNodes = mockNodeSummaries();
-        const mockMoistures = mockNodes.map((ns) => ns.latest_reading?.soil_moisture ?? 0);
-        const avgMock = Math.round(mockMoistures.reduce((a, b) => a + b, 0) / mockMoistures.length);
+
+        if (mockNodes.length === 0) {
+          return {
+            ...summary,
+            nodes: [],
+            is_mock_data: true,
+            gateway_status: 'offline',
+            average_soil_moisture: null,
+            nodes_problem: 0,
+            // weather WAJIB tetap dari summary asli, tidak diubah
+          };
+        }
+
+        const moistures = mockNodes
+          .map((ns) => ns.latest_reading?.soil_moisture)
+          .filter((m): m is number => m != null);
+        const avgMock =
+          moistures.length > 0
+            ? Math.round(moistures.reduce((a, b) => a + b, 0) / moistures.length)
+            : null;
+        const hasOnline = mockNodes.some((ns) => ns.node.status !== 'offline');
+        const nodesProblem = mockNodes.filter((ns) => ns.node.status === 'offline').length;
+
         return {
           ...summary,
           nodes: mockNodes,
           is_mock_data: true,
-          gateway_status: 'online',
+          gateway_status: hasOnline ? 'online' : 'offline',
           average_soil_moisture: avgMock,
-          nodes_problem: 0,
+          nodes_problem: nodesProblem,
           // weather WAJIB tetap dari summary asli, tidak diubah
         };
       }
@@ -62,17 +83,16 @@ export function useCreateFarm() {
   });
 }
 
-export function useUpdateFarm(farmId: string) {
+export function useDeleteFarm() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<CreateFarmPayload>) => api.updateFarm(farmId, payload),
+    mutationFn: (id: string) => api.deleteFarm(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farms'] });
-      queryClient.invalidateQueries({ queryKey: ['farm-summary', farmId] });
-      toast.success('Perubahan kebun berhasil disimpan.');
+      toast.success('Kebun berhasil dihapus.');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal memperbarui kebun.');
+      toast.error(error.message || 'Gagal menghapus kebun.');
     },
   });
 }

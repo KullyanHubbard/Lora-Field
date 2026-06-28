@@ -5,7 +5,7 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { RefreshCw } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { useReadings } from './queries';
-import { getNodeStatusBadge, isMock } from '@/lib/status';
+import { getNodeStatusBadge } from '@/lib/status';
 import { DEG_C, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
@@ -192,7 +192,6 @@ export default function MonitoringPage() {
     ? `${selectedNode.name}${selectedNode.location ? ` - ${selectedNode.location}` : ''}`
     : '—';
   const tableRows = readings.slice(0, 10);
-  const isMockData = isMock(summary);
 
   return (
     <div className="space-y-6">
@@ -201,7 +200,6 @@ export default function MonitoringPage() {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Node</span>
-              {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
             </div>
             <Select value={effectiveNodeId} onValueChange={setPicked} disabled={!nodes.length}>
               <SelectTrigger className="w-64">

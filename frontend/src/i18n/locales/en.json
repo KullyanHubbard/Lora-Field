@@ -1,7 +1,5 @@
 {
   "common": {
-    "save": "Save",
-    "cancel": "Cancel",
     "language": "Language",
     "languageId": "Bahasa Indonesia",
     "languageEn": "English"
@@ -100,7 +98,6 @@
   "irrigation": {
     "errorLoad": "Failed to load irrigation data: {{message}}",
     "noData": "Data not available.",
-    "backToList": "Back to Farm List",
     "unknown": "Unknown",
     "waitingGateway": "Waiting for Gateway",
     "valveStatusLabel": "Valve Status",
@@ -143,7 +140,6 @@
   "monitoring": {
     "errorLoadFarm": "Failed to load farm data: {{message}}",
     "noData": "Data not available.",
-    "backToList": "Back to Farm List",
     "selectNode": "Select node",
     "noNodes": "No nodes",
     "reload": "Reload Data",
@@ -164,29 +160,18 @@
     "batteryEmpty": "No nodes."
   },
   "farmDetail": {
-    "statusWarning": "Needs Attention",
-    "statusNormal": "Normal",
     "noData": "No Data",
     "noData2": "Data not available.",
-    "waitingGateway": "Waiting for Gateway",
-    "unknown": "Unknown",
-    "irrigationTitle": "Irrigation",
-    "soilStatus": "Soil Status",
-    "irrigationStatus": "Irrigation Status",
-    "valveStatus": "Valve Status",
-    "lastOnline": "Last Online",
-    "weatherTitle": "Weather",
     "weatherUnavailable": "Not available",
-    "rainPredicted": "Rain Predicted",
-    "noRain": "No Rain",
-    "rainForecast": "Rain Forecast (3 hr)",
-    "errorLoad": "Failed to load farm summary: {{message}}",
-    "backToList": "Back to Farm List",
-    "nodesProblem": "{{count}} node(s) with issues",
-    "avgMoisture": "Avg Moisture",
-    "activeNodes": "Active Nodes",
-    "airTemp": "Air Temperature",
+    "weatherForecastTitle": "Weather Forecast",
+    "weatherVerdictSafe": "Safe · No rain expected",
+    "weatherVerdictDelay": "Delayed · Rain expected",
+    "weatherNow": "Now",
+    "weatherNoForecast": "No forecast data yet",
     "airHumidity": "Air Humidity",
+    "errorLoad": "Failed to load farm summary: {{message}}",
+    "nodesProblem": "{{count}} node(s) with issues",
+    "activeNodes": "Active Nodes",
     "nodeTableTitle": "Sensor Node Status",
     "viewMonitoring": "View Monitoring",
     "noNodes": "No sensors connected",
@@ -195,9 +180,23 @@
     "colMoisture": "Moisture",
     "colSoilTemp": "Soil Temp",
     "colValve": "Valve",
-    "colBattery": "Battery",
-    "colStatus": "Status",
-    "colUpdate": "Updated"
+    "gaugeBatteryCardTitle": "Node Battery",
+    "gaugeBatteryEmpty": "No nodes yet",
+    "gaugeBatteryScrollLeft": "Scroll left",
+    "gaugeBatteryScrollRight": "Scroll right",
+    "batteryLow": "Low",
+    "batteryMid": "Medium",
+    "batteryOk": "Good",
+    "soilMoistureTitle": "Soil Moisture",
+    "soilZoneDry": "Dry",
+    "soilZoneNormal": "Normal",
+    "soilZoneWet": "Wet",
+    "soilTargetCaption": "Target {{lower}}–{{upper}}%",
+    "soilAvgNodes_one": "avg {{count}} node",
+    "soilAvgNodes_other": "avg {{count}} nodes",
+    "soilMax": "Maximum",
+    "soilAvg": "Average",
+    "soilMin": "Minimum"
   },
   "farms": {
     "searchPlaceholder": "Search farms, location, or crop",
@@ -208,6 +207,12 @@
     "cardCrop": "Crop",
     "cardArea": "Area",
     "cardUpdated": "Updated",
+    "cardMenuOpen": "Open farm menu",
+    "cardMenuDelete": "Delete farm",
+    "deleteTitle": "Delete farm?",
+    "deleteDescription": "Farm \"{{name}}\" will be deleted. This action is permanent and cannot be undone.",
+    "deleteCancel": "Cancel",
+    "deleteConfirm": "Delete",
     "addForm": {
       "pageTitle": "Add Farm",
       "backLabel": "Back",
@@ -240,7 +245,6 @@
       "submitForce": "Save Anyway",
       "cancel": "Cancel",
       "errorNoCoords": "Farm location not detected. Allow browser location access or enter farm coordinates.",
-      "errorNoAdm4": "BMKG code not auto-detected. Fill in the location down to village, subdistrict, and regency, then click Detect Location Now.",
       "geoUnsupported": "Browser does not support location detection.",
       "geoDetecting": "Detecting location...",
       "geoDetectingAuto": "Auto-detecting location...",
@@ -251,24 +255,6 @@
       "geoError2": "GPS is not available on this device.",
       "geoError3": "Failed to detect location. Make sure GPS is on and try again.",
       "geoErrorFallback": "Failed to detect location."
-    },
-    "editForm": {
-      "title": "Edit Farm",
-      "trigger": "Edit Farm",
-      "nameLabel": "Farm Name",
-      "namePlaceholder": "Farm name",
-      "ownerLabel": "Farm Owner",
-      "ownerPlaceholder": "Owner name",
-      "locationLabel": "Location / Address",
-      "locationPlaceholder": "e.g. Jl. Parangtritis, Bantul",
-      "cropLabel": "Crop Type",
-      "cropPlaceholder": "Crop type",
-      "areaLabel": "Area (ha)",
-      "areaPlaceholder": "e.g. 1.5",
-      "submit": "Save Changes",
-      "submitting": "Saving…",
-      "cancel": "Cancel",
-      "errorNameTooShort": "Farm name must be at least 2 characters."
     }
   },
   "logFilter": {
@@ -327,8 +313,7 @@
     "delayed": "Delayed",
     "closed": "Stopped",
     "normal": "Normal",
-    "needsCheck": "Needs Check",
-    "waitingGateway": "Waiting for Gateway"
+    "needsCheck": "Needs Check"
   },
   "farmStatus": {
     "active": "Active",
@@ -372,7 +357,6 @@
   "logs": {
     "errorLoad": "Failed to load history: {{message}}",
     "noData": "Data not available.",
-    "backToDashboard": "Back to Farm List",
     "searchPlaceholder": "Search node, location, or decision...",
     "exportCsv": "Export CSV",
     "problemTitle": "Problem Nodes",
@@ -399,7 +383,6 @@
   "weather": {
     "errorLoad": "Failed to load weather data: {{message}}",
     "noData": "Data not available.",
-    "backToDashboard": "Back to Farm List",
     "notAvailable": "Not available",
     "statusAvailable": "available",
     "impactNoData": "BMKG data not yet available. Make sure the farm's BMKG code is set correctly for the location.",
@@ -435,7 +418,6 @@
     "title": "Gateway",
     "errorLoad": "Failed to load gateway data: {{message}}",
     "noData": "Data not available.",
-    "backToDashboard": "Back to Farm List",
     "idLabel": "Gateway ID",
     "activeNodes": "Active Nodes",
     "lastSeen": "Last Seen",

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Droplet, Zap } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { valveKeyFromDecision } from '@/features/farms/farmHelpers';
-import { getIrrigationStatusBadge, getValveStatusBadge, isMock } from '@/lib/status';
+import { getIrrigationStatusBadge, getValveStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
@@ -23,9 +23,9 @@ type Pill = { label: string; tone: PillTone };
 
 // Warna ikon/teks emblem (bukan badge) — sehue dengan tone pill.
 const toneText: Record<PillTone, string> = {
-  green: 'text-emerald-600 dark:text-emerald-400',
-  yellow: 'text-amber-600 dark:text-amber-400',
-  red: 'text-red-600 dark:text-red-400',
+  green: 'text-emerald-500 dark:text-emerald-400',
+  yellow: 'text-amber-500 dark:text-amber-400',
+  red: 'text-red-500 dark:text-red-400',
   neutral: 'text-muted-foreground',
 };
 
@@ -81,8 +81,6 @@ export default function IrrigationPage() {
   const activeNode = summary.nodes.find((ns) => ns.node.status !== 'offline' && ns.decision);
   const decision = activeNode?.decision ?? null;
   const valveKey = valveKeyFromDecision(decision);
-  const isMockData = isMock(summary);
-
   const { lower, upper } = summary.thresholds;
   // average_soil_moisture BISA null → tampilkan "—" dan sembunyikan bar.
   const avg = summary.average_soil_moisture;
@@ -113,19 +111,18 @@ export default function IrrigationPage() {
               <span className="text-xs uppercase tracking-wide text-muted-foreground">
                 {t('irrigation.valveStatusLabel')}
               </span>
-              {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
             </div>
             <span
               className={cn('text-3xl font-semibold tracking-tight', toneText[valvePill.tone])}
             >
               {valvePill.label.toUpperCase()}
             </span>
-            <div className="flex items-center gap-1 rounded-full border border-border bg-muted p-0.5" role="group" aria-label={t('irrigation.modeLabel')}>
+            <div className="flex items-center gap-1 rounded-md border border-border bg-muted p-0.5" role="group" aria-label={t('irrigation.modeLabel')}>
               <button
                 type="button"
                 onClick={() => setMode('auto')}
                 className={cn(
-                  'flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  'flex items-center gap-1 rounded-md px-3 py-1 text-xs font-medium transition-colors',
                   mode === 'auto'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground',
@@ -138,7 +135,7 @@ export default function IrrigationPage() {
                 type="button"
                 onClick={() => setMode('manual')}
                 className={cn(
-                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  'rounded-md px-3 py-1 text-xs font-medium transition-colors',
                   mode === 'manual'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground',
@@ -153,7 +150,7 @@ export default function IrrigationPage() {
       </Card>
 
       {mode === 'manual' && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-500 dark:text-amber-400">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <span>{t('irrigation.manualBanner')}</span>
         </div>

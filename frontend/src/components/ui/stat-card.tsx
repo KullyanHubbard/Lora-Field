@@ -17,11 +17,9 @@ export interface StatCardProps {
 export function StatCard({ label, value, sublabel, icon, trend, className }: StatCardProps) {
   return (
     <div className={cn('rounded-xl border border-border bg-card p-5', className)}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </span>
+      <div className="flex items-center gap-2">
         {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
+        <span className="text-base font-medium text-foreground">{label}</span>
       </div>
       <div className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-foreground">
         {value}

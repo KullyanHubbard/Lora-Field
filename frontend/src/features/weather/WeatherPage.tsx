@@ -36,16 +36,11 @@ const weatherIcon: Record<WeatherIconKey, typeof Sun> = {
   unknown: CloudOff,
 };
 
-const toneBorder: Record<PillTone, string> = {
-  green: 'border-emerald-500/50',
-  yellow: 'border-amber-500/50',
-  red: 'border-red-500/50',
-  neutral: 'border-border',
-};
-const toneTextColor: Record<PillTone, string> = {
-  green: 'text-emerald-600 dark:text-emerald-400',
-  yellow: 'text-amber-600 dark:text-amber-400',
-  red: 'text-red-600 dark:text-red-400',
+// Warna ikon impact (status) — neon solid; teks & surface card tetap netral.
+const toneIconColor: Record<PillTone, string> = {
+  green: 'text-emerald-500 dark:text-emerald-400',
+  yellow: 'text-amber-500 dark:text-amber-400',
+  red: 'text-red-500 dark:text-red-400',
   neutral: 'text-muted-foreground',
 };
 
@@ -81,9 +76,9 @@ function ImpactCard({ weather }: { weather: Weather | null }) {
   const Icon = impact.Icon;
 
   return (
-    <Card className={toneBorder[impact.tone]}>
-      <CardContent className={cn('flex items-center gap-3 text-sm', toneTextColor[impact.tone])}>
-        <Icon className="size-5 shrink-0" />
+    <Card>
+      <CardContent className="flex items-center gap-3 text-sm text-foreground">
+        <Icon className={cn('size-5 shrink-0', toneIconColor[impact.tone])} />
         <span>{impact.text}</span>
       </CardContent>
     </Card>
@@ -143,7 +138,7 @@ function WeatherMainCard({ weather }: { weather: Weather | null }) {
     <Card>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4">
-          <Icon className="size-12 text-muted-foreground" />
+          <Icon className="size-12 shrink-0 text-amber-500 dark:text-amber-400" />
           <div className="flex flex-col">
             <span className="text-4xl font-semibold tracking-tight tabular-nums text-foreground">
               {tempText}
@@ -195,7 +190,7 @@ function ForecastGrid({ weather }: { weather: Weather | null }) {
           <Card key={i}>
             <CardContent className="flex flex-col items-center gap-1.5 text-center">
               <span className="text-xs text-muted-foreground">{formatForecastLabel(f, i)}</span>
-              <Icon className="size-7 text-muted-foreground" />
+              <Icon className="size-7 shrink-0 text-amber-500 dark:text-amber-400" />
               <span className="text-lg font-semibold tabular-nums text-foreground">{tempText}</span>
               <span className="text-xs text-muted-foreground">
                 {t(info.label)}

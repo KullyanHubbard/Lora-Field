@@ -98,7 +98,6 @@ export default function LogsPage() {
   const offlineNodes = summary.nodes.filter((ns) => ns.node.status === 'offline');
 
   const logs = logsData?.items ?? [];
-  const isMockLogs = logsData?.items === undefined ? false : logs.every((l) => l.id.startsWith('mock-log-'));
   const scopedLogs: ScopedLog[] = logs
     .filter((log) => nodeLookup.has(log.node_id))
     .map((log) => {
@@ -173,7 +172,6 @@ export default function LogsPage() {
                   </Button>
                 ))}
               </div>
-              {isMockLogs && <StatusPill tone="yellow" label="Data Contoh" />}
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">

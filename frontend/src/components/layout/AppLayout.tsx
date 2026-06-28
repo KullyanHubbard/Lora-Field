@@ -84,6 +84,10 @@ export function AppLayout() {
   const farmTitle = farmActiveNav ? t(farmActiveNav.labelKey) : t('layout.farmContext');
   const title = farmId ? farmTitle : (selectorTitles[pathname] ?? t('layout.nav.dashboard'));
 
+  const isFarmSummaryPage = farmId != null && pathname === `/farms/${farmId}`;
+  const summaryNodes = farmSummary?.nodes ?? [];
+  const activeNodeCount = summaryNodes.filter((ns) => ns.node.status !== 'offline').length;
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -223,6 +227,17 @@ export function AppLayout() {
         <header className="flex h-14 items-center gap-2 border-b border-border bg-background px-4">
           <SidebarTrigger />
           <h1 className="text-xl font-semibold text-primary">{title}</h1>
+          {isFarmSummaryPage && summaryNodes.length > 0 && (
+            <>
+              <span className="h-5 w-px rounded-full bg-border" aria-hidden="true" />
+              <span className="text-sm text-muted-foreground">
+                <span className="font-semibold tabular-nums text-foreground">{activeNodeCount}</span>
+                {' / '}
+                <span className="tabular-nums">{summaryNodes.length}</span>
+                {' '}Node Aktif
+              </span>
+            </>
+          )}
           <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
               {user?.name ?? user?.email ?? t('layout.fallbackUser')}

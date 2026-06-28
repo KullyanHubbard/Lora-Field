@@ -8,8 +8,6 @@
 // pemetaan tone -> kelas/token tema dilakukan di lapisan UI (komponen Badge),
 // bukan di sini. Perilaku keputusan (status -> warna) dipertahankan apa adanya.
 
-import type { FarmSummary } from '@/types';
-
 export type StatusTone = 'green' | 'yellow' | 'red';
 
 export interface StatusBadge {
@@ -75,9 +73,8 @@ export function getSoilStatusFromMoisture(
   return { labelKey: 'soilStatus.normal', tone: 'green' };
 }
 
-// True kalau summary memakai data mock (fallback demo saat kebun belum punya node
-// asli). Flag is_mock_data hanya ada di sisi client — di-set oleh select
-// useFarmSummary, bukan field dari backend.
-export function isMock(summary: FarmSummary): boolean {
-  return summary.is_mock_data === true;
+export function batteryTone(value: number): StatusTone {
+  if (value < 20) return 'red';
+  if (value <= 50) return 'yellow';
+  return 'green';
 }

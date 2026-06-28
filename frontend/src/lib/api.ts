@@ -111,14 +111,6 @@ export const api = {
 
   deleteFarm: (id: string) => apiFetch<void>(`/farms/${id}`, { method: 'DELETE' }),
 
-  // PATCH /api/farms/{id} — backend main.py:897, schema FarmUpdate (schemas.py:34)
-  // Semua field opsional (exclude_unset). Re-resolve bmkg_adm4_code kalau koordinat berubah.
-  updateFarm: (id: string, payload: Partial<CreateFarmPayload>) =>
-    apiFetch<{ farm: Farm }>(`/farms/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
-    }),
-
   // --- Utils ---
   getCrops: (q = '') =>
     apiFetch<{ crops: Crop[] }>(`/crops${q ? `?q=${encodeURIComponent(q)}` : ''}`),

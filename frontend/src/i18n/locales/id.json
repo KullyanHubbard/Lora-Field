@@ -1,7 +1,5 @@
 {
   "common": {
-    "save": "Simpan",
-    "cancel": "Batal",
     "language": "Bahasa",
     "languageId": "Bahasa Indonesia",
     "languageEn": "English"
@@ -100,7 +98,6 @@
   "irrigation": {
     "errorLoad": "Gagal memuat data irigasi: {{message}}",
     "noData": "Data tidak tersedia.",
-    "backToList": "Kembali ke Daftar Kebun",
     "unknown": "Tidak Diketahui",
     "waitingGateway": "Menunggu Gateway",
     "valveStatusLabel": "Status Valve",
@@ -143,7 +140,6 @@
   "monitoring": {
     "errorLoadFarm": "Gagal memuat data kebun: {{message}}",
     "noData": "Data tidak tersedia.",
-    "backToList": "Kembali ke Daftar Kebun",
     "selectNode": "Pilih node",
     "noNodes": "Tidak ada node",
     "reload": "Muat Ulang Data",
@@ -164,29 +160,18 @@
     "batteryEmpty": "Tidak ada node."
   },
   "farmDetail": {
-    "statusWarning": "Perlu Perhatian",
-    "statusNormal": "Normal",
     "noData": "Tidak Ada Data",
     "noData2": "Data tidak tersedia.",
-    "waitingGateway": "Menunggu Gateway",
-    "unknown": "Tidak Diketahui",
-    "irrigationTitle": "Irigasi",
-    "soilStatus": "Status Tanah",
-    "irrigationStatus": "Status Irigasi",
-    "valveStatus": "Status Valve",
-    "lastOnline": "Terakhir Online",
-    "weatherTitle": "Cuaca",
     "weatherUnavailable": "Belum tersedia",
-    "rainPredicted": "Prediksi Hujan",
-    "noRain": "Tidak Ada Hujan",
-    "rainForecast": "Prediksi Hujan (3 jam)",
-    "errorLoad": "Gagal memuat ringkasan kebun: {{message}}",
-    "backToList": "Kembali ke Daftar Kebun",
-    "nodesProblem": "{{count}} node bermasalah",
-    "avgMoisture": "Kelembapan Rata-rata",
-    "activeNodes": "Node Aktif",
-    "airTemp": "Suhu Udara",
+    "weatherForecastTitle": "Prediksi Cuaca",
+    "weatherVerdictSafe": "Aman · Tidak ada hujan",
+    "weatherVerdictDelay": "Ditunda · Hujan diprediksi",
+    "weatherNow": "Sekarang",
+    "weatherNoForecast": "Belum ada data prakiraan",
     "airHumidity": "Kelembapan Udara",
+    "errorLoad": "Gagal memuat ringkasan kebun: {{message}}",
+    "nodesProblem": "{{count}} node bermasalah",
+    "activeNodes": "Node Aktif",
     "nodeTableTitle": "Status Node Sensor",
     "viewMonitoring": "Lihat Monitoring",
     "noNodes": "Belum ada sensor terhubung",
@@ -195,9 +180,23 @@
     "colMoisture": "Kelembapan",
     "colSoilTemp": "Suhu Tanah",
     "colValve": "Valve",
-    "colBattery": "Baterai",
-    "colStatus": "Status",
-    "colUpdate": "Update"
+    "gaugeBatteryCardTitle": "Baterai Node",
+    "gaugeBatteryEmpty": "Belum ada node",
+    "gaugeBatteryScrollLeft": "Geser ke kiri",
+    "gaugeBatteryScrollRight": "Geser ke kanan",
+    "batteryLow": "Rendah",
+    "batteryMid": "Sedang",
+    "batteryOk": "Baik",
+    "soilMoistureTitle": "Kelembapan Tanah",
+    "soilZoneDry": "Kering",
+    "soilZoneNormal": "Normal",
+    "soilZoneWet": "Basah",
+    "soilTargetCaption": "Target {{lower}}–{{upper}}%",
+    "soilAvgNodes_one": "rata-rata {{count}} node",
+    "soilAvgNodes_other": "rata-rata {{count}} node",
+    "soilMax": "Maksimal",
+    "soilAvg": "Rata-rata",
+    "soilMin": "Minimal"
   },
   "farms": {
     "searchPlaceholder": "Cari kebun, lokasi, atau tanaman",
@@ -208,6 +207,12 @@
     "cardCrop": "Komoditas",
     "cardArea": "Luas Lahan",
     "cardUpdated": "Update",
+    "cardMenuOpen": "Buka menu kebun",
+    "cardMenuDelete": "Hapus kebun",
+    "deleteTitle": "Hapus kebun?",
+    "deleteDescription": "Kebun \"{{name}}\" akan dihapus. Tindakan ini permanen dan tidak bisa dibatalkan.",
+    "deleteCancel": "Batal",
+    "deleteConfirm": "Hapus",
     "addForm": {
       "pageTitle": "Tambah Kebun",
       "backLabel": "Kembali",
@@ -240,7 +245,6 @@
       "submitForce": "Tetap Simpan",
       "cancel": "Batal",
       "errorNoCoords": "Lokasi kebun belum terdeteksi. Izinkan akses lokasi browser atau isi koordinat kebun.",
-      "errorNoAdm4": "Kode BMKG belum otomatis terdeteksi. Isi lokasi sampai nama desa, kecamatan, dan kabupaten, lalu klik Deteksi Lokasi Sekarang.",
       "geoUnsupported": "Browser tidak mendukung deteksi lokasi.",
       "geoDetecting": "Mendeteksi lokasi...",
       "geoDetectingAuto": "Mendeteksi lokasi otomatis...",
@@ -251,24 +255,6 @@
       "geoError2": "GPS tidak tersedia di perangkat ini.",
       "geoError3": "Gagal mendeteksi lokasi. Pastikan GPS aktif dan coba lagi.",
       "geoErrorFallback": "Gagal mendeteksi lokasi."
-    },
-    "editForm": {
-      "title": "Edit Kebun",
-      "trigger": "Edit Kebun",
-      "nameLabel": "Nama Kebun",
-      "namePlaceholder": "Nama kebun",
-      "ownerLabel": "Pemilik Kebun",
-      "ownerPlaceholder": "Nama pemilik",
-      "locationLabel": "Lokasi / Alamat",
-      "locationPlaceholder": "Contoh: Jl. Parangtritis, Bantul",
-      "cropLabel": "Jenis Tanaman",
-      "cropPlaceholder": "Jenis tanaman",
-      "areaLabel": "Luas Lahan (ha)",
-      "areaPlaceholder": "Contoh: 1.5",
-      "submit": "Simpan Perubahan",
-      "submitting": "Menyimpan…",
-      "cancel": "Batal",
-      "errorNameTooShort": "Nama kebun minimal 2 karakter."
     }
   },
   "logFilter": {
@@ -323,8 +309,7 @@
     "delayed": "Ditunda",
     "closed": "Berhenti",
     "normal": "Normal",
-    "needsCheck": "Perlu Cek",
-    "waitingGateway": "Menunggu Gateway"
+    "needsCheck": "Perlu Cek"
   },
   "farmStatus": {
     "active": "Aktif",
@@ -368,7 +353,6 @@
   "logs": {
     "errorLoad": "Gagal memuat riwayat: {{message}}",
     "noData": "Data tidak tersedia.",
-    "backToDashboard": "Kembali ke Daftar Kebun",
     "searchPlaceholder": "Cari node, lokasi, atau keputusan...",
     "exportCsv": "Ekspor CSV",
     "problemTitle": "Node Bermasalah",
@@ -395,7 +379,6 @@
   "weather": {
     "errorLoad": "Gagal memuat data cuaca: {{message}}",
     "noData": "Data tidak tersedia.",
-    "backToDashboard": "Kembali ke Daftar Kebun",
     "notAvailable": "Belum tersedia",
     "statusAvailable": "tersedia",
     "impactNoData": "Data BMKG belum tersedia. Pastikan kode BMKG kebun sudah terisi sesuai lokasi.",
@@ -431,7 +414,6 @@
     "title": "Gateway",
     "errorLoad": "Gagal memuat data gateway: {{message}}",
     "noData": "Data tidak tersedia.",
-    "backToDashboard": "Kembali ke Daftar Kebun",
     "idLabel": "ID Gateway",
     "activeNodes": "Node Aktif",
     "lastSeen": "Terakhir Terlihat",

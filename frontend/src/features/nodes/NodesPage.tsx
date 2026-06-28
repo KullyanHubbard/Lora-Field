@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Cpu } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
-import { getNodeStatusBadge, isMock } from '@/lib/status';
+import { getNodeStatusBadge } from '@/lib/status';
 import { DEG_C, timeAgo } from '@/lib/format';
 import { StatusPill } from '@/components/ui/status-pill';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
@@ -41,14 +41,12 @@ export default function NodesPage() {
   }
 
   const nodeSummaries = summary.nodes;
-  const isMockData = isMock(summary);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Cpu className="size-4 text-muted-foreground" /> {t('nodes.title', 'Node Sensor')}
-          {isMockData && <StatusPill tone="yellow" label="Data Contoh" />}
+          <Cpu className="size-4 shrink-0 text-violet-500 dark:text-violet-400" /> {t('nodes.title', 'Node Sensor')}
         </CardTitle>
       </CardHeader>
       <CardContent>
