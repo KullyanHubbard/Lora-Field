@@ -90,17 +90,12 @@ export function getWeatherCodeInfo(
 
 export function formatForecastLabel(item: WeatherForecastPoint, index: number): string {
   const rawTime = item.local_datetime || item.datetime || item.utc_datetime;
-  if (!rawTime) return index === 0 ? 'Sekarang' : `+${index * 3} Jam`;
+  if (!rawTime) return index === 0 ? 'Sekarang' : `+${index * 3}j`;
   const normalized = String(rawTime).replace(' ', 'T');
   const date = new Date(normalized);
   if (Number.isNaN(date.getTime())) {
     const timePart = String(rawTime).split(' ')[1];
-    return timePart ? timePart.slice(0, 5) : index === 0 ? 'Sekarang' : `+${index * 3} Jam`;
+    return timePart ? timePart.slice(0, 5) : index === 0 ? 'Sekarang' : `+${index * 3}j`;
   }
-  return date.toLocaleString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 }

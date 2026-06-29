@@ -157,7 +157,11 @@
     "colStatus": "Status",
     "lastUpdate": "Last update:",
     "batteryTitle": "Node Battery",
-    "batteryEmpty": "No nodes."
+    "batteryEmpty": "No nodes.",
+    "avg24h": "24h avg",
+    "deviation": "deviation",
+    "hotLabel": "HOT",
+    "mockBadge": "MOCK"
   },
   "farmDetail": {
     "noData": "No Data",
@@ -397,7 +401,12 @@
     "labelHumidity": "Humidity",
     "labelWindSpeed": "Wind Speed",
     "labelWeatherCode": "Weather Code",
-    "forecastEmpty": "Forecast not yet available for this farm."
+    "labelTemperature": "Temperature",
+    "now": "Now",
+    "forecastTitle": "Weather Forecast",
+    "forecastEmpty": "Forecast not yet available for this farm.",
+    "historyTitle": "Temperature History (Open-Meteo)",
+    "historyNoLocation": "Farm location not set."
   },
   "nodes": {
     "errorLoad": "Failed to load node data: {{message}}",

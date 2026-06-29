@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { MOCK_READINGS } from '@/lib/mockFarmData';
 
-export function useReadings(nodeId: string, limit = 20) {
+export function useReadings(nodeId: string, limit = 100) {
   return useQuery({
     queryKey: ['readings', nodeId, limit],
     queryFn: () => {

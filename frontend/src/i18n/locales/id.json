@@ -157,7 +157,11 @@
     "colStatus": "Status",
     "lastUpdate": "Last update node:",
     "batteryTitle": "Baterai Node",
-    "batteryEmpty": "Tidak ada node."
+    "batteryEmpty": "Tidak ada node.",
+    "avg24h": "24j avg",
+    "deviation": "deviasi",
+    "hotLabel": "PANAS",
+    "mockBadge": "MOCK"
   },
   "farmDetail": {
     "noData": "Tidak Ada Data",
@@ -393,7 +397,12 @@
     "labelHumidity": "Kelembapan",
     "labelWindSpeed": "Kecepatan Angin",
     "labelWeatherCode": "Kode Cuaca",
-    "forecastEmpty": "Prakiraan belum tersedia untuk kebun ini."
+    "labelTemperature": "Suhu",
+    "now": "Sekarang",
+    "forecastTitle": "Ramalan Cuaca",
+    "forecastEmpty": "Prakiraan belum tersedia untuk kebun ini.",
+    "historyTitle": "Histori Suhu (Open-Meteo)",
+    "historyNoLocation": "Lokasi kebun belum diset."
   },
   "nodes": {
     "errorLoad": "Gagal memuat data node: {{message}}",

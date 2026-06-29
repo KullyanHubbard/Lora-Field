@@ -1,17 +1,19 @@
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
-  CircleCheck,
   Cloud,
   CloudLightning,
   CloudOff,
   CloudRain,
   CloudRainWind,
   CloudSun,
+  Droplets,
   Sun,
-  TriangleAlert,
+  Wind,
 } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
+import { useWeatherHistory } from './queries';
 import {
   formatForecastLabel,
   getWeatherCodeInfo,
@@ -20,11 +22,23 @@ import {
 } from './weatherHelpers';
 import { DEG_C } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { StatusPill, type PillTone } from '@/components/ui/status-pill';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Farm, Weather } from '@/types';
+import type { Weather } from '@/types';
+
+const CHART_COLOR = '#0ea5e9'; // sky-500 solid
+const CHART_FILL_TOP = 'rgba(14,165,233,0.22)';
+const CHART_FILL_BOTTOM = 'rgba(14,165,233,0.0)';
+// token --foreground = oklch; pakai color-mix utk alpha biar aman light+dark
+const TICK_FILL = 'color-mix(in oklch, var(--foreground) 85%, transparent)';
+const GRID_STROKE = 'color-mix(in oklch, var(--foreground) 25%, transparent)';
 
 const weatherIcon: Record<WeatherIconKey, typeof Sun> = {
   sun: Sun,
@@ -36,91 +50,122 @@ const weatherIcon: Record<WeatherIconKey, typeof Sun> = {
   unknown: CloudOff,
 };
 
-// Warna ikon impact (status) — neon solid; teks & surface card tetap netral.
-const toneIconColor: Record<PillTone, string> = {
-  green: 'text-emerald-500 dark:text-emerald-400',
-  yellow: 'text-amber-500 dark:text-amber-400',
-  red: 'text-red-500 dark:text-red-400',
-  neutral: 'text-muted-foreground',
-};
+const iconColor = (isRain: boolean): string =>
+  isRain
+    ? 'text-sky-500 dark:text-sky-400'
+    : 'text-amber-500 dark:text-amber-400';
 
-function InfoItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground">{value}</span>
-    </div>
-  );
+// ——— Temperature Chart (generic) —————————————————————————————————————————————
+
+interface ChartPoint {
+  label: string;
+  value: number;
 }
 
-function ImpactCard({ weather }: { weather: Weather | null }) {
+function TemperatureChart({ points }: { points: ChartPoint[] }) {
   const { t } = useTranslation();
-  // No-data BMKG → neutral (bukan merah). Hujan → amber (perhatian). Aman → green.
-  const impact: { tone: PillTone; Icon: typeof Sun; text: string } = !weather
-    ? {
-        tone: 'neutral',
-        Icon: TriangleAlert,
-        text: t('weather.impactNoData'),
-      }
-    : weather.rain_next_3h
-      ? {
-          tone: 'yellow',
-          Icon: CloudRain,
-          text: t('weather.impactRain'),
-        }
-      : {
-          tone: 'green',
-          Icon: CircleCheck,
-          text: t('weather.impactClear'),
-        };
-  const Icon = impact.Icon;
+
+  if (points.length < 2) {
+    return (
+      <p className="flex items-center justify-center py-10 text-xs text-muted-foreground">
+        {t('weather.forecastEmpty')}
+      </p>
+    );
+  }
+
+  const dataMin = Math.min(...points.map((p) => p.value));
+  const dataMax = Math.max(...points.map((p) => p.value));
+  const padding = Math.max(2, Math.ceil((dataMax - dataMin) * 0.25));
+
+  const chartConfig = {
+    value: {
+      label: t('weather.labelTemperature') ?? 'Suhu',
+      color: CHART_COLOR,
+    },
+  } satisfies ChartConfig;
 
   return (
-    <Card>
-      <CardContent className="flex items-center gap-3 text-sm text-foreground">
-        <Icon className={cn('size-5 shrink-0', toneIconColor[impact.tone])} />
-        <span>{impact.text}</span>
-      </CardContent>
-    </Card>
+    <ChartContainer config={chartConfig} className="h-full min-h-0 w-full">
+      <AreaChart
+        data={points}
+        margin={{ left: 0, right: 8, top: 4, bottom: 0 }}
+      >
+        <defs>
+          <linearGradient id="wxFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={CHART_FILL_TOP} />
+            <stop offset="100%" stopColor={CHART_FILL_BOTTOM} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid
+          vertical={true}
+          horizontal={true}
+          stroke={GRID_STROKE}
+          strokeDasharray="3 3"
+        />
+        <XAxis
+          dataKey="label"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={6}
+          tick={{ fill: TICK_FILL }}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          width={56}
+          tickMargin={4}
+          tick={{ fill: TICK_FILL }}
+          tickFormatter={(v) => `${v}${DEG_C}`}
+          domain={[Math.floor(dataMin - padding), 36]}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              indicator="line"
+              formatter={(value) => (
+                <span className="font-mono font-semibold tabular-nums text-foreground">
+                  {Number(value).toFixed(1)}
+                  {DEG_C}
+                </span>
+              )}
+            />
+          }
+        />
+        <Area
+          dataKey="value"
+          type="monotone"
+          stroke={CHART_COLOR}
+          strokeWidth={2.5}
+          fill="url(#wxFill)"
+          dot={{
+            r: 3,
+            fill: CHART_COLOR,
+            strokeWidth: 0,
+          }}
+          activeDot={{
+            r: 5,
+            fill: CHART_COLOR,
+            stroke: 'hsl(var(--background))',
+            strokeWidth: 2,
+          }}
+        />
+      </AreaChart>
+    </ChartContainer>
   );
 }
 
-function WeatherInfoCard({ weather, farm }: { weather: Weather | null; farm: Farm }) {
-  const { t } = useTranslation();
-  const r = weather?.region;
-  const regionText =
-    [r?.village, r?.district, r?.city, r?.province].filter(Boolean).join(', ') ||
-    farm.location ||
-    '—';
-  const adm4 = weather?.adm4 || farm.bmkg_adm4_code || '—';
-  const lat = Number(farm.latitude);
-  const lng = Number(farm.longitude);
-  const coord =
-    Number.isFinite(lat) && Number.isFinite(lng) ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : '—';
-  const altitude = pickNumber(weather?.location_profile?.altitude_m);
-  const altitudeText = altitude != null ? `${altitude} mdpl` : '—';
-  const lastUpdate = weather?.forecast_time || weather?.updated_at || t('weather.notAvailable');
-  const available = Boolean(weather);
-  const statusLabel = available ? `${weather?.provider || 'BMKG'} ${t('weather.statusAvailable')}` : t('weather.notAvailable');
+// ——— Main Weather Card ————————————————————————————————————————————————————————
 
-  return (
-    <Card>
-      <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <InfoItem label={t('weather.labelRegion')} value={regionText} />
-        <InfoItem label={t('weather.labelBmkgCode')} value={adm4} />
-        <InfoItem label={t('weather.labelCoord')} value={coord} />
-        <InfoItem label={t('weather.labelAltitude')} value={altitudeText} />
-        <div className="flex flex-col items-start gap-1">
-          <span className="text-xs text-muted-foreground">{t('weather.labelConnStatus')}</span>
-          <StatusPill tone={available ? 'green' : 'neutral'} label={statusLabel} />
-        </div>
-        <InfoItem label={t('weather.labelLastUpdate')} value={lastUpdate} />
-      </CardContent>
-    </Card>
-  );
-}
-
-function WeatherMainCard({ weather }: { weather: Weather | null }) {
+function WeatherMainCard({
+  weather,
+  farmLat,
+  farmLon,
+}: {
+  weather: Weather | null;
+  farmLat: number | undefined;
+  farmLon: number | undefined;
+}) {
   const { t } = useTranslation();
   const info = getWeatherCodeInfo(weather?.code, weather?.condition);
   const Icon = weatherIcon[info.iconKey];
@@ -129,37 +174,83 @@ function WeatherMainCard({ weather }: { weather: Weather | null }) {
   const wind = pickNumber(weather?.wind_speed);
   const tempText = temp != null ? `${temp}${DEG_C}` : '—';
   const humText = humidity != null ? `${humidity}%` : '—';
-  const windText =
+  const direction = weather?.wind_direction;
+  const windTextFull =
     wind != null
-      ? `${wind} km/jam${weather?.wind_direction ? ` (${weather.wind_direction})` : ''}`
+      ? `${wind} km/jam${direction ? ` (${direction})` : ''}`
       : '—';
 
+  const history = useWeatherHistory(farmLat, farmLon);
+  const points: ChartPoint[] = (history.data ?? []).map((p) => {
+    const d = new Date(p.time);
+    const label = Number.isFinite(d.getTime())
+      ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      : p.time;
+    return { label, value: p.temp };
+  });
+
   return (
-    <Card>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Icon className="size-12 shrink-0 text-amber-500 dark:text-amber-400" />
-          <div className="flex flex-col">
-            <span className="text-4xl font-semibold tracking-tight tabular-nums text-foreground">
-              {tempText}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {weather ? t(info.label) : t('weather.notAvailable')}
-            </span>
+    <Card className="flex flex-col lg:h-full lg:min-h-0">
+      <CardContent className="flex flex-1 flex-col items-center pt-8 pb-5 lg:min-h-0">
+        <div className="flex size-20 items-center justify-center rounded-full bg-muted/60 ring-1 ring-border">
+          <Icon className={cn('size-10', iconColor(info.isRain))} />
+        </div>
+
+        <span className="mt-4 text-7xl font-extralight tracking-tighter tabular-nums text-foreground">
+          {tempText}
+        </span>
+
+        <span className="mt-2.5 text-sm font-medium text-muted-foreground">
+          {weather ? t(info.label) : t('weather.notAvailable')}
+        </span>
+
+        <div className="mt-7 grid w-full max-w-xs grid-cols-2 gap-3">
+          <div className="flex items-center gap-2.5 rounded-lg border border-border px-4 py-3">
+            <Droplets className="size-4 shrink-0 text-sky-500 dark:text-sky-400" />
+            <div className="min-w-0">
+              <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
+                {t('weather.labelHumidity')}
+              </p>
+              <p className="text-base font-semibold tabular-nums text-foreground">
+                {humText}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-lg border border-border px-4 py-3">
+            <Wind className="size-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
+            <div className="min-w-0">
+              <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
+                {t('weather.labelWindSpeed')}
+              </p>
+              <p
+                className="truncate text-sm font-semibold tabular-nums text-foreground"
+                title={windTextFull}
+              >
+                {windTextFull}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="space-y-2 border-t border-border pt-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t('weather.labelHumidity')}</span>
-            <span className="font-medium tabular-nums text-foreground">{humText}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t('weather.labelWindSpeed')}</span>
-            <span className="font-medium text-foreground">{windText}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t('weather.labelWeatherCode')}</span>
-            <span className="font-medium tabular-nums text-foreground">{weather?.code ?? '—'}</span>
+
+        {/* Chart histori Open-Meteo */}
+        <div className="mt-7 flex w-full flex-1 flex-col min-h-0">
+          <p className="mb-2 text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
+            {t('weather.historyTitle')}
+          </p>
+          <div className="h-full min-h-[16rem] lg:min-h-0 w-full rounded-lg bg-foreground/[0.04] p-2">
+            {!farmLat || !farmLon ? (
+              <p className="flex items-center justify-center py-10 text-xs text-muted-foreground">
+                {t('weather.historyNoLocation')}
+              </p>
+            ) : history.isLoading ? (
+              <Skeleton className="h-full w-full rounded-lg" />
+            ) : history.isError ? (
+              <p className="flex items-center justify-center py-10 text-xs text-muted-foreground">
+                {t('weather.forecastEmpty')}
+              </p>
+            ) : (
+              <TemperatureChart points={points} />
+            )}
           </div>
         </div>
       </CardContent>
@@ -167,41 +258,68 @@ function WeatherMainCard({ weather }: { weather: Weather | null }) {
   );
 }
 
-function ForecastGrid({ weather }: { weather: Weather | null }) {
+// ——— Forecast Column ——————————————————————————————————————————————————————————
+
+function ForecastColumn({ weather }: { weather: Weather | null }) {
   const { t } = useTranslation();
   const forecast = weather?.forecast;
-  if (!Array.isArray(forecast) || forecast.length === 0) {
-    return (
-      <Card>
-        <CardContent className="text-sm text-muted-foreground">
-          {t('weather.forecastEmpty')}
-        </CardContent>
-      </Card>
-    );
-  }
+  const items =
+    Array.isArray(forecast) && forecast.length > 0
+      ? forecast.slice(0, 8)
+      : [];
+
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {forecast.slice(0, 8).map((f, i) => {
-        const info = getWeatherCodeInfo(pickNumber(f.weather, f.code), f.weather_desc || f.condition);
-        const Icon = weatherIcon[info.iconKey];
-        const temp = pickNumber(f.t, f.temperature);
-        const tempText = temp != null ? `${temp}${DEG_C}` : '—';
-        return (
-          <Card key={i}>
-            <CardContent className="flex flex-col items-center gap-1.5 text-center">
-              <span className="text-xs text-muted-foreground">{formatForecastLabel(f, i)}</span>
-              <Icon className="size-7 shrink-0 text-amber-500 dark:text-amber-400" />
-              <span className="text-lg font-semibold tabular-nums text-foreground">{tempText}</span>
-              <span className="text-xs text-muted-foreground">
-                {t(info.label)}
-              </span>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
+    <Card className="flex flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
+      <CardHeader>
+        <CardTitle>{t('weather.forecastTitle')}</CardTitle>
+      </CardHeader>
+      <CardContent className="lg:flex lg:flex-1 lg:flex-col lg:min-h-0">
+        {items.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">
+            {t('weather.forecastEmpty')}
+          </p>
+        ) : (
+          <div className="divide-y divide-border lg:flex lg:flex-1 lg:flex-col lg:overflow-hidden">
+            {items.map((f, i) => {
+              const info = getWeatherCodeInfo(
+                pickNumber(f.weather, f.code),
+                f.weather_desc || f.condition,
+              );
+              const Icon = weatherIcon[info.iconKey];
+              const temp = pickNumber(f.t, f.temperature);
+              const tempText = temp != null ? `${temp}${DEG_C}` : '—';
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 py-3.5 lg:flex-1"
+                >
+                  <Icon
+                    className={cn('size-8 shrink-0', iconColor(info.isRain))}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-base font-medium tabular-nums text-foreground">
+                        {formatForecastLabel(f, i)}
+                      </span>
+                      <span className="text-xl font-semibold tabular-nums text-foreground">
+                        {tempText}
+                      </span>
+                    </div>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {t(info.label)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
+
+// ——— Page —————————————————————————————————————————————————————————————————————
 
 export default function WeatherPage() {
   const { t } = useTranslation();
@@ -210,34 +328,43 @@ export default function WeatherPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-16 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-40 w-full rounded-xl" />
+      <div className="mx-auto max-w-6xl">
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
+          <Skeleton className="h-[36rem] w-full rounded-xl" />
+          <Skeleton className="h-80 w-full rounded-xl lg:w-72" />
+        </div>
       </div>
     );
   }
 
   if (error || !summary) {
     return (
-      <FarmSummaryError
-        message={
-          error ? t('weather.errorLoad', { message: error.message }) : t('weather.noData')
-        }
-      />
+      <div className="mx-auto max-w-6xl">
+        <FarmSummaryError
+          message={
+            error
+              ? t('weather.errorLoad', { message: error.message })
+              : t('weather.noData')
+          }
+        />
+      </div>
     );
   }
 
-  // Type menandai weather wajib, tapi backend bisa kirim null kalau adm4 belum resolve.
   const weather: Weather | null = summary.weather ?? null;
-  const farm = summary.farm;
 
   return (
-    <div className="space-y-6">
-      <ImpactCard weather={weather} />
-      <WeatherInfoCard weather={weather} farm={farm} />
-      <WeatherMainCard weather={weather} />
-      <ForecastGrid weather={weather} />
+    <div className="mx-auto max-w-6xl lg:flex lg:h-[calc(100svh-5.5rem)] lg:flex-col lg:overflow-hidden">
+      <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:h-full lg:min-h-0">
+        <WeatherMainCard
+          weather={weather}
+          farmLat={summary.farm.latitude}
+          farmLon={summary.farm.longitude}
+        />
+        <div className="w-full lg:w-72">
+          <ForecastColumn weather={weather} />
+        </div>
+      </div>
     </div>
   );
 }

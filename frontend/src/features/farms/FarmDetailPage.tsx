@@ -332,6 +332,31 @@ function BatteryNodesCard({ nodes, className }: { nodes: NodeSummary[]; classNam
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  // Trigger gauge animation when the card scrolls into the viewport.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      setHasAnimated(true);
+      return;
+    }
+    const el = scrollRef.current?.closest('.battery-section-root') as HTMLElement | null;
+    if (!el) {
+      setHasAnimated(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasAnimated(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
@@ -367,7 +392,7 @@ function BatteryNodesCard({ nodes, className }: { nodes: NodeSummary[]; classNam
   const itemFlex = `0 0 calc((100% - ${BATTERY_TOTAL_GAP}px) / ${BATTERY_VISIBLE_COUNT})`;
 
   return (
-    <Card className={className}>
+    <Card className={cn('battery-section-root', className)}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
           <BatteryFull className="size-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
@@ -446,6 +471,7 @@ function BatteryNodesCard({ nodes, className }: { nodes: NodeSummary[]; classNam
                     centerSub={centerSub}
                     tone={tone}
                     caption={ns.node.name || ns.node.location || ns.node.id}
+                    animate={hasAnimated}
                   />
                 </div>
               );

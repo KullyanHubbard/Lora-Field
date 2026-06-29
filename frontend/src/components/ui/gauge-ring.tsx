@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export type GaugeTone = 'green' | 'yellow' | 'red' | 'neutral';
@@ -9,6 +10,7 @@ interface GaugeRingProps {
   tone: GaugeTone;
   caption?: string;
   label?: string;
+  animate?: boolean;
 }
 
 const RADIUS = 40;
@@ -28,9 +30,35 @@ const toneLabelClass: Record<GaugeTone, string> = {
   neutral: 'text-muted-foreground',
 };
 
-export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label }: GaugeRingProps) {
+function useAnimatedValue(target: number, enabled: boolean, duration = 800) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) {
+      setProgress(target);
+      return;
+    }
+    setProgress(0);
+    const start = performance.now();
+    let frame: number;
+    function tick(now: number) {
+      const elapsed = now - start;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setProgress(Math.round(target * eased));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    }
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, enabled, duration]);
+
+  return progress;
+}
+
+export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label, animate }: GaugeRingProps) {
   const clamped = value != null ? Math.max(0, Math.min(100, value)) : 0;
-  const filled = (clamped / 100) * CIRCUMFERENCE;
+  const displayProgress = useAnimatedValue(clamped, animate === true && clamped > 0);
+  const filled = (displayProgress / 100) * CIRCUMFERENCE;
   const hasData = value != null;
 
   return (
@@ -54,7 +82,7 @@ export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label 
               fill="none"
               strokeWidth="10"
               strokeLinecap="round"
-              className={toneStrokeClass[tone]}
+              className={cn(toneStrokeClass[tone], animate && 'transition-colors duration-500')}
               style={{ strokeDasharray: `${filled} ${CIRCUMFERENCE}` }}
             />
           )}
@@ -64,6 +92,7 @@ export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label 
             className={cn(
               'text-2xl font-bold tabular-nums leading-none',
               hasData ? toneLabelClass[tone] : 'text-muted-foreground',
+              animate && 'transition-colors duration-500',
             )}
           >
             {centerLabel}
