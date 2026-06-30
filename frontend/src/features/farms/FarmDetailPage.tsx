@@ -808,15 +808,15 @@ export default function FarmDetailPage() {
           Baterai Node. Baris 3: Status Node Sensor penuh. Penempatan xl pakai longhand
           col-start/col-end + row-start (override col-span-2 mobile dengan aman). Di
           bawah xl semua kartu menumpuk rapi. */}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {/* Baris 1 — Status Valve (1 kolom) */}
         <ValveStatCard
           summary={summary}
-          className="col-span-2 xl:col-start-1 xl:col-end-2 xl:row-start-1"
+          className="sm:col-span-2 xl:col-start-1 xl:col-end-2 xl:row-start-1"
         />
 
         {/* Baris 1 — Gateway info (2 kolom) */}
-        <div className="col-span-2 overflow-hidden rounded-xl bg-card text-sm text-card-foreground ring-1 ring-foreground/10 xl:col-start-2 xl:col-end-4 xl:row-start-1">
+        <div className="overflow-hidden rounded-xl bg-card text-sm text-card-foreground ring-1 ring-foreground/10 sm:col-span-2 xl:col-start-2 xl:col-end-4 xl:row-start-1">
           <GatewayInfoContent
             summary={summary}
             className="flex-1 p-4"
@@ -826,31 +826,31 @@ export default function FarmDetailPage() {
         {/* Baris 1 — Log Aktivitas (1 kolom, sejajar kanan Gateway) */}
         <ActivityLogCard
           farmId={farmId ?? ''}
-          className="col-span-2 xl:col-start-4 xl:col-end-5 xl:row-start-1"
+          className="sm:col-span-2 xl:col-start-4 xl:col-end-5 xl:row-start-1"
         />
 
-        
+
         {/* Prediksi Cuaca — 1 kolom (ke-5), membentang turun ke baris 2 */}
         <WeatherForecastCard
           summary={summary}
           farmId={farmId ?? ''}
-          className="col-span-2 xl:col-start-5 xl:col-end-6 xl:row-start-1 xl:row-span-2"
+          className="sm:col-span-2 xl:col-start-5 xl:col-end-6 xl:row-start-1 xl:row-span-2"
         />
 
         {/* Node Sensor — kolom kiri baris 2, sejajar Baterai Node */}
         <NodeSensorCard
           nodes={nodes}
-          className="col-span-2 xl:col-start-1 xl:col-end-2 xl:row-start-2"
+          className="sm:col-span-2 xl:col-start-1 xl:col-end-2 xl:row-start-2"
         />
 
         {/* Baterai Node — baris 2, area tengah (3 kolom: slot 2-4) */}
         <BatteryNodesCard
           nodes={nodes}
-          className="col-span-2 xl:col-start-2 xl:col-end-5 xl:row-start-2"
+          className="sm:col-span-2 xl:col-start-2 xl:col-end-5 xl:row-start-2"
         />
 
         {/* 4 Metric Stat Card — baris 3, full width (span 5 kolom), subgrid 4 kolom */}
-        <div className="col-span-2 xl:col-start-1 xl:col-end-6 xl:row-start-3 grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2 xl:col-start-1 xl:col-end-6 xl:row-start-3 xl:grid-cols-4">
           {(() => {
             const mockKeys = ['node-a', 'node-b', 'node-c', 'node-d'];
             const nodeDataMap: Record<string, ChartPoint[]> = {};

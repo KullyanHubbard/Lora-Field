@@ -107,7 +107,7 @@ export default function ResetPasswordPage() {
       </div>
 
       {/* Panel kanan — form */}
-      <div className="flex w-full items-center justify-center bg-background p-8 lg:w-1/2">
+      <div className="flex w-full items-center justify-center bg-background px-4 py-8 sm:p-8 lg:w-1/2">
         <div className="w-full max-w-sm">
           {/* Logo hanya tampil di mobile */}
           <Link

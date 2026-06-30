@@ -69,7 +69,7 @@ export function FarmMap({ farms }: { farms: Farm[] }) {
       center={DEFAULT_CENTER}
       zoom={DEFAULT_ZOOM}
       scrollWheelZoom={false}
-      className="h-[749px] w-full rounded-lg"
+      className="h-[320px] w-full rounded-lg sm:h-[420px] lg:h-[560px] xl:h-[680px]"
       aria-label="Peta lokasi kebun"
     >
       <TileLayer

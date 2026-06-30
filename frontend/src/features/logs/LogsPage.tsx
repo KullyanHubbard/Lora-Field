@@ -173,15 +173,15 @@ export default function LogsPage() {
                 ))}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder={t('logs.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 pl-8"
+                  className="w-full pl-8"
                 />
               </div>
               <Button
@@ -189,6 +189,7 @@ export default function LogsPage() {
                 variant="secondary"
                 onClick={handleExportCsv}
                 disabled={!filteredLogs.length}
+                className="w-full sm:w-auto"
               >
                 <Download className="size-4" /> {t('logs.exportCsv')}
               </Button>
@@ -196,9 +197,9 @@ export default function LogsPage() {
           </div>
 
           {/* E1: filter tanggal client-side */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid gap-3 sm:flex sm:flex-wrap sm:items-center">
             <span className="text-sm text-muted-foreground">{t('logs.dateFilterLabel')}:</span>
-            <div className="flex items-center gap-1.5">
+            <div className="grid gap-1.5 sm:flex sm:items-center">
               <label htmlFor="log-date-from" className="text-sm text-muted-foreground">
                 {t('logs.dateFrom')}
               </label>
@@ -207,11 +208,11 @@ export default function LogsPage() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="w-36 text-sm"
+                className="w-full text-sm sm:w-36"
                 max={dateTo || undefined}
               />
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="grid gap-1.5 sm:flex sm:items-center">
               <label htmlFor="log-date-to" className="text-sm text-muted-foreground">
                 {t('logs.dateTo')}
               </label>
@@ -220,7 +221,7 @@ export default function LogsPage() {
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="w-36 text-sm"
+                className="w-full text-sm sm:w-36"
                 min={dateFrom || undefined}
               />
             </div>

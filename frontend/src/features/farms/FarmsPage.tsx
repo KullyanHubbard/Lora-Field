@@ -100,7 +100,7 @@ function FarmListCard({ farm }: { farm: Farm }) {
         </div>
 
         {/* Detail info */}
-        <div className="ml-9 mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-1 gap-2 min-[420px]:ml-9 min-[420px]:grid-cols-3">
           <div className="rounded-lg bg-muted/40 p-2">
             <div className="flex items-center gap-1 text-[0.65rem] text-muted-foreground">
               <MapPin className="size-2.5" />

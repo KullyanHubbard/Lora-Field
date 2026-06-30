@@ -224,32 +224,31 @@ export function AppLayout() {
       </Sidebar>
 
       <SidebarInset>
-        <header className="flex h-14 items-center gap-2 border-b border-border bg-background px-4">
-          <SidebarTrigger />
-          <h1 className="text-xl font-semibold text-primary">{title}</h1>
+        <header className="flex min-h-14 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-background px-3 py-2 sm:flex-nowrap sm:px-4">
+          <SidebarTrigger className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-base font-semibold text-primary sm:text-xl">{title}</h1>
+          </div>
           {isFarmSummaryPage && summaryNodes.length > 0 && (
-            <>
-              <span className="h-5 w-px rounded-full bg-border" aria-hidden="true" />
-              <span className="text-sm text-muted-foreground">
-                <span className="font-semibold tabular-nums text-foreground">{activeNodeCount}</span>
-                {' / '}
-                <span className="tabular-nums">{summaryNodes.length}</span>
-                {' '}Node Aktif
-              </span>
-            </>
+            <span className="order-last w-full text-xs text-muted-foreground sm:order-none sm:w-auto sm:text-sm">
+              <span className="font-semibold tabular-nums text-foreground">{activeNodeCount}</span>
+              {' / '}
+              <span className="tabular-nums">{summaryNodes.length}</span>
+              {' '}Node Aktif
+            </span>
           )}
-          <div className="ml-auto flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <span className="hidden max-w-32 truncate text-sm text-muted-foreground sm:block lg:max-w-48">
               {user?.name ?? user?.email ?? t('layout.fallbackUser')}
             </span>
             <Button variant="outline" size="sm" onClick={logout}>
               <LogOut className="size-4" />
-              {t('layout.logout')}
+              <span className="hidden sm:inline">{t('layout.logout')}</span>
             </Button>
           </div>
         </header>
 
-        <main className="flex-1 p-4">
+        <main className="min-w-0 flex-1 p-3 sm:p-4">
           <Outlet />
         </main>
       </SidebarInset>
