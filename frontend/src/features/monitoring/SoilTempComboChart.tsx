@@ -23,9 +23,9 @@ const OPTIMAL_SOIL_TEMP = { min: 18, max: 28 };
 const CHART_MAX = 40;
 
 function soilTempStatus(avg: number): { labelKey: string; tone: StatusTone } {
-  if (avg < OPTIMAL_SOIL_TEMP.min) return { labelKey: 'soilStatus.dry', tone: 'red' };
-  if (avg > OPTIMAL_SOIL_TEMP.max) return { labelKey: 'soilStatus.wet', tone: 'yellow' };
-  return { labelKey: 'soilStatus.normal', tone: 'green' };
+  if (avg < OPTIMAL_SOIL_TEMP.min) return { labelKey: 'monitoring.soilTempStatus.cold', tone: 'yellow' };
+  if (avg > OPTIMAL_SOIL_TEMP.max) return { labelKey: 'monitoring.soilTempStatus.warm', tone: 'red' };
+  return { labelKey: 'monitoring.soilTempStatus.normal', tone: 'green' };
 }
 
 interface Point {

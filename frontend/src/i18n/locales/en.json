@@ -177,6 +177,11 @@
       "normal": "Normal",
       "wet": "Humid"
     },
+    "soilTempStatus": {
+      "cold": "Cold",
+      "normal": "Normal",
+      "warm": "Warm"
+    },
     "zoneSafe": "Safe zone",
     "zoneIdeal": "Ideal zone",
     "zoneTemp": "Temperature zone"

@@ -177,6 +177,11 @@
       "normal": "Normal",
       "wet": "Lembap"
     },
+    "soilTempStatus": {
+      "cold": "Dingin",
+      "normal": "Normal",
+      "warm": "Hangat"
+    },
     "zoneSafe": "Zona aman",
     "zoneIdeal": "Zona ideal",
     "zoneTemp": "Zona suhu"

@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Activity, RadioTower, WifiOff } from 'lucide-react';
 import { useGatewayLogs } from '../queries';
-import { MOCK_GATEWAY_LOGS } from '@/lib/mockFarmData';
 import { timeAgo } from '@/lib/format';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,8 +37,7 @@ export function GatewayLogContent({ farmId }: { farmId?: string }) {
   const [filter, setFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
 
-  // ponytail: pakai mock kalau backend belum kirim log gateway
-  const rawLogs = gatewayLogs?.items?.length ? gatewayLogs.items : MOCK_GATEWAY_LOGS;
+  const rawLogs = gatewayLogs?.items ?? [];
 
   const filtered = useMemo(() => {
     if (filter === 'all') return rawLogs;

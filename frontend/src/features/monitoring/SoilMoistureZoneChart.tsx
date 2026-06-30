@@ -13,6 +13,7 @@ import { Droplets } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { StatusPill } from '@/components/ui/status-pill';
+import { getSoilStatusFromMoisture } from '@/lib/status';
 import type { Reading } from '@/types';
 import { formatTimeLabel } from './chart-helpers';
 
@@ -27,24 +28,6 @@ interface Point {
   label: string;
   value: number;
 }
-
-function classifyMoisture(value: number, lower: number, upper: number) {
-  if (value < lower) return 'kering' as const;
-  if (value > upper) return 'basah' as const;
-  return 'cukup' as const;
-}
-
-const STATUS_TONE = {
-  kering: 'red' as const,
-  cukup: 'green' as const,
-  basah: 'yellow' as const,
-};
-
-const STATUS_LABEL = {
-  kering: 'Kering',
-  cukup: 'Cukup',
-  basah: 'Basah',
-};
 
 export default function SoilMoistureZoneChart({
   readings,
@@ -67,8 +50,7 @@ export default function SoilMoistureZoneChart({
   );
 
   const latest = points.length > 0 ? points[points.length - 1].value : null;
-  const status = latest != null ? classifyMoisture(latest, lower, upper) : null;
-
+  const status = latest != null ? getSoilStatusFromMoisture(latest, lower, upper) : null;
 
   const config = {
     soil: { label: t('monitoring.chartSoilMoisture'), color: COLOR_LINE },
@@ -89,7 +71,7 @@ export default function SoilMoistureZoneChart({
                   {latest.toFixed(0)}%
                 </span>
                 {status && (
-                  <StatusPill tone={STATUS_TONE[status]} label={STATUS_LABEL[status]} />
+                  <StatusPill tone={status.tone} label={t(status.labelKey)} />
                 )}
               </div>
             )}
