@@ -79,12 +79,7 @@ export default function MonitoringPage() {
       {/* Node Selector */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-sm">{t('monitoring.selectNode')}</CardTitle>
-            {USE_MOCK_DATA && (
-              <StatusPill tone="neutral" label={t('monitoring.mockBadge')} />
-            )}
-          </div>
+          <CardTitle className="text-sm">{t('monitoring.selectNode')}</CardTitle>
         </CardHeader>
         <CardContent>
           {nodes.length === 0 ? (
