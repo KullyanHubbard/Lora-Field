@@ -161,7 +161,20 @@
     "avg24h": "24j avg",
     "deviation": "deviasi",
     "hotLabel": "PANAS",
-    "mockBadge": "MOCK"
+    "mockBadge": "MOCK",
+    "airStatus": {
+      "cool": "Dingin",
+      "normal": "Normal",
+      "hot": "Panas"
+    },
+    "humidityStatus": {
+      "dry": "Kering",
+      "normal": "Normal",
+      "wet": "Lembap"
+    },
+    "zoneSafe": "Zona aman",
+    "zoneIdeal": "Zona ideal",
+    "zoneTemp": "Zona suhu"
   },
   "farmDetail": {
     "noData": "Tidak Ada Data",

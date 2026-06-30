@@ -48,16 +48,19 @@ export function generateMockReadings(nodeId: string): Reading[] {
 
     // Ambil nilai dasar dari pola
     const baseValue = basePattern[i] ?? 55;
+    const clusterDrift = Math.sin(i / 5) * 1.4;
 
     // Tambah noise kecil (±2-4%)
     const noise = simpleNoise(seed, i, 3);
-    const moisture = Math.max(20, Math.min(90, baseValue + noise));
-
-    // Suhu tanah: 24-28°C dengan sedikit noise
-    const soilTemp = 26 + simpleNoise(seed + 100, i, 1.5);
+    const moisture = Math.max(20, Math.min(90, baseValue + clusterDrift + noise));
 
     // Suhu udara: siklus harian 28-34°C
     const hourOfDay = (new Date(ts).getHours() + 7) % 24;
+
+    // Suhu tanah: siklus harian + flare kecil biar tidak rata
+    const soilBase = 25.5 + Math.sin((hourOfDay - 5) * Math.PI / 12) * 2.1;
+    const soilPulse = i % 12 === 3 ? 1.2 : i % 12 === 9 ? -0.8 : 0;
+    const soilTemp = soilBase + soilPulse + simpleNoise(seed + 100, i, 0.8);
     const tempCycle = Math.sin((hourOfDay - 6) * Math.PI / 12) * 3;
     const airTemp = 31 + tempCycle + simpleNoise(seed + 200, i, 1);
 

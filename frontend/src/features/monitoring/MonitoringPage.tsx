@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,10 +19,7 @@ import SoilMoistureZoneChart from './SoilMoistureZoneChart';
 import SoilTempComboChart from './SoilTempComboChart';
 import AirTempCandlestickChart from './AirTempCandlestickChart';
 import AirHumidityRadialChart from './AirHumidityRadialChart';
-import { generateMockReadings } from './mockReadings';
 
-// TODO: revert — set ke false setelah backend/go-live.
-const USE_MOCK_DATA = true;
 
 export default function MonitoringPage() {
   const { id: farmId } = useParams();
@@ -32,22 +29,19 @@ export default function MonitoringPage() {
   const nodes = useMemo(() => summary?.nodes.map((ns) => ns.node) ?? [], [summary]);
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
 
+  useEffect(() => {
+    setSelectedNodeId('');
+  }, [farmId]);
+
   const effectiveNodeId = selectedNodeId || (nodes[0]?.id ?? '');
 
   const {
     data: readingsData,
     isLoading: readingsLoading,
     error: readingsError,
-  } = useReadings(USE_MOCK_DATA ? '' : effectiveNodeId, 100);
+  } = useReadings(effectiveNodeId, 100);
 
-  const mockReadings = useMemo(() => {
-    if (!USE_MOCK_DATA || !effectiveNodeId) return [];
-    return generateMockReadings(effectiveNodeId);
-  }, [effectiveNodeId]);
-
-  const readings = USE_MOCK_DATA
-    ? mockReadings
-    : readingsData?.items ?? [];
+  const readings = readingsData?.items ?? [];
 
   if (summaryLoading) {
     return (
@@ -111,9 +105,9 @@ export default function MonitoringPage() {
       </Card>
 
       {/* Charts */}
-      {readingsError && !USE_MOCK_DATA ? (
+      {readingsError ? (
         <p className="text-destructive">{t('monitoring.errorLoadReadings', { message: readingsError.message })}</p>
-      ) : readingsLoading && readings.length === 0 && !USE_MOCK_DATA ? (
+      ) : readingsLoading && readings.length === 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-64 w-full" />

@@ -1,14 +1,25 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts';
+import { Droplets } from 'lucide-react';
+import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import { StatusPill } from '@/components/ui/status-pill';
+import type { StatusTone } from '@/lib/status';
 import type { Reading } from '@/types';
-import { avgOfReadings, formatTimeLabel, latestValue } from './chart-helpers';
+import { latestValue, formatTimeLabel } from './chart-helpers';
 
-const PALETTE = { main: '#8B5CF6', dark: '#7C3AED', light: '#A78BFA' };
+const PALETTE = { main: '#8B5CF6', dark: '#7C3AED', light: '#A78BFA', wet: '#3B82F6', dry: '#F97316' };
+const RANGE = { min: 60, max: 85 };
+const CHART_MAX = 100;
 
-interface MiniPoint {
+function humidityStatus(value: number): { labelKey: string; tone: StatusTone } {
+  if (value < RANGE.min) return { labelKey: 'monitoring.humidityStatus.dry', tone: 'yellow' };
+  if (value > RANGE.max) return { labelKey: 'monitoring.humidityStatus.wet', tone: 'green' };
+  return { labelKey: 'monitoring.humidityStatus.normal', tone: 'green' };
+}
+
+interface Point {
   label: string;
   value: number;
 }
@@ -16,109 +27,72 @@ interface MiniPoint {
 export default function AirHumidityRadialChart({ readings }: { readings: Reading[] }) {
   const { t } = useTranslation();
 
-  const readingsAsc = useMemo(() => [...readings].reverse(), [readings]);
-  const current = latestValue(readingsAsc, 'air_humidity') ?? 0;
-  const avg24 = useMemo(() => avgOfReadings(readingsAsc, 'air_humidity') ?? 0, [readingsAsc]);
-  const deviation = current - avg24;
-
-  const miniPoints = useMemo<MiniPoint[]>(() => {
-    // downsample for mini sparkline
-    const step = Math.max(1, Math.floor(readingsAsc.length / 30));
-    return readingsAsc.filter((_, i) => i % step === 0).map((r) => ({
+  const points = useMemo<Point[]>(() => {
+    const asc = [...readings].reverse();
+    const step = Math.max(1, Math.floor(asc.length / 30));
+    return asc.filter((_, i) => i % step === 0).map((r) => ({
       label: formatTimeLabel(r.created_at),
       value: Number(r.air_humidity),
     }));
-  }, [readingsAsc]);
+  }, [readings]);
 
-  const gaugePct = current / 100;
-  const avgPct = avg24 / 100;
-
-  const config = { hum: { label: t('monitoring.chartAirHumidity'), color: PALETTE.main } } satisfies ChartConfig;
+  const latestHumidity = latestValue(readings, 'air_humidity');
+  const config = { hum: { label: `${t('monitoring.chartAirHumidity')} %`, color: PALETTE.main } } satisfies ChartConfig;
 
   return (
     <Card>
-      <CardHeader>
-        <div>
-          <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">
-            {t('monitoring.chartAirHumidity')}
-          </CardTitle>
+      <CardHeader className="space-y-2 pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {t('monitoring.chartAirHumidity')}
+            </CardTitle>
+            {latestHumidity != null && (() => {
+              const s = humidityStatus(latestHumidity);
+              return (
+                <div className="mt-1 flex items-baseline gap-2">
+                  <Droplets className="size-4 text-violet-500 dark:text-violet-400" aria-hidden="true" />
+                  <span className="text-3xl font-bold tabular-nums text-foreground">{latestHumidity.toFixed(0)}%</span>
+                  <StatusPill tone={s.tone} label={t(s.labelKey)} />
+                </div>
+              );
+            })()}
+          </div>
+          <div className="text-right text-[0.65rem] text-muted-foreground">
+            <div>{t('monitoring.zoneIdeal')}</div>
+            <div className="text-sm font-semibold tabular-nums text-foreground">
+              {RANGE.min}–{RANGE.max}%
+            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-3">
-          {/* Radial gauge + current value */}
-          <div className="flex items-center gap-4">
-            <div className="relative h-[140px] w-[140px] shrink-0">
-              <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
-                {/* Background ring */}
-                <circle cx={70} cy={70} r={56} fill="none" stroke="oklch(from var(--border) l c h / 0.35)" strokeWidth={10} />
-                {/* Avg24 ring */}
-                <circle
-                  cx={70}
-                  cy={70}
-                  r={56}
-                  fill="none"
-                  stroke={PALETTE.light}
-                  strokeWidth={6}
-                  strokeOpacity={0.5}
-                  strokeDasharray={`${(avgPct * 352).toFixed(0)} 352`}
-                  strokeLinecap="round"
-                />
-                {/* Current ring */}
-                <circle
-                  cx={70}
-                  cy={70}
-                  r={56}
-                  fill="none"
-                  stroke={`url(#hum-gauge-grad)`}
-                  strokeWidth={8}
-                  strokeDasharray={`${(gaugePct * 352).toFixed(0)} 352`}
-                  strokeLinecap="round"
-                />
-                <defs>
-                  <linearGradient id="hum-gauge-grad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor={PALETTE.dark} />
-                    <stop offset="50%" stopColor={PALETTE.main} />
-                    <stop offset="100%" stopColor={PALETTE.light} />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-foreground">{current.toFixed(0)}%</span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-              <div>
-                <span className="font-medium text-foreground">{avg24.toFixed(0)}%</span> {t('monitoring.avg24h')}
-              </div>
-              <div>
-                <span
-                  className="font-medium"
-                  style={{ color: deviation >= 0 ? PALETTE.main : '#EF4444' }}
-                >
-                  {deviation >= 0 ? '+' : ''}{deviation.toFixed(1)}%
-                </span>{' '}
-                {t('monitoring.deviation')}
-              </div>
-            </div>
-          </div>
-          {/* Mini time series */}
-          <ChartContainer config={config} className="h-[100px] w-full">
-            <ComposedChart data={miniPoints} margin={{ left: 0, right: 4, top: 4, bottom: 0 }}>
-              <defs>
-                <linearGradient id="hum-mini-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={PALETTE.main} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={PALETTE.main} stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} strokeDasharray="2 2" strokeOpacity={0.3} />
-              <XAxis dataKey="label" hide />
-              <YAxis domain={[0, 100]} hide />
-              <Area dataKey="value" type="monotone" stroke="none" fill="url(#hum-mini-grad)" dot={false} />
-              <Line dataKey="value" type="monotone" stroke={PALETTE.main} strokeWidth={1.5} dot={false} />
-            </ComposedChart>
-          </ChartContainer>
-        </div>
+        <ChartContainer config={config} className="h-[280px] w-full">
+          <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.12} />
+            <ReferenceArea y1={0} y2={RANGE.min} fill={PALETTE.dry} fillOpacity={0.05} />
+            <ReferenceArea y1={RANGE.min} y2={RANGE.max} fill={PALETTE.main} fillOpacity={0.07} />
+            <ReferenceArea y1={RANGE.max} y2={CHART_MAX} fill={PALETTE.wet} fillOpacity={0.05} />
+            <ReferenceLine y={RANGE.min} stroke={PALETTE.dry} strokeOpacity={0.45} strokeDasharray="5 3" />
+            <ReferenceLine y={RANGE.max} stroke={PALETTE.wet} strokeOpacity={0.45} strokeDasharray="5 3" />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} minTickGap={24} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
+            <YAxis domain={[0, CHART_MAX]} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
+            <ChartTooltip content={<ChartTooltipContent formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(0)}%`, t('monitoring.chartAirHumidity')]} />} />
+            <Line
+              dataKey="value"
+              type="monotone"
+              stroke={PALETTE.main}
+              strokeWidth={2.5}
+              dot={(props: { cx?: number; cy?: number }) => {
+                const { cx, cy } = props;
+                if (cx == null || cy == null) return null;
+                return <circle cx={cx} cy={cy} r={3.5} fill={PALETTE.main} stroke="#fff" strokeWidth={1} />;
+              }}
+              activeDot={{ r: 4.5 }}
+              isAnimationActive={false}
+            />
+          </ComposedChart>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

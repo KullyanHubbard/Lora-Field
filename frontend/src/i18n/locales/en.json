@@ -161,7 +161,20 @@
     "avg24h": "24h avg",
     "deviation": "deviation",
     "hotLabel": "HOT",
-    "mockBadge": "MOCK"
+    "mockBadge": "MOCK",
+    "airStatus": {
+      "cool": "Cool",
+      "normal": "Normal",
+      "hot": "Hot"
+    },
+    "humidityStatus": {
+      "dry": "Dry",
+      "normal": "Normal",
+      "wet": "Humid"
+    },
+    "zoneSafe": "Safe zone",
+    "zoneIdeal": "Ideal zone",
+    "zoneTemp": "Temperature zone"
   },
   "farmDetail": {
     "noData": "No Data",
