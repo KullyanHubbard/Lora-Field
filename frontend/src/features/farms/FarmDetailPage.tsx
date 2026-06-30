@@ -483,6 +483,13 @@ function BatteryNodesCard({ nodes, className }: { nodes: NodeSummary[]; classNam
   );
 }
 
+function mockRssi(nodeId: string) {
+  if (!nodeId) return `${DASH} dBm`;
+  const seed = Array.from(nodeId).reduce((a, c) => a + c.charCodeAt(0), 0);
+  const val = -80 - (seed % 25);
+  return `${val} dBm`;
+}
+
 // Ringkasan node sensor — dropdown selector, satu node per waktu. Pola sama
 // dengan SoilMoistureCard: pilih node via dropdown, metrik dalam subcard grid.
 function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; className?: string }) {
@@ -501,7 +508,13 @@ function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; className?
             <Cpu className="size-4 shrink-0 text-violet-500 dark:text-violet-400" />
             {t('nodes.title', 'Node Sensor')}
           </CardTitle>
-          {badge && <StatusPill tone={badge.tone} label={t(badge.labelKey)} />}
+          {selectedNs && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs tabular-nums text-muted-foreground">{mockRssi(selectedNs.node.id)}</span>
+              {badge && <StatusPill tone={badge.tone} label={t(badge.labelKey)} />}
+            </div>
+          )}
+          {!selectedNs && badge && <StatusPill tone={badge.tone} label={t(badge.labelKey)} />}
         </div>
         {nodes.length > 1 && (
           <select

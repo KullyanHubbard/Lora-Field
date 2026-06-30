@@ -3,6 +3,7 @@ import { Radio, Signal, Wifi, Clock } from 'lucide-react';
 import { getFarmLastUpdate } from '@/features/farms/farmHelpers';
 import { timeAgo } from '@/lib/format';
 import { StatusPill } from '@/components/ui/status-pill';
+import { getGatewayStatusBadge } from '@/lib/status';
 import type { FarmSummary } from '@/types';
 
 function StatTile({
@@ -41,9 +42,11 @@ export function GatewayInfoContent({
 }) {
   const { t } = useTranslation();
 
-  const isOnline = summary.gateway_status === 'online';
+  const gatewayStatus = getGatewayStatusBadge(summary.gateway_status);
   const gatewayId = `gw-${summary.farm.id}`;
   const lastSeen = getFarmLastUpdate(summary.farm, summary.nodes);
+
+  const isOnline = summary.gateway_status === 'online';
 
   // Ikon stat = neon solid, beda warna per jenis (Sinyal biru, Internet cyan)
   // agar tidak sama; Terakhir tetap netral. Status hidup/mati dibawakan badge.
@@ -61,10 +64,7 @@ export function GatewayInfoContent({
           </div>
           <p className="mt-1 text-xs text-muted-foreground font-mono">{gatewayId}</p>
         </div>
-        <StatusPill
-          tone={isOnline ? 'green' : 'neutral'}
-          label={isOnline ? 'Terhubung' : 'Terputus'}
-        />
+        <StatusPill tone={gatewayStatus.tone} label={t(gatewayStatus.labelKey)} />
       </div>
 
       {/* Stat tiles grid */}

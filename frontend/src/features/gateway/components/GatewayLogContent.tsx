@@ -73,17 +73,17 @@ export function GatewayLogContent({ farmId }: { farmId?: string }) {
       </CardHeader>
 
       <CardContent className="px-4 pb-4">
-        {/* Filter pills */}
+        {/* Filter box badges */}
         <div className="mb-3 flex flex-wrap gap-1.5">
           {EVENT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => { setFilter(opt.value); setPage(0); }}
               className={cn(
-                'rounded-full border border-border px-2.5 py-0.5 text-[0.65rem] font-medium transition-colors',
+                'inline-flex h-6 items-center gap-1 !rounded-md border px-2.5 py-1 text-xs font-medium leading-none transition-colors',
                 filter === opt.value
-                  ? 'border-primary/40 bg-primary/10 text-primary'
-                  : 'bg-transparent text-muted-foreground hover:text-foreground',
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                  : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-white/20 hover:bg-white/[0.06] hover:text-foreground',
               )}
             >
               {opt.label}

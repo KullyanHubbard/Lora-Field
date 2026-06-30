@@ -2,7 +2,6 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   CloudSun,
-  Cpu,
   Droplets,
   HelpCircle,
   History,
@@ -65,7 +64,6 @@ export function AppLayout() {
         { to: `/farms/${farmId}/monitoring`, labelKey: 'layout.nav.monitoring', icon: LineChart },
         { to: `/farms/${farmId}/irrigation`, labelKey: 'layout.nav.irrigation', icon: Droplets },
         { to: `/farms/${farmId}/gateway`, labelKey: 'layout.nav.gateway', icon: Radio },
-        { to: `/farms/${farmId}/nodes`, labelKey: 'layout.nav.sensorNode', icon: Cpu },
         { to: `/farms/${farmId}/weather`, labelKey: 'layout.nav.weather', icon: CloudSun },
         { to: `/farms/${farmId}/logs`, labelKey: 'layout.nav.history', icon: History },
       ]

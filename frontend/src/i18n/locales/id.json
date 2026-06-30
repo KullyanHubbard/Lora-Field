@@ -4,6 +4,11 @@
     "languageId": "Bahasa Indonesia",
     "languageEn": "English"
   },
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "standby": "Standby"
+  },
   "auth": {
     "login": {
       "backToHome": "Kembali ke beranda LoraField",
