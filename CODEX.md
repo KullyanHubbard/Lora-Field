@@ -8,15 +8,15 @@ LoraField adalah web dashboard monitoring pertanian presisi berbasis LoRa. User 
 
 ## Sumber kebenaran
 
-- `CLAUDE.md` → sumber utama arsitektur, endpoint, aturan UI, dan status backend/frontend
-- `frontend/docs/Panduan-Rebuild-Frontend-LoraField.md` → sumber utama langkah rebuild frontend
-- `frontend/src/types/index.ts` → shape type frontend
+- `CLAUDE.md` â†’ sumber utama arsitektur, endpoint, aturan UI, dan status backend/frontend
+- `frontend/docs/Panduan-Rebuild-Frontend-LoraField.md` â†’ sumber utama langkah rebuild frontend
+- `frontend/src/types/index.ts` â†’ shape type frontend
 
 ## Konteks repo
 
-- `frontend/` → satu-satunya frontend aktif: React 19 + Vite + TypeScript strict + Tailwind v4 + shadcn/ui
-- `backend/` → FastAPI + SQLite, serve `frontend/dist/` di `/` dengan SPA fallback
-- Root repo → dokumentasi dan metadata proyek
+- `frontend/` â†’ satu-satunya frontend aktif: React 19 + Vite + TypeScript strict + Tailwind v4 + shadcn/ui
+- `backend/` â†’ FastAPI + SQLite, serve `frontend/dist/` di `/` dengan SPA fallback
+- Root repo â†’ dokumentasi dan metadata proyek
 
 ## Stack frontend
 
@@ -43,7 +43,7 @@ LoraField adalah web dashboard monitoring pertanian presisi berbasis LoRa. User 
 - Rebuild frontend selesai; frontend lama sudah digantikan
 - Folder rebuild sudah di-rename ke `frontend/`
 - Backend men-serve `frontend/dist/` di `/` dan asset di `/assets`
-- Dev server: `cd frontend && npm run dev` → port 5173, proxy `/api` ke 8000
+- Dev server: `cd frontend && npm run dev` â†’ port 5173, proxy `/api` ke 8000
 
 ## Routes utama
 
@@ -68,21 +68,21 @@ LoraField adalah web dashboard monitoring pertanian presisi berbasis LoRa. User 
 
 ## Komponen penting
 
-- `Sidebar` → context-aware: selector mode vs farm-context mode
-- `Topbar` → render `FarmSwitcher` saat farm context aktif
-- `FarmSwitcher` → pill nama kebun aktif
-- `FarmMap` → Leaflet wrapper, wajib maintain `invalidateSize` via ResizeObserver + rAF
-- `StatusPill` → badge status standar
+- `Sidebar` â†’ context-aware: selector mode vs farm-context mode
+- `Topbar` â†’ render `FarmSwitcher` saat farm context aktif
+- `FarmSwitcher` â†’ pill nama kebun aktif
+- `FarmMap` â†’ Leaflet wrapper, wajib maintain `invalidateSize` via ResizeObserver + rAF
+- `StatusPill` â†’ badge status standar
 - `ConfirmDialog`, `CropDropdown`, `LocationDetector`, `PasswordToggle`
 
 ## Helpers penting
 
-- `frontend/src/features/farms/farmHelpers.ts` → timeAgo, badge mappers, soil/water helpers
-- `frontend/src/lib/status.ts` → tone / badge mapping
-- `frontend/src/lib/api.ts` → API service
-- `frontend/src/lib/token.ts` → token access only
-- `frontend/src/context/AuthContext.tsx` → auth state
-- `frontend/src/hooks/useFarmContext.ts` → deteksi farm route
+- `frontend/src/features/farms/farmHelpers.ts` â†’ timeAgo, badge mappers, soil/water helpers
+- `frontend/src/lib/status.ts` â†’ tone / badge mapping
+- `frontend/src/lib/api.ts` â†’ API service
+- `frontend/src/lib/token.ts` â†’ token access only
+- `frontend/src/context/AuthContext.tsx` â†’ auth state
+- `frontend/src/hooks/useFarmContext.ts` â†’ deteksi farm route
 
 ## Backend endpoints
 
@@ -90,10 +90,10 @@ LoraField adalah web dashboard monitoring pertanian presisi berbasis LoRa. User 
 
 | Endpoint | Method | Auth | Keterangan |
 |----------|--------|------|-----------|
-| `/api/auth/register` | POST | — | Daftar akun baru |
-| `/api/auth/login` | POST | — | Login, return JWT |
-| `/api/auth/forgot-password` | POST | — | Kirim OTP ke email |
-| `/api/auth/reset-password/verify` | POST | — | Verifikasi OTP 6 digit |
+| `/api/auth/register` | POST | â€” | Daftar akun baru |
+| `/api/auth/login` | POST | â€” | Login, return JWT |
+| `/api/auth/forgot-password` | POST | â€” | Kirim OTP ke email |
+| `/api/auth/reset-password/verify` | POST | â€” | Verifikasi OTP 6 digit |
 | `/api/auth/reset-password` | POST | OTP | Ganti password lupa password |
 | `/api/auth/change-password` | POST | JWT | Ganti password saat login |
 | `/api/auth/profile` | PATCH | JWT | Update phone |
@@ -130,14 +130,14 @@ Jangan pakai `user_id` di query params; sumber kebenaran user dari JWT.
 ## Database schema
 
 ```text
-users           — id, email, name, password_hash, phone, created_at, updated_at
-farms           — id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status
-nodes           — id, farm_id, name, location, region, latitude, longitude, status, battery, updated_at
-readings        — id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, created_at
-decision_logs   — id, node_id, soil_moisture, weather, decision, valve_state, reason, created_at
-gateway_logs    — id, farm_id, event, detail, created_at
-weather_cache   — adm4 (PK), data (JSON), updated_at
-password_resets — id, user_id, token, expires_at, used, created_at
+users           â€” id, email, name, password_hash, phone, created_at, updated_at
+farms           â€” id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status
+nodes           â€” id, farm_id, name, location, region, latitude, longitude, status, battery, updated_at
+readings        â€” id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, created_at
+decision_logs   â€” id, node_id, soil_moisture, weather, decision, valve_state, reason, created_at
+gateway_logs    â€” id, farm_id, event, detail, created_at
+weather_cache   â€” adm4 (PK), data (JSON), updated_at
+password_resets â€” id, user_id, token, expires_at, used, created_at
 ```
 
 ## Product/UI rules
@@ -152,12 +152,107 @@ password_resets — id, user_id, token, expires_at, used, created_at
 - Landing page publik wajib ada di `/`
 - Logo/brand: ikon `Sprout` + teks `LoraField`
 
+### Pondasi Layout Ringkasan Kebun
+
+- Section `Ringkasan Kebun` adalah layout final, utama, dan baseline resmi untuk Detail Kebun.
+- Perubahan struktur, ukuran, posisi, spacing, tinggi card, susunan kolom, atau komposisi visual wajib mendapat persetujuan eksplisit dari pemilik proyek.
+- Tanpa persetujuan, layout ini harus dipertahankan apa adanya.
+
+Prinsip dasar:
+
+- Layout memakai 3 kolom utama untuk ringkasan cepat kondisi kebun.
+- Section ini bukan monitoring lengkap.
+- Layout harus terasa penuh, sejajar, seimbang, bersih, tidak kosong di bawah, tidak terlalu padat, tidak terlalu renggang, dan aman di light mode serta dark mode.
+
+Struktur 3 kolom:
+
+```text
+Kolom 1        Kolom 2        Kolom 3
+Status utama   Node & cuaca   Metrik sensor
+```
+
+- Jangan ubah menjadi 2 kolom, 4 kolom, carousel, tab, accordion, atau layout lain tanpa persetujuan eksplisit.
+
+Kolom 1:
+
+- Isi utama: Status Valve, Gateway, Log Aktivitas, Prediksi Cuaca.
+- Kolom 1 adalah area status sistem.
+- Ukuran card, urutan elemen, dan posisi card tidak boleh diubah tanpa persetujuan.
+- Jangan pindahkan Status Valve, Gateway, atau Log Aktivitas ke kolom lain tanpa persetujuan.
+
+Kolom 2:
+
+- Isi utama: Node Sensor, Baterai Node, Prediksi Cuaca.
+- Kolom 2 mendukung informasi teknis kebun.
+- Prediksi Cuaca boleh menyambung visual dari kolom 1 ke kolom 2.
+- Ukuran card dan posisi Node Sensor/Baterai Node tidak boleh diubah tanpa persetujuan.
+
+Prediksi Cuaca:
+
+- Boleh memakai area horizontal yang lebih lebar.
+- Tetap harus menyatu dengan layout Ringkasan Kebun.
+- Jangan pindahkan sepenuhnya ke kolom 3.
+- Jangan merusak tinggi atau alignment kolom lain.
+- Jangan ganti area cuaca menjadi layout baru tanpa persetujuan.
+
+Kolom 3:
+
+- Isi wajib 4 card: Kelembapan Tanah, Suhu Tanah, Suhu Udara, Kelembapan Udara.
+- Kolom 3 adalah area metrik cepat dan harus terlihat penuh secara vertikal sejajar dengan kolom 1 dan 2.
+- Jika perlu penyesuaian layout, prioritaskan hanya kolom 3.
+- Jangan kurangi jumlah card.
+- Jangan ganti 4 card menjadi tabel, chart, carousel, atau bentuk lain tanpa persetujuan.
+
+Alignment dan spacing:
+
+- Semua card harus sejajar secara visual.
+- Batas bawah kolom 3 harus sejajar secara visual dengan bawah kolom 1 dan 2.
+- Gap antar-card harus konsisten.
+- Gunakan `grid`, `flex`, `min-height`, `height`, `align-items`, `grid-template-rows`, dan `gap` seperlunya.
+- Jangan membuat spacing terlalu besar atau terlalu sempit.
+- Jangan menambahkan margin manual yang tidak perlu.
+
+Responsiveness:
+
+- Pada layar besar, tetap 3 kolom.
+- Pada layar sedang, layout boleh menyesuaikan selama tetap rapi dan tidak bertumpuk.
+- Pada layar kecil/mobile, card boleh stack vertikal.
+- Tidak boleh ada overflow horizontal atau card terpotong.
+
+Dark mode dan light mode:
+
+- Gunakan CSS variable atau token tema yang sudah ada.
+- Jangan hardcode warna hex baru.
+- Pastikan border, background, teks, badge, dan icon tetap terbaca di dua mode.
+
+Larangan keras:
+
+- Jangan ubah struktur 3 kolom.
+- Jangan ubah ukuran kolom 1 atau kolom 2.
+- Jangan memindahkan card antar kolom.
+- Jangan menghapus 4 card metrik kolom 3.
+- Jangan mengubah section lain, sidebar, topbar, routing, API, backend, package.json, package-lock.json, atau `frontend/public/static/`.
+- Jangan refactor besar, menambah dependency baru, menambahkan inline style, atau meninggalkan komentar eksperimen.
+
+Validasi sebelum selesai:
+
+- Kolom 1 tetap seperti baseline.
+- Kolom 2 tetap seperti baseline.
+- Kolom 3 tetap berisi 4 card metrik.
+- Tidak ada ruang kosong aneh di bawah kolom 3.
+- Prediksi Cuaca tetap menyambung rapi.
+- Light mode aman.
+- Dark mode aman.
+- Responsive aman.
+- Tidak ada section lain berubah.
+- Tidak ada file tidak relevan ikut berubah.
+
 ## Flow penting
 
 ### Ganti password
 
-- `/reset-password` → flow lupa password OTP 2 tahap
-- `/change-password` → ganti password saat sudah login
+- `/reset-password` â†’ flow lupa password OTP 2 tahap
+- `/change-password` â†’ ganti password saat sudah login
 - Jangan campur keduanya
 
 ### Monitoring
@@ -168,8 +263,9 @@ password_resets — id, user_id, token, expires_at, used, created_at
 
 ## Monitoring mock data
 
-- File: `frontend/src/features/monitoring/mockReadings.ts`
+- File: `frontend/src/lib/mockReadings.ts`
 - Mock harus realistis, variatif, dan ditandai jelas sebagai mock
+- Semua file mock frontend harus berada di satu folder terpusat `frontend/src/lib/`
 - Jangan tampilkan mock seolah data backend
 
 ## Aturan kerja saat edit

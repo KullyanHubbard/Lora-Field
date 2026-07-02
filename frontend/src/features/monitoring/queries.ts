@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { generateMockReadings } from './mockReadings';
+import { generateMockReadings } from '@/lib/mockReadings';
 
 export function useReadings(nodeId: string, limit = 100) {
   return useQuery({

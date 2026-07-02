@@ -1,4 +1,4 @@
-# CLAUDE.md — LoraField
+# CLAUDE.md â€” LoraField
 
 Panduan kerja Claude untuk rebuild frontend LoraField.
 
@@ -19,10 +19,10 @@ User buka Web LoraField
 
 ## Konteks Rebuild & Struktur Repo
 
-Ini proyek rebuild frontend dengan pendekatan strangler migration. Frontend React lama yang berantakan (CSS monolit, fetch manual duplikatif, tanpa TypeScript) sudah digantikan sepenuhnya. Promote selesai (2026-06-21): folder rebuild di-rename menjadi `frontend/` (menggantikan frontend React lama yang dihapus) — `frontend/` kini satu-satunya frontend.
+Ini proyek rebuild frontend dengan pendekatan strangler migration. Frontend React lama yang berantakan (CSS monolit, fetch manual duplikatif, tanpa TypeScript) sudah digantikan sepenuhnya. Promote selesai (2026-06-21): folder rebuild di-rename menjadi `frontend/` (menggantikan frontend React lama yang dihapus) â€” `frontend/` kini satu-satunya frontend.
 
-- **Frontend tunggal: `frontend/`** — semua perintah npm/npx dijalankan di sini. `npm run build` menghasilkan `frontend/dist/`.
-- **Backend (tidak diubah dalam rebuild ini): `backend/`** — FastAPI + SQLite. Backend men-serve `frontend/dist/` di `/` (SPA fallback + asset di `/assets`). Contract-nya ada di section "Backend Endpoints" + "Database Schema" di bawah; itu sumber kebenaran.
+- **Frontend tunggal: `frontend/`** â€” semua perintah npm/npx dijalankan di sini. `npm run build` menghasilkan `frontend/dist/`.
+- **Backend (tidak diubah dalam rebuild ini): `backend/`** â€” FastAPI + SQLite. Backend men-serve `frontend/dist/` di `/` (SPA fallback + asset di `/assets`). Contract-nya ada di section "Backend Endpoints" + "Database Schema" di bawah; itu sumber kebenaran.
 - **Sumber kebenaran tunggal untuk langkah rebuild:** `frontend/docs/Panduan-Rebuild-Frontend-LoraField.md`. Tiap fase ikuti bagian relevan; jangan menambah teknologi, library, atau langkah di luar panduan.
 
 Label UI: Bahasa Indonesia. Istilah teknis dipertahankan: LoRa, VWC, MQTT, Gateway, Node, BMKG, RSSI.
@@ -31,7 +31,7 @@ Dev server: `cd frontend && npm run dev` (port 5173, proxy `/api` ke port 8000).
 
 ## Stack
 
-Frontend (`frontend/`) — kunci ke ini, jangan ganti:
+Frontend (`frontend/`) â€” kunci ke ini, jangan ganti:
 
 - Vite + React 19 + TypeScript strict
 - Tailwind v4 (@tailwindcss/vite) + shadcn/ui
@@ -46,8 +46,9 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 
 - API contract = section "Backend Endpoints" + "Database Schema" di CLAUDE.md ini, plus `src/types/index.ts`. JANGAN mengarang endpoint, field, atau shape response.
 - Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada").
-- Field yang masih perlu verifikasi shape-nya terhadap response asli: kolom `weather` di decision_logs (kolom ada di schema, tipe perlu cek), struktur summary cuaca termasuk prediksi hujan, serta isi persis response `/summary` dan `/login`. Kalau tidak cocok dengan type, LAPORKAN — jangan diam-diam ubah.
+- Field yang masih perlu verifikasi shape-nya terhadap response asli: kolom `weather` di decision_logs (kolom ada di schema, tipe perlu cek), struktur summary cuaca termasuk prediksi hujan, serta isi persis response `/summary` dan `/login`. Kalau tidak cocok dengan type, LAPORKAN â€” jangan diam-diam ubah.
 - Data dummy/mock harus ditandai jelas sebagai mock, jangan seolah dari backend.
+- Semua mock frontend harus disentralisasi di satu folder terpusat `frontend/src/lib/` agar tidak tersebar dan tetap rapi.
 - Kalau ragu atau butuh keputusan desain: BERHENTI dan tanya.
 
 ## Konvensi Kode
@@ -64,10 +65,10 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 
 | Endpoint | Method | Auth | Keterangan |
 |----------|--------|------|-----------|
-| `/api/auth/register` | POST | — | Daftar akun baru |
-| `/api/auth/login` | POST | — | Login, return JWT |
-| `/api/auth/forgot-password` | POST | — | Kirim OTP ke email |
-| `/api/auth/reset-password/verify` | POST | — | Verifikasi OTP 6 digit |
+| `/api/auth/register` | POST | â€” | Daftar akun baru |
+| `/api/auth/login` | POST | â€” | Login, return JWT |
+| `/api/auth/forgot-password` | POST | â€” | Kirim OTP ke email |
+| `/api/auth/reset-password/verify` | POST | â€” | Verifikasi OTP 6 digit |
 | `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password) |
 | `/api/auth/change-password` | POST | JWT | Ganti password (sudah login) |
 | `/api/auth/profile` | PATCH | JWT | Update phone number |
@@ -100,25 +101,25 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | `GET /api/farms/{id}/weather` | Prakiraan cuaca BMKG untuk kebun (auto-resolve adm4, cache 30 menit). **Ini endpoint cuaca yang dipakai frontend.** main.py:1018 |
 | `GET /api/nodes` | List node (filter `?farm_id=`). Return `{ items, total }` |
 | `PATCH /api/nodes/{id}/location` | Update lokasi/region/koordinat node. Return `{ node }`. main.py:1124 |
-| `GET /api/nodes/{id}/readings` | Pembacaan sensor node (`limit` 1–100, default 20) |
+| `GET /api/nodes/{id}/readings` | Pembacaan sensor node (`limit` 1â€“100, default 20) |
 | `POST /api/nodes/{id}/readings` | Insert reading + hitung decision + tulis decision_log. Query wajib `?adm4=`. Return `{ reading, decision }`. main.py:1176 |
 | `GET /api/weather?adm4=X` | Cuaca BMKG mentah by adm4 (debug, butuh auth). main.py:1238 |
 | `GET /api/decision?soil_moisture=X&rain_next_3h=bool` | Simulator keputusan irigasi (stateless, butuh auth). main.py:1250 |
-| `GET /api/logs` | Decision logs milik user (`limit` 1–100, default 20; filter client-side per farm) |
-| `GET /api/farms/{id}/gateway-logs` | Log koneksi gateway kebun (`limit` 1–100, default 20). Verifikasi kepemilikan. Return `{ items, total }`. Kosong sampai hardware gateway lapor |
+| `GET /api/logs` | Decision logs milik user (`limit` 1â€“100, default 20; filter client-side per farm) |
+| `GET /api/farms/{id}/gateway-logs` | Log koneksi gateway kebun (`limit` 1â€“100, default 20). Verifikasi kepemilikan. Return `{ items, total }`. Kosong sampai hardware gateway lapor |
 | `POST /api/farms/{id}/gateway-logs` | Insert log koneksi gateway (scaffolding hardware). Body `GatewayLogIn` (`event`, `detail`). Return `{ log }`, status 201 |
 
 ## Database Schema (SQLite)
 
 ```text
-users           — id, email, name, password_hash, phone, created_at, updated_at
-farms           — id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status
-nodes           — id, farm_id, name, location, region, latitude, longitude, status, battery, updated_at
-readings        — id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, created_at
-decision_logs   — id, node_id, soil_moisture, weather, decision, valve_state, reason, created_at
-gateway_logs    — id, farm_id, event, detail, created_at; log koneksi gateway (kosong sampai hardware lapor)
-weather_cache   — adm4 (PK), data (JSON), updated_at; TTL 30 menit
-password_resets — id, user_id, token (6-digit OTP), expires_at, used, created_at
+users           â€” id, email, name, password_hash, phone, created_at, updated_at
+farms           â€” id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status
+nodes           â€” id, farm_id, name, location, region, latitude, longitude, status, battery, updated_at
+readings        â€” id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, created_at
+decision_logs   â€” id, node_id, soil_moisture, weather, decision, valve_state, reason, created_at
+gateway_logs    â€” id, farm_id, event, detail, created_at; log koneksi gateway (kosong sampai hardware lapor)
+weather_cache   â€” adm4 (PK), data (JSON), updated_at; TTL 30 menit
+password_resets â€” id, user_id, token (6-digit OTP), expires_at, used, created_at
 ```
 
 Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di frontend = id, email, name, phone, created_at, updated_at. Kolom `phone` ditambahkan via `ensure_column` (migration otomatis saat startup).
@@ -127,7 +128,7 @@ Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di fronte
 
 - Rate limit brute-force untuk endpoint auth sensitif belum ada.
 
-> Catatan (2026-06-24): `PATCH /api/farms/{farm_id}` SUDAH ADA di backend (main.py:897) — sebelumnya tertulis belum ada. Frontend `src/lib/api.ts` belum memanggilnya; kalau mau pakai fitur edit kebun, tambahkan method-nya dulu sesuai schema `FarmUpdate`.
+> Catatan (2026-06-24): `PATCH /api/farms/{farm_id}` SUDAH ADA di backend (main.py:897) â€” sebelumnya tertulis belum ada. Frontend `src/lib/api.ts` belum memanggilnya; kalau mau pakai fitur edit kebun, tambahkan method-nya dulu sesuai schema `FarmUpdate`.
 
 ## Logika Irigasi
 
@@ -135,7 +136,7 @@ Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di fronte
 - Valve ditutup jika kelembapan tanah sudah cukup.
 - Irigasi ditunda jika BMKG memprediksi hujan.
 - Sistem menunggu data sensor terbaru jika gateway offline.
-- RSSI tidak disimpan di backend — selalu tampilkan `—` di tabel node.
+- RSSI tidak disimpan di backend â€” selalu tampilkan `â€”` di tabel node.
 
 ## Akses User
 
@@ -151,7 +152,102 @@ Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di fronte
 - Badge status warna konsisten: green/yellow/red.
 - Progress bar selalu sertakan label range `0%` dan `100%`.
 - Landing page marketing publik ADA di route `/` (lihat tabel Routes). Aturan lama "jangan buat landing page" sudah dicabut user (2026-06-21). Dashboard tetap pengalaman utama bagi user yang sudah login; landing hanya etalase di `/` (publik, tanpa auth guard, untuk semua pengunjung).
-- Logo/brand: ikon `Sprout` (lucide-react) + teks "LoraField" — lihat `BrandMark` di `frontend/src/components/layout/AppLayout.tsx` dan landing. Favicon: `frontend/public/favicon.svg`.
+- Logo/brand: ikon `Sprout` (lucide-react) + teks "LoraField" â€” lihat `BrandMark` di `frontend/src/components/layout/AppLayout.tsx` dan landing. Favicon: `frontend/public/favicon.svg`.
+
+### Pondasi Layout Ringkasan Kebun
+
+- Section `Ringkasan Kebun` adalah layout final, utama, dan baseline resmi untuk Detail Kebun.
+- Perubahan struktur, ukuran, posisi, spacing, tinggi card, susunan kolom, atau komposisi visual wajib mendapat persetujuan eksplisit dari pemilik proyek.
+- Tanpa persetujuan, layout ini harus dipertahankan apa adanya.
+
+Prinsip dasar:
+
+- Layout memakai 3 kolom utama untuk ringkasan cepat kondisi kebun.
+- Section ini bukan monitoring lengkap.
+- Layout harus terasa penuh, sejajar, seimbang, bersih, tidak kosong di bawah, tidak terlalu padat, tidak terlalu renggang, dan aman di light mode serta dark mode.
+
+Struktur 3 kolom:
+
+```text
+Kolom 1        Kolom 2        Kolom 3
+Status utama   Node & cuaca   Metrik sensor
+```
+
+- Jangan ubah menjadi 2 kolom, 4 kolom, carousel, tab, accordion, atau layout lain tanpa persetujuan eksplisit.
+
+Kolom 1:
+
+- Isi utama: Status Valve, Gateway, Log Aktivitas, Prediksi Cuaca.
+- Kolom 1 adalah area status sistem.
+- Ukuran card, urutan elemen, dan posisi card tidak boleh diubah tanpa persetujuan.
+- Jangan pindahkan Status Valve, Gateway, atau Log Aktivitas ke kolom lain tanpa persetujuan.
+
+Kolom 2:
+
+- Isi utama: Node Sensor, Baterai Node, Prediksi Cuaca.
+- Kolom 2 mendukung informasi teknis kebun.
+- Prediksi Cuaca boleh menyambung visual dari kolom 1 ke kolom 2.
+- Ukuran card dan posisi Node Sensor/Baterai Node tidak boleh diubah tanpa persetujuan.
+
+Prediksi Cuaca:
+
+- Boleh memakai area horizontal yang lebih lebar.
+- Tetap harus menyatu dengan layout Ringkasan Kebun.
+- Jangan pindahkan sepenuhnya ke kolom 3.
+- Jangan merusak tinggi atau alignment kolom lain.
+- Jangan ganti area cuaca menjadi layout baru tanpa persetujuan.
+
+Kolom 3:
+
+- Isi wajib 4 card: Kelembapan Tanah, Suhu Tanah, Suhu Udara, Kelembapan Udara.
+- Kolom 3 adalah area metrik cepat dan harus terlihat penuh secara vertikal sejajar dengan kolom 1 dan 2.
+- Jika perlu penyesuaian layout, prioritaskan hanya kolom 3.
+- Jangan kurangi jumlah card.
+- Jangan ganti 4 card menjadi tabel, chart, carousel, atau bentuk lain tanpa persetujuan.
+
+Alignment dan spacing:
+
+- Semua card harus sejajar secara visual.
+- Batas bawah kolom 3 harus sejajar secara visual dengan bawah kolom 1 dan 2.
+- Gap antar-card harus konsisten.
+- Gunakan `grid`, `flex`, `min-height`, `height`, `align-items`, `grid-template-rows`, dan `gap` seperlunya.
+- Jangan membuat spacing terlalu besar atau terlalu sempit.
+- Jangan menambahkan margin manual yang tidak perlu.
+
+Responsiveness:
+
+- Pada layar besar, tetap 3 kolom.
+- Pada layar sedang, layout boleh menyesuaikan selama tetap rapi dan tidak bertumpuk.
+- Pada layar kecil/mobile, card boleh stack vertikal.
+- Tidak boleh ada overflow horizontal atau card terpotong.
+
+Dark mode dan light mode:
+
+- Gunakan CSS variable atau token tema yang sudah ada.
+- Jangan hardcode warna hex baru.
+- Pastikan border, background, teks, badge, dan icon tetap terbaca di dua mode.
+
+Larangan keras:
+
+- Jangan ubah struktur 3 kolom.
+- Jangan ubah ukuran kolom 1 atau kolom 2.
+- Jangan memindahkan card antar kolom.
+- Jangan menghapus 4 card metrik kolom 3.
+- Jangan mengubah section lain, sidebar, topbar, routing, API, backend, package.json, package-lock.json, atau `frontend/public/static/`.
+- Jangan refactor besar, menambah dependency baru, menambahkan inline style, atau meninggalkan komentar eksperimen.
+
+Validasi sebelum selesai:
+
+- Kolom 1 tetap seperti baseline.
+- Kolom 2 tetap seperti baseline.
+- Kolom 3 tetap berisi 4 card metrik.
+- Tidak ada ruang kosong aneh di bawah kolom 3.
+- Prediksi Cuaca tetap menyambung rapi.
+- Light mode aman.
+- Dark mode aman.
+- Responsive aman.
+- Tidak ada section lain berubah.
+- Tidak ada file tidak relevan ikut berubah.
 
 ### Routes & Pages (target rebuild)
 
@@ -159,7 +255,7 @@ Route dan path dipertahankan sama. File `.jsx` lama = referensi porting.
 
 | Route | Page (referensi lama) | Keterangan |
 |-------|------|-----------|
-| `/` | `LandingPage.tsx` | Landing marketing PUBLIK, tanpa auth guard. Tombol Login/CTA → `/login`. Dark-only. |
+| `/` | `LandingPage.tsx` | Landing marketing PUBLIK, tanpa auth guard. Tombol Login/CTA â†’ `/login`. Dark-only. |
 | `/login` | `LoginPage.jsx` | Login + inline forgot password 2-step |
 | `/register` | `RegisterPage.jsx` | Daftar akun baru |
 | `/reset-password` | `ResetPasswordPage.jsx` | Flow lupa password (OTP 2 tahap) |
@@ -193,14 +289,14 @@ Settings              Irigasi
 
 Jangan mengubah struktur sidebar kecuali user meminta eksplisit.
 
-## Dua Flow Ganti Password (PENTING — jangan dicampur)
+## Dua Flow Ganti Password (PENTING â€” jangan dicampur)
 
 | Flow | Halaman | Endpoint | Auth | Kapan dipakai |
 |------|---------|----------|------|---------------|
 | Lupa Password | `/reset-password` | `POST /api/auth/reset-password` | OTP 6 digit | User belum login, lupa password |
 | Ganti Password | `/change-password` | `POST /api/auth/change-password` | JWT Bearer | User sudah login, ganti sandi dari Settings |
 
-- Tombol "Ganti Sandi" di Settings HARUS menuju `/change-password` — tanpa OTP.
+- Tombol "Ganti Sandi" di Settings HARUS menuju `/change-password` â€” tanpa OTP.
 - Flow lupa password (dari Login) pakai urutan: `forgot-password` -> `reset-password/verify` -> `reset-password`, wajib OTP 2 tahap.
 - Jangan arahkan user yang sudah login ke `/reset-password`.
 
