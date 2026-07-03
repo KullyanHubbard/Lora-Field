@@ -28,7 +28,6 @@ import {
 import { useFarmSummary } from './queries';
 import { batteryTone, getNodeStatusBadge } from '@/lib/status';
 import { StatusPill } from '@/components/ui/status-pill';
-import { MOCK_GATEWAY_LOGS } from '@/lib/mockFarmData';
 import { cn } from '@/lib/utils';
 import { GaugeRing } from '@/components/ui/gauge-ring';
 import type { GaugeTone } from '@/components/ui/gauge-ring';
@@ -39,6 +38,7 @@ import {
   type WeatherIconKey,
 } from '@/features/weather/weatherHelpers';
 import { GatewayInfoContent } from '@/features/gateway/components/GatewayInfoContent';
+import { useGatewayLogs } from '@/features/gateway/queries';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,7 +49,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
-import { historicalData, type ChartPoint } from '@/lib/historicalData';
+import { getHistoricalDataForNode, type ChartPoint } from '@/lib/historicalData';
 import type { FarmSummary, NodeSummary, WeatherForecastPoint } from '@/types';
 
 const DASH = '—';
@@ -483,13 +483,6 @@ function BatteryNodesCard({ nodes, className }: { nodes: NodeSummary[]; classNam
   );
 }
 
-function mockRssi(nodeId: string) {
-  if (!nodeId) return `${DASH} dBm`;
-  const seed = Array.from(nodeId).reduce((a, c) => a + c.charCodeAt(0), 0);
-  const val = -80 - (seed % 25);
-  return `${val} dBm`;
-}
-
 // Ringkasan node sensor — dropdown selector, satu node per waktu. Pola sama
 // dengan SoilMoistureCard: pilih node via dropdown, metrik dalam subcard grid.
 function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; className?: string }) {
@@ -510,11 +503,10 @@ function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; className?
           </CardTitle>
           {selectedNs && (
             <div className="flex items-center gap-2">
-              <span className="text-xs tabular-nums text-muted-foreground">{mockRssi(selectedNs.node.id)}</span>
+              <span className="text-xs tabular-nums text-muted-foreground">{selectedNs.signal_rssi ?? `${DASH} dBm`}</span>
               {badge && <StatusPill tone={badge.tone} label={t(badge.labelKey)} />}
             </div>
           )}
-          {!selectedNs && badge && <StatusPill tone={badge.tone} label={t(badge.labelKey)} />}
         </div>
         {nodes.length > 1 && (
           <select
@@ -711,7 +703,8 @@ function WeatherForecastCard({
 
 function ActivityLogCard({ farmId, className }: { farmId: string; className?: string }) {
   const { t } = useTranslation();
-  const logs = MOCK_GATEWAY_LOGS.slice(0, 2);
+  const { data: gatewayLogs, isLoading, error } = useGatewayLogs(farmId, 2);
+  const logs = gatewayLogs?.items ?? [];
 
   const eventLabel: Record<string, string> = {
     connected: 'Terhubung',
@@ -736,8 +729,12 @@ function ActivityLogCard({ farmId, className }: { farmId: string; className?: st
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col">
-        {logs.length === 0 ? (
-          <p className="py-4 text-center text-xs text-muted-foreground">Belum ada aktivitas</p>
+        {isLoading ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">Memuat log...</p>
+        ) : error ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">Log gateway belum bisa dimuat</p>
+        ) : logs.length === 0 ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">Belum ada aktivitas gateway</p>
         ) : (
           <div className="flex-1 divide-y divide-border/40">
             {logs.map((log) => (
@@ -865,10 +862,9 @@ export default function FarmDetailPage() {
         {/* 4 Metric Stat Card — baris 3, full width (span 5 kolom), subgrid 4 kolom */}
         <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2 xl:col-start-1 xl:col-end-6 xl:row-start-3 xl:grid-cols-4">
           {(() => {
-            const mockKeys = ['node-a', 'node-b', 'node-c', 'node-d'];
             const nodeDataMap: Record<string, ChartPoint[]> = {};
-            nodes.forEach((ns, i) => {
-              nodeDataMap[ns.node.id] = historicalData[mockKeys[i]] ?? historicalData['node-a'] ?? [];
+            nodes.forEach((ns) => {
+              nodeDataMap[ns.node.id] = getHistoricalDataForNode(ns.node.id);
             });
             const cards = [
               { title: t('farmDetail.soilMoistureTitle'), icon: Droplets, iconColor: 'text-cyan-500 dark:text-cyan-400', chartColor: { light: '#06b6d4', dark: '#22d3ee' }, dataKey: 'soil_moisture' as keyof ChartPoint, unit: '%', decimals: 0 },

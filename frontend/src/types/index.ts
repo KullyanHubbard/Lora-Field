@@ -87,6 +87,7 @@ export interface NodeSummary {
   // backend kirim null kalau node belum punya reading (main.py:1063)
   latest_reading: Reading | null;
   decision: { decision: string; valve_state: string } | null;
+  signal_rssi?: string; // client-side fallback/mock sampai backend punya field RSSI
 }
 
 export interface FarmSummary {

@@ -2,6 +2,8 @@
 // backend punya endpoint riwayat per-node. Dipakai untuk tile Min/Rata-rata/Maks
 // + grafik historis kompak di kartu metrik Ringkasan Kebun (FarmDetailPage).
 
+import { ENABLE_MOCK_NODE_FALLBACK, getMockNodeIdForNode, MOCK_READINGS } from '@/lib/mockFarmData';
+
 export interface ChartPoint {
   label: string; // jam "HH.MM" (format id-ID), jarak antar titik 1 jam
   soil_moisture: number; // %
@@ -25,31 +27,42 @@ function hourlyLabels(count: number): string[] {
   return labels;
 }
 
-function jitter(base: number, range: number): number {
-  return +(base + (Math.random() - 0.5) * range).toFixed(1);
-}
-
-function genSeries(seed: { sm: number; st: number; at: number; ah: number }): ChartPoint[] {
+function historicalSeriesFromReadings(nodeId: string): ChartPoint[] {
   const labels = hourlyLabels(POINTS);
-  return labels.map((label) => {
-    seed.sm = jitter(seed.sm, 6);
-    seed.st = jitter(seed.st, 2);
-    seed.at = jitter(seed.at, 3);
-    seed.ah = jitter(seed.ah, 8);
+  const readings = (MOCK_READINGS[nodeId] ?? []).slice(0, POINTS).reverse();
+
+  return readings.map((reading, index) => {
     return {
-      label,
-      soil_moisture: Math.min(100, Math.max(0, seed.sm)),
-      soil_temp: +seed.st.toFixed(1),
-      air_temp: +seed.at.toFixed(1),
-      air_humidity: Math.min(100, Math.max(0, seed.ah)),
+      label: labels[index] ?? '',
+      soil_moisture: reading.soil_moisture,
+      soil_temp: reading.soil_temp,
+      air_temp: reading.air_temp,
+      air_humidity: reading.air_humidity,
     };
   });
 }
 
-// Tiap node punya base value sedikit beda agar ganti dropdown terlihat berubah.
+const mockNodeHistoricalData = Object.fromEntries(
+  Object.keys(MOCK_READINGS).map((nodeId) => [nodeId, historicalSeriesFromReadings(nodeId)]),
+) as Record<string, ChartPoint[]>;
+
+const legacyAliases = ['node-a', 'node-b', 'node-c', 'node-d'];
+const mockNodeIds = Object.keys(mockNodeHistoricalData);
+
+// Alias node-a..d dipertahankan agar mock lama tetap tersambung.
 export const historicalData: Record<string, ChartPoint[]> = {
-  'node-a': genSeries({ sm: 68, st: 26.5, at: 29.0, ah: 72 }),
-  'node-b': genSeries({ sm: 55, st: 25.0, at: 28.0, ah: 65 }),
-  'node-c': genSeries({ sm: 78, st: 27.2, at: 30.5, ah: 80 }),
-  'node-d': genSeries({ sm: 42, st: 24.0, at: 27.0, ah: 58 }),
+  ...Object.fromEntries(
+    legacyAliases.map((alias, index) => [alias, mockNodeHistoricalData[mockNodeIds[index] ?? ''] ?? []]),
+  ),
+  ...mockNodeHistoricalData,
 };
+
+export function getHistoricalDataForNode(nodeId: string): ChartPoint[] {
+  if (!ENABLE_MOCK_NODE_FALLBACK) return [];
+
+  const normalizedId = nodeId.trim().toLowerCase();
+  if (historicalData[normalizedId]) return historicalData[normalizedId];
+
+  const mockNodeId = getMockNodeIdForNode(normalizedId);
+  return mockNodeId ? historicalData[mockNodeId] ?? [] : [];
+}

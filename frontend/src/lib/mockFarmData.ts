@@ -1,6 +1,8 @@
 // DATA DUMMY — bukan dari backend. Dipakai hanya sebagai fallback tampilan saat farm belum punya node sensor asli.
 
-import type { GatewayLog, IrrigationLog, Node, NodeSummary, Reading } from '@/types';
+import type { FarmSummary, GatewayLog, IrrigationLog, Node, NodeSummary, Reading } from '@/types';
+
+export const ENABLE_MOCK_NODE_FALLBACK = true;
 
 export const MOCK_NODES: Node[] = [
   {
@@ -135,20 +137,117 @@ export const MOCK_READINGS: Record<string, Reading[]> = {
   ], 'mock-node-7'),
 };
 
+const MOCK_NODE_IDS = MOCK_NODES.map((node) => node.id);
+
+function hashNodeId(nodeId: string): number {
+  let hash = 0;
+  for (let i = 0; i < nodeId.length; i++) {
+    hash = (hash * 31 + nodeId.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+export function getMockNodeIdForNode(nodeId: string): string {
+  const normalizedId = nodeId.trim().toLowerCase();
+  if (MOCK_READINGS[normalizedId]) return normalizedId;
+
+  const mockNodeMatch = normalizedId.match(/^mock-node-(\d+)$/);
+  const index = mockNodeMatch
+    ? Number(mockNodeMatch[1]) - 1
+    : hashNodeId(normalizedId);
+
+  return MOCK_NODE_IDS[Math.abs(index) % MOCK_NODE_IDS.length] ?? MOCK_NODE_IDS[0] ?? '';
+}
+
+export function getMockRssiForNode(nodeId: string): string {
+  if (!nodeId) return '— dBm';
+  const mockNodeId = getMockNodeIdForNode(nodeId);
+  const seed = Array.from(mockNodeId || nodeId).reduce((a, c) => a + c.charCodeAt(0), 0);
+  return `${-80 - (seed % 25)} dBm`;
+}
+
+function buildMockNodeSummary(node: Node): NodeSummary {
+  const readings = MOCK_READINGS[node.id];
+  const latest_reading = readings?.[0] ?? null;
+  const moisture = latest_reading?.soil_moisture ?? null;
+  let decision: { decision: string; valve_state: string } | null = null;
+  if (moisture != null) {
+    decision =
+      moisture < 40
+        ? { decision: 'Irigasi dijalankan', valve_state: 'open' }
+        : { decision: 'Irigasi berhenti', valve_state: 'closed' };
+  }
+  return { node, latest_reading, decision, signal_rssi: getMockRssiForNode(node.id) };
+}
+
+export function getMockNodeSummaryForNode(nodeId: string): NodeSummary | null {
+  const mockNodeId = getMockNodeIdForNode(nodeId);
+  const node = MOCK_NODES.find((item) => item.id === mockNodeId);
+  return node ? buildMockNodeSummary(node) : null;
+}
+
 export function mockNodeSummaries(): NodeSummary[] {
-  return MOCK_NODES.map((node) => {
-    const readings = MOCK_READINGS[node.id];
-    const latest_reading = readings?.[0] ?? null;
-    const moisture = latest_reading?.soil_moisture ?? null;
-    let decision: { decision: string; valve_state: string } | null = null;
-    if (moisture != null) {
-      decision =
-        moisture < 40
-          ? { decision: 'Irigasi dijalankan', valve_state: 'open' }
-          : { decision: 'Irigasi berhenti', valve_state: 'closed' };
-    }
-    return { node, latest_reading, decision };
-  });
+  return MOCK_NODES.map(buildMockNodeSummary);
+}
+
+function summarizeNodeList(nodes: NodeSummary[]) {
+  const moistures = nodes
+    .map((ns) => ns.latest_reading?.soil_moisture)
+    .filter((m): m is number => m != null);
+  const averageSoilMoisture =
+    moistures.length > 0
+      ? Math.round(moistures.reduce((a, b) => a + b, 0) / moistures.length)
+      : null;
+  const hasOnline = nodes.some((ns) => ns.node.status !== 'offline');
+  const nodesProblem = nodes.filter((ns) => ns.node.status === 'offline').length;
+
+  return { averageSoilMoisture, gatewayStatus: hasOnline ? 'online' : 'offline', nodesProblem } as const;
+}
+
+export function withMockNodeFallback(summary: FarmSummary): FarmSummary {
+  if (!ENABLE_MOCK_NODE_FALLBACK) {
+    return { ...summary, is_mock_data: false };
+  }
+
+  const needsFullMock = summary.nodes.length === 0;
+  const needsMissingReadingMock = summary.nodes.some((ns) => ns.latest_reading == null);
+
+  if (!needsFullMock && !needsMissingReadingMock) {
+    return { ...summary, is_mock_data: false };
+  }
+
+  const nodes = needsFullMock
+    ? mockNodeSummaries()
+    : summary.nodes.map((ns) => {
+        if (ns.latest_reading != null) return ns;
+
+        const mockSummary = getMockNodeSummaryForNode(ns.node.id);
+        if (!mockSummary) return ns;
+
+        return {
+          ...ns,
+          node: {
+            ...ns.node,
+            battery: mockSummary.node.battery,
+            updated_at: mockSummary.node.updated_at,
+          },
+          latest_reading: mockSummary.latest_reading,
+          decision: mockSummary.decision,
+          signal_rssi: mockSummary.signal_rssi,
+        };
+      });
+
+  const { averageSoilMoisture, gatewayStatus, nodesProblem } = summarizeNodeList(nodes);
+
+  return {
+    ...summary,
+    nodes,
+    is_mock_data: true,
+    gateway_status: gatewayStatus,
+    average_soil_moisture: averageSoilMoisture,
+    nodes_problem: nodesProblem,
+    // weather WAJIB tetap dari summary asli, tidak diubah
+  };
 }
 
 export const MOCK_LOGS: IrrigationLog[] = [
