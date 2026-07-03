@@ -158,8 +158,8 @@ export default function SoilMoistureZoneChart({
               type="monotone"
               stroke={COLOR_LINE}
               strokeWidth={2.5}
-              dot={{ r: 2.5, fill: COLOR_LINE, stroke: '#fff', strokeWidth: 1 }}
-              activeDot={{ r: 4 }}
+              dot={{ r: 2.75, fill: COLOR_LINE, stroke: COLOR_WET, strokeWidth: 1 }}
+              activeDot={{ r: 4.5, fill: COLOR_LINE, stroke: '#fff', strokeWidth: 1.5 }}
               isAnimationActive={false}
             />
           </ComposedChart>

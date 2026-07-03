@@ -86,9 +86,18 @@ export default function AirHumidityZoneLineChart({ readings }: { readings: Readi
               dot={(props: { cx?: number; cy?: number }) => {
                 const { cx, cy } = props;
                 if (cx == null || cy == null) return null;
-                return <circle cx={cx} cy={cy} r={3.5} fill={PALETTE.main} stroke="#fff" strokeWidth={1} />;
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={3.75}
+                    fill="var(--card)"
+                    stroke={PALETTE.light}
+                    strokeWidth={2}
+                  />
+                );
               }}
-              activeDot={{ r: 4.5 }}
+              activeDot={{ r: 5, fill: PALETTE.main, stroke: '#fff', strokeWidth: 1.5 }}
               isAnimationActive={false}
             />
           </ComposedChart>

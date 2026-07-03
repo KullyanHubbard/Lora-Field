@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -28,18 +28,13 @@ export default function MonitoringPage() {
 
   const nodes = useMemo(() => summary?.nodes.map((ns) => ns.node) ?? [], [summary]);
   const nodeIds = useMemo(() => nodes.map((node) => node.id), [nodes]);
-  const [selectedNodeId, setSelectedNodeId] = useState<string>('');
+  const [selectedNode, setSelectedNode] = useState<{ farmId: string; nodeId: string } | null>(null);
 
-  useEffect(() => {
-    setSelectedNodeId('');
-  }, [farmId]);
-
-  useEffect(() => {
-    if (selectedNodeId && !nodeIds.includes(selectedNodeId)) {
-      setSelectedNodeId('');
-    }
-  }, [nodeIds, selectedNodeId]);
-
+  const selectedNodeForFarm = selectedNode?.farmId === farmId ? selectedNode : null;
+  const selectedNodeId =
+    selectedNodeForFarm && nodeIds.includes(selectedNodeForFarm.nodeId)
+      ? selectedNodeForFarm.nodeId
+      : '';
   const effectiveNodeId = selectedNodeId || (nodes[0]?.id ?? '');
 
   const {
@@ -88,7 +83,7 @@ export default function MonitoringPage() {
           ) : (
             <Select
               value={effectiveNodeId}
-              onValueChange={(v) => setSelectedNodeId(v)}
+              onValueChange={(v) => setSelectedNode({ farmId: farmId ?? '', nodeId: v })}
             >
               <SelectTrigger className="w-full max-w-xs">
                 <SelectValue />

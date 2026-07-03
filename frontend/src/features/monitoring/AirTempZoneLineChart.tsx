@@ -8,7 +8,7 @@ import { StatusPill } from '@/components/ui/status-pill';
 import type { StatusTone } from '@/lib/status';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
-import { latestValue, type ChunkAggregate, groupByKey, normalizeReadings } from './chart-helpers';
+import { latestValue, normalizeReadings, formatTimeLabel } from './chart-helpers';
 
 const PALETTE = { main: '#F59E0B', cool: '#06B6D4', hot: '#EF4444' };
 const COMFORT = { min: 24, max: 32 };
@@ -20,7 +20,9 @@ function airTempStatus(value: number): { labelKey: string; tone: StatusTone } {
   return { labelKey: 'monitoring.airStatus.normal', tone: 'green' };
 }
 
-interface Point extends ChunkAggregate {
+interface Point {
+  label: string;
+  value: number;
   band: 'cool' | 'ideal' | 'hot';
 }
 
@@ -34,17 +36,15 @@ export default function AirTempZoneLineChart({ readings }: { readings: Reading[]
   const { t } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
-    const asc = normalizeReadings(readings);
-    const chunkSize = Math.max(2, Math.ceil(asc.length / 30));
-    return groupByKey(asc, 'air_temp', chunkSize, (iso) => {
-      if (!iso) return '';
-      const d = new Date(iso);
-      return Number.isFinite(d.getTime()) ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
-    }).map((a) => ({ ...a, band: classifyBand(a.avg) }));
+    return normalizeReadings(readings).map((reading) => ({
+      label: formatTimeLabel(reading.created_at),
+      value: reading.air_temp,
+      band: classifyBand(reading.air_temp),
+    }));
   }, [readings]);
 
   const latestAvg = latestValue(readings, 'air_temp');
-  const config = { avg: { label: `${t('monitoring.chartAirTemp')} ${DEG_C}`, color: PALETTE.main } } satisfies ChartConfig;
+  const config = { value: { label: `${t('monitoring.chartAirTemp')} ${DEG_C}`, color: PALETTE.main } } satisfies ChartConfig;
 
   return (
     <Card>
@@ -87,7 +87,7 @@ export default function AirTempZoneLineChart({ readings }: { readings: Reading[]
             <YAxis domain={[0, CHART_MAX]} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${v}${DEG_C}`} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
             <ChartTooltip content={<ChartTooltipContent formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(1)}${DEG_C}`, t('monitoring.chartAirTemp')]} />} />
             <Line
-              dataKey="avg"
+              dataKey="value"
               type="monotone"
               stroke={PALETTE.main}
               strokeWidth={2.5}
@@ -96,9 +96,20 @@ export default function AirTempZoneLineChart({ readings }: { readings: Reading[]
                 if (cx == null || cy == null || index == null) return null;
                 const pt = points[index];
                 const fill = pt?.band === 'cool' ? PALETTE.cool : pt?.band === 'hot' ? PALETTE.hot : PALETTE.main;
-                return <circle cx={cx} cy={cy} r={3.5} fill={fill} stroke="#fff" strokeWidth={1} />;
+                return (
+                  <rect
+                    x={cx - 3.25}
+                    y={cy - 3.25}
+                    width={6.5}
+                    height={6.5}
+                    rx={1.5}
+                    fill={fill}
+                    stroke="#fff"
+                    strokeWidth={1}
+                  />
+                );
               }}
-              activeDot={{ r: 4.5 }}
+              activeDot={{ r: 5, fill: PALETTE.main, stroke: '#fff', strokeWidth: 1.5 }}
               isAnimationActive={false}
             />
           </ComposedChart>

@@ -16,7 +16,7 @@ import { StatusPill } from '@/components/ui/status-pill';
 import type { StatusTone } from '@/lib/status';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
-import { latestValue, groupByKey, normalizeReadings } from './chart-helpers';
+import { latestValue, normalizeReadings, formatTimeLabel } from './chart-helpers';
 
 const PALETTE = { main: '#F59E0B', dark: '#D97706', cool: '#06B6D4', hot: '#EF4444' };
 const OPTIMAL_SOIL_TEMP = { min: 18, max: 28 };
@@ -44,22 +44,16 @@ export default function SoilTempZoneLineChart({ readings }: { readings: Reading[
   const { t } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
-    const asc = normalizeReadings(readings);
-    const chunkSize = Math.max(2, Math.ceil(asc.length / 30));
-    return groupByKey(asc, 'soil_temp', chunkSize, (iso) => {
-      if (!iso) return '';
-      const d = new Date(iso);
-      return Number.isFinite(d.getTime()) ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
-    }).map((a) => ({
-      label: a.label,
-      value: a.avg,
-      band: classifyBand(a.avg),
+    return normalizeReadings(readings).map((reading) => ({
+      label: formatTimeLabel(reading.created_at),
+      value: reading.soil_temp,
+      band: classifyBand(reading.soil_temp),
     }));
   }, [readings]);
 
   const latestAvg = latestValue(readings, 'soil_temp');
 
-  const config = { avg: { label: `${t('farmDetail.soilAvg')} ${DEG_C}`, color: PALETTE.main } } satisfies ChartConfig;
+  const config = { value: { label: `${t('monitoring.chartSoilTemp')} ${DEG_C}`, color: PALETTE.main } } satisfies ChartConfig;
 
   return (
     <Card>
@@ -103,7 +97,7 @@ export default function SoilTempZoneLineChart({ readings }: { readings: Reading[
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(1)}${DEG_C}`, t('farmDetail.soilAvg')]}
+                  formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(1)}${DEG_C}`, t('monitoring.chartSoilTemp')]}
                 />
               }
             />
@@ -117,9 +111,21 @@ export default function SoilTempZoneLineChart({ readings }: { readings: Reading[
                 if (cx == null || cy == null || index == null) return null;
                 const pt = points[index];
                 const fill = pt?.band === 'cold' ? PALETTE.cool : pt?.band === 'hot' ? PALETTE.hot : PALETTE.main;
-                return <circle cx={cx} cy={cy} r={3.5} fill={fill} stroke="#fff" strokeWidth={1} />;
+                return (
+                  <rect
+                    x={cx - 3.25}
+                    y={cy - 3.25}
+                    width={6.5}
+                    height={6.5}
+                    rx={1}
+                    fill={fill}
+                    stroke="#fff"
+                    strokeWidth={1}
+                    transform={`rotate(45 ${cx} ${cy})`}
+                  />
+                );
               }}
-              activeDot={{ r: 4.5 }}
+              activeDot={{ r: 5, fill: PALETTE.main, stroke: '#fff', strokeWidth: 1.5 }}
               isAnimationActive={false}
             />
           </ComposedChart>
