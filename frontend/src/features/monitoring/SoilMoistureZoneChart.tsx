@@ -15,7 +15,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { StatusPill } from '@/components/ui/status-pill';
 import { getSoilStatusFromMoisture } from '@/lib/status';
 import type { Reading } from '@/types';
-import { formatTimeLabel } from './chart-helpers';
+import { formatTimeLabel, latestValue, normalizeReadings } from './chart-helpers';
 
 // Konsisten dengan tema: cyan = garis utama, hijau = zona ideal,
 // merah = batas, biru = zona basah.
@@ -42,14 +42,14 @@ export default function SoilMoistureZoneChart({
 
   const points: Point[] = useMemo(
     () =>
-      [...readings].reverse().map((r) => ({
+      normalizeReadings(readings).map((r) => ({
         label: formatTimeLabel(r.created_at),
         value: r.soil_moisture,
       })),
     [readings],
   );
 
-  const latest = points.length > 0 ? points[points.length - 1].value : null;
+  const latest = latestValue(readings, 'soil_moisture');
   const status = latest != null ? getSoilStatusFromMoisture(latest, lower, upper) : null;
 
   const config = {
@@ -168,4 +168,3 @@ export default function SoilMoistureZoneChart({
     </Card>
   );
 }
-

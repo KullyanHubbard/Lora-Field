@@ -2,7 +2,7 @@
 // backend punya endpoint riwayat per-node. Dipakai untuk tile Min/Rata-rata/Maks
 // + grafik historis kompak di kartu metrik Ringkasan Kebun (FarmDetailPage).
 
-import { ENABLE_MOCK_NODE_FALLBACK, getMockNodeIdForNode, MOCK_READINGS } from '@/lib/mockFarmData';
+import { ENABLE_MOCK_NODE_FALLBACK, generateMockReadingsForNode, getMockNodeIdForNode } from '@/lib/mockFarmData';
 
 export interface ChartPoint {
   label: string; // jam "HH.MM" (format id-ID), jarak antar titik 1 jam
@@ -29,7 +29,7 @@ function hourlyLabels(count: number): string[] {
 
 function historicalSeriesFromReadings(nodeId: string): ChartPoint[] {
   const labels = hourlyLabels(POINTS);
-  const readings = (MOCK_READINGS[nodeId] ?? []).slice(0, POINTS).reverse();
+  const readings = generateMockReadingsForNode(nodeId, POINTS).reverse();
 
   return readings.map((reading, index) => {
     return {
@@ -42,27 +42,14 @@ function historicalSeriesFromReadings(nodeId: string): ChartPoint[] {
   });
 }
 
-const mockNodeHistoricalData = Object.fromEntries(
-  Object.keys(MOCK_READINGS).map((nodeId) => [nodeId, historicalSeriesFromReadings(nodeId)]),
-) as Record<string, ChartPoint[]>;
-
 const legacyAliases = ['node-a', 'node-b', 'node-c', 'node-d'];
-const mockNodeIds = Object.keys(mockNodeHistoricalData);
-
-// Alias node-a..d dipertahankan agar mock lama tetap tersambung.
-export const historicalData: Record<string, ChartPoint[]> = {
-  ...Object.fromEntries(
-    legacyAliases.map((alias, index) => [alias, mockNodeHistoricalData[mockNodeIds[index] ?? ''] ?? []]),
-  ),
-  ...mockNodeHistoricalData,
-};
 
 export function getHistoricalDataForNode(nodeId: string): ChartPoint[] {
   if (!ENABLE_MOCK_NODE_FALLBACK) return [];
 
   const normalizedId = nodeId.trim().toLowerCase();
-  if (historicalData[normalizedId]) return historicalData[normalizedId];
+  const legacyIndex = legacyAliases.indexOf(normalizedId);
+  const resolvedNodeId = legacyIndex >= 0 ? `mock-node-${legacyIndex + 1}` : getMockNodeIdForNode(normalizedId);
 
-  const mockNodeId = getMockNodeIdForNode(normalizedId);
-  return mockNodeId ? historicalData[mockNodeId] ?? [] : [];
+  return resolvedNodeId ? historicalSeriesFromReadings(resolvedNodeId) : [];
 }

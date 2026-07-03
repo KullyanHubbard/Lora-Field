@@ -16,9 +16,9 @@ import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import SoilMoistureZoneChart from './SoilMoistureZoneChart';
-import SoilTempComboChart from './SoilTempComboChart';
-import AirTempCandlestickChart from './AirTempCandlestickChart';
-import AirHumidityRadialChart from './AirHumidityRadialChart';
+import SoilTempZoneLineChart from './SoilTempZoneLineChart';
+import AirTempZoneLineChart from './AirTempZoneLineChart';
+import AirHumidityZoneLineChart from './AirHumidityZoneLineChart';
 
 
 export default function MonitoringPage() {
@@ -27,11 +27,18 @@ export default function MonitoringPage() {
   const { data: summary, isLoading: summaryLoading, error: summaryError } = useFarmSummary(farmId ?? '');
 
   const nodes = useMemo(() => summary?.nodes.map((ns) => ns.node) ?? [], [summary]);
+  const nodeIds = useMemo(() => nodes.map((node) => node.id), [nodes]);
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
 
   useEffect(() => {
     setSelectedNodeId('');
   }, [farmId]);
+
+  useEffect(() => {
+    if (selectedNodeId && !nodeIds.includes(selectedNodeId)) {
+      setSelectedNodeId('');
+    }
+  }, [nodeIds, selectedNodeId]);
 
   const effectiveNodeId = selectedNodeId || (nodes[0]?.id ?? '');
 
@@ -122,9 +129,9 @@ export default function MonitoringPage() {
             lower={summary.thresholds.lower}
             upper={summary.thresholds.upper}
           />
-          <SoilTempComboChart readings={readings} />
-          <AirTempCandlestickChart readings={readings} />
-          <AirHumidityRadialChart readings={readings} />
+          <SoilTempZoneLineChart readings={readings} />
+          <AirTempZoneLineChart readings={readings} />
+          <AirHumidityZoneLineChart readings={readings} />
         </div>
       )}
     </div>

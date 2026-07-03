@@ -7,7 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { StatusPill } from '@/components/ui/status-pill';
 import type { StatusTone } from '@/lib/status';
 import type { Reading } from '@/types';
-import { latestValue, formatTimeLabel } from './chart-helpers';
+import { latestValue, formatTimeLabel, normalizeReadings } from './chart-helpers';
 
 const PALETTE = { main: '#8B5CF6', dark: '#7C3AED', light: '#A78BFA', wet: '#3B82F6', dry: '#F97316' };
 const RANGE = { min: 60, max: 85 };
@@ -24,11 +24,11 @@ interface Point {
   value: number;
 }
 
-export default function AirHumidityRadialChart({ readings }: { readings: Reading[] }) {
+export default function AirHumidityZoneLineChart({ readings }: { readings: Reading[] }) {
   const { t } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
-    const asc = [...readings].reverse();
+    const asc = normalizeReadings(readings);
     const step = Math.max(1, Math.floor(asc.length / 30));
     return asc.filter((_, i) => i % step === 0).map((r) => ({
       label: formatTimeLabel(r.created_at),

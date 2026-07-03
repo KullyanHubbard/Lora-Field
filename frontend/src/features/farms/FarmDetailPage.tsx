@@ -93,11 +93,13 @@ const weatherIcon: Record<WeatherIconKey, typeof Sun> = {
 };
 
 function ValveStatCard({ summary, className }: { summary: FarmSummary; className?: string }) {
-  const totalCount = summary.nodes.length;
+  const valveNodes = summary.nodes;
+  const totalCount = valveNodes.length;
 
   // Setiap bar mewakili satu node. Warna mengikuti aturan prioritas:
   // offline → MERAH, online + valve terbuka → HIJAU, online + valve tertutup → KUNING.
-  const bars = summary.nodes.map((ns) => {
+  // Jumlah bar mengikuti data node aktif dari backend atau fallback mock, bukan angka tetap.
+  const bars = valveNodes.map((ns) => {
     if (ns.node.status === 'offline') return 'bg-red-500';
     return ns.decision?.valve_state === 'open' ? 'bg-emerald-500' : 'bg-amber-500';
   });

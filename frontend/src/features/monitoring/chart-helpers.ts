@@ -7,55 +7,26 @@ export interface ChunkAggregate {
   avg: number;
 }
 
-/** Simple moving average — returns null for leading edges where window isn't full */
-export function movingAverage(values: number[], window: number): (number | null)[] {
-  return values.map((_, i) => {
-    if (i < window - 1) return null;
-    let sum = 0;
-    for (let j = i - window + 1; j <= i; j++) sum += values[j];
-    return sum / window;
-  });
+export type ReadingMetricKey = keyof Pick<Reading, 'soil_moisture' | 'soil_temp' | 'air_temp' | 'air_humidity'>;
+
+function readingTime(reading: Reading): number | null {
+  const time = Date.parse(reading.created_at);
+  return Number.isFinite(time) ? time : null;
 }
 
-/** Bollinger Bands: middle = SMA, upper/lower = middle ± multiplier × stddev */
-export function bollingerBands(
-  values: number[],
-  period: number,
-  multiplier: number,
-): { upper: (number | null)[]; middle: (number | null)[]; lower: (number | null)[] } {
-  const middle = movingAverage(values, period);
-  const upper: (number | null)[] = [];
-  const lower: (number | null)[] = [];
-  for (let i = 0; i < values.length; i++) {
-    if (middle[i] == null) {
-      upper.push(null);
-      lower.push(null);
-      continue;
-    }
-    let sumSq = 0;
-    let count = 0;
-    for (let j = i - period + 1; j <= i; j++) {
-      sumSq += (values[j] - middle[i]!) ** 2;
-      count++;
-    }
-    const stddev = Math.sqrt(sumSq / count);
-    upper.push(middle[i]! + multiplier * stddev);
-    lower.push(middle[i]! - multiplier * stddev);
-  }
-  return { upper, middle, lower };
-}
-
-export type SoilZone = 'danger' | 'optimal' | 'warning';
-
-export function classifySoilZone(value: number, lower: number, upper: number): SoilZone {
-  if (value < lower) return 'danger';
-  if (value > upper) return 'warning';
-  return 'optimal';
+export function normalizeReadings(readings: Reading[]): Reading[] {
+  return readings
+    .map((reading, index) => ({ reading, index, time: readingTime(reading) }))
+    .sort((a, b) => {
+      if (a.time == null || b.time == null) return a.index - b.index;
+      return a.time - b.time || a.index - b.index;
+    })
+    .map(({ reading }) => reading);
 }
 
 export function groupByKey(
   readings: Reading[],
-  key: keyof Pick<Reading, 'soil_moisture' | 'soil_temp' | 'air_temp' | 'air_humidity'>,
+  key: ReadingMetricKey,
   chunkSize: number,
   formatLabel: (iso: string | null | undefined) => string,
 ): ChunkAggregate[] {
@@ -73,11 +44,6 @@ export function groupByKey(
   return chunks;
 }
 
-export function avgOfReadings(readings: Reading[], key: keyof Reading): number | null {
-  if (readings.length === 0) return null;
-  return readings.reduce((s, r) => s + Number(r[key]), 0) / readings.length;
-}
-
 export function formatTimeLabel(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -86,7 +52,10 @@ export function formatTimeLabel(iso: string | null | undefined): string {
 }
 
 /** Latest reading value for a key, or null */
-export function latestValue(readings: Reading[], key: keyof Reading): number | null {
+export function latestValue(readings: Reading[], key: ReadingMetricKey): number | null {
   if (readings.length === 0) return null;
-  return Number(readings[readings.length - 1][key]);
+  const latest = normalizeReadings(readings).at(-1);
+  if (!latest) return null;
+  const value = Number(latest[key]);
+  return Number.isFinite(value) ? value : null;
 }
