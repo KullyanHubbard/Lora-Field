@@ -242,21 +242,21 @@ function MetricStatCard({
       ) : (
         <>
           <div className="mt-3 flex gap-2">
-            <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
+            <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
               <ArrowDown className="size-3.5 shrink-0 text-blue-500 dark:text-blue-400" aria-hidden="true" />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">Minimal</span>
               <span className="mt-0.5 text-base font-extrabold tabular-nums tracking-tight text-foreground">
                 {fmt(stats.min)}{unit}
               </span>
             </div>
-            <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
+            <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
               <Minus className="size-3.5 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">Rata-rata</span>
               <span className="mt-0.5 text-base font-extrabold tabular-nums tracking-tight text-foreground">
                 {fmt(stats.avg)}{unit}
               </span>
             </div>
-            <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
+            <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
               <ArrowUp className="size-3.5 shrink-0 text-red-500 dark:text-red-400" aria-hidden="true" />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">Maksimal</span>
               <span className="mt-0.5 text-base font-extrabold tabular-nums tracking-tight text-foreground">
@@ -332,17 +332,17 @@ function BatteryNodesCard({ nodes, className }: { nodes: NodeSummary[]; classNam
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(
+    () => typeof IntersectionObserver === 'undefined',
+  );
 
   // Trigger gauge animation when the card scrolls into the viewport.
   useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') {
-      setHasAnimated(true);
+    if (hasAnimated || typeof IntersectionObserver === 'undefined') {
       return;
     }
     const el = scrollRef.current?.closest('.battery-section-root') as HTMLElement | null;
     if (!el) {
-      setHasAnimated(true);
       return;
     }
     const io = new IntersectionObserver(
@@ -356,7 +356,7 @@ function BatteryNodesCard({ nodes, className }: { nodes: NodeSummary[]; classNam
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [hasAnimated]);
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
@@ -532,28 +532,28 @@ function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; className?
           <p className="py-4 text-center text-sm text-muted-foreground">{t('nodes.empty')}</p>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
+            <div className="summary-subcard-interactive flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
               <Droplets className="size-4 shrink-0 text-cyan-500 dark:text-cyan-400" aria-hidden="true" />
               <div className="min-w-0">
                 <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">{t('nodes.colSoilMoisture')}</p>
                 <p className="text-base font-semibold tabular-nums tracking-tight text-foreground">{reading ? `${reading.soil_moisture}%` : DASH}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
+            <div className="summary-subcard-interactive flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
               <Thermometer className="size-4 shrink-0 text-orange-500 dark:text-orange-400" aria-hidden="true" />
               <div className="min-w-0">
                 <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">{t('nodes.colSoilTemp')}</p>
                 <p className="text-base font-semibold tabular-nums tracking-tight text-foreground">{reading ? `${reading.soil_temp}${DEG_C}` : DASH}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
+            <div className="summary-subcard-interactive flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
               <Sun className="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />
               <div className="min-w-0">
                 <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">{t('nodes.colAirTemp')}</p>
                 <p className="text-base font-semibold tabular-nums tracking-tight text-foreground">{reading ? `${reading.air_temp}${DEG_C}` : DASH}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
+            <div className="summary-subcard-interactive flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
               <Cloud className="size-4 shrink-0 text-sky-500 dark:text-sky-400" aria-hidden="true" />
               <div className="min-w-0">
                 <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">{t('nodes.colAirHumidity')}</p>
@@ -638,7 +638,7 @@ function WeatherForecastCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-4">
         {/* Verdict irigasi berdasar prediksi hujan 3 jam ke depan */}
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-medium text-foreground">
+        <div className="summary-subcard-interactive flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-medium text-foreground">
           {rain ? (
             <TriangleAlert className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
           ) : (
@@ -671,7 +671,7 @@ function WeatherForecastCard({
                 <div
                   key={slot.key}
                   className={cn(
-                    'flex items-center gap-3 rounded-md px-2 py-1.5 text-sm',
+                    'summary-subcard-interactive flex items-center gap-3 rounded-md border border-transparent px-2 py-1.5 text-sm',
                     slot.isRain && 'bg-blue-500/10',
                   )}
                 >

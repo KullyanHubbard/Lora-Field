@@ -16,7 +16,7 @@ function StatTile({
   value: string | number;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-gradient-to-b from-muted/50 to-transparent p-3 transition-colors hover:border-foreground/20">
+    <div className="summary-subcard-interactive rounded-lg border border-border bg-gradient-to-b from-muted/50 to-transparent p-3">
       <div className="flex items-center gap-2 min-h-[1.25rem]">
         {icon}
         <span className="text-xs leading-none text-muted-foreground">{label}</span>
