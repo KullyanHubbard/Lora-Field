@@ -806,7 +806,7 @@ export default function FarmDetailPage() {
       ? t('farmDetail.nodesProblem', { count: summary.nodes_problem })
       : null;
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4 xl:min-h-[calc(100svh-5.5rem)]">
       {warning && (
         <Card className="border-amber-500/20 bg-amber-500/10">
           <CardContent className="flex items-center gap-2 rounded-md text-sm font-medium text-amber-500 dark:text-amber-400">
@@ -820,7 +820,7 @@ export default function FarmDetailPage() {
           Baterai Node. Baris 3: Status Node Sensor penuh. Penempatan xl pakai longhand
           col-start/col-end + row-start (override col-span-2 mobile dengan aman). Di
           bawah xl semua kartu menumpuk rapi. */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5 xl:grid-rows-[auto_auto_minmax(0,1fr)]">
         {/* Baris 1 — Status Valve (1 kolom) */}
         <ValveStatCard
           summary={summary}
@@ -862,7 +862,7 @@ export default function FarmDetailPage() {
         />
 
         {/* 4 Metric Stat Card — baris 3, full width (span 5 kolom), subgrid 4 kolom */}
-        <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2 xl:col-start-1 xl:col-end-6 xl:row-start-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2 xl:col-start-1 xl:col-end-6 xl:row-start-3 xl:h-full xl:min-h-0 xl:grid-cols-4">
           {(() => {
             const nodeDataMap: Record<string, ChartPoint[]> = {};
             nodes.forEach((ns) => {
