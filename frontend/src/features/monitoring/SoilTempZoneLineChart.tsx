@@ -69,8 +69,8 @@ export default function SoilTempZoneLineChart({
       )}
     >
       <CardHeader className="space-y-2 pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className={cn('flex items-start justify-between gap-3', embedded && 'pl-11 pr-2')}>
+          <div className="min-w-0">
             <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t('monitoring.chartSoilTemp')}
             </CardTitle>
@@ -86,7 +86,7 @@ export default function SoilTempZoneLineChart({
               );
             })()}
           </div>
-          <div className="text-right text-[0.65rem] text-muted-foreground">
+          <div className="shrink-0 text-right text-[0.65rem] text-muted-foreground">
             <div>{t('farmDetail.soilTargetCaption', { lower: OPTIMAL_SOIL_TEMP.min, upper: OPTIMAL_SOIL_TEMP.max })}</div>
             <div className="text-sm font-semibold tabular-nums text-foreground">
               {OPTIMAL_SOIL_TEMP.min}–{OPTIMAL_SOIL_TEMP.max}{DEG_C}

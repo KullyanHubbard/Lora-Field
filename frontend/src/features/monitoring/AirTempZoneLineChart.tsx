@@ -60,8 +60,8 @@ export default function AirTempZoneLineChart({
       )}
     >
       <CardHeader className="space-y-2 pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className={cn('flex items-start justify-between gap-3', embedded && 'pl-11 pr-2')}>
+          <div className="min-w-0">
             <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t('monitoring.chartAirTemp')}
             </CardTitle>
@@ -77,7 +77,7 @@ export default function AirTempZoneLineChart({
               );
             })()}
           </div>
-          <div className="text-right text-[0.65rem] text-muted-foreground">
+          <div className="shrink-0 text-right text-[0.65rem] text-muted-foreground">
             <div>{t('monitoring.zoneTemp')}</div>
             <div className="text-sm font-semibold tabular-nums text-foreground">
               {COMFORT.min}–{COMFORT.max}{DEG_C}
