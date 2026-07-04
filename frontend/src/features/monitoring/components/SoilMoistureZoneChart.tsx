@@ -10,13 +10,14 @@ import {
   YAxis,
 } from 'recharts';
 import { Droplets } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { StatusPill } from '@/components/ui/status-pill';
 import { getSoilStatusFromMoisture } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
-import { formatTimeLabel, latestValue, normalizeReadings } from './chart-helpers';
+import { getHourlyMonitoringPoints, latestValue } from '../chart-helpers';
+import { MonitoringChartHeader } from './MonitoringChartHeader';
+import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 
 // Konsisten dengan tema: cyan = garis utama, hijau = zona ideal,
 // merah = batas, biru = zona basah.
@@ -45,9 +46,9 @@ export default function SoilMoistureZoneChart({
 
   const points: Point[] = useMemo(
     () =>
-      normalizeReadings(readings).map((r) => ({
-        label: formatTimeLabel(r.created_at),
-        value: r.soil_moisture,
+      getHourlyMonitoringPoints(readings).map(({ label, reading }) => ({
+        label,
+        value: reading.soil_moisture,
       })),
     [readings],
   );
@@ -65,33 +66,16 @@ export default function SoilMoistureZoneChart({
         embedded && 'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
       )}
     >
-      <CardHeader className="space-y-2 pb-3">
-        <div className={cn('flex items-start justify-between gap-3', embedded && 'pl-10 pr-3')}>
-          <div className="min-w-0">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t('monitoring.chartSoilMoisture')}
-            </CardTitle>
-            {latest != null && (
-              <div className="mt-1 flex items-baseline gap-2">
-                <Droplets className="size-4 text-cyan-500 dark:text-cyan-400" aria-hidden="true" />
-                <span className="text-3xl font-bold tabular-nums text-foreground">
-                  {latest.toFixed(0)}%
-                </span>
-                {status && (
-                  <StatusPill tone={status.tone} label={t(status.labelKey)} />
-                )}
-              </div>
-            )}
-          </div>
-          <div className="shrink-0 text-right text-[0.65rem] text-muted-foreground">
-            <div>{t('farmDetail.soilTargetCaption', { lower, upper })}</div>
-            <div className="text-sm font-semibold tabular-nums text-foreground">
-              {lower}–{upper}%
-            </div>
-          </div>
-        </div>
-
-      </CardHeader>
+      <MonitoringChartHeader
+        title={t('monitoring.chartSoilMoisture')}
+        icon={<Droplets className="size-4 text-cyan-500 dark:text-cyan-400" aria-hidden="true" />}
+        value={latest != null ? `${latest.toFixed(0)}%` : null}
+        status={status ? { tone: status.tone, label: t(status.labelKey) } : undefined}
+        sideLabel={t('farmDetail.soilTargetCaption', { lower, upper })}
+        sideValue={`${lower}–${upper}%`}
+        embedded={embedded}
+        plotInsetClassName="pl-10 pr-3"
+      />
 
       <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
         <ChartContainer config={config} className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}>
@@ -137,7 +121,7 @@ export default function SoilMoistureZoneChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              minTickGap={32}
+              interval={0}
               tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
             />
             <YAxis
@@ -167,7 +151,7 @@ export default function SoilMoistureZoneChart({
               strokeWidth={2.5}
               dot={{ r: 2.75, fill: COLOR_LINE, stroke: COLOR_WET, strokeWidth: 1 }}
               activeDot={{ r: 4.5, fill: COLOR_LINE, stroke: '#fff', strokeWidth: 1.5 }}
-              isAnimationActive={false}
+              {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>
         </ChartContainer>

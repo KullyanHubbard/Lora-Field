@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Droplets } from 'lucide-react';
 import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, XAxis, YAxis } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { StatusPill } from '@/components/ui/status-pill';
 import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
-import { latestValue, formatTimeLabel, normalizeReadings } from './chart-helpers';
+import { latestValue, getHourlyMonitoringPoints } from '../chart-helpers';
+import { MonitoringChartHeader } from './MonitoringChartHeader';
+import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 
 const PALETTE = { main: '#8B5CF6', dark: '#7C3AED', light: '#A78BFA', wet: '#3B82F6', dry: '#F97316' };
 const RANGE = { min: 60, max: 85 };
@@ -35,15 +36,14 @@ export default function AirHumidityZoneLineChart({
   const { t } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
-    const asc = normalizeReadings(readings);
-    const step = Math.max(1, Math.floor(asc.length / 30));
-    return asc.filter((_, i) => i % step === 0).map((r) => ({
-      label: formatTimeLabel(r.created_at),
-      value: Number(r.air_humidity),
+    return getHourlyMonitoringPoints(readings).map(({ label, reading }) => ({
+      label,
+      value: Number(reading.air_humidity),
     }));
   }, [readings]);
 
   const latestHumidity = latestValue(readings, 'air_humidity');
+  const latestStatus = latestHumidity != null ? humidityStatus(latestHumidity) : null;
   const config = { hum: { label: `${t('monitoring.chartAirHumidity')} %`, color: PALETTE.main } } satisfies ChartConfig;
 
   return (
@@ -52,31 +52,15 @@ export default function AirHumidityZoneLineChart({
         embedded && 'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
       )}
     >
-      <CardHeader className="space-y-2 pb-3">
-        <div className={cn('flex items-start justify-between gap-3', embedded && 'pl-11 pr-2')}>
-          <div className="min-w-0">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t('monitoring.chartAirHumidity')}
-            </CardTitle>
-            {latestHumidity != null && (() => {
-              const s = humidityStatus(latestHumidity);
-              return (
-                <div className="mt-1 flex items-baseline gap-2">
-                  <Droplets className="size-4 text-violet-500 dark:text-violet-400" aria-hidden="true" />
-                  <span className="text-3xl font-bold tabular-nums text-foreground">{latestHumidity.toFixed(0)}%</span>
-                  <StatusPill tone={s.tone} label={t(s.labelKey)} />
-                </div>
-              );
-            })()}
-          </div>
-          <div className="shrink-0 text-right text-[0.65rem] text-muted-foreground">
-            <div>{t('monitoring.zoneIdeal')}</div>
-            <div className="text-sm font-semibold tabular-nums text-foreground">
-              {RANGE.min}–{RANGE.max}%
-            </div>
-          </div>
-        </div>
-      </CardHeader>
+      <MonitoringChartHeader
+        title={t('monitoring.chartAirHumidity')}
+        icon={<Droplets className="size-4 text-violet-500 dark:text-violet-400" aria-hidden="true" />}
+        value={latestHumidity != null ? `${latestHumidity.toFixed(0)}%` : null}
+        status={latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined}
+        sideLabel={t('monitoring.zoneIdeal')}
+        sideValue={`${RANGE.min}–${RANGE.max}%`}
+        embedded={embedded}
+      />
       <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
         <ChartContainer config={config} className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}>
           <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -86,7 +70,7 @@ export default function AirHumidityZoneLineChart({
             <ReferenceArea y1={RANGE.max} y2={CHART_MAX} fill={PALETTE.wet} fillOpacity={0.05} />
             <ReferenceLine y={RANGE.min} stroke={PALETTE.dry} strokeOpacity={0.45} strokeDasharray="5 3" />
             <ReferenceLine y={RANGE.max} stroke={PALETTE.wet} strokeOpacity={0.45} strokeDasharray="5 3" />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} minTickGap={24} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval={0} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
             <YAxis domain={[0, CHART_MAX]} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
             <ChartTooltip content={<ChartTooltipContent formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(0)}%`, t('monitoring.chartAirHumidity')]} />} />
             <Line
@@ -109,7 +93,7 @@ export default function AirHumidityZoneLineChart({
                 );
               }}
               activeDot={{ r: 5, fill: PALETTE.main, stroke: '#fff', strokeWidth: 1.5 }}
-              isAnimationActive={false}
+              {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>
         </ChartContainer>

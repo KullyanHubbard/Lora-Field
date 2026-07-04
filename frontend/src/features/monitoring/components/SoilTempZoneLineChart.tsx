@@ -10,14 +10,15 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { StatusPill } from '@/components/ui/status-pill';
 import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
-import { latestValue, normalizeReadings, formatTimeLabel } from './chart-helpers';
+import { latestValue, getHourlyMonitoringPoints } from '../chart-helpers';
+import { MonitoringChartHeader } from './MonitoringChartHeader';
+import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 
 const PALETTE = { main: '#F59E0B', dark: '#D97706', cool: '#06B6D4', hot: '#EF4444' };
 const OPTIMAL_SOIL_TEMP = { min: 18, max: 28 };
@@ -51,14 +52,15 @@ export default function SoilTempZoneLineChart({
   const { t } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
-    return normalizeReadings(readings).map((reading) => ({
-      label: formatTimeLabel(reading.created_at),
+    return getHourlyMonitoringPoints(readings).map(({ label, reading }) => ({
+      label,
       value: reading.soil_temp,
       band: classifyBand(reading.soil_temp),
     }));
   }, [readings]);
 
   const latestAvg = latestValue(readings, 'soil_temp');
+  const latestStatus = latestAvg != null ? soilTempStatus(latestAvg) : null;
 
   const config = { value: { label: `${t('monitoring.chartSoilTemp')} ${DEG_C}`, color: PALETTE.main } } satisfies ChartConfig;
 
@@ -68,32 +70,19 @@ export default function SoilTempZoneLineChart({
         embedded && 'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
       )}
     >
-      <CardHeader className="space-y-2 pb-3">
-        <div className={cn('flex items-start justify-between gap-3', embedded && 'pl-11 pr-2')}>
-          <div className="min-w-0">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t('monitoring.chartSoilTemp')}
-            </CardTitle>
-            {latestAvg != null && (() => {
-              const s = soilTempStatus(latestAvg);
-              return (
-                <div className="mt-1 flex items-baseline gap-2">
-                  <ThermometerSun className="size-4 text-amber-500 dark:text-amber-400" aria-hidden="true" />
-                  <span className="text-3xl font-bold tabular-nums text-foreground">{latestAvg.toFixed(1)}</span>
-                  <span className="text-base text-muted-foreground">{DEG_C}</span>
-                  <StatusPill tone={s.tone} label={t(s.labelKey)} />
-                </div>
-              );
-            })()}
-          </div>
-          <div className="shrink-0 text-right text-[0.65rem] text-muted-foreground">
-            <div>{t('farmDetail.soilTargetCaption', { lower: OPTIMAL_SOIL_TEMP.min, upper: OPTIMAL_SOIL_TEMP.max })}</div>
-            <div className="text-sm font-semibold tabular-nums text-foreground">
-              {OPTIMAL_SOIL_TEMP.min}–{OPTIMAL_SOIL_TEMP.max}{DEG_C}
-            </div>
-          </div>
-        </div>
-      </CardHeader>
+      <MonitoringChartHeader
+        title={t('monitoring.chartSoilTemp')}
+        icon={<ThermometerSun className="size-4 text-amber-500 dark:text-amber-400" aria-hidden="true" />}
+        value={latestAvg != null ? latestAvg.toFixed(1) : null}
+        unit={DEG_C}
+        status={latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined}
+        sideLabel={t('farmDetail.soilTargetCaption', {
+          lower: OPTIMAL_SOIL_TEMP.min,
+          upper: OPTIMAL_SOIL_TEMP.max,
+        })}
+        sideValue={`${OPTIMAL_SOIL_TEMP.min}–${OPTIMAL_SOIL_TEMP.max}${DEG_C}`}
+        embedded={embedded}
+      />
       <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
         <ChartContainer config={config} className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}>
           <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -103,7 +92,7 @@ export default function SoilTempZoneLineChart({
             <ReferenceArea y1={OPTIMAL_SOIL_TEMP.max} y2={CHART_MAX} fill={PALETTE.hot} fillOpacity={0.05} />
             <ReferenceLine y={OPTIMAL_SOIL_TEMP.min} stroke={PALETTE.cool} strokeOpacity={0.45} strokeDasharray="5 3" />
             <ReferenceLine y={OPTIMAL_SOIL_TEMP.max} stroke={PALETTE.hot} strokeOpacity={0.45} strokeDasharray="5 3" />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} minTickGap={24} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval={0} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
             <YAxis domain={[0, CHART_MAX]} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${v}${DEG_C}`} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
             <ChartTooltip
               content={
@@ -137,7 +126,7 @@ export default function SoilTempZoneLineChart({
                 );
               }}
               activeDot={{ r: 5, fill: PALETTE.main, stroke: '#fff', strokeWidth: 1.5 }}
-              isAnimationActive={false}
+              {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>
         </ChartContainer>
