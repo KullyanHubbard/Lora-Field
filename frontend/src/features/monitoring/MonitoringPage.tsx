@@ -71,64 +71,61 @@ export default function MonitoringPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Node Selector */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">{t('monitoring.selectNode')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {nodes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('monitoring.noNodes')}</p>
-          ) : (
-            <Select
-              value={effectiveNodeId}
-              onValueChange={(v) => setSelectedNode({ farmId: farmId ?? '', nodeId: v })}
-            >
-              <SelectTrigger className="w-full max-w-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {nodes.map((node) => {
-                  const badge = getNodeStatusBadge(node.status);
-                  return (
-                    <SelectItem key={node.id} value={node.id}>
-                      <span className="flex items-center gap-2">
-                        <span>{node.name}</span>
-                        <StatusPill tone={badge.tone} label={t(badge.labelKey)} />
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          )}
-        </CardContent>
-      </Card>
+    <Card className="md:h-[calc(100svh-5.5rem)] md:max-h-[calc(100svh-5.5rem)]">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm">{t('monitoring.selectNode')}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
+        {nodes.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('monitoring.noNodes')}</p>
+        ) : (
+          <Select
+            value={effectiveNodeId}
+            onValueChange={(v) => setSelectedNode({ farmId: farmId ?? '', nodeId: v })}
+          >
+            <SelectTrigger className="w-full max-w-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {nodes.map((node) => {
+                const badge = getNodeStatusBadge(node.status);
+                return (
+                  <SelectItem key={node.id} value={node.id}>
+                    <span className="flex items-center gap-2">
+                      <span>{node.name}</span>
+                      <StatusPill tone={badge.tone} label={t(badge.labelKey)} />
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        )}
 
-      {/* Charts */}
-      {readingsError ? (
-        <p className="text-destructive">{t('monitoring.errorLoadReadings', { message: readingsError.message })}</p>
-      ) : readingsLoading && readings.length === 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full" />
-          ))}
-        </div>
-      ) : readings.length === 0 ? (
-        <p className="text-muted-foreground">{t('monitoring.emptyReadings')}</p>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          <SoilMoistureZoneChart
-            readings={readings}
-            lower={summary.thresholds.lower}
-            upper={summary.thresholds.upper}
-          />
-          <SoilTempZoneLineChart readings={readings} />
-          <AirTempZoneLineChart readings={readings} />
-          <AirHumidityZoneLineChart readings={readings} />
-        </div>
-      )}
-    </div>
+        {readingsError ? (
+          <p className="text-destructive">{t('monitoring.errorLoadReadings', { message: readingsError.message })}</p>
+        ) : readingsLoading && readings.length === 0 ? (
+          <div className="grid flex-1 gap-4 md:min-h-0 md:grid-cols-2 md:grid-rows-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="min-h-[14rem] w-full md:min-h-0" />
+            ))}
+          </div>
+        ) : readings.length === 0 ? (
+          <p className="text-muted-foreground">{t('monitoring.emptyReadings')}</p>
+        ) : (
+          <div className="grid flex-1 gap-4 md:min-h-0 md:grid-cols-2 md:grid-rows-2">
+            <SoilMoistureZoneChart
+              readings={readings}
+              lower={summary.thresholds.lower}
+              upper={summary.thresholds.upper}
+              embedded
+            />
+            <SoilTempZoneLineChart readings={readings} embedded />
+            <AirTempZoneLineChart readings={readings} embedded />
+            <AirHumidityZoneLineChart readings={readings} embedded />
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { StatusPill } from '@/components/ui/status-pill';
 import type { StatusTone } from '@/lib/status';
+import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
 import { latestValue, normalizeReadings, formatTimeLabel } from './chart-helpers';
@@ -32,7 +33,13 @@ function classifyBand(value: number): Point['band'] {
   return 'ideal';
 }
 
-export default function AirTempZoneLineChart({ readings }: { readings: Reading[] }) {
+export default function AirTempZoneLineChart({
+  readings,
+  embedded = false,
+}: {
+  readings: Reading[];
+  embedded?: boolean;
+}) {
   const { t } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
@@ -47,7 +54,11 @@ export default function AirTempZoneLineChart({ readings }: { readings: Reading[]
   const config = { value: { label: `${t('monitoring.chartAirTemp')} ${DEG_C}`, color: PALETTE.main } } satisfies ChartConfig;
 
   return (
-    <Card>
+    <Card
+      className={cn(
+        embedded && 'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
+      )}
+    >
       <CardHeader className="space-y-2 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -74,8 +85,8 @@ export default function AirTempZoneLineChart({ readings }: { readings: Reading[]
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={config} className="h-[280px] w-full">
+      <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
+        <ChartContainer config={config} className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}>
           <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.12} />
             <ReferenceArea y1={0} y2={COMFORT.min} fill={PALETTE.cool} fillOpacity={0.05} />
