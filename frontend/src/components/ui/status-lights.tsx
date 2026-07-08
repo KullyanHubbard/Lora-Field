@@ -3,41 +3,6 @@ import { cn } from '@/lib/utils';
 // Tone lampu status kebun. Termasuk 'neutral' (abu-abu) untuk status tak dikenal.
 export type LightTone = 'green' | 'yellow' | 'red' | 'neutral';
 
-// Mapping status kebun -> tone lampu. SATU sumber kebenaran tone (dipakai
-// Dashboard/FarmListPage dan halaman Kebun Saya/FarmsPage). active=hijau;
-// warning/maintenance=kuning; inactive/offline=merah; sisanya neutral.
-export function farmStatusTone(status: string): LightTone {
-  switch (status) {
-    case 'active':
-      return 'green';
-    case 'warning':
-    case 'maintenance':
-      return 'yellow';
-    case 'inactive':
-    case 'offline':
-      return 'red';
-    default:
-      return 'neutral';
-  }
-}
-
-// Mapping status kebun -> labelKey i18n (untuk teks screen reader).
-export function farmStatusLabelKey(status: string): string {
-  switch (status) {
-    case 'active':
-      return 'farmStatus.active';
-    case 'warning':
-      return 'farmStatus.warning';
-    case 'maintenance':
-      return 'farmStatus.maintenance';
-    case 'inactive':
-    case 'offline':
-      return 'farmStatus.inactive';
-    default:
-      return 'farmStatus.unknown';
-  }
-}
-
 const LIGHT_COLORS: Record<LightTone, { on: string; off: string; glow: string }> = {
   green:   { on: 'bg-emerald-400', off: 'bg-emerald-500/25', glow: 'shadow-[0_0_7px_2px_rgba(16,185,129,0.75)]' },
   yellow:  { on: 'bg-amber-400',   off: 'bg-amber-400/25',   glow: 'shadow-[0_0_5px_1px_rgba(251,191,36,0.55)]' },

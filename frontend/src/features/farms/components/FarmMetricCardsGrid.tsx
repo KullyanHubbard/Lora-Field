@@ -15,7 +15,7 @@ export function FarmMetricCardsGrid({
   const { t } = useTranslation();
   const cards: MetricStatCardConfig[] = [
     {
-      title: t('farmDetail.soilMoistureTitle'),
+      title: t('farmDetail.nodeSensor.metrics.soilMoisture'),
       icon: Droplets,
       iconColor: 'text-cyan-500 dark:text-cyan-400',
       chartColor: { light: '#06b6d4', dark: '#22d3ee' },
@@ -24,7 +24,7 @@ export function FarmMetricCardsGrid({
       decimals: 0,
     },
     {
-      title: t('nodes.colSoilTemp'),
+      title: t('farmDetail.nodeSensor.metrics.soilTemp'),
       icon: Thermometer,
       iconColor: 'text-orange-500 dark:text-orange-400',
       chartColor: { light: '#f97316', dark: '#fb923c' },
@@ -33,7 +33,7 @@ export function FarmMetricCardsGrid({
       decimals: 1,
     },
     {
-      title: t('nodes.colAirTemp'),
+      title: t('farmDetail.nodeSensor.metrics.airTemp'),
       icon: Sun,
       iconColor: 'text-amber-500 dark:text-amber-400',
       chartColor: { light: '#f59e0b', dark: '#fbbf24' },
@@ -42,7 +42,7 @@ export function FarmMetricCardsGrid({
       decimals: 1,
     },
     {
-      title: t('nodes.colAirHumidity'),
+      title: t('farmDetail.nodeSensor.metrics.airHumidity'),
       icon: Cloud,
       iconColor: 'text-sky-500 dark:text-sky-400',
       chartColor: { light: '#0ea5e9', dark: '#38bdf8' },

@@ -8,7 +8,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { StatusLights, farmStatusTone, farmStatusLabelKey } from '@/components/ui/status-lights';
+import { StatusLights } from '@/components/ui/status-lights';
+import { farmStatusLabelKey, farmStatusTone } from '@/features/farms/farmHelpers';
 import {
   DropdownMenu,
   DropdownMenuContent,

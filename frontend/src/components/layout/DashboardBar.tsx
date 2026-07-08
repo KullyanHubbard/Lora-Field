@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { LogOut } from 'lucide-react';
 import { BrandMark } from '@/components/layout/BrandMark';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/features/auth/AuthContext';
+import { useAuth } from '@/features/auth/auth-context';
 
 // Bar untuk halaman full-bleed tanpa AppLayout (Dashboard, Tambah Kebun). Sengaja
 // tipis dan bukan topbar penuh: hanya brand kiri + nama user & logout kanan.

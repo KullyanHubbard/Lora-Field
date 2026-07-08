@@ -2,7 +2,8 @@
   "common": {
     "language": "Bahasa",
     "languageId": "Bahasa Indonesia",
-    "languageEn": "English"
+    "languageEn": "English",
+    "backToFarmList": "Kembali ke Daftar Kebun"
   },
   "status": {
     "online": "Online",
@@ -206,14 +207,16 @@
     "errorLoad": "Gagal memuat ringkasan kebun: {{message}}",
     "nodesProblem": "{{count}} node bermasalah",
     "activeNodes": "Node Aktif",
-    "nodeTableTitle": "Status Node Sensor",
-    "viewMonitoring": "Lihat Monitoring",
-    "noNodes": "Belum ada sensor terhubung",
-    "noNodesDesc": "Kebun ini belum memiliki node sensor yang terdaftar",
-    "colNode": "Node",
-    "colMoisture": "Kelembapan",
-    "colSoilTemp": "Suhu Tanah",
-    "colValve": "Valve",
+    "nodeSensor": {
+      "title": "Node Sensor",
+      "empty": "Belum ada node terdaftar untuk kebun ini.",
+      "metrics": {
+        "soilMoisture": "Kelembapan Tanah",
+        "soilTemp": "Suhu Tanah",
+        "airTemp": "Suhu Udara",
+        "airHumidity": "Kelembapan Udara"
+      }
+    },
     "gaugeBatteryCardTitle": "Baterai Node",
     "gaugeBatteryEmpty": "Belum ada node",
     "gaugeBatteryScrollLeft": "Geser ke kiri",
@@ -221,7 +224,6 @@
     "batteryLow": "Rendah",
     "batteryMid": "Sedang",
     "batteryOk": "Baik",
-    "soilMoistureTitle": "Kelembapan Tanah",
     "soilZoneDry": "Kering",
     "soilZoneNormal": "Normal",
     "soilZoneWet": "Basah",
@@ -379,7 +381,6 @@
       "monitoring": "Monitoring",
       "irrigation": "Irigasi",
       "gateway": "Gateway",
-      "sensorNode": "Node Sensor",
       "weather": "Cuaca",
       "history": "Riwayat"
     }
@@ -433,21 +434,6 @@
     "forecastEmpty": "Prakiraan belum tersedia untuk kebun ini.",
     "historyTitle": "Histori Suhu (Open-Meteo)",
     "historyNoLocation": "Lokasi kebun belum diset."
-  },
-  "nodes": {
-    "errorLoad": "Gagal memuat data node: {{message}}",
-    "noData": "Data tidak tersedia.",
-    "backToDashboard": "Kembali ke Daftar Kebun",
-    "colNode": "Node",
-    "colLocation": "Lokasi Titik",
-    "colStatus": "Status",
-    "colSoilMoisture": "Kelembapan Tanah",
-    "colSoilTemp": "Suhu Tanah",
-    "colAirTemp": "Suhu Udara",
-    "colAirHumidity": "Kelembapan Udara",
-    "colBattery": "Baterai",
-    "colLastUpdate": "Update Terakhir",
-    "empty": "Belum ada node terdaftar untuk kebun ini."
   },
   "gateway": {
     "title": "Gateway",

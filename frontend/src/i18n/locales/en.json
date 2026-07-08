@@ -2,7 +2,8 @@
   "common": {
     "language": "Language",
     "languageId": "Bahasa Indonesia",
-    "languageEn": "English"
+    "languageEn": "English",
+    "backToFarmList": "Back to Farm List"
   },
   "status": {
     "online": "Online",
@@ -206,14 +207,16 @@
     "errorLoad": "Failed to load farm summary: {{message}}",
     "nodesProblem": "{{count}} node(s) with issues",
     "activeNodes": "Active Nodes",
-    "nodeTableTitle": "Sensor Node Status",
-    "viewMonitoring": "View Monitoring",
-    "noNodes": "No sensors connected",
-    "noNodesDesc": "This farm has no registered sensor nodes",
-    "colNode": "Node",
-    "colMoisture": "Moisture",
-    "colSoilTemp": "Soil Temp",
-    "colValve": "Valve",
+    "nodeSensor": {
+      "title": "Sensor Node",
+      "empty": "No nodes registered for this farm yet.",
+      "metrics": {
+        "soilMoisture": "Soil Moisture",
+        "soilTemp": "Soil Temp",
+        "airTemp": "Air Temp",
+        "airHumidity": "Air Humidity"
+      }
+    },
     "gaugeBatteryCardTitle": "Node Battery",
     "gaugeBatteryEmpty": "No nodes yet",
     "gaugeBatteryScrollLeft": "Scroll left",
@@ -221,7 +224,6 @@
     "batteryLow": "Low",
     "batteryMid": "Medium",
     "batteryOk": "Good",
-    "soilMoistureTitle": "Soil Moisture",
     "soilZoneDry": "Dry",
     "soilZoneNormal": "Normal",
     "soilZoneWet": "Wet",
@@ -383,7 +385,6 @@
       "monitoring": "Monitoring",
       "irrigation": "Irrigation",
       "gateway": "Gateway",
-      "sensorNode": "Sensor Node",
       "weather": "Weather",
       "history": "History"
     }
@@ -437,21 +438,6 @@
     "forecastEmpty": "Forecast not yet available for this farm.",
     "historyTitle": "Temperature History (Open-Meteo)",
     "historyNoLocation": "Farm location not set."
-  },
-  "nodes": {
-    "errorLoad": "Failed to load node data: {{message}}",
-    "noData": "Data not available.",
-    "backToDashboard": "Back to Farm List",
-    "colNode": "Node",
-    "colLocation": "Point Location",
-    "colStatus": "Status",
-    "colSoilMoisture": "Soil Moisture",
-    "colSoilTemp": "Soil Temp",
-    "colAirTemp": "Air Temp",
-    "colAirHumidity": "Air Humidity",
-    "colBattery": "Battery",
-    "colLastUpdate": "Last Update",
-    "empty": "No nodes registered for this farm yet."
   },
   "gateway": {
     "title": "Gateway",

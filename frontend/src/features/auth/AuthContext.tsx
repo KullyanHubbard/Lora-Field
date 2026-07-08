@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -10,6 +8,7 @@ import {
 import { api } from '@/lib/api';
 import { clearToken, getToken, setToken } from '@/lib/token';
 import type { User } from '@/types';
+import { AuthContext, type AuthContextValue } from '@/features/auth/auth-context';
 
 // Token diakses lewat lib/token.ts. User dipersist terpisah di localStorage
 // ('lf_user') seperti versi lama — ini bukan token, jadi boleh akses langsung.
@@ -25,17 +24,6 @@ function getStoredUser(): User | null {
     return null;
   }
 }
-
-interface AuthContextValue {
-  token: string | null;
-  user: User | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  updateUser: (user: User) => void;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() => getToken());
@@ -83,16 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', handler);
   }, []);
 
-  const value = useMemo(
+  const value = useMemo<AuthContextValue>(
     () => ({ token, user, isAuthenticated, login, logout, updateUser }),
     [token, user, isAuthenticated, login, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth harus dipakai di dalam <AuthProvider>');
-  return ctx;
 }

@@ -16,14 +16,16 @@ export function useFarmDetailViewModel() {
 
   const summaryQuery = useFarmSummary(farmId);
   const activityLogQuery = useGatewayLogs(farmId, 2);
+  const summary = summaryQuery.data;
+  const weather = summary?.weather ?? null;
 
-  const nodes = summaryQuery.data?.nodes ?? [];
+  const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
   const errorMessage = summaryQuery.error
     ? t('farmDetail.errorLoad', { message: summaryQuery.error.message })
     : t('farmDetail.noData2');
 
-  const warning = summaryQuery.data?.nodes_problem
-    ? t('farmDetail.nodesProblem', { count: summaryQuery.data.nodes_problem })
+  const warning = summary?.nodes_problem
+    ? t('farmDetail.nodesProblem', { count: summary.nodes_problem })
     : null;
 
   const activityLogs = useMemo(
@@ -33,14 +35,12 @@ export function useFarmDetailViewModel() {
   const valveSummary = useMemo(() => buildValveSummary(nodes), [nodes]);
   const nodeHistoricalDataMap = useMemo(() => buildNodeHistoricalDataMap(nodes), [nodes]);
   const weatherForecast = useMemo(() => {
-    return summaryQuery.data?.weather
-      ? buildWeatherForecastViewModel(summaryQuery.data.weather)
-      : null;
-  }, [summaryQuery.data?.weather]);
+    return weather ? buildWeatherForecastViewModel(weather) : null;
+  }, [weather]);
 
   return {
     farmId,
-    summary: summaryQuery.data,
+    summary,
     nodes,
     isLoading: summaryQuery.isLoading,
     hasError: Boolean(summaryQuery.error) || !summaryQuery.data,

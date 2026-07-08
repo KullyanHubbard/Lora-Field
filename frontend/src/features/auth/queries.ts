@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { useAuth } from './AuthContext';
+import { useAuth } from './auth-context';
 
 export interface RegisterPayload {
   name: string;

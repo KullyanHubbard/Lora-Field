@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { BrandMark } from '@/components/layout/BrandMark';
-import { useAuth } from '@/features/auth/AuthContext';
+import { useAuth } from '@/features/auth/auth-context';
 import { useFarmSummary } from '@/features/farms/queries';
 
 type NavItem = {

@@ -34,11 +34,8 @@ function useAnimatedValue(target: number, enabled: boolean, duration = 800) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (!enabled) {
-      setProgress(target);
-      return;
-    }
-    setProgress(0);
+    if (!enabled) return;
+
     const start = performance.now();
     let frame: number;
     function tick(now: number) {
@@ -52,7 +49,7 @@ function useAnimatedValue(target: number, enabled: boolean, duration = 800) {
     return () => cancelAnimationFrame(frame);
   }, [target, enabled, duration]);
 
-  return progress;
+  return enabled ? progress : target;
 }
 
 export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label, animate }: GaugeRingProps) {

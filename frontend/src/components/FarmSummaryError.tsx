@@ -9,16 +9,13 @@ import { Button } from '@/components/ui/button';
 // `message` = ekspresi i18n yang sudah dipakai tiap halaman (mis.
 // `error ? t('monitoring.errorLoadFarm', { message }) : t('monitoring.noData')`).
 //
-// Tombol "kembali" memakai key i18n yang SUDAH ADA. Ketujuh halaman farm-context
-// menampilkan teks identik ("Kembali ke Daftar Kebun" / "Back to Farm List"),
-// jadi satu key aman dan tidak mengubah teks yang tampil.
 export function FarmSummaryError({ message }: { message: string }) {
   const { t } = useTranslation();
   return (
     <div className="space-y-3">
       <p className="text-destructive">{message}</p>
       <Button asChild variant="outline" size="sm">
-        <Link to="/dashboard">{t('nodes.backToDashboard')}</Link>
+        <Link to="/dashboard">{t('common.backToFarmList')}</Link>
       </Button>
     </div>
   );

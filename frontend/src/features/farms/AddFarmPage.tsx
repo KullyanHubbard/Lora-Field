@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Info, MapPin, Plus } from 'lucide-react';
-import { useAuth } from '@/features/auth/AuthContext';
+import { useAuth } from '@/features/auth/auth-context';
 import { useCrops, useCreateFarm, useFarms } from './queries';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';

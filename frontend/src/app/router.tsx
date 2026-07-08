@@ -19,7 +19,6 @@ const MonitoringPage = lazy(() => import('@/features/monitoring/MonitoringPage')
 const IrrigationPage = lazy(() => import('@/features/irrigation/IrrigationPage'));
 const WeatherPage = lazy(() => import('@/features/weather/WeatherPage'));
 const GatewayPage = lazy(() => import('@/features/gateway/GatewayPage'));
-const NodesPage = lazy(() => import('@/features/nodes/NodesPage'));
 const LogsPage = lazy(() => import('@/features/logs/LogsPage'));
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
 
@@ -89,7 +88,6 @@ export function AppRouter() {
           <Route path="/farms/:id/irrigation" element={<IrrigationPage />} />
           <Route path="/farms/:id/weather" element={<WeatherPage />} />
           <Route path="/farms/:id/gateway" element={<GatewayPage />} />
-          <Route path="/farms/:id/nodes" element={<NodesPage />} />
           <Route path="/farms/:id/logs" element={<LogsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />

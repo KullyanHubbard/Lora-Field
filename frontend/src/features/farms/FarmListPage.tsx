@@ -4,7 +4,8 @@ import { Plus } from 'lucide-react';
 import { useFarms } from './queries';
 import { FarmMap } from './components/FarmMap';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatusLights, farmStatusTone } from '@/components/ui/status-lights';
+import { StatusLights } from '@/components/ui/status-lights';
+import { farmStatusTone } from '@/features/farms/farmHelpers';
 
 export default function FarmListPage() {
   const navigate = useNavigate();
