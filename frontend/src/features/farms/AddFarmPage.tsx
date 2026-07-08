@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Info, MapPin, Plus } from 'lucide-react';
-import { useAuth } from '@/features/auth/auth-context';
-import { useCrops, useCreateFarm, useFarms } from './queries';
+import { useCrops } from './queries';
+import { useAddFarmViewModel } from '@/features/farms/useAddFarmViewModel';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { DashboardBar } from '@/components/layout/DashboardBar';
@@ -242,92 +242,30 @@ function LocationDetector({
 }
 
 export default function AddFarmPage() {
-  const { user } = useAuth();
   const { t } = useTranslation();
-  const { data: farmsData } = useFarms();
-  const createFarm = useCreateFarm();
-
-  const [name, setName] = useState('');
-  const [owner, setOwner] = useState(user?.name ?? '');
-  const [location, setLocation] = useState('');
-  const [cropType, setCropType] = useState('');
-  const [areaHa, setAreaHa] = useState('');
-  const [lat, setLat] = useState('');
-  const [lng, setLng] = useState('');
-  const [adm4, setAdm4] = useState('');
-  const [forceSubmit, setForceSubmit] = useState(false);
-  const [missingFields, setMissingFields] = useState<string[]>([]);
-  const [feedback, setFeedback] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  const existingCount = farmsData?.items.length ?? 0;
-  const busy = submitting || createFarm.isPending;
-
-  const submit = async () => {
-    if (busy) return;
-    setFeedback('');
-
-    const rawName = name.trim();
-    const effectiveName = rawName || t('farms.addForm.defaultName', { count: existingCount + 1 });
-    if (!rawName) setName(effectiveName);
-
-    const trimmedLocation = location.trim();
-    const trimmedCrop = cropType.trim();
-
-    const missing: string[] = [];
-    if (!trimmedLocation) missing.push(t('farms.addForm.fieldLocation'));
-    if (!trimmedCrop) missing.push(t('farms.addForm.fieldCrop'));
-    if (areaHa === '') missing.push(t('farms.addForm.fieldArea'));
-    if (missing.length && !forceSubmit) {
-      setMissingFields(missing);
-      setForceSubmit(true);
-      return;
-    }
-    setMissingFields([]);
-
-    const parsedLat = lat !== '' ? parseFloat(lat) : NaN;
-    const parsedLng = lng !== '' ? parseFloat(lng) : NaN;
-    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
-      setFeedback(t('farms.addForm.errorNoCoords'));
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      // Best-effort resolve kode BMKG dari koordinat + alamat. Kalau belum ketemu,
-      // kebun TETAP dibuat dengan kode kosong; backend meng-resolve otomatis nanti
-      // (ensure_farm_bmkg_adm4) saat detail/cuaca kebun pertama dibuka.
-      let resolvedAdm4 = adm4.trim();
-      if (!resolvedAdm4) {
-        try {
-          const res = await api.resolveAdm4(parsedLat, parsedLng, trimmedLocation);
-          resolvedAdm4 = res.found && res.adm4 ? res.adm4 : '';
-        } catch {
-          resolvedAdm4 = '';
-        }
-      }
-
-      await createFarm.mutateAsync({
-        name: effectiveName,
-        owner: owner.trim(),
-        location: trimmedLocation,
-        crop_type: trimmedCrop,
-        area_ha: areaHa !== '' ? parseFloat(areaHa) : null,
-        bmkg_adm4_code: resolvedAdm4,
-        latitude: parsedLat,
-        longitude: parsedLng,
-      });
-    } catch {
-      // Kegagalan request sudah ditangani lewat toast di useCreateFarm.onError.
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const submitLabel =
-    forceSubmit && missingFields.length
-      ? t('farms.addForm.submitForce')
-      : t('farms.addForm.submit');
+  const {
+    name,
+    setName,
+    owner,
+    setOwner,
+    location,
+    setLocation,
+    cropType,
+    setCropType,
+    areaHa,
+    setAreaHa,
+    lat,
+    setLat,
+    lng,
+    setLng,
+    adm4,
+    setAdm4,
+    missingFields,
+    feedback,
+    busy,
+    submitLabel,
+    submit,
+  } = useAddFarmViewModel();
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
@@ -336,7 +274,7 @@ export default function AddFarmPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Button asChild variant="ghost" size="icon" className="size-7">
-              <Link to="/dashboard" aria-label={t('farms.addForm.backLabel')}>
+              <Link to="/select-farms" aria-label={t('farms.addForm.backLabel')}>
                 <ArrowLeft className="size-4" />
               </Link>
             </Button>
@@ -450,7 +388,7 @@ export default function AddFarmPage() {
                 <Plus className="size-4" /> {submitLabel}
               </Button>
               <Button asChild variant="outline">
-                <Link to="/dashboard">{t('farms.addForm.cancel')}</Link>
+                <Link to="/select-farms">{t('farms.addForm.cancel')}</Link>
               </Button>
             </div>
           </form>

@@ -9,7 +9,7 @@ import { useAuth } from './auth-context';
 export function RedirectIfAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/select-farms" replace />;
   }
   return children;
 }

@@ -23,14 +23,16 @@ import {
 } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { DASHBOARD_PREVIEW_IMAGE_URL } from "./constants"
+import "./LandingPage.css"
 
 // Lebar konten + padding horizontal yang konsisten. Tailwind v4 di proyek ini
 // tidak mengonfigurasi utility `container` (center/padding), jadi pakai kelas
 // eksplisit ini sebagai gantinya.
 const SHELL = "mx-auto w-full max-w-7xl px-4 md:px-6"
 
-// Grid garis dekoratif. Warna garis pakai token tema --grid-line (didefinisikan
-// di index.css), bukan hex hardcoded. Referensi var() bebas koma — penting karena
+// Grid garis dekoratif. Warna garis pakai token tema --grid-line (scoped di
+// LandingPage.css), bukan hex hardcoded. Referensi var() bebas koma — penting karena
 // fungsi ber-koma (mis. color-mix) di dalam arbitrary value memutus parser Tailwind
 // sehingga utiliti background-image gagal ter-generate. --border (10% putih) terlalu
 // redup; --grid-line (16% putih di dark) tampak halus tapi jelas di atas bg gelap.
@@ -205,7 +207,7 @@ export default function LandingPage() {
   // menimpa grid overlay ber-`-z-10` (paint order), bikin grid tak terlihat.
   // Background gelap halaman sudah disediakan body (index.css).
   return (
-    <div className="flex min-h-[100dvh] flex-col text-foreground">
+    <div className="landing-page flex min-h-[100dvh] flex-col text-foreground">
       <header
         className={`sticky top-0 z-50 w-full backdrop-blur-lg transition-all duration-300 ${isScrolled ? "bg-background/80 shadow-sm" : "bg-transparent"}`}
       >
@@ -331,7 +333,7 @@ export default function LandingPage() {
             >
               <div className="overflow-hidden rounded-xl border border-border/40 bg-gradient-to-b from-background to-muted/20 shadow-2xl">
                 <img
-                  src="https://cdn.dribbble.com/userupload/12302729/file/original-fa372845e394ee85bebe0389b9d86871.png?resize=1504x1128&vertical=center"
+                  src={DASHBOARD_PREVIEW_IMAGE_URL}
                   width={1280}
                   height={720}
                   alt="Pratinjau dashboard LoraField"

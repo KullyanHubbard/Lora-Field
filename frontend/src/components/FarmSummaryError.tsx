@@ -15,7 +15,7 @@ export function FarmSummaryError({ message }: { message: string }) {
     <div className="space-y-3">
       <p className="text-destructive">{message}</p>
       <Button asChild variant="outline" size="sm">
-        <Link to="/dashboard">{t('common.backToFarmList')}</Link>
+        <Link to="/select-farms">{t('common.backToFarmList')}</Link>
       </Button>
     </div>
   );

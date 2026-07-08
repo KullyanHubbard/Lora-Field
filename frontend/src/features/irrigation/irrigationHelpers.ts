@@ -1,4 +1,3 @@
-import { valveKeyFromDecision } from '@/features/farms/farmHelpers';
 import type { FarmSummary, NodeSummary } from '@/types';
 
 export type IrrigationStats = {
@@ -36,6 +35,13 @@ export function moistureCondition(value: number | null, lower: number, upper: nu
 
 export function getNodeMoisture(ns: NodeSummary) {
   return ns.latest_reading?.soil_moisture ?? null;
+}
+
+export function valveKeyFromDecision(
+  decision: NodeSummary['decision'] | null | undefined,
+): string {
+  if (!decision) return 'valve.unknown';
+  return decision.valve_state === 'open' ? 'valve.open' : 'valve.closed';
 }
 
 export function buildIrrigationStats(summary: FarmSummary, nodes: NodeSummary[]): IrrigationStats {

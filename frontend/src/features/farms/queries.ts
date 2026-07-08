@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { withMockNodeFallback } from '@/lib/mockFarmData';
+import { withMockNodeFallback } from '@/mocks/mockFarmData';
 import type { CreateFarmPayload } from '@/types';
 
 export function useFarms() {
@@ -38,7 +38,7 @@ export function useCreateFarm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farms'] });
       toast.success('Kebun berhasil ditambahkan.');
-      navigate('/dashboard', { replace: true });
+      navigate('/select-farms', { replace: true });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Gagal menambah kebun.');

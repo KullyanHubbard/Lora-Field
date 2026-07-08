@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import type { SemanticTone } from '@/types';
 
-export type GaugeTone = 'green' | 'yellow' | 'red' | 'neutral';
+export type GaugeTone = SemanticTone;
 
 interface GaugeRingProps {
   value: number | null;

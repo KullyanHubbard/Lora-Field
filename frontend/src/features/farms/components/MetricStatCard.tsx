@@ -15,7 +15,7 @@ import {
   getValidMetricNodeId,
 } from '@/features/farms/farmDetailHelpers';
 import { cn } from '@/lib/utils';
-import type { ChartPoint } from '@/lib/historicalData';
+import type { FarmMetricChartPoint } from '@/features/farms/farmDetailHistoricalData';
 import type { NodeSummary } from '@/types';
 
 export type MetricStatCardConfig = {
@@ -23,7 +23,7 @@ export type MetricStatCardConfig = {
   icon: LucideIcon;
   iconColor: string;
   chartColor: { light: string; dark: string };
-  dataKey: keyof ChartPoint;
+  dataKey: keyof FarmMetricChartPoint;
   unit: string;
   decimals: number;
 };
@@ -40,7 +40,7 @@ export function MetricStatCard({
   nodes,
   className,
 }: MetricStatCardConfig & {
-  data: Record<string, ChartPoint[]>;
+  data: Record<string, FarmMetricChartPoint[]>;
   nodes: NodeSummary[];
   className?: string;
 }) {

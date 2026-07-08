@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { MOCK_LOGS } from '@/lib/mockFarmData';
+import { MOCK_LOGS } from '@/mocks/mockLogs';
 
 // Endpoint GET /api/logs mengembalikan semua log; filter per-farm dilakukan
 // client-side (sesuai kode lama). farmId hanya menggating query, tidak dikirim

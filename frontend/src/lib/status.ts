@@ -8,7 +8,9 @@
 // pemetaan tone -> kelas/token tema dilakukan di lapisan UI (komponen Badge),
 // bukan di sini. Perilaku keputusan (status -> warna) dipertahankan apa adanya.
 
-export type StatusTone = 'green' | 'yellow' | 'red';
+import type { SemanticTone } from '@/types';
+
+export type StatusTone = Exclude<SemanticTone, 'neutral'>;
 
 export interface StatusBadge {
   labelKey: string;

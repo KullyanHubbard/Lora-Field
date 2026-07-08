@@ -1,26 +1,25 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { RedirectIfAuth } from '@/features/auth/RedirectIfAuth';
-import { RequireAuth } from '@/features/auth/RequireAuth';
+import { RedirectIfAuth, RequireAuth } from '@/features/auth';
 
 // Route-based code splitting — Leaflet (Pilih Kebun) dan chart (monitoring)
 // di-load hanya saat route pertama kali dikunjungi.
-const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
-const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
-const RegisterPage = lazy(() => import('@/features/auth/RegisterPage'));
-const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'));
-const ChangePasswordPage = lazy(() => import('@/features/auth/ChangePasswordPage'));
-const SelectFarmsPage = lazy(() => import('@/features/SelectFarms/SelectFarms'));
-const MyFarmsPage = lazy(() => import('@/features/MyFarms/MyFarms'));
-const AddFarmPage = lazy(() => import('@/features/farms/AddFarmPage'));
-const FarmDetailPage = lazy(() => import('@/features/farms/FarmDetailPage'));
-const MonitoringPage = lazy(() => import('@/features/monitoring/MonitoringPage'));
-const IrrigationPage = lazy(() => import('@/features/irrigation/IrrigationPage'));
-const WeatherPage = lazy(() => import('@/features/weather/WeatherPage'));
-const GatewayPage = lazy(() => import('@/features/gateway/GatewayPage'));
-const LogsPage = lazy(() => import('@/features/logs/LogsPage'));
-const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
+const LandingPage = lazy(() => import('@/features/landing').then(m => ({ default: m.LandingPage })));
+const LoginPage = lazy(() => import('@/features/auth').then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('@/features/auth').then(m => ({ default: m.RegisterPage })));
+const ResetPasswordPage = lazy(() => import('@/features/auth').then(m => ({ default: m.ResetPasswordPage })));
+const ChangePasswordPage = lazy(() => import('@/features/auth').then(m => ({ default: m.ChangePasswordPage })));
+const SelectFarmsPage = lazy(() => import('@/features/selectFarms').then(m => ({ default: m.SelectFarmsPage })));
+const MyFarmsPage = lazy(() => import('@/features/myFarms').then(m => ({ default: m.MyFarmsPage })));
+const AddFarmPage = lazy(() => import('@/features/farms').then(m => ({ default: m.AddFarmPage })));
+const FarmDetailPage = lazy(() => import('@/features/farms').then(m => ({ default: m.FarmDetailPage })));
+const MonitoringPage = lazy(() => import('@/features/monitoring').then(m => ({ default: m.MonitoringPage })));
+const IrrigationPage = lazy(() => import('@/features/irrigation').then(m => ({ default: m.IrrigationPage })));
+const WeatherPage = lazy(() => import('@/features/weather').then(m => ({ default: m.WeatherPage })));
+const GatewayPage = lazy(() => import('@/features/gateway').then(m => ({ default: m.GatewayPage })));
+const LogsPage = lazy(() => import('@/features/logs').then(m => ({ default: m.LogsPage })));
+const SettingsPage = lazy(() => import('@/features/settings').then(m => ({ default: m.SettingsPage })));
 
 export function AppRouter() {
   return (
@@ -81,7 +80,7 @@ export function AppRouter() {
             </RequireAuth>
           }
         >
-          <Route path="/dashboard" element={<SelectFarmsPage />} />
+          <Route path="/select-farms" element={<SelectFarmsPage />} />
           <Route path="/farms" element={<MyFarmsPage />} />
           <Route path="/farms/:id" element={<FarmDetailPage />} />
           <Route path="/farms/:id/monitoring" element={<MonitoringPage />} />
@@ -93,7 +92,7 @@ export function AppRouter() {
           <Route path="/change-password" element={<ChangePasswordPage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/select-farms" replace />} />
       </Routes>
     </Suspense>
   );

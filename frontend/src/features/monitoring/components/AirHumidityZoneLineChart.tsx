@@ -7,7 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
-import { latestValue, getHourlyMonitoringPoints } from '../chart-helpers';
+import { latestValue, getHourlyMonitoringPoints } from '../chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 

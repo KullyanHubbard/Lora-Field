@@ -1,8 +1,10 @@
-// Domain logic agregasi farm summary — diport dari frontend React lama (utils/farmHelpers.js)
-// (valveKeyFromDecision, getFarmLastUpdate). Murni, tanpa side effect.
+// Domain logic agregasi farm summary — diport dari frontend React lama (utils/farmHelpers.js).
+// Murni, tanpa side effect.
 import type { Farm, NodeSummary } from '@/types';
 
-export type FarmStatusTone = 'green' | 'yellow' | 'red' | 'neutral';
+import type { SemanticTone } from '@/types';
+
+export type FarmStatusTone = SemanticTone;
 
 // Mapping status kebun -> tone lampu. SATU sumber kebenaran tone (dipakai
 // SelectFarms dan halaman Kebun Saya/MyFarmsPage). active=hijau;
@@ -37,13 +39,6 @@ export function farmStatusLabelKey(status: string): string {
     default:
       return 'farmStatus.unknown';
   }
-}
-
-export function valveKeyFromDecision(
-  decision: NodeSummary['decision'] | null | undefined,
-): string {
-  if (!decision) return 'valve.unknown';
-  return decision.valve_state === 'open' ? 'valve.open' : 'valve.closed';
 }
 
 /**

@@ -1,3 +1,6 @@
+// Base semantic tone — used by StatusTone (excludes neutral), GaugeTone, FarmStatusTone, LightTone.
+export type SemanticTone = 'green' | 'yellow' | 'red' | 'neutral';
+
 export interface Farm {
   id: string;
   name: string;

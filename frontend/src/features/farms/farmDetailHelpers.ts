@@ -1,4 +1,7 @@
-import { getHistoricalDataForNode, type ChartPoint } from '@/lib/historicalData';
+import {
+  getHistoricalDataForNode,
+  type FarmMetricChartPoint,
+} from '@/features/farms/farmDetailHistoricalData';
 import { batteryTone } from '@/lib/status';
 import { DEG_C } from '@/lib/format';
 import { getWeatherCodeInfo, pickNumber, type WeatherIconKey } from '@/features/weather/weatherHelpers';
@@ -139,16 +142,22 @@ export function getValidMetricNodeId(nodes: NodeSummary[], selectedId: string): 
   return nodes[0]?.node.id ?? '';
 }
 
-export function getMetricValues(points: ChartPoint[], dataKey: keyof ChartPoint): number[] {
+export function getMetricValues(
+  points: FarmMetricChartPoint[],
+  dataKey: keyof FarmMetricChartPoint,
+): number[] {
   return points.map((point) => point[dataKey] as number).filter((value) => Number.isFinite(value));
 }
 
-export function buildMetricChartData(points: ChartPoint[], dataKey: keyof ChartPoint) {
+export function buildMetricChartData(
+  points: FarmMetricChartPoint[],
+  dataKey: keyof FarmMetricChartPoint,
+) {
   return points.map((point) => ({ label: point.label, value: Number(point[dataKey]) }));
 }
 
-export function buildNodeHistoricalDataMap(nodes: NodeSummary[]): Record<string, ChartPoint[]> {
-  const nodeDataMap: Record<string, ChartPoint[]> = {};
+export function buildNodeHistoricalDataMap(nodes: NodeSummary[]): Record<string, FarmMetricChartPoint[]> {
+  const nodeDataMap: Record<string, FarmMetricChartPoint[]> = {};
   nodes.forEach((ns) => {
     nodeDataMap[ns.node.id] = getHistoricalDataForNode(ns.node.id);
   });

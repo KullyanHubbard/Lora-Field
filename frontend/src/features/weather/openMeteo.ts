@@ -1,3 +1,5 @@
+import { OPEN_METEO_FORECAST_URL } from '@/features/weather/constants';
+
 export interface OpenMeteoPoint {
   time: string;
   temp: number;
@@ -19,7 +21,7 @@ export async function fetchWeatherHistory(lat: number, lon: number): Promise<Ope
     forecast_days: '1',
     timezone: 'auto',
   });
-  const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+  const res = await fetch(`${OPEN_METEO_FORECAST_URL}?${params}`);
   if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
   const json: OpenMeteoResponse = await res.json();
   const { time, temperature_2m } = json.hourly;

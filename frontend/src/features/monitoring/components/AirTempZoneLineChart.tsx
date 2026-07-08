@@ -8,7 +8,7 @@ import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
-import { latestValue, getHourlyMonitoringPoints } from '../chart-helpers';
+import { latestValue, getHourlyMonitoringPoints } from '../chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 

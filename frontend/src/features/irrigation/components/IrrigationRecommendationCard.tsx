@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { valveKeyFromDecision } from '@/features/farms/farmHelpers';
 import {
   getNodeMoisture,
   moistureCondition,
+  valveKeyFromDecision,
   type IrrigationStats,
 } from '@/features/irrigation/irrigationHelpers';
 import { getValveStatusBadge } from '@/lib/status';

@@ -67,8 +67,6 @@
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
-    /* Warna garis grid dekoratif landing page (lebih kentara dari --border). */
-    --grid-line: oklch(0 0 0 / 7%);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -105,8 +103,6 @@
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.556 0 0);
-    /* Garis grid lebih terang di dark agar tampak halus tapi jelas di atas bg gelap. */
-    --grid-line: oklch(1 0 0 / 24%);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);

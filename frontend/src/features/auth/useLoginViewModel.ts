@@ -35,7 +35,7 @@ function readPrefillEmail(): string {
 }
 
 function getRedirectPath(state: unknown): string {
-  return (state as AuthLocationState | null)?.from?.pathname ?? '/dashboard';
+  return (state as AuthLocationState | null)?.from?.pathname ?? '/select-farms';
 }
 
 export function useLoginViewModel(): LoginViewModel {

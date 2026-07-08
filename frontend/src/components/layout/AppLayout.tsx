@@ -34,6 +34,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { BrandMark } from '@/components/layout/BrandMark';
 import { useAuth } from '@/features/auth/auth-context';
+import { FarmDetailActiveNodeBadge } from '@/features/farms/components/FarmDetailActiveNodeBadge';
 import { useFarmSummary } from '@/features/farms/queries';
 
 type NavItem = {
@@ -54,7 +55,7 @@ export function AppLayout() {
   const farmName = farmSummary?.farm.name ?? t('layout.fallbackFarm');
 
   const selectorNav: NavItem[] = [
-    { to: '/dashboard', labelKey: 'layout.nav.selectFarms', icon: LayoutDashboard },
+    { to: '/select-farms', labelKey: 'layout.nav.selectFarms', icon: LayoutDashboard },
     { to: '/farms', labelKey: 'layout.nav.myFarms', icon: Sprout },
   ];
 
@@ -70,7 +71,7 @@ export function AppLayout() {
     : [];
 
   const selectorTitles: Record<string, string> = {
-    '/dashboard': t('layout.nav.selectFarms'),
+    '/select-farms': t('layout.nav.selectFarms'),
     '/farms': t('layout.nav.myFarms'),
     '/farms/add': t('farms.addForm.pageTitle'),
     '/settings': t('layout.nav.settings'),
@@ -84,7 +85,6 @@ export function AppLayout() {
 
   const isFarmSummaryPage = farmId != null && pathname === `/farms/${farmId}`;
   const summaryNodes = farmSummary?.nodes ?? [];
-  const activeNodeCount = summaryNodes.filter((ns) => ns.node.status !== 'offline').length;
 
   return (
     <SidebarProvider>
@@ -101,7 +101,7 @@ export function AppLayout() {
                   {/* Back link — sengaja bukan SidebarMenuButton, bobot visual rendah
                       supaya tidak bersaing dengan judul nama kebun di bawahnya. */}
                   <Link
-                    to="/dashboard"
+                    to="/select-farms"
                     className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <ArrowLeft className="size-3.5" />
@@ -227,14 +227,7 @@ export function AppLayout() {
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-semibold text-primary sm:text-xl">{title}</h1>
           </div>
-          {isFarmSummaryPage && summaryNodes.length > 0 && (
-            <span className="order-last w-full text-xs text-muted-foreground sm:order-none sm:w-auto sm:text-sm">
-              <span className="font-semibold tabular-nums text-foreground">{activeNodeCount}</span>
-              {' / '}
-              <span className="tabular-nums">{summaryNodes.length}</span>
-              {' '}Node Aktif
-            </span>
-          )}
+          {isFarmSummaryPage && <FarmDetailActiveNodeBadge summaryNodes={summaryNodes} />}
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <span className="hidden max-w-32 truncate text-sm text-muted-foreground sm:block lg:max-w-48">
               {user?.name ?? user?.email ?? t('layout.fallbackUser')}

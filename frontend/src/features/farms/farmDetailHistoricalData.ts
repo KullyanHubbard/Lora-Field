@@ -2,9 +2,9 @@
 // backend punya endpoint riwayat per-node. Dipakai untuk tile Min/Rata-rata/Maks
 // + grafik historis kompak di kartu metrik Ringkasan Kebun (FarmDetailPage).
 
-import { ENABLE_MOCK_NODE_FALLBACK, generateMockReadingsForNode, getMockNodeIdForNode } from '@/lib/mockFarmData';
+import { ENABLE_MOCK_NODE_FALLBACK, generateMockReadingsForNode, getMockNodeIdForNode } from '@/mocks/mockFarmData';
 
-export interface ChartPoint {
+export interface FarmMetricChartPoint {
   label: string; // jam "HH.MM" (format id-ID), jarak antar titik 1 jam
   soil_moisture: number; // %
   soil_temp: number; // °C
@@ -14,7 +14,7 @@ export interface ChartPoint {
 
 // 6 titik, jarak 1 jam. Label = 6 jam terakhir s/d jam berjalan
 // (mis. "08.00, 09.00, 10.00, 11.00, 12.00, 13.00").
-const POINTS = 6;
+export const POINTS = 6;
 
 function hourlyLabels(count: number): string[] {
   const anchor = new Date();
@@ -27,7 +27,7 @@ function hourlyLabels(count: number): string[] {
   return labels;
 }
 
-function historicalSeriesFromReadings(nodeId: string): ChartPoint[] {
+function historicalSeriesFromReadings(nodeId: string): FarmMetricChartPoint[] {
   const labels = hourlyLabels(POINTS);
   const readings = generateMockReadingsForNode(nodeId, POINTS).reverse();
 
@@ -44,7 +44,7 @@ function historicalSeriesFromReadings(nodeId: string): ChartPoint[] {
 
 const legacyAliases = ['node-a', 'node-b', 'node-c', 'node-d'];
 
-export function getHistoricalDataForNode(nodeId: string): ChartPoint[] {
+export function getHistoricalDataForNode(nodeId: string): FarmMetricChartPoint[] {
   if (!ENABLE_MOCK_NODE_FALLBACK) return [];
 
   const normalizedId = nodeId.trim().toLowerCase();

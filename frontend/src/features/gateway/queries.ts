@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { MOCK_GATEWAY_LOGS } from '@/lib/mockFarmData';
+import { MOCK_GATEWAY_LOGS } from '@/mocks/mockGatewayLogs';
 
 // Log koneksi gateway. Saat hardware belum mengirim data, tampilkan mock agar
 // ringkasan kebun tetap terisi selama fase demo/development.

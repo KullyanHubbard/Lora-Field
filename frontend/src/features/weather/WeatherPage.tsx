@@ -1,25 +1,15 @@
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import {
-  Cloud,
-  CloudLightning,
-  CloudOff,
-  CloudRain,
-  CloudRainWind,
-  CloudSun,
-  Droplets,
-  Sun,
-  Wind,
-} from 'lucide-react';
+import { Droplets, Wind } from 'lucide-react';
 import { useFarmSummary } from '@/features/farms/queries';
 import { useWeatherHistory } from './queries';
 import {
   formatForecastLabel,
   getWeatherCodeInfo,
   pickNumber,
-  type WeatherIconKey,
 } from './weatherHelpers';
+import { weatherIconMap } from '@/features/weather/weatherIconMap';
 import { DEG_C } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
@@ -39,16 +29,6 @@ const CHART_FILL_BOTTOM = 'rgba(14,165,233,0.0)';
 // token --foreground = oklch; pakai color-mix utk alpha biar aman light+dark
 const TICK_FILL = 'color-mix(in oklch, var(--foreground) 85%, transparent)';
 const GRID_STROKE = 'color-mix(in oklch, var(--foreground) 25%, transparent)';
-
-const weatherIcon: Record<WeatherIconKey, typeof Sun> = {
-  sun: Sun,
-  'cloud-sun': CloudSun,
-  cloud: Cloud,
-  'cloud-rain': CloudRain,
-  'cloud-showers': CloudRainWind,
-  'cloud-bolt': CloudLightning,
-  unknown: CloudOff,
-};
 
 const iconColor = (isRain: boolean): string =>
   isRain
@@ -159,16 +139,14 @@ function TemperatureChart({ points }: { points: ChartPoint[] }) {
 
 function WeatherMainCard({
   weather,
-  farmLat,
-  farmLon,
+  history,
 }: {
   weather: Weather | null;
-  farmLat: number | undefined;
-  farmLon: number | undefined;
+  history: ReturnType<typeof useWeatherHistory>;
 }) {
   const { t } = useTranslation();
   const info = getWeatherCodeInfo(weather?.code, weather?.condition);
-  const Icon = weatherIcon[info.iconKey];
+  const Icon = weatherIconMap[info.iconKey];
   const temp = pickNumber(weather?.temperature);
   const humidity = pickNumber(weather?.humidity);
   const wind = pickNumber(weather?.wind_speed);
@@ -180,7 +158,6 @@ function WeatherMainCard({
       ? `${wind} km/jam${direction ? ` (${direction})` : ''}`
       : '—';
 
-  const history = useWeatherHistory(farmLat, farmLon);
   const points: ChartPoint[] = (history.data ?? []).map((p) => {
     const d = new Date(p.time);
     const label = Number.isFinite(d.getTime())
@@ -238,11 +215,7 @@ function WeatherMainCard({
             {t('weather.historyTitle')}
           </p>
           <div className="h-full min-h-[16rem] lg:min-h-0 w-full rounded-lg bg-foreground/[0.04] p-2">
-            {!farmLat || !farmLon ? (
-              <p className="flex items-center justify-center py-10 text-xs text-muted-foreground">
-                {t('weather.historyNoLocation')}
-              </p>
-            ) : history.isLoading ? (
+            {history.isLoading ? (
               <Skeleton className="h-full w-full rounded-lg" />
             ) : history.isError ? (
               <p className="flex items-center justify-center py-10 text-xs text-muted-foreground">
@@ -285,7 +258,7 @@ function ForecastColumn({ weather }: { weather: Weather | null }) {
                 pickNumber(f.weather, f.code),
                 f.weather_desc || f.condition,
               );
-              const Icon = weatherIcon[info.iconKey];
+              const Icon = weatherIconMap[info.iconKey];
               const temp = pickNumber(f.t, f.temperature);
               const tempText = temp != null ? `${temp}${DEG_C}` : '—';
               return (
@@ -326,6 +299,13 @@ export default function WeatherPage() {
   const { id: farmId } = useParams();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
 
+  // Fetch Open-Meteo history PARALEL dengan farm summary — tidak perlu tunggu summary selesai.
+  // Query disabled otomatis kalau farmId/koodinat belum ada.
+  const history = useWeatherHistory(
+    summary?.farm.latitude,
+    summary?.farm.longitude,
+  );
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-6xl">
@@ -356,11 +336,7 @@ export default function WeatherPage() {
   return (
     <div className="mx-auto max-w-6xl lg:flex lg:h-[calc(100svh-5.5rem)] lg:flex-col lg:overflow-hidden">
       <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:h-full lg:min-h-0">
-        <WeatherMainCard
-          weather={weather}
-          farmLat={summary.farm.latitude}
-          farmLon={summary.farm.longitude}
-        />
+        <WeatherMainCard weather={weather} history={history} />
         <div className="w-full lg:w-72">
           <ForecastColumn weather={weather} />
         </div>

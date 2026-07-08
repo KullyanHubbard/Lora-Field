@@ -2,12 +2,12 @@ import { Link } from 'react-router-dom';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { SelectFarmsMapController } from './SelectFarmsMapController';
-import { useSelectFarmsMapViewModel } from '../hooks/useSelectFarmsMapViewModel';
+import { useSelectFarmsMapViewModel } from '../useSelectFarmsMapViewModel';
 import {
   configureSelectFarmsLeafletIcons,
   SELECT_FARMS_DEFAULT_CENTER,
   SELECT_FARMS_DEFAULT_ZOOM,
-} from '../utils/selectFarmsMapConfig';
+} from '../selectFarmsMapConfig';
 import type { Farm } from '@/types';
 
 configureSelectFarmsLeafletIcons();

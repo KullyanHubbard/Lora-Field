@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getSelectFarmMapPoints } from '../utils/selectFarmsHelpers';
+import { getSelectFarmMapPoints } from './selectFarmsHelpers';
 import type { Farm } from '@/types';
 
 export function useSelectFarmsMapViewModel(farms: Farm[]) {

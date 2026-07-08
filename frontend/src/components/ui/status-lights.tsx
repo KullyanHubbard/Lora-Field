@@ -1,7 +1,8 @@
 import { cn } from '@/lib/utils';
+import type { SemanticTone } from '@/types';
 
 // Tone lampu status kebun. Termasuk 'neutral' (abu-abu) untuk status tak dikenal.
-export type LightTone = 'green' | 'yellow' | 'red' | 'neutral';
+export type LightTone = SemanticTone;
 
 const LIGHT_COLORS: Record<LightTone, { on: string; off: string; glow: string }> = {
   green:   { on: 'bg-emerald-400', off: 'bg-emerald-500/25', glow: 'shadow-[0_0_7px_2px_rgba(16,185,129,0.75)]' },

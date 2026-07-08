@@ -3,30 +3,12 @@ import { useTranslation } from 'react-i18next';
 import {
   Check,
   ChevronRight,
-  Cloud,
-  CloudLightning,
-  CloudOff,
-  CloudRain,
-  CloudRainWind,
-  CloudSun,
-  Sun,
   TriangleAlert,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { WeatherForecastViewModel } from '@/features/farms/farmDetailHelpers';
+import { weatherIconMap } from '@/features/weather/weatherIconMap';
 import { cn } from '@/lib/utils';
-import type { WeatherIconKey } from '@/features/weather/weatherHelpers';
-
-const weatherIcon: Record<WeatherIconKey, LucideIcon> = {
-  sun: Sun,
-  'cloud-sun': CloudSun,
-  cloud: Cloud,
-  'cloud-rain': CloudRain,
-  'cloud-showers': CloudRainWind,
-  'cloud-bolt': CloudLightning,
-  unknown: CloudOff,
-};
 
 export function WeatherForecastCard({
   forecast,
@@ -38,13 +20,14 @@ export function WeatherForecastCard({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const UnavailableIcon = weatherIconMap.unknown;
 
   if (!forecast) {
     return (
       <Card className={cn('flex h-full flex-col', className)}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <CloudOff className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
+            <UnavailableIcon className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
             {t('farmDetail.weatherForecastTitle')}
           </CardTitle>
         </CardHeader>
@@ -55,7 +38,7 @@ export function WeatherForecastCard({
     );
   }
 
-  const CurrentIcon = weatherIcon[forecast.currentIconKey];
+  const CurrentIcon = weatherIconMap[forecast.currentIconKey];
 
   return (
     <Card className={cn('flex h-full flex-col', className)}>
@@ -94,7 +77,7 @@ export function WeatherForecastCard({
             <p className="text-sm text-muted-foreground">{t('farmDetail.weatherNoForecast')}</p>
           ) : (
             forecast.slots.map((slot) => {
-              const SlotIcon = weatherIcon[slot.iconKey];
+              const SlotIcon = weatherIconMap[slot.iconKey];
               return (
                 <div
                   key={slot.key}

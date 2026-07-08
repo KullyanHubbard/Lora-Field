@@ -14,7 +14,7 @@ import {
   getMyFarmStatusBorderClass,
   getMyFarmStatusDotClass,
   getMyFarmStatusRibbonClass,
-} from '@/features/MyFarms/myFarmsHelpers';
+} from '@/features/myFarms/myFarmsHelpers';
 import { farmStatusLabelKey, farmStatusTone } from '@/features/farms/farmHelpers';
 import { formatAreaHa, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';

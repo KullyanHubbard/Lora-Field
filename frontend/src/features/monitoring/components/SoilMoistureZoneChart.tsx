@@ -15,7 +15,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { getSoilStatusFromMoisture } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
-import { getHourlyMonitoringPoints, latestValue } from '../chart-helpers';
+import { getHourlyMonitoringPoints, latestValue } from '../chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 

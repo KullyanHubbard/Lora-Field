@@ -1,11 +1,11 @@
-import { GatewayInfoContent } from '@/features/gateway/components/GatewayInfoContent';
+import { GatewayInfoContent } from '@/features/farms/components/FarmDetailGatewayInfoContent';
 import { ActivityLogCard } from '@/features/farms/components/ActivityLogCard';
 import { BatteryNodesCard } from '@/features/farms/components/BatteryNodesCard';
 import { FarmMetricCardsGrid } from '@/features/farms/components/FarmMetricCardsGrid';
 import { NodeSensorCard } from '@/features/farms/components/NodeSensorCard';
 import { ValveStatCard } from '@/features/farms/components/ValveStatCard';
 import { WeatherForecastCard } from '@/features/farms/components/WeatherForecastCard';
-import type { ChartPoint } from '@/lib/historicalData';
+import type { FarmMetricChartPoint } from '@/features/farms/farmDetailHistoricalData';
 import type { ValveSummary, WeatherForecastViewModel } from '@/features/farms/farmDetailHelpers';
 import type { FarmSummary, GatewayLog, NodeSummary } from '@/types';
 
@@ -27,7 +27,7 @@ export function FarmDetailSummaryGrid({
   activityLogsLoading: boolean;
   activityLogsError: unknown;
   valveSummary: ValveSummary;
-  nodeHistoricalDataMap: Record<string, ChartPoint[]>;
+  nodeHistoricalDataMap: Record<string, FarmMetricChartPoint[]>;
   weatherForecast: WeatherForecastViewModel | null;
 }) {
   return (
