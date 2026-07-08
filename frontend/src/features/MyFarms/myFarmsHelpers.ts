@@ -1,5 +1,5 @@
 import type { Farm } from '@/types';
-import type { FarmStatusTone } from '@/features/farms/farmHelpers';
+import type { FarmStatusTone } from '@/features/dashboard/farmStatusHelpers';
 
 export function filterMyFarms(farms: Farm[], filter: string): Farm[] {
   const q = filter.trim().toLowerCase();

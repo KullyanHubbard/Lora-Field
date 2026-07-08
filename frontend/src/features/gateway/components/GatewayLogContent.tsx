@@ -6,7 +6,7 @@ import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import {
   getGatewayEventDotClass,
-  getGatewayEventLabel,
+  getGatewayEventLabelKey,
   getGatewayEventTone,
   type GatewayEventFilter,
 } from '@/features/gateway/gatewayHelpers';
@@ -35,28 +35,34 @@ export function GatewayLogContent({
 }) {
   const { t } = useTranslation();
 
+  const filterOptions: { value: GatewayEventFilter; labelKey: string }[] = [
+    { value: 'all', labelKey: 'gateway.filterAll' },
+    { value: 'connected', labelKey: 'gateway.filterConnected' },
+    { value: 'disconnected', labelKey: 'gateway.filterDisconnected' },
+    { value: 'heartbeat', labelKey: 'gateway.filterHeartbeat' },
+    { value: 'data_sync', labelKey: 'gateway.filterDataSync' },
+  ];
+
   return (
     <>
       <CardHeader className="flex flex-row items-center justify-between px-4 py-3">
         <CardTitle className="flex items-center gap-2 text-sm">
           <Activity className="size-3.5 text-muted-foreground" />
-          Riwayat Koneksi
+          {t('gateway.connectionHistory')}
         </CardTitle>
-        {totalLogs > 0 && <span className="text-xs tabular-nums text-muted-foreground">{totalLogs} event</span>}
+        {totalLogs > 0 && (
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {t('gateway.eventCount', { count: totalLogs })}
+          </span>
+        )}
       </CardHeader>
 
       <CardContent className="px-4 pb-4">
         <div className="mb-3 flex flex-wrap gap-1.5">
-          {[
-            { value: 'all', label: 'Semua' },
-            { value: 'connected', label: 'Terhubung' },
-            { value: 'disconnected', label: 'Terputus' },
-            { value: 'heartbeat', label: 'Heartbeat' },
-            { value: 'data_sync', label: 'Sinkronisasi' },
-          ].map((opt) => (
+          {filterOptions.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => onFilterChange(opt.value as GatewayEventFilter)}
+              onClick={() => onFilterChange(opt.value)}
               className={cn(
                 'inline-flex h-6 items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium leading-none transition-colors',
                 filter === opt.value
@@ -64,7 +70,7 @@ export function GatewayLogContent({
                   : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-white/20 hover:bg-white/[0.06] hover:text-foreground',
               )}
             >
-              {opt.label}
+              {t(opt.labelKey)}
               <span className="ml-1 tabular-nums opacity-60">{eventCounts[opt.value] ?? 0}</span>
             </button>
           ))}
@@ -75,8 +81,8 @@ export function GatewayLogContent({
             <div className="flex size-10 items-center justify-center rounded-full bg-muted">
               <Activity className="size-4 text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground">Belum ada log</p>
-            <p className="text-xs text-muted-foreground/60">Riwayat akan muncul setelah gateway terhubung</p>
+            <p className="text-sm text-muted-foreground">{t('gateway.noLogs')}</p>
+            <p className="text-xs text-muted-foreground/60">{t('gateway.noLogsDescription')}</p>
           </div>
         ) : (
           <>
@@ -98,7 +104,7 @@ export function GatewayLogContent({
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="truncate text-xs font-medium text-foreground">
-                            {getGatewayEventLabel(log.event)}
+                            {t(getGatewayEventLabelKey(log.event))}
                           </p>
                           {log.detail && <p className="truncate text-[0.65rem] text-muted-foreground">{log.detail}</p>}
                         </div>
@@ -121,7 +127,7 @@ export function GatewayLogContent({
                   onClick={onPreviousPage}
                   className="h-7 px-2 text-xs"
                 >
-                  Sebelumnya
+                  {t('gateway.previous')}
                 </Button>
                 <span className="tabular-nums">
                   {page + 1} / {totalPages}
@@ -133,7 +139,7 @@ export function GatewayLogContent({
                   onClick={onNextPage}
                   className="h-7 px-2 text-xs"
                 >
-                  Berikutnya
+                  {t('gateway.next')}
                 </Button>
               </div>
             )}

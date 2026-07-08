@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { filterMyFarms } from './myFarmsHelpers';
 import { useDeleteFarm } from './queries';
-import { useFarms } from '@/features/farms/queries';
+import { useFarms } from '@/features/dashboard/queries';
 import type { Farm } from '@/types';
 
 export function useMyFarmsViewModel() {

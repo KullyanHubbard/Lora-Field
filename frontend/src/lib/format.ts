@@ -1,4 +1,4 @@
-// Helper format murni — diport dari frontend React lama (utils/farmHelpers.js)
+// Helper format murni — diport dari frontend React lama (utils/farmStatusHelpers.js)
 // (DEG_C, timeAgo, formatAreaHa). Tanpa side effect; semua input dari argument.
 import type { TFunction } from 'i18next';
 

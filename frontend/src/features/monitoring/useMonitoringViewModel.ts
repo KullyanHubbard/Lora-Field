@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useFarmSummary } from '@/features/farms/queries';
+import { useFarmSummary } from '@/features/dashboard/queries';
 import { useReadings } from './queries';
 
 interface MonitoringSelection {

@@ -42,7 +42,7 @@ export function GatewayInfoCard({
         <div>
           <div className="flex items-center gap-2">
             <Radio className="size-4 shrink-0 text-blue-500 dark:text-blue-400" />
-            <h2 className="text-base font-medium text-foreground">Gateway</h2>
+            <h2 className="text-base font-medium text-foreground">{t('gateway.title')}</h2>
           </div>
           <p className="mt-1 font-mono text-xs text-muted-foreground">{info.gatewayId}</p>
         </div>
@@ -52,17 +52,17 @@ export function GatewayInfoCard({
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
         <StatTile
           icon={<Signal className="size-3.5 text-blue-500 dark:text-blue-400" />}
-          label="Sinyal"
-          value={info.signalValue}
+          label={t('gateway.signal')}
+          value={t(info.signalValueKey)}
         />
         <StatTile
           icon={<Wifi className="size-3.5 text-cyan-500 dark:text-cyan-400" />}
-          label="Internet"
-          value={info.internetValue}
+          label={t('gateway.internet')}
+          value={t(info.internetValueKey)}
         />
         <StatTile
           icon={<Clock className="size-3.5 text-muted-foreground" />}
-          label="Terakhir"
+          label={t('gateway.lastSeenShort')}
           value={info.lastSeen ? timeAgo(info.lastSeen, t) : '-'}
         />
       </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { useFarmSummary } from '@/features/farms/queries';
+import { useFarmSummary } from '@/features/dashboard/queries';
 import { useLogs } from '@/features/logs/queries';
 import {
   buildLogsCsv,

@@ -12,8 +12,8 @@ const ResetPasswordPage = lazy(() => import('@/features/auth').then(m => ({ defa
 const ChangePasswordPage = lazy(() => import('@/features/auth').then(m => ({ default: m.ChangePasswordPage })));
 const SelectFarmsPage = lazy(() => import('@/features/selectFarms').then(m => ({ default: m.SelectFarmsPage })));
 const MyFarmsPage = lazy(() => import('@/features/myFarms').then(m => ({ default: m.MyFarmsPage })));
-const AddFarmPage = lazy(() => import('@/features/farms').then(m => ({ default: m.AddFarmPage })));
-const FarmDetailPage = lazy(() => import('@/features/farms').then(m => ({ default: m.FarmDetailPage })));
+const AddFarmPage = lazy(() => import('@/features/addFarm').then(m => ({ default: m.AddFarmPage })));
+const DashboardPage = lazy(() => import('@/features/dashboard').then(m => ({ default: m.DashboardPage })));
 const MonitoringPage = lazy(() => import('@/features/monitoring').then(m => ({ default: m.MonitoringPage })));
 const IrrigationPage = lazy(() => import('@/features/irrigation').then(m => ({ default: m.IrrigationPage })));
 const WeatherPage = lazy(() => import('@/features/weather').then(m => ({ default: m.WeatherPage })));
@@ -64,7 +64,7 @@ export function AppRouter() {
 
         {/* Tambah Kebun: full-bleed tanpa AppLayout, tetap di balik RequireAuth */}
         <Route
-          path="/farms/add"
+          path="/addFarm"
           element={
             <RequireAuth>
               <AddFarmPage />
@@ -81,8 +81,8 @@ export function AppRouter() {
           }
         >
           <Route path="/select-farms" element={<SelectFarmsPage />} />
-          <Route path="/farms" element={<MyFarmsPage />} />
-          <Route path="/farms/:id" element={<FarmDetailPage />} />
+          <Route path="/my-farms" element={<MyFarmsPage />} />
+          <Route path="/farms/:id" element={<DashboardPage />} />
           <Route path="/farms/:id/monitoring" element={<MonitoringPage />} />
           <Route path="/farms/:id/irrigation" element={<IrrigationPage />} />
           <Route path="/farms/:id/weather" element={<WeatherPage />} />

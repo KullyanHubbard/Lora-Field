@@ -7,7 +7,7 @@ export { default as MyFarmsPage } from './MyFarmsPage';
 export { useMyFarmsViewModel } from './useMyFarmsViewModel';
 
 // Query hooks
-export { useFarms } from '@/features/farms/queries';
+export { useFarms } from '@/features/dashboard/queries';
 
 // Helpers (cross-feature: farmStatusTone/farmStatusLabelKey imported from farms/farmHelpers)
 export {

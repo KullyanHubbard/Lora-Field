@@ -1,26 +1,34 @@
-import { getFarmLastUpdate } from '@/features/farms/farmHelpers';
+import { getFarmLastUpdate } from '@/features/dashboard/farmStatusHelpers';
 import { getGatewayStatusBadge } from '@/lib/status';
 import type { StatusTone } from '@/lib/status';
 import type { FarmSummary, GatewayLog } from '@/types';
 
 export const GATEWAY_LOGS_PER_PAGE = 10;
 
-export const GATEWAY_EVENT_OPTIONS = [
-  { value: 'all', label: 'Semua' },
-  { value: 'connected', label: 'Terhubung' },
-  { value: 'disconnected', label: 'Terputus' },
-  { value: 'heartbeat', label: 'Heartbeat' },
-  { value: 'data_sync', label: 'Sinkronisasi' },
+export const GATEWAY_EVENT_FILTERS = [
+  'all',
+  'connected',
+  'disconnected',
+  'heartbeat',
+  'data_sync',
 ] as const;
 
-export type GatewayEventFilter = (typeof GATEWAY_EVENT_OPTIONS)[number]['value'];
+export type GatewayEventFilter = (typeof GATEWAY_EVENT_FILTERS)[number];
+
+// Map of event values to their i18n keys
+const GATEWAY_EVENT_LABEL_KEYS: Record<string, string> = {
+  connected: 'gateway.filterConnected',
+  disconnected: 'gateway.filterDisconnected',
+  heartbeat: 'gateway.filterHeartbeat',
+  data_sync: 'gateway.filterDataSync',
+};
 
 export type GatewayInfoViewModel = {
   gatewayId: string;
   statusLabelKey: string;
   statusTone: StatusTone;
-  signalValue: string;
-  internetValue: string;
+  signalValueKey: string;
+  internetValueKey: string;
   lastSeen: string | null;
 };
 
@@ -32,8 +40,8 @@ export function buildGatewayInfo(summary: FarmSummary): GatewayInfoViewModel {
     gatewayId: `gw-${summary.farm.id}`,
     statusLabelKey: status.labelKey,
     statusTone: status.tone,
-    signalValue: isOnline ? 'Kuat' : '-',
-    internetValue: isOnline ? 'WiFi' : '-',
+    signalValueKey: isOnline ? 'gateway.signalStrong' : 'gateway.signalNone',
+    internetValueKey: isOnline ? 'gateway.internetWifi' : 'gateway.internetNone',
     lastSeen: getFarmLastUpdate(summary.farm, summary.nodes),
   };
 }
@@ -66,9 +74,9 @@ export function paginateGatewayLogs(logs: GatewayLog[], page: number) {
   return logs.slice(start, start + GATEWAY_LOGS_PER_PAGE);
 }
 
-export function getGatewayEventLabel(event: string) {
-  const option = GATEWAY_EVENT_OPTIONS.find((item) => item.value === event);
-  return option?.label ?? event;
+// Returns i18n key for gateway event label
+export function getGatewayEventLabelKey(event: string): string {
+  return GATEWAY_EVENT_LABEL_KEYS[event] ?? `gateway.filter${event.charAt(0).toUpperCase() + event.slice(1)}`;
 }
 
 export function getGatewayEventTone(event: string) {

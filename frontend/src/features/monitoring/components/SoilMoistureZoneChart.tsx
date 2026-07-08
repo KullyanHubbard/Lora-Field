@@ -71,7 +71,7 @@ export default function SoilMoistureZoneChart({
         icon={<Droplets className="size-4 text-cyan-500 dark:text-cyan-400" aria-hidden="true" />}
         value={latest != null ? `${latest.toFixed(0)}%` : null}
         status={status ? { tone: status.tone, label: t(status.labelKey) } : undefined}
-        sideLabel={t('farmDetail.soilTargetCaption', { lower, upper })}
+        sideLabel={t('dashboard.soilTargetCaption', { lower, upper })}
         sideValue={`${lower}–${upper}%`}
         embedded={embedded}
         plotInsetClassName="pl-10 pr-3"

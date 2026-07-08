@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Droplets, Wind } from 'lucide-react';
-import { useFarmSummary } from '@/features/farms/queries';
+import { useFarmSummary } from '@/features/dashboard/queries';
 import { useWeatherHistory } from './queries';
 import {
   formatForecastLabel,

@@ -1,4 +1,4 @@
-// Gateway feature public API — consumed by farms (buildGatewayInfo).
+// Gateway feature public API — consumed by dashboard (buildGatewayInfo).
 
 // Page entry point
 export { default as GatewayPage } from './GatewayPage';
@@ -9,7 +9,7 @@ export { useGatewayPageViewModel } from './useGatewayPageViewModel';
 // Query hooks
 export { useGatewayLogs } from './queries';
 
-// Helper used by farms (FarmDetailGatewayInfoContent)
+// Helper used by dashboard (DashboardGatewayInfoContent)
 export {
   buildGatewayInfo,
   buildGatewayEventCounts,
@@ -17,7 +17,7 @@ export {
   getGatewayTotalPages,
   getGatewaySafePage,
   paginateGatewayLogs,
-  getGatewayEventLabel,
+  getGatewayEventLabelKey,
   getGatewayEventTone,
   getGatewayEventDotClass,
   type GatewayInfoViewModel,

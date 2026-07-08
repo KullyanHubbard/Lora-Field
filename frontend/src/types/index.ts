@@ -120,7 +120,7 @@ export interface Crop {
   upper_threshold: number;
 }
 
-// Payload POST /api/farms (field dari AddFarmPage lama)
+// Payload POST /api/farms (field dari addFarm/)
 export interface CreateFarmPayload {
   name: string;
   owner: string;

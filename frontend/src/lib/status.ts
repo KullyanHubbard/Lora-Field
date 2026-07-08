@@ -1,7 +1,7 @@
-// Status/badge mappers murni — diport dari frontend React lama (utils/farmHelpers.js:
+// Status/badge mappers murni — diport dari frontend React lama (utils/farmStatusHelpers.js:
 // getGatewayStatusBadge, getNodeStatusBadge, getValveStatusBadge,
 // getIrrigationStatusBadge, getSoilStatusFromMoisture) dan dari logika gauge di
-// pages/FarmDetailPage.jsx (SoilGauge).
+// pages/DashboardPage.jsx (SoilGauge).
 //
 // Catatan port: versi lama mengembalikan className CSS lama ('badge-green' dst).
 // Di build baru fungsi ini mengembalikan `tone` semantik (green/yellow/red);

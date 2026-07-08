@@ -34,8 +34,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { BrandMark } from '@/components/layout/BrandMark';
 import { useAuth } from '@/features/auth/auth-context';
-import { FarmDetailActiveNodeBadge } from '@/features/farms/components/FarmDetailActiveNodeBadge';
-import { useFarmSummary } from '@/features/farms/queries';
+import { DashboardActiveNodeBadge } from '@/features/dashboard/components/DashboardActiveNodeBadge';
+import { useFarmSummary } from '@/features/dashboard/queries';
 
 type NavItem = {
   to: string;
@@ -48,7 +48,7 @@ export function AppLayout() {
   const { pathname } = useLocation();
   const { t } = useTranslation();
 
-  // Context-aware: di dalam /farms/:id/* (kecuali /farms/add) → mode farm-context.
+  // Context-aware: di dalam /farms/:id/* (kecuali /addFarm) → mode farm-context.
   const farmMatch = pathname.match(/^\/farms\/([^/]+)/);
   const farmId = farmMatch && farmMatch[1] !== 'add' ? farmMatch[1] : null;
   const { data: farmSummary } = useFarmSummary(farmId ?? '');
@@ -56,12 +56,12 @@ export function AppLayout() {
 
   const selectorNav: NavItem[] = [
     { to: '/select-farms', labelKey: 'layout.nav.selectFarms', icon: LayoutDashboard },
-    { to: '/farms', labelKey: 'layout.nav.myFarms', icon: Sprout },
+    { to: '/my-farms', labelKey: 'layout.nav.myFarms', icon: Sprout },
   ];
 
   const farmNav: NavItem[] = farmId
     ? [
-        { to: `/farms/${farmId}`, labelKey: 'layout.nav.farmSummary', icon: Home },
+        { to: `/farms/${farmId}`, labelKey: 'layout.nav.dashboard', icon: Home },
         { to: `/farms/${farmId}/monitoring`, labelKey: 'layout.nav.monitoring', icon: LineChart },
         { to: `/farms/${farmId}/irrigation`, labelKey: 'layout.nav.irrigation', icon: Droplets },
         { to: `/farms/${farmId}/gateway`, labelKey: 'layout.nav.gateway', icon: Radio },
@@ -72,18 +72,18 @@ export function AppLayout() {
 
   const selectorTitles: Record<string, string> = {
     '/select-farms': t('layout.nav.selectFarms'),
-    '/farms': t('layout.nav.myFarms'),
-    '/farms/add': t('farms.addForm.pageTitle'),
+    '/my-farms': t('layout.nav.myFarms'),
+    '/addFarm': t('farms.addForm.pageTitle'),
     '/settings': t('layout.nav.settings'),
     '/change-password': t('layout.nav.changePassword'),
   };
   // Judul header farm-context ikut halaman aktif: ambil label dari farmNav,
-  // termasuk route ringkasan (/farms/:id) → "Ringkasan Kebun".
+  // termasuk route dashboard (/farms/:id) → "Dashboard".
   const farmActiveNav = farmId ? farmNav.find((item) => item.to === pathname) : undefined;
   const farmTitle = farmActiveNav ? t(farmActiveNav.labelKey) : t('layout.farmContext');
   const title = farmId ? farmTitle : (selectorTitles[pathname] ?? t('layout.nav.selectFarms'));
 
-  const isFarmSummaryPage = farmId != null && pathname === `/farms/${farmId}`;
+  const isDashboardPage = farmId != null && pathname === `/farms/${farmId}`;
   const summaryNodes = farmSummary?.nodes ?? [];
 
   return (
@@ -180,8 +180,8 @@ export function AppLayout() {
 
                     {/* Registrasi Kebun */}
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === '/farms/add'}>
-                        <Link to="/farms/add">
+                      <SidebarMenuButton asChild isActive={pathname === '/addFarm'}>
+                        <Link to="/addFarm">
                           <Plus />
                           <span>{t('layout.nav.registerFarm')}</span>
                         </Link>
@@ -227,7 +227,7 @@ export function AppLayout() {
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-semibold text-primary sm:text-xl">{title}</h1>
           </div>
-          {isFarmSummaryPage && <FarmDetailActiveNodeBadge summaryNodes={summaryNodes} />}
+          {isDashboardPage && <DashboardActiveNodeBadge summaryNodes={summaryNodes} />}
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <span className="hidden max-w-32 truncate text-sm text-muted-foreground sm:block lg:max-w-48">
               {user?.name ?? user?.email ?? t('layout.fallbackUser')}

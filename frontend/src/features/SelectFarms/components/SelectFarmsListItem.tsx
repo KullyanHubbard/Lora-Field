@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { StatusLights } from '@/components/ui/status-lights';
-import { farmStatusTone } from '@/features/farms/farmHelpers';
+import { farmStatusTone } from '@/features/dashboard/farmStatusHelpers';
 import { getShortFarmLocation } from '@/features/selectFarms/selectFarmsHelpers';
 import type { Farm } from '@/types';
 

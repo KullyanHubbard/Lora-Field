@@ -7,7 +7,7 @@ export { default as SelectFarmsPage } from './SelectFarmsPage';
 export { useSelectFarmsViewModel } from './useSelectFarmsViewModel';
 
 // Query hooks
-export { useFarms } from '@/features/farms/queries';
+export { useFarms } from '@/features/dashboard/queries';
 
 // Helpers (cross-feature: farmStatusTone imported from farms/farmHelpers)
 export {

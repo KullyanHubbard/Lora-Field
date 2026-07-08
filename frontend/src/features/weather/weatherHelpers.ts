@@ -1,6 +1,6 @@
 // Domain logic cuaca — diport dari frontend React lama (pages/WeatherPage.jsx:
 // WEATHER_CODES, getWeatherCodeInfo, pickNumber, formatForecastLabel) dan
-// getWeatherInfo dari utils/farmHelpers.js.
+// getWeatherInfo dari utils/farmStatusHelpers.js.
 //
 // Catatan port: versi lama menyimpan ikon sebagai kelas FontAwesome ('fas fa-...').
 // Build baru pakai lucide, jadi di sini ikon disimpan sebagai `iconKey` semantik;

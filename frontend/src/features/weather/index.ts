@@ -4,7 +4,7 @@
 export { default as WeatherPage } from './WeatherPage';
 
 // Query hooks
-export { useFarmSummary } from '@/features/farms/queries';
+export { useFarmSummary } from '@/features/dashboard/queries';
 
 // Weather helpers (used by farms WeatherForecastCard and internally)
 export {

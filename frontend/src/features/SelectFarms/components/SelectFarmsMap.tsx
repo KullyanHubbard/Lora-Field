@@ -33,7 +33,7 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
             <div className="flex flex-col gap-1">
               <strong>{farm.name}</strong>
               <Link to={`/farms/${farm.id}`} className="text-primary hover:underline">
-                Buka Ringkasan Kebun
+                Buka Dashboard
               </Link>
             </div>
           </Popup>

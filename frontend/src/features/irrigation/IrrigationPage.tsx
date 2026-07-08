@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
-import { getFarmLastUpdate } from '@/features/farms/farmHelpers';
+import { getFarmLastUpdate } from '@/features/dashboard/farmStatusHelpers';
 import { IrrigationHeaderCard } from '@/features/irrigation/components/IrrigationHeaderCard';
 import { IrrigationLoadingState } from '@/features/irrigation/components/IrrigationLoadingState';
 import { IrrigationNodeGridCard } from '@/features/irrigation/components/IrrigationNodeGridCard';

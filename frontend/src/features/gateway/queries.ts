@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 import { MOCK_GATEWAY_LOGS } from '@/mocks/mockGatewayLogs';
 
 // Log koneksi gateway. Saat hardware belum mengirim data, tampilkan mock agar
-// ringkasan kebun tetap terisi selama fase demo/development.
+// dashboard tetap terisi selama fase demo/development.
 export function useGatewayLogs(farmId?: string, limit = 20) {
   return useQuery({
     queryKey: ['gateway-logs', farmId, limit],

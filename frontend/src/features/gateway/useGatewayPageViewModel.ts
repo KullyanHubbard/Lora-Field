@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useFarmSummary } from '@/features/farms/queries';
+import { useFarmSummary } from '@/features/dashboard/queries';
 import {
   buildGatewayEventCounts,
   buildGatewayInfo,

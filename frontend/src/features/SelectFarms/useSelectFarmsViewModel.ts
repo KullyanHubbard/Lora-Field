@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useFarms } from '@/features/farms/queries';
+import { useFarms } from '@/features/dashboard/queries';
 
 export function useSelectFarmsViewModel() {
   const navigate = useNavigate();
@@ -9,7 +9,7 @@ export function useSelectFarmsViewModel() {
     farms: data?.items ?? [],
     isLoading,
     error,
-    onAddFarm: () => navigate('/farms/add'),
+    onAddFarm: () => navigate('/addFarm'),
     onOpenFarm: (id: string) => navigate(`/farms/${id}`),
   };
 }

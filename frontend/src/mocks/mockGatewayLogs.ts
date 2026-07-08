@@ -1,7 +1,7 @@
 import type { GatewayLog } from '@/types';
 
 // DATA DUMMY — log aktivitas gateway. Dipakai sebagai placeholder di halaman
-// Ringkasan Kebun saat backend belum mengirim log koneksi gateway.
+// Dashboard (/farms/:id) saat backend belum mengirim log koneksi gateway.
 // Spread ~3 hari, campuran connected / disconnected / heartbeat / data_sync.
 const H = 60 * 60 * 1000;
 export const MOCK_GATEWAY_LOGS: GatewayLog[] = (() => {

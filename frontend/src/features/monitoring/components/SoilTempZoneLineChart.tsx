@@ -76,7 +76,7 @@ export default function SoilTempZoneLineChart({
         value={latestAvg != null ? latestAvg.toFixed(1) : null}
         unit={DEG_C}
         status={latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined}
-        sideLabel={t('farmDetail.soilTargetCaption', {
+        sideLabel={t('dashboard.soilTargetCaption', {
           lower: OPTIMAL_SOIL_TEMP.min,
           upper: OPTIMAL_SOIL_TEMP.max,
         })}
