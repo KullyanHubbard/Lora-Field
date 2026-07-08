@@ -1,18 +1,29 @@
-import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useFarmSummary } from '@/features/farms/queries';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { GatewayInfoContent } from './components/GatewayInfoContent';
+import { GatewayInfoCard } from './components/GatewayInfoCard';
 import { GatewayLogContent } from './components/GatewayLogContent';
+import { useGatewayPageViewModel } from './useGatewayPageViewModel';
 
 export default function GatewayPage() {
   const { t } = useTranslation();
-  const { id: farmId } = useParams();
-  const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
+  const {
+    gatewayInfo,
+    isSummaryLoading,
+    summaryError,
+    totalLogs,
+    safePage,
+    totalPages,
+    filter,
+    eventCounts,
+    logs,
+    changeFilter,
+    previousPage,
+    nextPage,
+  } = useGatewayPageViewModel();
 
-  if (isLoading) {
+  if (isSummaryLoading) {
     return (
       <div className="space-y-4 max-w-xl mx-auto">
         <Skeleton className="h-56 w-full" />
@@ -21,11 +32,11 @@ export default function GatewayPage() {
     );
   }
 
-  if (error || !summary) {
+  if (summaryError || !gatewayInfo) {
     return (
       <FarmSummaryError
         message={
-          error ? t('gateway.errorLoad', { message: error.message }) : t('gateway.noData')
+          summaryError ? t('gateway.errorLoad', { message: summaryError.message }) : t('gateway.noData')
         }
       />
     );
@@ -33,15 +44,23 @@ export default function GatewayPage() {
 
   return (
     <div className="space-y-5 max-w-xl mx-auto">
-      {/* ——— KARTU UTAMA GATEWAY ——— */}
-      <GatewayInfoContent
-        summary={summary}
+      <GatewayInfoCard
+        info={gatewayInfo}
         className="rounded-2xl border border-border bg-gradient-to-br from-card to-card/80 p-6 transition-colors"
       />
 
-      {/* ——— RIWAYAT KONEKSI ——— */}
       <Card>
-        <GatewayLogContent farmId={farmId} />
+        <GatewayLogContent
+          logs={logs}
+          totalLogs={totalLogs}
+          eventCounts={eventCounts}
+          filter={filter}
+          page={safePage}
+          totalPages={totalPages}
+          onFilterChange={changeFilter}
+          onPreviousPage={previousPage}
+          onNextPage={nextPage}
+        />
       </Card>
     </div>
   );

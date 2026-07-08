@@ -16,15 +16,24 @@ export const LOG_TYPE_LABEL: Record<LogType, string> = {
   open: 'logClass.open',
   delayed: 'logClass.delayed',
   closed: 'logClass.closed',
+  warning: 'logClass.warning',
   normal: 'logClass.normal',
 };
 
 export type LogFilterKey = (typeof LOG_FILTER_OPTIONS)[number]['key'];
 
-export type LogType = 'open' | 'delayed' | 'closed' | 'normal';
+export type LogType = 'open' | 'delayed' | 'closed' | 'warning' | 'normal';
 
 export function classifyLog(log: Pick<IrrigationLog, 'decision' | 'valve_state'>): LogType {
   const decision = String(log.decision || '').toLowerCase();
+  if (
+    decision.includes('reconnect') ||
+    decision.includes('delay') ||
+    decision.includes('anomali') ||
+    decision.includes('peringatan')
+  ) {
+    return 'warning';
+  }
   if (log.valve_state === 'open') return 'open';
   if (decision.includes('ditunda')) return 'delayed';
   if (log.valve_state === 'closed' && decision.includes('berhenti')) return 'closed';
@@ -32,7 +41,7 @@ export function classifyLog(log: Pick<IrrigationLog, 'decision' | 'valve_state'>
 }
 
 // Versi lama: getDecisionBadgeClass -> 'badge-green' dst. Sekarang return tone.
-export function getDecisionTone(type: LogType | 'warning'): StatusTone {
+export function getDecisionTone(type: LogType): StatusTone {
   switch (type) {
     case 'open':
       return 'green';
