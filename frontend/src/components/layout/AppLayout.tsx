@@ -54,7 +54,7 @@ export function AppLayout() {
   const farmName = farmSummary?.farm.name ?? t('layout.fallbackFarm');
 
   const selectorNav: NavItem[] = [
-    { to: '/dashboard', labelKey: 'layout.nav.dashboard', icon: LayoutDashboard },
+    { to: '/dashboard', labelKey: 'layout.nav.selectFarms', icon: LayoutDashboard },
     { to: '/farms', labelKey: 'layout.nav.myFarms', icon: Sprout },
   ];
 
@@ -70,7 +70,7 @@ export function AppLayout() {
     : [];
 
   const selectorTitles: Record<string, string> = {
-    '/dashboard': t('layout.nav.dashboard'),
+    '/dashboard': t('layout.nav.selectFarms'),
     '/farms': t('layout.nav.myFarms'),
     '/farms/add': t('farms.addForm.pageTitle'),
     '/settings': t('layout.nav.settings'),
@@ -80,7 +80,7 @@ export function AppLayout() {
   // termasuk route ringkasan (/farms/:id) → "Ringkasan Kebun".
   const farmActiveNav = farmId ? farmNav.find((item) => item.to === pathname) : undefined;
   const farmTitle = farmActiveNav ? t(farmActiveNav.labelKey) : t('layout.farmContext');
-  const title = farmId ? farmTitle : (selectorTitles[pathname] ?? t('layout.nav.dashboard'));
+  const title = farmId ? farmTitle : (selectorTitles[pathname] ?? t('layout.nav.selectFarms'));
 
   const isFarmSummaryPage = farmId != null && pathname === `/farms/${farmId}`;
   const summaryNodes = farmSummary?.nodes ?? [];
@@ -105,7 +105,7 @@ export function AppLayout() {
                     className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <ArrowLeft className="size-3.5" />
-                    <span>{t('layout.backToDashboard')}</span>
+                    <span>{t('layout.backToSelectFarms')}</span>
                   </Link>
                   {/* Nama kebun = judul halaman farm-context. */}
                   <div className="mt-1 truncate px-2 pb-1 text-base font-semibold text-foreground">

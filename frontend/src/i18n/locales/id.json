@@ -354,8 +354,8 @@
     "inactive": "Tidak Aktif",
     "unknown": "Tidak Diketahui"
   },
-  "dashboard": {
-    "title": "Daftar Kebun",
+  "selectFarms": {
+    "title": "Pilih Kebun",
     "errorLoad": "Gagal memuat kebun: {{message}}",
     "empty": "Belum ada kebun.",
     "openFarm": "Buka {{name}}"
@@ -364,13 +364,13 @@
     "menu": "Menu",
     "menuNav": "Menu Navigasi",
     "farmContext": "Detail Kebun",
-    "backToDashboard": "Dashboard",
+    "backToSelectFarms": "Pilih Kebun",
     "logout": "Logout",
     "fallbackFarm": "Kebun",
     "fallbackUser": "Pengguna",
     "nav": {
       "home": "Home",
-      "dashboard": "Dashboard",
+      "selectFarms": "Pilih Kebun",
       "myFarms": "Kebun Saya",
       "registerFarm": "Registrasi Kebun",
       "settings": "Pengaturan",

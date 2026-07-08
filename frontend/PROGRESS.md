@@ -18,7 +18,7 @@ Snapshot kondisi terkini (update: 2026-06-21). Ringkas, untuk handoff antar-sesi
 - **Dark-only.** Toggle light mode = future (bukan sekarang).
 - **Badge subtle** via `StatusPill`: no-data = neutral abu-abu, merah hanya untuk kondisi kritis.
 - **Gauge `SoilGauge` dilepas** — FarmDetail pakai `StatCard` angka, bukan gauge.
-- **Dashboard** = peta + card kebun. Card berisi Nama + Komoditas + Status saja (tanpa stat row).
+- **Pilih Kebun** = peta + card kebun. Card berisi Nama + Komoditas + Status saja (tanpa stat row).
 - **Sidebar farm-context** punya link "Ringkasan Kebun" → `/farms/:id`.
 
 ## 4. Deviasi Tooling (vs panduan/ekspektasi awal)

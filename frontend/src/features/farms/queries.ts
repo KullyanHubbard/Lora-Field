@@ -45,17 +45,3 @@ export function useCreateFarm() {
     },
   });
 }
-
-export function useDeleteFarm() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => api.deleteFarm(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['farms'] });
-      toast.success('Kebun berhasil dihapus.');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Gagal menghapus kebun.');
-    },
-  });
-}

@@ -4,7 +4,7 @@ import { BrandMark } from '@/components/layout/BrandMark';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
 
-// Bar untuk halaman full-bleed tanpa AppLayout (Dashboard, Tambah Kebun). Sengaja
+// Bar untuk halaman full-bleed tanpa AppLayout (mis. Tambah Kebun). Sengaja
 // tipis dan bukan topbar penuh: hanya brand kiri + nama user & logout kanan.
 export function DashboardBar({ title = 'Menu Navigasi' }: { title?: string }) {
   const { user, logout } = useAuth();

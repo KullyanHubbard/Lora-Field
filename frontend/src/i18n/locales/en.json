@@ -358,8 +358,8 @@
     "inactive": "Inactive",
     "unknown": "Unknown"
   },
-  "dashboard": {
-    "title": "Farm List",
+  "selectFarms": {
+    "title": "Select Farm",
     "errorLoad": "Failed to load farms: {{message}}",
     "empty": "No farms yet.",
     "openFarm": "Open {{name}}"
@@ -368,13 +368,13 @@
     "menu": "Menu",
     "menuNav": "Navigation Menu",
     "farmContext": "Farm Detail",
-    "backToDashboard": "Dashboard",
+    "backToSelectFarms": "Select Farm",
     "logout": "Logout",
     "fallbackFarm": "Farm",
     "fallbackUser": "User",
     "nav": {
       "home": "Home",
-      "dashboard": "Dashboard",
+      "selectFarms": "Select Farm",
       "myFarms": "My Farms",
       "registerFarm": "Register Farm",
       "settings": "Settings",

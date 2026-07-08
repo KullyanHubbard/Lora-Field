@@ -4,15 +4,15 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { RedirectIfAuth } from '@/features/auth/RedirectIfAuth';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 
-// Route-based code splitting — Leaflet (dashboard) dan chart (monitoring)
+// Route-based code splitting — Leaflet (Pilih Kebun) dan chart (monitoring)
 // di-load hanya saat route pertama kali dikunjungi.
 const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/features/auth/RegisterPage'));
 const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'));
 const ChangePasswordPage = lazy(() => import('@/features/auth/ChangePasswordPage'));
-const DashboardPage = lazy(() => import('@/features/farms/FarmListPage'));
-const FarmsPage = lazy(() => import('@/features/farms/FarmsPage'));
+const SelectFarmsPage = lazy(() => import('@/features/SelectFarms/SelectFarms'));
+const MyFarmsPage = lazy(() => import('@/features/MyFarms/MyFarms'));
 const AddFarmPage = lazy(() => import('@/features/farms/AddFarmPage'));
 const FarmDetailPage = lazy(() => import('@/features/farms/FarmDetailPage'));
 const MonitoringPage = lazy(() => import('@/features/monitoring/MonitoringPage'));
@@ -37,7 +37,7 @@ export function AppRouter() {
         {/* Landing page publik — tanpa auth guard, untuk semua pengunjung */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* Auth routes: kalau sudah login, lempar ke dashboard */}
+        {/* Auth routes: kalau sudah login, lempar ke Pilih Kebun */}
         <Route
           path="/login"
           element={
@@ -81,8 +81,8 @@ export function AppRouter() {
             </RequireAuth>
           }
         >
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/farms" element={<FarmsPage />} />
+          <Route path="/dashboard" element={<SelectFarmsPage />} />
+          <Route path="/farms" element={<MyFarmsPage />} />
           <Route path="/farms/:id" element={<FarmDetailPage />} />
           <Route path="/farms/:id/monitoring" element={<MonitoringPage />} />
           <Route path="/farms/:id/irrigation" element={<IrrigationPage />} />

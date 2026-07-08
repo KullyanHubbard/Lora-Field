@@ -5,7 +5,7 @@ import type { Farm, NodeSummary } from '@/types';
 export type FarmStatusTone = 'green' | 'yellow' | 'red' | 'neutral';
 
 // Mapping status kebun -> tone lampu. SATU sumber kebenaran tone (dipakai
-// Dashboard/FarmListPage dan halaman Kebun Saya/FarmsPage). active=hijau;
+// SelectFarms dan halaman Kebun Saya/MyFarmsPage). active=hijau;
 // warning/maintenance=kuning; inactive/offline=merah; sisanya neutral.
 export function farmStatusTone(status: string): FarmStatusTone {
   switch (status) {
