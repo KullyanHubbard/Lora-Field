@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { MapContainer, Marker, TileLayer, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { SelectFarmsMapController } from './SelectFarmsMapController';
 import { useSelectFarmsMapViewModel } from '../useSelectFarmsMapViewModel';
@@ -25,18 +24,13 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
       {points.map(({ farm, pos }) => (
         <Marker key={farm.id} position={pos}>
-          <Popup>
-            <div className="flex flex-col gap-1">
-              <strong>{farm.name}</strong>
-              <Link to={`/farms/${farm.id}`} className="text-primary hover:underline">
-                Buka Dashboard
-              </Link>
-            </div>
-          </Popup>
+          <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent={false}>
+            <span className="font-medium">{farm.name}</span>
+          </Tooltip>
         </Marker>
       ))}
       <SelectFarmsMapController points={positions} />
