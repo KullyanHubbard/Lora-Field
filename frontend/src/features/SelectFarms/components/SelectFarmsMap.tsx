@@ -18,7 +18,7 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
     <MapContainer
       center={SELECT_FARMS_DEFAULT_CENTER}
       zoom={SELECT_FARMS_DEFAULT_ZOOM}
-      scrollWheelZoom={false}
+      scrollWheelZoom={true}
       className="h-[320px] w-full rounded-lg sm:h-[420px] lg:h-[560px] xl:h-[680px]"
       aria-label="Peta lokasi kebun"
     >
