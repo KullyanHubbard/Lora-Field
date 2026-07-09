@@ -1,8 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { MyFarmDeleteDialog } from './MyFarmDeleteDialog';
+import { MyFarmEditDialog } from './MyFarmEditDialog';
+import { MyFarmColorPicker } from './MyFarmColorPicker';
 import { MyFarmsList } from './MyFarmsList';
 import { MyFarmsLoadingState } from './MyFarmsLoadingState';
 import { MyFarmsSearchBar } from './MyFarmsSearchBar';
+import { getFarmMarkerColor, type MarkerColorId } from '../farmColorStorage';
 import type { Farm } from '@/types';
 
 interface MyFarmsViewProps {
@@ -16,6 +19,16 @@ interface MyFarmsViewProps {
   onRequestDeleteFarm: (farm: Farm) => void;
   onCloseDeleteDialog: () => void;
   onConfirmDeleteFarm: () => void;
+  farmPendingEdit: Farm | null;
+  farmPendingColor: Farm | null;
+  isEditing: boolean;
+  currentColor: MarkerColorId;
+  onRequestEditFarm: (farm: Farm) => void;
+  onCloseEditDialog: () => void;
+  onConfirmEditFarm: (newName: string) => void;
+  onRequestChangeColorFarm: (farm: Farm) => void;
+  onCloseColorPicker: () => void;
+  onConfirmColorChange: (colorId: MarkerColorId) => void;
 }
 
 export function MyFarmsView({
@@ -29,6 +42,16 @@ export function MyFarmsView({
   onRequestDeleteFarm,
   onCloseDeleteDialog,
   onConfirmDeleteFarm,
+  farmPendingEdit,
+  farmPendingColor,
+  isEditing,
+  currentColor,
+  onRequestEditFarm,
+  onCloseEditDialog,
+  onConfirmEditFarm,
+  onRequestChangeColorFarm,
+  onCloseColorPicker,
+  onConfirmColorChange,
 }: MyFarmsViewProps) {
   const { t } = useTranslation();
 
@@ -49,8 +72,28 @@ export function MyFarmsView({
           {filter ? t('farms.emptyFiltered') : t('farms.empty')}
         </p>
       ) : (
-        <MyFarmsList farms={visibleFarms} onRequestDeleteFarm={onRequestDeleteFarm} />
+        <MyFarmsList
+          farms={visibleFarms}
+          onRequestDeleteFarm={onRequestDeleteFarm}
+          onRequestEditFarm={onRequestEditFarm}
+          onRequestChangeColorFarm={onRequestChangeColorFarm}
+        />
       )}
+
+      <MyFarmEditDialog
+        farm={farmPendingEdit}
+        isUpdating={isEditing}
+        onClose={onCloseEditDialog}
+        onConfirm={onConfirmEditFarm}
+      />
+
+      <MyFarmColorPicker
+        farmName={farmPendingColor?.name ?? ''}
+        isOpen={farmPendingColor != null}
+        currentColor={currentColor}
+        onColorChange={onConfirmColorChange}
+        onClose={onCloseColorPicker}
+      />
 
       <MyFarmDeleteDialog
         farm={farmPendingDelete}

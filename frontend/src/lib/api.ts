@@ -111,6 +111,12 @@ export const api = {
 
   deleteFarm: (id: string) => apiFetch<void>(`/farms/${id}`, { method: 'DELETE' }),
 
+  updateFarm: (id: string, payload: Partial<Farm>) =>
+    apiFetch<{ farm: Farm }>(`/farms/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
   // --- Utils ---
   getCrops: (q = '') =>
     apiFetch<{ crops: Crop[] }>(`/crops${q ? `?q=${encodeURIComponent(q)}` : ''}`),

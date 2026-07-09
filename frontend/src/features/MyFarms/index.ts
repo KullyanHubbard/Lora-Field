@@ -10,9 +10,4 @@ export { useMyFarmsViewModel } from './useMyFarmsViewModel';
 export { useFarms } from '@/features/dashboard/queries';
 
 // Helpers (cross-feature: farmStatusTone/farmStatusLabelKey imported from farms/farmHelpers)
-export {
-  filterMyFarms,
-  getMyFarmStatusBorderClass,
-  getMyFarmStatusDotClass,
-  getMyFarmStatusRibbonClass,
-} from './myFarmsHelpers';
+export { filterMyFarms } from './myFarmsHelpers';

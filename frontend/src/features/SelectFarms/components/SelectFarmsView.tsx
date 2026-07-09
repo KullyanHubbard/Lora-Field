@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { SelectFarmsLoadingState } from './SelectFarmsLoadingState';
 import { SelectFarmsMap } from './SelectFarmsMap';
 import type { Farm } from '@/types';
@@ -14,19 +13,17 @@ export function SelectFarmsView({
   isLoading,
   error,
 }: SelectFarmsViewProps) {
-  const { t } = useTranslation();
-
   if (isLoading) return <SelectFarmsLoadingState />;
 
   if (error) {
     return (
-      <p className="text-destructive">{t('selectFarms.errorLoad', { message: error.message })}</p>
+      <p className="p-4 text-destructive">{error.message}</p>
     );
   }
 
   return (
-    <div className="w-full rounded-xl border border-border p-4 sm:p-6">
-      <div className="rounded-xl border border-border bg-muted/40 p-1.5">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex-1 min-h-0 rounded-xl border border-border bg-muted/40">
         <SelectFarmsMap farms={farms} />
       </div>
     </div>

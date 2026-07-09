@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, MoreVertical, Ruler, Sprout } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -9,105 +9,62 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { StatusLights } from '@/components/ui/status-lights';
-import {
-  getMyFarmStatusBorderClass,
-  getMyFarmStatusDotClass,
-  getMyFarmStatusRibbonClass,
-} from '@/features/myFarms/myFarmsHelpers';
-import { farmStatusLabelKey, farmStatusTone } from '@/features/dashboard/farmStatusHelpers';
-import { formatAreaHa, timeAgo } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { formatAreaHa } from '@/lib/format';
 import type { Farm } from '@/types';
 
 interface MyFarmsCardProps {
   farm: Farm;
   onRequestDelete: (farm: Farm) => void;
+  onRequestEdit: (farm: Farm) => void;
+  onRequestChangeColor: (farm: Farm) => void;
 }
 
-export function MyFarmsCard({ farm, onRequestDelete }: MyFarmsCardProps) {
+export function MyFarmsCard({
+  farm,
+  onRequestDelete,
+  onRequestEdit,
+  onRequestChangeColor,
+}: MyFarmsCardProps) {
   const { t } = useTranslation();
-  const statusTone = farmStatusTone(farm.status);
 
   return (
     <Card
-      className={cn(
-        'group relative h-full overflow-hidden border-l-4 p-0 transition-all hover:shadow-md',
-        getMyFarmStatusBorderClass(statusTone),
-      )}
+      className="relative h-full overflow-hidden p-0 transition-all hover:shadow-md"
     >
-      {/* Strip pita dekoratif tipis di atas */}
-      <div
-        className={cn(
-          'absolute right-0 top-0 h-1 w-1/3 rounded-bl-full',
-          getMyFarmStatusRibbonClass(statusTone),
-        )}
-        aria-hidden="true"
-      />
 
-      <Link to={`/farms/${farm.id}`} className="block p-5">
-        {/* Header: nama + status */}
-        <div className="flex items-start justify-between gap-2">
+      <Link to={`/farms/${farm.id}`} className="block p-6">
+        {/* Header: nama + owner */}
+        <div className="flex items-start gap-2">
           <div className="flex min-w-0 flex-col">
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Sprout className="size-3.5" />
-              </span>
-              <h3 className="truncate font-semibold text-foreground">{farm.name}</h3>
-              <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-1.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider text-muted-foreground">
-                <span
-                  className={cn('size-1.5 shrink-0 rounded-full', getMyFarmStatusDotClass(statusTone))}
-                  aria-hidden="true"
-                />
-                {t(farmStatusLabelKey(farm.status))}
-              </span>
-            </div>
+            <h3 className="truncate text-lg font-semibold text-foreground">{farm.name}</h3>
             {farm.owner && (
-              <span className="ml-9 mt-0.5 text-xs text-muted-foreground">{farm.owner}</span>
+              <span className="mt-1 text-sm text-muted-foreground">{farm.owner}</span>
             )}
           </div>
-          <StatusLights
-            tone={statusTone}
-            label={t(farmStatusLabelKey(farm.status))}
-            className="shrink-0"
-          />
         </div>
 
         {/* Detail info */}
-        <div className="mt-3 grid grid-cols-1 gap-2 min-[420px]:ml-9 min-[420px]:grid-cols-3">
-          <div className="rounded-lg bg-muted/40 p-2">
-            <div className="flex items-center gap-1 text-[0.65rem] text-muted-foreground">
-              <MapPin className="size-2.5" />
-              <span>Lokasi</span>
-            </div>
-            <p className="mt-0.5 truncate text-xs font-medium text-foreground">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="rounded-lg bg-muted/40 p-3">
+            <div className="text-xs text-muted-foreground">Lokasi</div>
+            <p className="mt-1 truncate text-sm font-medium text-foreground">
               {farm.location || '—'}
             </p>
           </div>
-          <div className="rounded-lg bg-muted/40 p-2">
-            <div className="flex items-center gap-1 text-[0.65rem] text-muted-foreground">
-              <Sprout className="size-2.5" />
-              <span>Tanaman</span>
-            </div>
-            <p className="mt-0.5 truncate text-xs font-medium text-foreground">
+          <div className="rounded-lg bg-muted/40 p-3">
+            <div className="text-xs text-muted-foreground">Tanaman</div>
+            <p className="mt-1 truncate text-sm font-medium text-foreground">
               {farm.crop_type || '—'}
             </p>
           </div>
-          <div className="rounded-lg bg-muted/40 p-2">
-            <div className="flex items-center gap-1 text-[0.65rem] text-muted-foreground">
-              <Ruler className="size-2.5" />
-              <span>Luas</span>
-            </div>
-            <p className="mt-0.5 text-xs font-medium tabular-nums text-foreground">
+          <div className="rounded-lg bg-muted/40 p-3">
+            <div className="text-xs text-muted-foreground">Luas</div>
+            <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
               {formatAreaHa(farm.area_ha)}
             </p>
           </div>
         </div>
 
-        {/* Footer */}
-        <p className="ml-9 mt-3 text-[0.65rem] text-muted-foreground">
-          {t('farms.cardUpdated')} {timeAgo(farm.updated_at, t)}
-        </p>
       </Link>
 
       <DropdownMenu>
@@ -117,14 +74,20 @@ export function MyFarmsCard({ farm, onRequestDelete }: MyFarmsCardProps) {
             size="icon-sm"
             aria-label={t('farms.cardMenuOpen')}
             onClick={(e) => e.stopPropagation()}
-            className="absolute right-3 top-3 z-10 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+            className="absolute right-3 top-3 z-10"
           >
             <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-36">
+          <DropdownMenuItem onSelect={() => onRequestEdit(farm)}>
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onRequestChangeColor(farm)}>
+            Marker
+          </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onSelect={() => onRequestDelete(farm)}>
-            {t('farms.cardMenuDelete')}
+            Hapus
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

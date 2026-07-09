@@ -1,4 +1,5 @@
 import { MapContainer, Marker, TileLayer, Tooltip } from 'react-leaflet';
+import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import { SelectFarmsMapController } from './SelectFarmsMapController';
 import { useSelectFarmsMapViewModel } from '../useSelectFarmsMapViewModel';
@@ -14,6 +15,7 @@ import type { Farm } from '@/types';
 configureSelectFarmsLeafletIcons();
 
 export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
+  const navigate = useNavigate();
   const { points, positions } = useSelectFarmsMapViewModel(farms);
 
   return (
@@ -21,7 +23,7 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
       center={SELECT_FARMS_DEFAULT_CENTER}
       zoom={SELECT_FARMS_DEFAULT_ZOOM}
       scrollWheelZoom={true}
-      className="h-[320px] w-full rounded-lg sm:h-[420px] lg:h-[560px] xl:h-[680px]"
+      className="h-full w-full rounded-lg"
       aria-label="Peta lokasi kebun"
     >
       <TileLayer
@@ -33,6 +35,7 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
           key={farm.id}
           position={pos}
           icon={createColoredMarkerIcon(getUniqueColor(farm.id))}
+          eventHandlers={{ click: () => navigate(`/farms/${farm.id}`) }}
         >
           <Tooltip direction="top" offset={[0, -35]} opacity={1} permanent={false}>
             <span className="font-medium">{farm.name}</span>
