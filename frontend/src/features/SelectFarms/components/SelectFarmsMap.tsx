@@ -6,6 +6,8 @@ import {
   configureSelectFarmsLeafletIcons,
   SELECT_FARMS_DEFAULT_CENTER,
   SELECT_FARMS_DEFAULT_ZOOM,
+  getFarmMarkerColor,
+  createColoredMarkerIcon,
 } from '../selectFarmsMapConfig';
 import type { Farm } from '@/types';
 
@@ -27,8 +29,12 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
         url="https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
       {points.map(({ farm, pos }) => (
-        <Marker key={farm.id} position={pos}>
-          <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent={false}>
+        <Marker
+          key={farm.id}
+          position={pos}
+          icon={createColoredMarkerIcon(getFarmMarkerColor(farm.id))}
+        >
+          <Tooltip direction="top" offset={[0, -35]} opacity={1} permanent={false}>
             <span className="font-medium">{farm.name}</span>
           </Tooltip>
         </Marker>
