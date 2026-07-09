@@ -19,34 +19,6 @@ export function configureSelectFarmsLeafletIcons() {
   leafletIconsConfigured = true;
 }
 
-// Color palette for farm markers - visually distinct colors
-export const FARM_MARKER_COLORS = [
-  '#10B981', // emerald
-  '#3B82F6', // blue
-  '#F59E0B', // amber
-  '#EF4444', // red
-  '#8B5CF6', // violet
-  '#EC4899', // pink
-  '#06B6D4', // cyan
-  '#84CC16', // lime
-  '#F97316', // orange
-  '#6366F1', // indigo
-] as const;
-
-/**
- * Generate a consistent color for a farm based on its ID.
- * Same ID always returns same color.
- */
-export function getFarmMarkerColor(farmId: string): string {
-  // Simple hash to get consistent index
-  let hash = 0;
-  for (let i = 0; i < farmId.length; i++) {
-    hash = ((hash << 5) - hash) + farmId.charCodeAt(i);
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return FARM_MARKER_COLORS[Math.abs(hash) % FARM_MARKER_COLORS.length];
-}
-
 /**
  * Create a Leaflet DivIcon with colored pin.
  * Uses inline SVG for flexibility.
