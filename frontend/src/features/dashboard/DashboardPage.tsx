@@ -28,7 +28,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 xl:min-h-[calc(100svh-5.5rem)]">
+    <div className="flex flex-1 flex-col gap-4">
       {warning && <DashboardWarningCard message={warning} />}
 
       <DashboardSummaryGrid

@@ -22,11 +22,11 @@ export function IrrigationNodeGridCard({
   const shouldScrollNodes = nodes.length > NODE_SCROLL_THRESHOLD;
 
   return (
-    <Card className="flex h-full flex-col">
-      <CardHeader className="pb-2">
+    <Card className="flex h-full min-h-0 flex-col gap-1 overflow-hidden py-2">
+      <CardHeader className="pb-0">
         <CardTitle className="text-sm">{t('irrigation.perNodeTitle')}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 p-4 pt-0 sm:p-5 sm:pt-0">
+      <CardContent className="flex min-h-0 flex-1 px-4 pt-0 pb-2 sm:px-5 sm:pt-0 sm:pb-2">
         {nodes.length === 0 ? (
           <div className="flex min-h-[120px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
             {t('irrigation.perNodeEmpty')}
@@ -34,7 +34,7 @@ export function IrrigationNodeGridCard({
         ) : (
           <div
             className={cn(
-              'grid flex-1 content-start items-start gap-3',
+              'grid min-h-0 flex-1 content-start items-start gap-3',
               NODE_GRID_COLUMNS_CLASS,
               shouldScrollNodes && NODE_GRID_SCROLL_CLASS,
             )}

@@ -239,7 +239,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="flex min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-4">
+        <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-4">
           <Outlet />
         </main>
       </SidebarInset>

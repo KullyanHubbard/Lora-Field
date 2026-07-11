@@ -57,7 +57,7 @@ export function GatewayLogContent({
         )}
       </CardHeader>
 
-      <CardContent className="px-4 pb-4">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <div className="mb-3 flex flex-wrap gap-1.5">
           {filterOptions.map((opt) => (
             <button

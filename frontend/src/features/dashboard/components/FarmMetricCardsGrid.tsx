@@ -53,7 +53,7 @@ export function FarmMetricCardsGrid({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2 xl:col-start-1 xl:col-end-6 xl:row-start-3 xl:h-full xl:min-h-0 xl:grid-cols-4">
+    <div className="grid min-h-0 flex-1 gap-4 sm:col-span-2 sm:grid-cols-2 xl:col-start-1 xl:col-end-6 xl:row-start-3 xl:h-full xl:grid-cols-4 xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden">
       {cards.map((card) => (
         <MetricStatCard
           key={card.dataKey}

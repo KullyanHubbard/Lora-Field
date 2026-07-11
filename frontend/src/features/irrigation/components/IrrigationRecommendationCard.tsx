@@ -24,11 +24,11 @@ export function IrrigationRecommendationCard({
   const { t } = useTranslation();
 
   return (
-    <Card className="h-full">
+    <Card className="h-full min-h-0 overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm">{t('irrigation.recommendationTitle')}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 p-4 pt-0">
+      <CardContent className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4 pt-0">
         {nodes.length === 0 ? (
           <p className="text-xs text-muted-foreground">{t('irrigation.recommendationEmpty')}</p>
         ) : stats.driestNodes.length === 0 ? (

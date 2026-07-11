@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { DASHBOARD_PREVIEW_IMAGE_URL } from "./constants"
+import heroPreviewImage from "@/assets/Hero-Preview1.png"
 import "./LandingPage.css"
 
 // Lebar konten + padding horizontal yang konsisten.
@@ -244,7 +244,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="mx-auto mb-12 max-w-3xl text-center"
+              className="mx-auto mb-6 max-w-3xl text-center"
             >
               <h1 className="mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl lg:text-6xl">
                 {t("landing.heroTitle")}
@@ -266,17 +266,17 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative mx-auto max-w-5xl"
+              className="relative mx-auto max-w-[70.60032rem]"
             >
               <div className="overflow-hidden rounded-xl border border-border/40 bg-gradient-to-b from-background to-muted/20 shadow-2xl">
                 {!imageError && (
                   <img
-                    src={DASHBOARD_PREVIEW_IMAGE_URL}
+                    src={heroPreviewImage}
                     onError={handleImageError}
                     width={1280}
                     height={720}
                     alt={t("landing.heroImageAlt")}
-                    className="h-auto w-full"
+                    className="aspect-video w-full object-fill"
                   />
                 )}
                 {imageError && (

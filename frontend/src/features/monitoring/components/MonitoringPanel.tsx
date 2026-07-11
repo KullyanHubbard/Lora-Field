@@ -64,7 +64,7 @@ function MonitoringNodeSelect({
 
 function MonitoringChartLoadingState() {
   return (
-    <div className="grid flex-1 gap-4 md:min-h-0 md:grid-cols-2 md:grid-rows-2">
+    <div className="grid flex-1 gap-4 md:min-h-0 md:grid-cols-2 md:grid-rows-2 md:overflow-hidden">
       {Array.from({ length: 4 }).map((_, i) => (
         <Skeleton key={i} className="min-h-[14rem] w-full md:min-h-0" />
       ))}
@@ -77,7 +77,7 @@ function MonitoringChartGrid({
   thresholds,
 }: Pick<MonitoringPanelProps, 'readings' | 'thresholds'>) {
   return (
-    <div className="grid flex-1 gap-4 md:min-h-0 md:grid-cols-2 md:grid-rows-2">
+    <div className="grid flex-1 gap-4 md:min-h-0 md:grid-cols-2 md:grid-rows-2 md:overflow-hidden">
       <SoilMoistureZoneChart
         readings={readings}
         lower={thresholds.lower}
@@ -103,7 +103,7 @@ export function MonitoringPanel({
   const { t } = useTranslation();
 
   return (
-    <Card className="md:h-[calc(100svh-5.5rem)] md:max-h-[calc(100svh-5.5rem)]">
+    <Card className="md:h-[calc(100svh-5.5rem)] md:max-h-[calc(100svh-5.5rem)] md:overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm">{t('monitoring.selectNode')}</CardTitle>
       </CardHeader>

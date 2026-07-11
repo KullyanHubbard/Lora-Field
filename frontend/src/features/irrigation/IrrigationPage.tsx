@@ -33,7 +33,7 @@ export default function IrrigationPage() {
   const lastSync = getFarmLastUpdate(summary.farm, irrigationNodes);
 
   return (
-    <div className="flex flex-col gap-4 xl:min-h-[calc(100svh-5.5rem)]">
+    <div className="flex flex-col gap-4 xl:h-[calc(100svh-5.5rem)] xl:max-h-[calc(100svh-5.5rem)] xl:overflow-hidden">
       <IrrigationHeaderCard
         gatewayStatus={summary.gateway_status}
         lastSync={lastSync}
@@ -42,7 +42,7 @@ export default function IrrigationPage() {
 
       <IrrigationStatsGrid stats={stats} />
 
-      <div className="grid min-h-[calc(100svh-335px)] flex-1 items-stretch gap-3 xl:min-h-0 xl:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="grid min-h-[calc(100svh-335px)] flex-1 items-stretch gap-3 xl:min-h-0 xl:grid-cols-[minmax(0,1fr)_220px] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden">
         <IrrigationNodeGridCard
           nodes={irrigationNodes}
           lower={summary.thresholds.lower}

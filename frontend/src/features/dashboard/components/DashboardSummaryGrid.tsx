@@ -32,7 +32,7 @@ export function DashboardSummaryGrid({
   weatherForecast: WeatherForecastViewModel | null;
 }) {
   return (
-    <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5 xl:grid-rows-[auto_auto_minmax(0,1fr)]">
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:h-[calc(100svh-5.5rem)] xl:max-h-[calc(100svh-5.5rem)] xl:grid-cols-5 xl:grid-rows-[auto_auto_minmax(0,1fr)] xl:overflow-hidden">
       <ValveStatCard
         summary={valveSummary}
         className="sm:col-span-2 xl:col-start-1 xl:col-end-2 xl:row-start-1"

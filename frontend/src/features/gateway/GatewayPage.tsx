@@ -43,13 +43,13 @@ export default function GatewayPage() {
   }
 
   return (
-    <div className="space-y-5 max-w-xl mx-auto">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-5 xl:h-[calc(100svh-5.5rem)] xl:max-h-[calc(100svh-5.5rem)] xl:overflow-hidden">
       <GatewayInfoCard
         info={gatewayInfo}
-        className="rounded-2xl border border-border bg-gradient-to-br from-card to-card/80 p-6 transition-colors"
+        className="shrink-0 rounded-2xl border border-border bg-gradient-to-br from-card to-card/80 p-6 transition-colors"
       />
 
-      <Card>
+      <Card className="min-h-0 flex-1 overflow-hidden">
         <GatewayLogContent
           logs={logs}
           totalLogs={totalLogs}
