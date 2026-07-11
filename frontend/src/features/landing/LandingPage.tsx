@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Link } from "react-router-dom"
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 import {
   Activity,
   ArrowRight,
@@ -194,6 +194,9 @@ function BrandMark() {
 export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  const handleImageError = useCallback(() => setImageError(true), [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -259,36 +262,41 @@ export default function LandingPage() {
           </div>
         </div>
         {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute inset-x-0 top-16 border-b bg-background/95 backdrop-blur-lg md:hidden"
-          >
-            <div className={`${SHELL} flex flex-col gap-4 py-4`}>
-              <a href="#features" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                Fitur
-              </a>
-              <a href="#testimonials" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                Testimoni
-              </a>
-              <a href="#faq" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                FAQ
-              </a>
-              <div className="flex flex-col gap-2 border-t pt-2">
-                <Link to="/login" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  Masuk
-                </Link>
-                <Button asChild className="rounded-lg">
-                  <Link to="/register">
-                    Mulai Sekarang
-                    <ChevronRight className="ml-1 size-4" />
+        <AnimatePresence mode="wait">
+          {mobileMenuOpen ? (
+            <motion.div
+              key="mobile-menu"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-x-0 top-16 border-b bg-background/95 backdrop-blur-lg md:hidden"
+            >
+              <div className={`${SHELL} flex flex-col gap-4 py-4`}>
+                <a href="#features" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
+                  Fitur
+                </a>
+                <a href="#testimonials" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
+                  Testimoni
+                </a>
+                <a href="#faq" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
+                  FAQ
+                </a>
+                <div className="flex flex-col gap-2 border-t pt-2">
+                  <Link to="/login" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
+                    Masuk
                   </Link>
-                </Button>
+                  <Button asChild className="rounded-lg">
+                    <Link to="/register">
+                      Mulai Sekarang
+                      <ChevronRight className="ml-1 size-4" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </header>
       <main className="flex-1">
         {/* Hero Section */}
@@ -313,7 +321,7 @@ export default function LandingPage() {
                 LoraField, Satu Dashboard untuk Seluruh Kebunmu
               </h1>
               <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-                Platform monitoring lengkap dengan sensor kelembaban tanah, prakiraan cuaca BMKG, dan otomatisasi katup irigasi. Pantau kebunmu dari mana saja, ambil keputusan berbasis data, dan hemat air tanpa repot.
+                Optimalkan penggunaan air irigasi secara otomatis. Tanaman lebih sehat, hasil panen meningkat, waktu lebih hemat.
               </p>
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
                 <Button asChild size="lg" className="h-12 rounded-lg px-8 text-base">
@@ -332,13 +340,21 @@ export default function LandingPage() {
               className="relative mx-auto max-w-5xl"
             >
               <div className="overflow-hidden rounded-xl border border-border/40 bg-gradient-to-b from-background to-muted/20 shadow-2xl">
-                <img
-                  src={DASHBOARD_PREVIEW_IMAGE_URL}
-                  width={1280}
-                  height={720}
-                  alt="Pratinjau dashboard LoraField"
-                  className="h-auto w-full"
-                />
+                {!imageError && (
+                  <img
+                    src={DASHBOARD_PREVIEW_IMAGE_URL}
+                    onError={handleImageError}
+                    width={1280}
+                    height={720}
+                    alt="Pratinjau dashboard LoraField"
+                    className="h-auto w-full"
+                  />
+                )}
+                {imageError && (
+                  <div className="flex aspect-[16/9] w-full items-center justify-center bg-muted text-muted-foreground">
+                    <p className="text-sm">Pratinjau tidak tersedia</p>
+                  </div>
+                )}
                 <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-foreground/10"></div>
               </div>
               <div className="absolute -right-6 -bottom-6 -z-10 h-[300px] w-[300px] rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 opacity-70 blur-3xl"></div>
@@ -577,17 +593,17 @@ export default function LandingPage() {
               <h4 className="text-sm font-bold">Navigasi</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#features" className="text-muted-foreground transition-colors hover:text-foreground">
+                  <a href="#features" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                     Fitur
                   </a>
                 </li>
                 <li>
-                  <a href="#testimonials" className="text-muted-foreground transition-colors hover:text-foreground">
+                  <a href="#testimonials" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                     Testimoni
                   </a>
                 </li>
                 <li>
-                  <a href="#faq" className="text-muted-foreground transition-colors hover:text-foreground">
+                  <a href="#faq" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                     FAQ
                   </a>
                 </li>

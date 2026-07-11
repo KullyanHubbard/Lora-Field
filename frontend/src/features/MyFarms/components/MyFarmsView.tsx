@@ -5,7 +5,7 @@ import { MyFarmColorPicker } from './MyFarmColorPicker';
 import { MyFarmsList } from './MyFarmsList';
 import { MyFarmsLoadingState } from './MyFarmsLoadingState';
 import { MyFarmsSearchBar } from './MyFarmsSearchBar';
-import { getFarmMarkerColor, type MarkerColorId } from '../farmColorStorage';
+import { type MarkerColorId } from '../farmColorStorage';
 import type { Farm } from '@/types';
 
 interface MyFarmsViewProps {

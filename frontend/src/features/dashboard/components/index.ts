@@ -2,7 +2,7 @@
 export { ActivityLogCard } from './ActivityLogCard';
 export { BatteryNodesCard } from './BatteryNodesCard';
 export { DashboardActiveNodeBadge } from './DashboardActiveNodeBadge';
-export { DashboardGatewayInfoContent } from './DashboardGatewayInfoContent';
+export { GatewayInfoContent } from './DashboardGatewayInfoContent';
 export { DashboardLoadingState } from './DashboardLoadingState';
 export { DashboardSummaryGrid } from './DashboardSummaryGrid';
 export { DashboardWarningCard } from './DashboardWarningCard';
