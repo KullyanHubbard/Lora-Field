@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react"
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { motion, AnimatePresence } from "motion/react"
 import {
@@ -26,16 +27,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { DASHBOARD_PREVIEW_IMAGE_URL } from "./constants"
 import "./LandingPage.css"
 
-// Lebar konten + padding horizontal yang konsisten. Tailwind v4 di proyek ini
-// tidak mengonfigurasi utility `container` (center/padding), jadi pakai kelas
-// eksplisit ini sebagai gantinya.
+// Lebar konten + padding horizontal yang konsisten.
 const SHELL = "mx-auto w-full max-w-7xl px-4 md:px-6"
 
-// Grid garis dekoratif. Warna garis pakai token tema --grid-line (scoped di
-// LandingPage.css), bukan hex hardcoded. Referensi var() bebas koma — penting karena
-// fungsi ber-koma (mis. color-mix) di dalam arbitrary value memutus parser Tailwind
-// sehingga utiliti background-image gagal ter-generate. --border (10% putih) terlalu
-// redup; --grid-line (16% putih di dark) tampak halus tapi jelas di atas bg gelap.
+// Grid garis dekoratif.
 const GRID =
   "bg-[linear-gradient(to_right,var(--grid-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--grid-line)_1px,transparent_1px)] bg-[size:4rem_4rem]"
 
@@ -54,57 +49,17 @@ const item = {
   show: { opacity: 1, y: 0 },
 }
 
-const features = [
-  {
-    title: "Monitoring Sensor Real-Time",
-    description: "Pantau kelembaban tanah, suhu, dan kelembaban udara dari setiap node sensor secara langsung.",
-    icon: <Activity className="size-5" />,
-  },
-  {
-    title: "Irigasi Otomatis Cerdas",
-    description: "Katup irigasi buka/tutup otomatis berdasarkan kondisi tanah dan prediksi cuaca.",
-    icon: <Droplets className="size-5" />,
-  },
-  {
-    title: "Prediksi Cuaca BMKG",
-    description: "Data cuaca akurat per lokasi kebun, diperbarui setiap 30 menit.",
-    icon: <CloudSun className="size-5" />,
-  },
-  {
-    title: "Kelola Banyak Kebun",
-    description: "Satu akun untuk banyak kebun. Tiap kebun punya komoditas dan aturan irigasi sendiri.",
-    icon: <Sprout className="size-5" />,
-  },
-  {
-    title: "Peta Kebun Interaktif",
-    description: "Lihat lokasi dan status seluruh kebunmu dalam satu peta.",
-    icon: <MapPin className="size-5" />,
-  },
-  {
-    title: "Riwayat & Export Data",
-    description: "Log keputusan irigasi tersimpan rapi, siap diekspor ke CSV.",
-    icon: <History className="size-5" />,
-  },
+// Icons merged into translated features at render time (icons are static)
+const FEATURE_ICONS = [
+  <Activity className="size-5" key="activity" />,
+  <Droplets className="size-5" key="droplets" />,
+  <CloudSun className="size-5" key="cloudsun" />,
+  <Sprout className="size-5" key="sprout" />,
+  <MapPin className="size-5" key="mappin" />,
+  <History className="size-5" key="history" />,
 ]
 
-const steps = [
-  {
-    step: "01",
-    title: "Pasang Perangkat",
-    description: "Pasang node sensor dan gateway di kebun. Perangkat akan otomatis tersambung dan mulai mengirim data.",
-  },
-  {
-    step: "02",
-    title: "Tambah Kebun & Aturan",
-    description: "Daftarkan kebunmu di dashboard, pilih jenis tanaman, dan tentukan aturan irigasi sesuai kebutuhan.",
-  },
-  {
-    step: "03",
-    title: "Pantau & Serahkan ke Sistem",
-    description: "Lihat data real-time dari dashboard. Katup irigasi akan bekerja otomatis berdasarkan tanah dan cuaca.",
-  },
-]
-
+// Testimonials kept as-is (user content — not translated per instruction)
 const testimonials = [
   {
     quote:
@@ -143,43 +98,10 @@ const testimonials = [
   },
   {
     quote:
-      "Untuk tanaman organik, kontrol air harus tepat. LoraField bantu kami menjaga kelembaban tanah ideal tanpa over-irigasi.",
+      "Untuk tanaman organik, kontrol air harus tepat. LoraField bantu kami menjaga kelembaban tanah ideal tanpa over-irrigasi.",
     author: "Made Wirawan",
     role: "Petani Organik, Bali",
     rating: 5,
-  },
-]
-
-const faqs = [
-  {
-    question: "Apa itu LoraField dan bagaimana cara kerjanya?",
-    answer:
-      "LoraField adalah sistem irigasi pintar berbasis web yang menggabungkan sensor IoT, data cuaca dari BMKG, dan otomatisasi katup. Sensor di kebunmu membaca kondisi tanah secara real-time, lalu sistem menentukan apakah irigasi perlu dibuka, ditutup, atau ditunda berdasarkan kelembaban tanah dan prediksi cuaca. Semua data bisa kamu pantau langsung dari dashboard.",
-  },
-  {
-    question: "Apakah saya perlu keahlian teknis untuk memasang perangkat?",
-    answer:
-      "Tidak perlu. Perangkat sensor dan gateway dirancang agar mudah dipasang di lapangan. Setelah terhubung, kebunmu akan otomatis muncul di dashboard dan siap dikonfigurasi. Kami juga menyediakan panduan pemasangan langkah demi langkah.",
-  },
-  {
-    question: "Berapa banyak kebun yang bisa saya kelola dalam satu akun?",
-    answer:
-      "Satu akun bisa mengelola banyak kebun sekaligus. Tiap kebun memiliki peta lokasi, jenis tanaman, node sensor, dan aturan irigasi yang independen. Jadi kalau kamu punya lahan di beberapa tempat, semua tetap terpantau dalam satu dashboard.",
-  },
-  {
-    question: "Bagaimana jika lokasi kebun saya sulit terjangkau sinyal internet?",
-    answer:
-      "Gateway LoraField mengirim data melalui jaringan LoRa yang hemat daya dan jarak jangkauannya jauh. Selama ada sinyal seluler minimal di sekitar gateway, data tetap masuk ke dashboard. Kalau gateway sempat offline, sistem akan menunggu data kembali normal sebelum mengambil keputusan irigasi.",
-  },
-  {
-    question: "Apakah sistem ini bisa digunakan untuk tanaman selain padi?",
-    answer:
-      "Bisa. LoraField mendukung lebih dari 30 jenis tanaman, mulai dari cabai, tomat, melon, hingga tanaman hias. Tiap tanaman memiliki ambang batas kelembaban tanah (VWC) yang sudah tersimpan di sistem, jadi irigasi akan disesuaikan dengan kebutuhan masing-masing.",
-  },
-  {
-    question: "Apakah data kebun saya aman?",
-    answer:
-      "Sangat aman. Setiap pengguna hanya bisa mengakses kebun miliknya sendiri. Data sensor, riwayat irigasi, dan informasi profil dilindungi dengan enkripsi. Kami juga menggunakan autentikasi JWT dan verifikasi OTP untuk menjaga keamanan akun.",
   },
 ]
 
@@ -192,9 +114,24 @@ function BrandMark() {
 }
 
 export default function LandingPage() {
+  const { t } = useTranslation()
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
+
+  // Translated content from i18n JSON
+  const featuresItems = t(
+    "landing.featuresItems",
+    { returnObjects: true },
+  ) as Array<{ title: string; description: string }>
+  const stepsItems = t(
+    "landing.stepsItems",
+    { returnObjects: true },
+  ) as Array<{ step: string; title: string; description: string }>
+  const faqItems = t(
+    "landing.faqItems",
+    { returnObjects: true },
+  ) as Array<{ question: string; answer: string }>
 
   const handleImageError = useCallback(() => setImageError(true), [])
 
@@ -206,9 +143,6 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Tanpa bg-background di wrapper ini: itu background normal-flow yang akan
-  // menimpa grid overlay ber-`-z-10` (paint order), bikin grid tak terlihat.
-  // Background gelap halaman sudah disediakan body (index.css).
   return (
     <div className="landing-page flex min-h-[100dvh] flex-col text-foreground">
       <header
@@ -221,19 +155,19 @@ export default function LandingPage() {
               href="#features"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              Fitur
+              {t("landing.navFeatures")}
             </a>
             <a
               href="#testimonials"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              Testimoni
+              {t("landing.navTestimonials")}
             </a>
             <a
               href="#faq"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              FAQ
+              {t("landing.navFaq")}
             </a>
           </nav>
           <div className="hidden items-center gap-4 md:flex">
@@ -241,11 +175,11 @@ export default function LandingPage() {
               to="/login"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              Masuk
+              {t("landing.navLogin")}
             </Link>
             <Button asChild className="rounded-lg">
               <Link to="/register">
-                Mulai Sekarang
+                {t("landing.navStart")}
                 <ChevronRight className="ml-1 size-4" />
               </Link>
             </Button>
@@ -257,7 +191,7 @@ export default function LandingPage() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-              <span className="sr-only">Toggle menu</span>
+              <span className="sr-only">{t("landing.toggleMenu")}</span>
             </Button>
           </div>
         </div>
@@ -274,21 +208,21 @@ export default function LandingPage() {
             >
               <div className={`${SHELL} flex flex-col gap-4 py-4`}>
                 <a href="#features" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  Fitur
+                  {t("landing.navFeatures")}
                 </a>
                 <a href="#testimonials" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  Testimoni
+                  {t("landing.navTestimonials")}
                 </a>
                 <a href="#faq" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  FAQ
+                  {t("landing.navFaq")}
                 </a>
                 <div className="flex flex-col gap-2 border-t pt-2">
                   <Link to="/login" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                    Masuk
+                    {t("landing.navLogin")}
                   </Link>
                   <Button asChild className="rounded-lg">
                     <Link to="/register">
-                      Mulai Sekarang
+                      {t("landing.navStart")}
                       <ChevronRight className="ml-1 size-4" />
                     </Link>
                   </Button>
@@ -302,11 +236,6 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="w-full overflow-hidden py-20 md:py-32 lg:py-40">
           <div className={`${SHELL} relative`}>
-            {/* Mask radial terpusat: grid penuh di tengah (area headline), memudar
-                halus ke transparan SEBELUM mencapai keempat tepi (atas/bawah/kiri/
-                kanan) — radius 70% dengan stop transparan di 70% bikin jarak ke tepi
-                (~71%) sudah lewat titik transparan, jadi tak ada batas kotak tegas.
-                #000/transparent = alpha mask (bukan warna). -webkit- untuk Safari. */}
             <div
               className={`absolute inset-0 -z-10 h-full w-full bg-background ${GRID} [-webkit-mask-image:radial-gradient(ellipse_88%_82%_at_50%_44%,#000_0%,transparent_78%)] [mask-image:radial-gradient(ellipse_88%_82%_at_50%_44%,#000_0%,transparent_78%)]`}
             ></div>
@@ -318,15 +247,15 @@ export default function LandingPage() {
               className="mx-auto mb-12 max-w-3xl text-center"
             >
               <h1 className="mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl lg:text-6xl">
-                LoraField, Satu Dashboard untuk Seluruh Kebunmu
+                {t("landing.heroTitle")}
               </h1>
               <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-                Optimalkan penggunaan air irigasi secara otomatis. Tanaman lebih sehat, hasil panen meningkat, waktu lebih hemat.
+                {t("landing.heroSubtitle")}
               </p>
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
                 <Button asChild size="lg" className="h-12 rounded-lg px-8 text-base">
                   <Link to="/login">
-                    Mulai Monitoring
+                    {t("landing.heroCta")}
                     <ArrowRight className="ml-2 size-4" />
                   </Link>
                 </Button>
@@ -346,13 +275,13 @@ export default function LandingPage() {
                     onError={handleImageError}
                     width={1280}
                     height={720}
-                    alt="Pratinjau dashboard LoraField"
+                    alt={t("landing.heroImageAlt")}
                     className="h-auto w-full"
                   />
                 )}
                 {imageError && (
                   <div className="flex aspect-[16/9] w-full items-center justify-center bg-muted text-muted-foreground">
-                    <p className="text-sm">Pratinjau tidak tersedia</p>
+                    <p className="text-sm">{t("landing.heroImageFallback")}</p>
                   </div>
                 )}
                 <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-foreground/10"></div>
@@ -374,11 +303,13 @@ export default function LandingPage() {
               className="mb-12 flex flex-col items-center justify-center space-y-4 text-center"
             >
               <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-                Fitur
+                {t("landing.featuresBadge")}
               </Badge>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Teknologi Irigasi Modern dalam Satu Platform</h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                {t("landing.featuresTitle")}
+              </h2>
               <p className="max-w-[800px] text-muted-foreground md:text-lg">
-                LoraField menggabungkan sensor IoT, data cuaca BMKG, dan otomatisasi katup untuk memberikan kontrol penuh atas irigasi kebunmu dari mana saja.
+                {t("landing.featuresSubtitle")}
               </p>
             </motion.div>
 
@@ -389,12 +320,12 @@ export default function LandingPage() {
               viewport={{ once: true }}
               className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
             >
-              {features.map((feature) => (
+              {featuresItems.map((feature, idx) => (
                 <motion.div key={feature.title} variants={item}>
                   <Card className="h-full overflow-hidden border border-border/40 bg-gradient-to-b from-background to-muted/10 py-0 backdrop-blur transition-all hover:shadow-md">
                     <CardContent className="flex h-full flex-col p-6">
                       <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        {feature.icon}
+                        {FEATURE_ICONS[idx]}
                       </div>
                       <h3 className="mb-2 text-xl font-bold">{feature.title}</h3>
                       <p className="text-muted-foreground">{feature.description}</p>
@@ -421,18 +352,20 @@ export default function LandingPage() {
               className="mb-16 flex flex-col items-center justify-center space-y-4 text-center"
             >
               <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-                Tiga Langkah Mudah
+                {t("landing.howItWorksBadge")}
               </Badge>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Pasang, Atur, Pantau. Selesai.</h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                {t("landing.howItWorksTitle")}
+              </h2>
               <p className="max-w-[800px] text-muted-foreground md:text-lg">
-                Tidak perlu keahlian teknis. Cukup pasang perangkat, daftar kebun, dan biarkan sistem mengatur irigasi secara otomatis.
+                {t("landing.howItWorksSubtitle")}
               </p>
             </motion.div>
 
             <div className="relative grid gap-8 md:grid-cols-3 md:gap-12">
               <div className="absolute top-1/2 right-0 left-0 z-0 hidden h-0.5 -translate-y-1/2 bg-gradient-to-r from-transparent via-border to-transparent md:block"></div>
 
-              {steps.map((s, i) => (
+              {stepsItems.map((s, i) => (
                 <motion.div
                   key={s.step}
                   initial={{ opacity: 0, y: 20 }}
@@ -463,11 +396,13 @@ export default function LandingPage() {
               className="mb-12 flex flex-col items-center justify-center space-y-4 text-center"
             >
               <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-                Testimoni
+                {t("landing.navTestimonials")}
               </Badge>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Dipercaya Petani di Berbagai Daerah</h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                {t("landing.testimonialsTitle")}
+              </h2>
               <p className="max-w-[800px] text-muted-foreground md:text-lg">
-                Lihat bagaimana LoraField membantu petani menghemat air, mengurangi kerja manual, dan meningkatkan hasil panen.
+                {t("landing.testimonialsSubtitle")}
               </p>
             </motion.div>
 
@@ -517,17 +452,19 @@ export default function LandingPage() {
               className="mb-12 flex flex-col items-center justify-center space-y-4 text-center"
             >
               <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-                FAQ
+                {t("landing.navFaq")}
               </Badge>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Pertanyaan yang Sering Diajukan</h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                {t("landing.faqTitle")}
+              </h2>
               <p className="max-w-[800px] text-muted-foreground md:text-lg">
-                Temukan jawaban untuk pertanyaan umum tentang platform kami.
+                {t("landing.faqSubtitle")}
               </p>
             </motion.div>
 
             <div className="mx-auto max-w-3xl">
               <Accordion type="single" collapsible className="w-full">
-                {faqs.map((faq, i) => (
+                {faqItems.map((faq, i) => (
                   <motion.div
                     key={faq.question}
                     initial={{ opacity: 0, y: 10 }}
@@ -563,15 +500,15 @@ export default function LandingPage() {
               className="flex flex-col items-center justify-center space-y-6 text-center"
             >
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-                Siap Wujudkan Irigasi Pintar di Kebunmu?
+                {t("landing.ctaTitle")}
               </h2>
               <p className="mx-auto max-w-[700px] text-primary-foreground/80 md:text-xl">
-                Bergabunglah dengan petani yang sudah menghemat air, mengurangi kerja manual, dan meningkatkan hasil panen dengan LoraField.
+                {t("landing.ctaSubtitle")}
               </p>
               <div className="mt-4 flex flex-col gap-4 sm:flex-row">
                 <Button asChild size="lg" variant="secondary" className="h-12 rounded-lg px-8 text-base">
                   <Link to="/login">
-                    Mulai Monitoring
+                    {t("landing.ctaButton")}
                     <ArrowRight className="ml-2 size-4" />
                   </Link>
                 </Button>
@@ -584,27 +521,27 @@ export default function LandingPage() {
         <div className={`${SHELL} flex flex-col gap-8 py-10 lg:py-16`}>
           <div className="grid gap-8 sm:grid-cols-2">
             <div className="space-y-4">
-              <span className="text-lg font-bold">LoraField</span>
+              <span className="text-lg font-bold">{t("landing.footerAbout")}</span>
               <p className="text-sm text-muted-foreground">
-                Sistem irigasi pintar berbasis web dengan sensor IoT, data cuaca BMKG, dan otomatisasi katup. Pantau dan kendalikan kebunmu dari mana saja.
+                {t("landing.footerAboutDesc")}
               </p>
             </div>
             <div className="space-y-4">
-              <h4 className="text-sm font-bold">Navigasi</h4>
+              <h4 className="text-sm font-bold">{t("landing.footerNav")}</h4>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a href="#features" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    Fitur
+                    {t("landing.footerFeatures")}
                   </a>
                 </li>
                 <li>
                   <a href="#testimonials" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    Testimoni
+                    {t("landing.footerTestimonials")}
                   </a>
                 </li>
                 <li>
                   <a href="#faq" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    FAQ
+                    {t("landing.footerFaq")}
                   </a>
                 </li>
               </ul>

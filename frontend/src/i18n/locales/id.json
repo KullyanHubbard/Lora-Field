@@ -336,11 +336,6 @@
     "hoursAgo": "{{count}} jam lalu",
     "daysAgo": "{{count}} hari lalu"
   },
-  "status": {
-    "online": "Online",
-    "offline": "Offline",
-    "standby": "Standby"
-  },
   "valve": {
     "open": "Terbuka",
     "closed": "Tertutup",
@@ -365,6 +360,20 @@
     "maintenance": "Perawatan",
     "inactive": "Tidak Aktif",
     "unknown": "Tidak Diketahui"
+  },
+  "myFarms": {
+    "colorPickerTitle": "Pilih Warna Marker",
+    "cardLocation": "Lokasi",
+    "cardCrop": "Tanaman",
+    "cardArea": "Luas",
+    "cardMenuEdit": "Edit",
+    "cardMenuMarker": "Marker",
+    "cardMenuDelete": "Hapus",
+    "editDialogTitle": "Edit Kebun",
+    "editDialogDesc": "Ubah nama untuk \"{{name}}\"",
+    "editDialogPlaceholder": "Nama kebun",
+    "editDialogCancel": "Batal",
+    "editDialogSave": "Simpan"
   },
   "selectFarms": {
     "title": "Pilih Kebun",
@@ -446,6 +455,138 @@
     "forecastEmpty": "Prakiraan belum tersedia untuk kebun ini.",
     "historyTitle": "Histori Suhu (Open-Meteo)",
     "historyNoLocation": "Lokasi kebun belum diset."
+  },
+  "settingsPage": {
+    "title": "Profil Akun",
+    "fieldName": "Nama",
+    "fieldEmail": "Email",
+    "fieldPhone": "Nomor Handphone",
+    "notAvailable": "Tidak tersedia",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "editPhone": "Edit nomor handphone",
+    "changePassword": "Ganti Sandi",
+    "logout": "Keluar"
+  },
+  "landing": {
+    "navFeatures": "Fitur",
+    "navTestimonials": "Testimoni",
+    "navFaq": "FAQ",
+    "navLogin": "Masuk",
+    "navStart": "Mulai Sekarang",
+    "heroTitle": "LoraField, Satu Dashboard untuk Seluruh Kebunmu",
+    "heroSubtitle": "Optimalkan penggunaan air irigasi secara otomatis. Tanaman lebih sehat, hasil panen meningkat, waktu lebih hemat.",
+    "heroCta": "Mulai Monitoring",
+    "heroImageAlt": "Pratinjau dashboard LoraField",
+    "heroImageFallback": "Pratinjau tidak tersedia",
+    "featuresBadge": "Fitur",
+    "featuresTitle": "Teknologi Irigasi Modern dalam Satu Platform",
+    "featuresSubtitle": "LoraField menggabungkan sensor IoT, data cuaca BMKG, dan otomatisasi katup untuk memberikan kontrol penuh atas irigasi kebunmu dari mana saja.",
+    "howItWorksBadge": "Tiga Langkah Mudah",
+    "howItWorksTitle": "Pasang, Atur, Pantau. Selesai.",
+    "howItWorksSubtitle": "Tidak perlu keahlian teknis. Cukup pasang perangkat, daftar kebun, dan biarkan sistem mengatur irigasi secara otomatis.",
+    "testimonialsTitle": "Dipercaya Petani di Berbagai Daerah",
+    "testimonialsSubtitle": "Lihat bagaimana LoraField membantu petani menghemat air, mengurangi kerja manual, dan meningkatkan hasil panen.",
+    "faqBadge": "FAQ",
+    "faqTitle": "Pertanyaan yang Sering Diajukan",
+    "faqSubtitle": "Temukan jawaban untuk pertanyaan umum tentang platform kami.",
+    "ctaTitle": "Siap Wujudkan Irigasi Pintar di Kebunmu?",
+    "ctaSubtitle": "Bergabunglah dengan petani yang sudah menghemat air, mengurangi kerja manual, dan meningkatkan hasil panen dengan LoraField.",
+    "ctaButton": "Mulai Monitoring",
+    "footerNav": "Navigasi",
+    "footerAbout": "LoraField",
+    "footerAboutDesc": "Sistem irigasi pintar berbasis web dengan sensor IoT, data cuaca BMKG, dan otomatisasi katup. Pantau dan kendalikan kebunmu dari mana saja.",
+    "footerFeatures": "Fitur",
+    "footerTestimonials": "Testimoni",
+    "footerFaq": "FAQ",
+    "toggleMenu": "Buka menu",
+    "featuresItems": [
+      {
+        "title": "Monitoring Sensor Real-Time",
+        "description": "Pantau kelembaban tanah, suhu, dan kelembaban udara dari setiap node sensor secara langsung."
+      },
+      {
+        "title": "Irigasi Otomatis Cerdas",
+        "description": "Katup irigasi buka/tutup otomatis berdasarkan kondisi tanah dan prediksi cuaca."
+      },
+      {
+        "title": "Prediksi Cuaca BMKG",
+        "description": "Data cuaca akurat per lokasi kebun, diperbarui setiap 30 menit."
+      },
+      {
+        "title": "Kelola Banyak Kebun",
+        "description": "Satu akun untuk banyak kebun. Tiap kebun punya komoditas dan aturan irigasi sendiri."
+      },
+      {
+        "title": "Peta Kebun Interaktif",
+        "description": "Lihat lokasi dan status seluruh kebunmu dalam satu peta."
+      },
+      {
+        "title": "Riwayat & Export Data",
+        "description": "Log keputusan irigasi tersimpan rapi, siap diekspor ke CSV."
+      }
+    ],
+    "stepsItems": [
+      {
+        "step": "01",
+        "title": "Pasang Perangkat",
+        "description": "Pasang node sensor dan gateway di kebun. Perangkat akan otomatis tersambung dan mulai mengirim data."
+      },
+      {
+        "step": "02",
+        "title": "Tambah Kebun & Aturan",
+        "description": "Daftarkan kebunmu di dashboard, pilih jenis tanaman, dan tentukan aturan irigasi sesuai kebutuhan."
+      },
+      {
+        "step": "03",
+        "title": "Pantau & Serahkan ke Sistem",
+        "description": "Lihat data real-time dari dashboard. Katup irigasi akan bekerja otomatis berdasarkan tanah dan cuaca."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Apa itu LoraField dan bagaimana cara kerjanya?",
+        "answer": "LoraField adalah sistem irigasi pintar berbasis web yang menggabungkan sensor IoT, data cuaca dari BMKG, dan otomatisasi katup. Sensor di kebunmu membaca kondisi tanah secara real-time, lalu sistem menentukan apakah irigasi perlu dibuka, ditutup, atau ditunda berdasarkan kelembaban tanah dan prediksi cuaca. Semua data bisa kamu pantau langsung dari dashboard."
+      },
+      {
+        "question": "Apakah saya perlu keahlian teknis untuk memasang perangkat?",
+        "answer": "Tidak perlu. Perangkat sensor dan gateway dirancang agar mudah dipasang di lapangan. Setelah terhubung, kebunmu akan otomatis muncul di dashboard dan siap dikonfigurasi. Kami juga menyediakan panduan pemasangan langkah demi langkah."
+      },
+      {
+        "question": "Berapa banyak kebun yang bisa saya kelola dalam satu akun?",
+        "answer": "Satu akun bisa mengelola banyak kebun sekaligus. Tiap kebun memiliki peta lokasi, jenis tanaman, node sensor, dan aturan irigasi yang independen. Jadi kalau kamu punya lahan di beberapa tempat, semua tetap terpantau dalam satu dashboard."
+      },
+      {
+        "question": "Bagaimana jika lokasi kebun saya sulit terjangkau sinyal internet?",
+        "answer": "Gateway LoraField mengirim data melalui jaringan LoRa yang hemat daya dan jarak jangkauannya jauh. Selama ada sinyal seluler minimal di sekitar gateway, data tetap masuk ke dashboard. Kalau gateway sempat offline, sistem akan menunggu data kembali normal sebelum mengambil keputusan irigasi."
+      },
+      {
+        "question": "Apakah sistem ini bisa digunakan untuk tanaman selain padi?",
+        "answer": "Bisa. LoraField mendukung lebih dari 30 jenis tanaman, mulai dari cabai, tomat, melon, hingga tanaman hias. Tiap tanaman memiliki ambang batas kelembaban tanah (VWC) yang sudah tersimpan di sistem, jadi irigasi akan disesuaikan dengan kebutuhan masing-masing."
+      },
+      {
+        "question": "Apakah data kebun saya aman?",
+        "answer": "Sangat aman. Setiap pengguna hanya bisa mengakses kebun miliknya sendiri. Data sensor, riwayat irigasi, dan informasi profil dilindungi dengan enkripsi. Kami juga menggunakan autentikasi JWT dan verifikasi OTP untuk menjaga keamanan akun."
+      }
+    ]
+  },
+  "markerColor": {
+    "blue": "Biru",
+    "green": "Hijau",
+    "yellow": "Kuning",
+    "red": "Merah",
+    "purple": "Ungu",
+    "orange": "Oranye",
+    "pink": "Merah Muda",
+    "cyan": "Sian",
+    "brown": "Coklat",
+    "gray": "Abu-abu",
+    "black": "Hitam",
+    "lime": "Hijau Limau",
+    "indigo": "Nil",
+    "amber": "Amber",
+    "rose": "Mawar",
+    "teal": "Hijau Zamrud"
   },
   "gateway": {
     "title": "Gateway",

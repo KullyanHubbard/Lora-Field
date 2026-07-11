@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,32 +24,36 @@ export function MyFarmColorPicker({
   onColorChange,
   onClose,
 }: MyFarmColorPickerProps) {
+  const { t } = useTranslation();
+
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <SheetContent>
         <SheetHeader>
           <div className="flex items-center justify-between">
-            <SheetTitle>Pilih Warna Marker</SheetTitle>
+            <SheetTitle>{t('myFarms.colorPickerTitle')}</SheetTitle>
             <Button variant="ghost" size="icon-sm" onClick={onClose}>
               <X className="size-4" />
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">{farmName}</p>
         </SheetHeader>
-        <div className="mt-6 grid grid-cols-1 gap-3">
+        <div className="mt-6 grid grid-cols-2 gap-2">
           {MARKER_COLORS.map((color) => (
             <button
               key={color.id}
               onClick={() => onColorChange(color.id)}
-              className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent"
+              className="relative flex flex-col items-center gap-2 rounded-lg border border-border p-3 transition-colors hover:bg-accent"
             >
               <span
-                className="size-6 rounded-full"
+                className="size-8 rounded-full shadow-sm"
                 style={{ backgroundColor: color.value }}
               />
-              <span className="text-sm font-medium">{color.label}</span>
+              <span className="text-xs font-medium text-center">
+                {t(`markerColor.${color.id}`)}
+              </span>
               {currentColor === color.id && (
-                <span className="ml-auto text-primary">✓</span>
+                <span className="absolute right-2 top-2 text-primary">✓</span>
               )}
             </button>
           ))}

@@ -46,19 +46,19 @@ export function MyFarmsCard({
         {/* Detail info */}
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div className="rounded-lg bg-muted/40 p-3">
-            <div className="text-xs text-muted-foreground">Lokasi</div>
+            <div className="text-xs text-muted-foreground">{t('myFarms.cardLocation')}</div>
             <p className="mt-1 truncate text-sm font-medium text-foreground">
               {farm.location || '—'}
             </p>
           </div>
           <div className="rounded-lg bg-muted/40 p-3">
-            <div className="text-xs text-muted-foreground">Tanaman</div>
+            <div className="text-xs text-muted-foreground">{t('myFarms.cardCrop')}</div>
             <p className="mt-1 truncate text-sm font-medium text-foreground">
               {farm.crop_type || '—'}
             </p>
           </div>
           <div className="rounded-lg bg-muted/40 p-3">
-            <div className="text-xs text-muted-foreground">Luas</div>
+            <div className="text-xs text-muted-foreground">{t('myFarms.cardArea')}</div>
             <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
               {formatAreaHa(farm.area_ha)}
             </p>
@@ -81,13 +81,13 @@ export function MyFarmsCard({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36">
           <DropdownMenuItem onSelect={() => onRequestEdit(farm)}>
-            Edit
+            {t('myFarms.cardMenuEdit')}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onRequestChangeColor(farm)}>
-            Marker
+            {t('myFarms.cardMenuMarker')}
           </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onSelect={() => onRequestDelete(farm)}>
-            Hapus
+            {t('myFarms.cardMenuDelete')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
@@ -26,6 +27,7 @@ export function MyFarmEditDialog({
   onClose,
   onConfirm,
 }: MyFarmEditDialogProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
 
   if (farm && name === '') {
@@ -49,22 +51,22 @@ export function MyFarmEditDialog({
     <AlertDialog open={farm != null} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Edit Kebun</AlertDialogTitle>
+          <AlertDialogTitle>{t('myFarms.editDialogTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Ubah nama untuk "{farm.name}"
+            {t('myFarms.editDialogDesc', { name: farm.name })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Nama kebun"
+          placeholder={t('myFarms.editDialogPlaceholder')}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleConfirm();
           }}
           autoFocus
         />
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isUpdating}>Batal</AlertDialogCancel>
+          <AlertDialogCancel disabled={isUpdating}>{t('myFarms.editDialogCancel')}</AlertDialogCancel>
           <AlertDialogAction
             disabled={isUpdating || !name.trim() || name.trim() === farm.name}
             onClick={(e) => {
@@ -72,7 +74,7 @@ export function MyFarmEditDialog({
               handleConfirm();
             }}
           >
-            {isUpdating ? <Loader2 className="size-4 animate-spin" /> : 'Simpan'}
+            {isUpdating ? <Loader2 className="size-4 animate-spin" /> : t('myFarms.editDialogSave')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

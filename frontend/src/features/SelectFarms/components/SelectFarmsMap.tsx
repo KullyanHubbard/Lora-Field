@@ -9,8 +9,14 @@ import {
   SELECT_FARMS_DEFAULT_ZOOM,
   createColoredMarkerIcon,
 } from '../selectFarmsMapConfig';
-import { getUniqueColor } from '@/lib/markerColors';
+import { getFarmMarkerColor, MARKER_COLORS } from '@/features/myFarms/farmColorStorage';
 import type { Farm } from '@/types';
+
+/** Convert MarkerColorId to hex color */
+function markerColorIdToHex(colorId: string): string {
+  const found = MARKER_COLORS.find((c) => c.id === colorId);
+  return found ? found.value : '#3b82f6'; // fallback blue
+}
 
 configureSelectFarmsLeafletIcons();
 
@@ -34,7 +40,7 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
         <Marker
           key={farm.id}
           position={pos}
-          icon={createColoredMarkerIcon(getUniqueColor(farm.id))}
+          icon={createColoredMarkerIcon(markerColorIdToHex(getFarmMarkerColor(farm.id)))}
           eventHandlers={{ click: () => navigate(`/farms/${farm.id}`) }}
         >
           <Tooltip direction="top" offset={[0, -35]} opacity={1} permanent={false}>

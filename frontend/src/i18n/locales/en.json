@@ -331,6 +331,10 @@
   "time": {
     "unavailable": "Not available",
     "justNow": "Just now",
+    "secondsAgo": "{{count}} second ago",
+    "minutesAgo": "{{count}} minute ago",
+    "hoursAgo": "{{count}} hour ago",
+    "daysAgo": "{{count}} day ago",
     "secondsAgo_one": "{{count}} second ago",
     "secondsAgo_other": "{{count}} seconds ago",
     "minutesAgo_one": "{{count}} minute ago",
@@ -339,11 +343,6 @@
     "hoursAgo_other": "{{count}} hours ago",
     "daysAgo_one": "{{count}} day ago",
     "daysAgo_other": "{{count}} days ago"
-  },
-  "status": {
-    "online": "Online",
-    "offline": "Offline",
-    "standby": "Standby"
   },
   "valve": {
     "open": "Open",
@@ -369,6 +368,20 @@
     "maintenance": "Maintenance",
     "inactive": "Inactive",
     "unknown": "Unknown"
+  },
+  "myFarms": {
+    "colorPickerTitle": "Marker Color",
+    "cardLocation": "Location",
+    "cardCrop": "Crop",
+    "cardArea": "Area",
+    "cardMenuEdit": "Edit",
+    "cardMenuMarker": "Marker",
+    "cardMenuDelete": "Delete",
+    "editDialogTitle": "Edit Farm",
+    "editDialogDesc": "Change name for \"{{name}}\"",
+    "editDialogPlaceholder": "Farm name",
+    "editDialogCancel": "Cancel",
+    "editDialogSave": "Save"
   },
   "selectFarms": {
     "title": "Select Farm",
@@ -451,6 +464,24 @@
     "historyTitle": "Temperature History (Open-Meteo)",
     "historyNoLocation": "Farm location not set."
   },
+  "markerColor": {
+    "blue": "Blue",
+    "green": "Green",
+    "yellow": "Yellow",
+    "red": "Red",
+    "purple": "Purple",
+    "orange": "Orange",
+    "pink": "Pink",
+    "cyan": "Cyan",
+    "brown": "Brown",
+    "gray": "Gray",
+    "black": "Black",
+    "lime": "Lime",
+    "indigo": "Indigo",
+    "amber": "Amber",
+    "rose": "Rose",
+    "teal": "Teal"
+  },
   "gateway": {
     "title": "Gateway",
     "errorLoad": "Failed to load gateway data: {{message}}",
@@ -480,5 +511,119 @@
     "filterHeartbeat": "Heartbeat",
     "filterDataSync": "Sync",
     "eventCount": "{{count}} event(s)"
+  },
+  "settingsPage": {
+    "title": "Account Profile",
+    "fieldName": "Name",
+    "fieldEmail": "Email",
+    "fieldPhone": "Phone Number",
+    "notAvailable": "Not available",
+    "save": "Save",
+    "cancel": "Cancel",
+    "editPhone": "Edit phone number",
+    "changePassword": "Change Password",
+    "logout": "Logout"
+  },
+  "landing": {
+    "navFeatures": "Features",
+    "navTestimonials": "Testimonials",
+    "navFaq": "FAQ",
+    "navLogin": "Sign In",
+    "navStart": "Get Started",
+    "heroTitle": "LoraField, One Dashboard for All Your Farms",
+    "heroSubtitle": "Optimize irrigation water usage automatically. Healthier plants, better harvests, more time saved.",
+    "heroCta": "Start Monitoring",
+    "heroImageAlt": "LoraField dashboard preview",
+    "heroImageFallback": "Preview not available",
+    "featuresBadge": "Features",
+    "featuresTitle": "Modern Irrigation Technology in One Platform",
+    "featuresSubtitle": "LoraField combines IoT sensors, BMKG weather data, and valve automation to give you full control over your farm irrigation from anywhere.",
+    "howItWorksBadge": "Three Easy Steps",
+    "howItWorksTitle": "Install, Configure, Monitor. Done.",
+    "howItWorksSubtitle": "No technical expertise needed. Just install the devices, register your farm, and let the system manage irrigation automatically.",
+    "testimonialsTitle": "Trusted by Farmers Across the Country",
+    "testimonialsSubtitle": "See how LoraField helps farmers save water, reduce manual work, and increase crop yields.",
+    "faqBadge": "FAQ",
+    "faqTitle": "Frequently Asked Questions",
+    "faqSubtitle": "Find answers to common questions about our platform.",
+    "ctaTitle": "Ready to Build Smart Irrigation for Your Farm?",
+    "ctaSubtitle": "Join farmers who have saved water, reduced manual work, and increased yields with LoraField.",
+    "ctaButton": "Start Monitoring",
+    "footerNav": "Navigation",
+    "footerAbout": "LoraField",
+    "footerAboutDesc": "Smart web-based irrigation system with IoT sensors, BMKG weather data, and valve automation. Monitor and control your farms from anywhere.",
+    "footerFeatures": "Features",
+    "footerTestimonials": "Testimonials",
+    "footerFaq": "FAQ",
+    "toggleMenu": "Toggle menu",
+    "featuresItems": [
+      {
+        "title": "Real-Time Sensor Monitoring",
+        "description": "Monitor soil moisture, temperature, and air humidity from each sensor node in real-time."
+      },
+      {
+        "title": "Smart Automatic Irrigation",
+        "description": "Irrigation valves open/close automatically based on soil conditions and weather predictions."
+      },
+      {
+        "title": "BMKG Weather Forecast",
+        "description": "Accurate weather data per farm location, updated every 30 minutes."
+      },
+      {
+        "title": "Manage Multiple Farms",
+        "description": "One account for many farms. Each farm has its own commodities and irrigation rules."
+      },
+      {
+        "title": "Interactive Farm Map",
+        "description": "View all your farms locations and status on a single map."
+      },
+      {
+        "title": "History & Data Export",
+        "description": "Irrigation decision logs are neatly stored, ready to export to CSV."
+      }
+    ],
+    "stepsItems": [
+      {
+        "step": "01",
+        "title": "Install Devices",
+        "description": "Install sensor nodes and gateway in your farm. Devices will automatically connect and start transmitting data."
+      },
+      {
+        "step": "02",
+        "title": "Add Farm & Rules",
+        "description": "Register your farm on the dashboard, select crop type, and set irrigation rules as needed."
+      },
+      {
+        "step": "03",
+        "title": "Monitor & Let the System Run",
+        "description": "View real-time data from the dashboard. Irrigation valves work automatically based on soil and weather conditions."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "What is LoraField and how does it work?",
+        "answer": "LoraField is a smart web-based irrigation system that combines IoT sensors, BMKG weather data, and valve automation. Sensors in your farm read soil conditions in real-time, then the system determines whether irrigation needs to be opened, closed, or delayed based on soil moisture and weather predictions. All data can be monitored directly from the dashboard."
+      },
+      {
+        "question": "Do I need technical expertise to install the devices?",
+        "answer": "No. Sensor and gateway devices are designed to be easily installed in the field. Once connected, your farm will automatically appear on the dashboard and be ready to configure. We also provide step-by-step installation guides."
+      },
+      {
+        "question": "How many farms can I manage with one account?",
+        "answer": "One account can manage many farms at once. Each farm has its own location map, crop type, sensor nodes, and independent irrigation rules. So if you have land in multiple locations, everything is still monitored from a single dashboard."
+      },
+      {
+        "question": "What if my farm location has poor internet signal?",
+        "answer": "LoraField gateway transmits data over LoRa network which is power-efficient and has long range. As long as there is minimal cellular signal around the gateway, data still reaches the dashboard. If the gateway goes offline temporarily, the system will wait for data to return to normal before making irrigation decisions."
+      },
+      {
+        "question": "Can this system be used for crops other than rice?",
+        "answer": "Yes. LoraField supports more than 30 crop types, from chili, tomatoes, and melons to ornamental plants. Each crop has its own soil moisture threshold (VWC) stored in the system, so irrigation is adjusted to each crop needs."
+      },
+      {
+        "question": "Is my farm data secure?",
+        "answer": "Very secure. Each user can only access their own farms. Sensor data, irrigation history, and profile information are protected with encryption. We also use JWT authentication and OTP verification to maintain account security."
+      }
+    ]
   }
 }

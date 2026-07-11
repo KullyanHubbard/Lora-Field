@@ -56,14 +56,14 @@ export default function SettingsPage() {
   return (
     <Card className="mx-auto max-w-xl">
       <CardHeader>
-        <CardTitle className="text-base">Profil Akun</CardTitle>
+        <CardTitle className="text-base">{t('settingsPage.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <ProfileField label="Nama" value={user?.name || 'Tidak tersedia'} />
-          <ProfileField label="Email" value={user?.email || 'Tidak tersedia'} />
+          <ProfileField label={t('settingsPage.fieldName')} value={user?.name || t('settingsPage.notAvailable')} />
+          <ProfileField label={t('settingsPage.fieldEmail')} value={user?.email || t('settingsPage.notAvailable')} />
           <div className="flex items-center justify-between gap-3 border-b border-border py-3 text-sm last:border-b-0">
-            <span className="text-muted-foreground">Nomor Handphone</span>
+            <span className="text-muted-foreground">{t('settingsPage.fieldPhone')}</span>
             {editingPhone ? (
               <div className="flex items-center gap-2">
                 <Input
@@ -77,7 +77,7 @@ export default function SettingsPage() {
                   autoFocus
                 />
                 <Button size="sm" onClick={savePhone} disabled={updateProfile.isPending}>
-                  Simpan
+                  {t('settingsPage.save')}
                 </Button>
                 <Button
                   size="sm"
@@ -85,7 +85,7 @@ export default function SettingsPage() {
                   onClick={() => setEditingPhone(false)}
                   disabled={updateProfile.isPending}
                 >
-                  Batal
+                  {t('settingsPage.cancel')}
                 </Button>
               </div>
             ) : (
@@ -96,7 +96,7 @@ export default function SettingsPage() {
                   variant="ghost"
                   className="size-7"
                   onClick={startEdit}
-                  aria-label="Edit nomor handphone"
+                  aria-label={t('settingsPage.editPhone')}
                 >
                   <Pencil className="size-4" />
                 </Button>
@@ -120,11 +120,11 @@ export default function SettingsPage() {
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="outline">
             <Link to="/change-password">
-              <KeyRound className="size-4" /> Ganti Sandi
+              <KeyRound className="size-4" /> {t('settingsPage.changePassword')}
             </Link>
           </Button>
           <Button variant="destructive" onClick={logout}>
-            <LogOut className="size-4" /> Keluar
+            <LogOut className="size-4" /> {t('settingsPage.logout')}
           </Button>
         </div>
       </CardContent>
