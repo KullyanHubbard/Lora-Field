@@ -6,6 +6,7 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { WeatherForecastViewModel } from '@/features/dashboard/dashboardHelpers';
 import { weatherIconMap } from '@/features/weather/weatherIconMap';
 import { cn } from '@/lib/utils';
@@ -13,14 +14,33 @@ import { cn } from '@/lib/utils';
 export function WeatherForecastCard({
   forecast,
   farmId,
+  isLoading,
   className,
 }: {
   forecast: WeatherForecastViewModel | null;
   farmId: string;
+  isLoading?: boolean;
   className?: string;
 }) {
   const { t } = useTranslation();
   const UnavailableIcon = weatherIconMap.unknown;
+
+  // Slot skeleton — 5 bars mimicking the slot list
+  const SlotSkeletons = () => (
+    <div className="flex flex-1 flex-col gap-1 border-t border-border pt-4">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-3 rounded-md border border-transparent px-2 py-1.5"
+        >
+          <Skeleton className="h-4 w-12 rounded" />
+          <Skeleton className="size-4 rounded" />
+          <Skeleton className="h-4 w-10 rounded" />
+          <Skeleton className="h-4 flex-1 rounded" />
+        </div>
+      ))}
+    </div>
+  );
 
   if (!forecast) {
     return (
@@ -73,7 +93,9 @@ export function WeatherForecastCard({
         </div>
 
         <div className="flex flex-1 flex-col gap-1 border-t border-border pt-4">
-          {forecast.slots.length === 0 ? (
+          {isLoading ? (
+            <SlotSkeletons />
+          ) : forecast.slots.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('dashboard.weatherNoForecast')}</p>
           ) : (
             forecast.slots.map((slot) => {

@@ -6,7 +6,7 @@ export function useWeatherHistory(lat: number | undefined, lon: number | undefin
     queryKey: ['weather-history', lat, lon],
     queryFn: () => fetchWeatherHistory(lat!, lon!),
     enabled: lat != null && lon != null && lat !== 0 && lon !== 0,
-    staleTime: 15 * 60_000,
-    refetchInterval: 30 * 60_000,
+    staleTime: 5 * 60_000, // weather data doesn't change frequently
+    refetchInterval: 15 * 60_000, // refresh every 15 minutes
   });
 }

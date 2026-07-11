@@ -167,8 +167,8 @@ function WeatherMainCard({
   });
 
   return (
-    <Card className="flex flex-col lg:h-full lg:min-h-0">
-      <CardContent className="flex flex-1 flex-col items-center pt-8 pb-5 lg:min-h-0">
+    <Card className="flex w-full flex-col lg:h-full lg:min-h-0">
+      <CardContent className="flex w-full flex-1 flex-col items-center pt-8 pb-5 lg:min-h-0">
         <div className="flex size-20 items-center justify-center rounded-full bg-muted/60 ring-1 ring-border">
           <Icon className={cn('size-10', iconColor(info.isRain))} />
         </div>
@@ -181,7 +181,7 @@ function WeatherMainCard({
           {weather ? t(info.label) : t('weather.notAvailable')}
         </span>
 
-        <div className="mt-7 grid w-full max-w-xs grid-cols-2 gap-3">
+        <div className="mt-7 grid w-full max-w-sm grid-cols-2 gap-3">
           <div className="flex items-center gap-2.5 rounded-lg border border-border px-4 py-3">
             <Droplets className="size-4 shrink-0 text-sky-500 dark:text-sky-400" />
             <div className="min-w-0">
@@ -334,10 +334,10 @@ export default function WeatherPage() {
   const weather: Weather | null = summary.weather ?? null;
 
   return (
-    <div className="mx-auto max-w-6xl lg:flex lg:h-[calc(100svh-5.5rem)] lg:flex-col lg:overflow-hidden">
-      <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:h-full lg:min-h-0">
+    <div className="mx-auto w-full max-w-6xl lg:flex lg:h-[calc(100svh-5.5rem)] lg:flex-col lg:overflow-hidden">
+      <div className="grid gap-6 lg:grid-cols-[1fr_18rem] lg:h-full lg:min-h-0">
         <WeatherMainCard weather={weather} history={history} />
-        <div className="w-full lg:w-72">
+        <div className="lg:w-72">
           <ForecastColumn weather={weather} />
         </div>
       </div>

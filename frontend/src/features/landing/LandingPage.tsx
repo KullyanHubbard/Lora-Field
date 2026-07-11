@@ -237,7 +237,7 @@ export default function LandingPage() {
         <section className="w-full overflow-hidden py-20 md:py-32 lg:py-40">
           <div className={`${SHELL} relative`}>
             <div
-              className={`absolute inset-0 -z-10 h-full w-full bg-background ${GRID} [-webkit-mask-image:radial-gradient(ellipse_88%_82%_at_50%_44%,#000_0%,transparent_78%)] [mask-image:radial-gradient(ellipse_88%_82%_at_50%_44%,#000_0%,transparent_78%)]`}
+              className={`absolute inset-0 -z-10 h-full w-full bg-background ${GRID} [-webkit-mask-image:radial-gradient(ellipse_60%_150%_at_50%_55%,#000_0%,transparent_78%)] [mask-image:radial-gradient(ellipse_60%_150%_at_50%_55%,#000_0%,transparent_78%)]`}
             ></div>
 
             <motion.div

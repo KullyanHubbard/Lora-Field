@@ -18,7 +18,6 @@ export async function fetchWeatherHistory(lat: number, lon: number): Promise<Ope
     longitude: String(lon),
     hourly: 'temperature_2m',
     past_days: '1',
-    forecast_days: '1',
     timezone: 'auto',
   });
   const res = await fetch(`${OPEN_METEO_FORECAST_URL}?${params}`);
@@ -26,10 +25,10 @@ export async function fetchWeatherHistory(lat: number, lon: number): Promise<Ope
   const json: OpenMeteoResponse = await res.json();
   const { time, temperature_2m } = json.hourly;
 
-  // ambil hanya 12 jam terakhir sampai sekarang (buang jam ke depan)
+  // Ambil hanya 6 jam terakhir sampai sekarang (buang jam ke depan)
   // ponytail: timezone=auto kirim ISO naive (TZ kebun); cocok krn user+kebun se-TZ (WIB). beda TZ → tambah offset
   const now = Date.now();
-  const from = now - 12 * 60 * 60_000;
+  const from = now - 6 * 60 * 60_000; // 6 jam saja, sesuai label chart
   const out: OpenMeteoPoint[] = [];
   for (let i = 0; i < time.length; i++) {
     const t = temperature_2m[i];
