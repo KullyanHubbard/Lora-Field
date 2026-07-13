@@ -56,7 +56,10 @@ from .schemas import (
     FarmCreate,
     FarmUpdate,
     GatewayLogIn,
+    GatewayRegisterPayload,
+    GatewayRegisterResponse,
     NodeLocationUpdate,
+    RegisteredNode,
     SensorReadingIn,
     ThresholdConfig,
     TokenResponse,
@@ -1133,6 +1136,91 @@ def create_gateway_log(
             ).fetchone()
         )
     return {"log": log}
+
+
+# ---------------------------------------------------------------------------
+# Auto Node Discovery - Gateway Registration
+# ---------------------------------------------------------------------------
+
+@app.post("/api/gateways/{gateway_id}/register", status_code=200)
+def gateway_register_nodes(
+    gateway_id: str,
+    payload: GatewayRegisterPayload,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> GatewayRegisterResponse:
+    """Batch register nodes via gateway.
+
+    Gateway firmware calls this endpoint when it connects, providing
+    the list of all node IDs it manages. Nodes are auto-created
+    if they don't exist yet.
+    """
+    registered_nodes = []
+
+    with get_connection() as connection:
+        # Verify farm ownership
+        farm = connection.execute(
+            "SELECT * FROM farms WHERE id = ? AND user_id = ?",
+            (payload.farm_id, current_user["id"])
+        ).fetchone()
+
+        if not farm:
+            raise HTTPException(status_code=404, detail="Farm not found")
+
+        for node_item in payload.nodes:
+            # Check if node already exists
+            existing = connection.execute(
+                "SELECT * FROM nodes WHERE id = ?", (node_item.node_id,)
+            ).fetchone()
+
+            if existing:
+                # Update gateway_id and status
+                connection.execute(
+                    """UPDATE nodes
+                       SET gateway_id = ?, status = 'online', updated_at = CURRENT_TIMESTAMP
+                       WHERE id = ?""",
+                    (gateway_id, node_item.node_id)
+                )
+                registered_nodes.append(RegisteredNode(
+                    id=node_item.node_id,
+                    name=node_item.name,
+                    status="active",
+                    created=False
+                ))
+            else:
+                # Create new node
+                node_id = node_item.node_id
+                connection.execute(
+                    """INSERT INTO nodes
+                       (id, farm_id, gateway_id, name, location, region,
+                        latitude, longitude, status, battery, first_seen_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+                    (
+                        node_id,
+                        payload.farm_id,
+                        gateway_id,
+                        node_item.name,
+                        node_item.region,
+                        node_item.region,
+                        node_item.latitude,
+                        node_item.longitude,
+                        "online",
+                        100,  # Default battery until actual reading
+                    )
+                )
+                registered_nodes.append(RegisteredNode(
+                    id=node_id,
+                    name=node_item.name,
+                    status="pending",
+                    created=True
+                ))
+
+    return GatewayRegisterResponse(
+        gateway_id=gateway_id,
+        farm_id=payload.farm_id,
+        status="registered",
+        nodes=registered_nodes,
+        created_count=sum(1 for n in registered_nodes if n.created)
+    )
 
 
 # ---------------------------------------------------------------------------
