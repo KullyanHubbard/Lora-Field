@@ -6,6 +6,7 @@ class SensorReadingIn(BaseModel):
     soil_temp: float = Field(..., ge=-20, le=80)
     air_temp: float = Field(..., ge=-20, le=80)
     air_humidity: float = Field(..., ge=0, le=100)
+    farm_id: str | None = Field(default=None, description="Required for first-time node self-registration")
 
 
 class NodeLocationUpdate(BaseModel):

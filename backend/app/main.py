@@ -1317,11 +1317,42 @@ def create_reading(
     current_user: Annotated[dict, Depends(get_current_user)],
     adm4: str = Query(..., min_length=2, description="Kode wilayah adm4 BMKG"),
 ) -> dict:
-    weather = fetch_weather_with_cache(adm4)
-    decision = calculate_decision(payload.soil_moisture, weather["rain_next_3h"])
+    from .database import row_to_dict
+
+    # Auto-create node if not exists (self-registration fallback)
+    node_created = False
+    node_status = "pending"
 
     with get_connection() as connection:
-        _get_node_owned(connection, node_id, current_user["id"])
+        existing_node = connection.execute(
+            "SELECT * FROM nodes WHERE id = ?", (node_id,)
+        ).fetchone()
+
+        if not existing_node:
+            # Auto-create node
+            farm_id = payload.farm_id
+
+            if not farm_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="farm_id required for first-time node registration"
+                )
+
+            connection.execute(
+                """INSERT INTO nodes
+                   (id, farm_id, name, location, status, battery, first_seen_at)
+                   VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+                (node_id, farm_id, f"Node {node_id[:8]}", "", "online", 100)
+            )
+            node_created = True
+            node_status = "online"
+        else:
+            # Node exists — verify ownership
+            _get_node_owned(connection, node_id, current_user["id"])
+            node_status = "online"
+
+        weather = fetch_weather_with_cache(adm4)
+        decision = calculate_decision(payload.soil_moisture, weather["rain_next_3h"])
 
         cursor = connection.execute(
             """
@@ -1365,7 +1396,12 @@ def create_reading(
     reading["id"] = reading_id
     reading["node_id"] = node_id
 
-    return {"reading": reading, "decision": decision}
+    return {
+        "reading": reading,
+        "decision": decision,
+        "node_created": node_created,
+        "node_status": node_status,
+    }
 
 
 # ---------------------------------------------------------------------------
