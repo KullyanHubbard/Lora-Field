@@ -62,16 +62,6 @@ export function AppRouter() {
           }
         />
 
-        {/* Tambah Kebun: full-bleed tanpa AppLayout, tetap di balik RequireAuth */}
-        <Route
-          path="/addFarm"
-          element={
-            <RequireAuth>
-              <AddFarmPage />
-            </RequireAuth>
-          }
-        />
-
         {/* Protected routes: dibungkus AppLayout (sidebar + topbar) di balik RequireAuth */}
         <Route
           element={
@@ -82,6 +72,7 @@ export function AppRouter() {
         >
           <Route path="/select-farms" element={<SelectFarmsPage />} />
           <Route path="/my-farms" element={<MyFarmsPage />} />
+          <Route path="/addFarm" element={<AddFarmPage />} />
           <Route path="/farms/:id" element={<DashboardPage />} />
           <Route path="/farms/:id/monitoring" element={<MonitoringPage />} />
           <Route path="/farms/:id/irrigation" element={<IrrigationPage />} />

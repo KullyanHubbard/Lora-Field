@@ -1,3 +1,4 @@
+import { useEffect, useCallback, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -34,8 +35,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { BrandMark } from '@/components/layout/BrandMark';
 import { useAuth } from '@/features/auth/auth-context';
+import { useSelectedFarm } from '@/contexts/FarmContext';
 import { DashboardActiveNodeBadge } from '@/features/dashboard/components/DashboardActiveNodeBadge';
 import { useFarmSummary } from '@/features/dashboard/queries';
+import { HelpCenterDialog } from '@/features/helpCenter';
 
 type NavItem = {
   to: string;
@@ -44,13 +47,31 @@ type NavItem = {
 };
 
 export function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout: authLogout } = useAuth();
   const { pathname } = useLocation();
   const { t } = useTranslation();
+  const { selectedFarmId, selectFarm, clearFarm } = useSelectedFarm();
+  const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false);
 
-  // Context-aware: di dalam /farms/:id/* (kecuali /addFarm) → mode farm-context.
+  // Wrapper logout: clear farm state + auth logout
+  const logout = useCallback(() => {
+    clearFarm();
+    authLogout();
+  }, [clearFarm, authLogout]);
+
+  // Deteksi farmId dari URL (untuk inisialisasi saat masuk via direct URL)
   const farmMatch = pathname.match(/^\/farms\/([^/]+)/);
-  const farmId = farmMatch && farmMatch[1] !== 'add' ? farmMatch[1] : null;
+  const urlFarmId = farmMatch && farmMatch[1] !== 'add' ? farmMatch[1] : null;
+
+  // Sync: kalau URL punya farmId, simpan ke context
+  useEffect(() => {
+    if (urlFarmId && urlFarmId !== selectedFarmId) {
+      selectFarm(urlFarmId);
+    }
+  }, [urlFarmId, selectedFarmId, selectFarm]);
+
+  // Gunakan selectedFarmId dari context sebagai source of truth
+  const farmId = selectedFarmId;
   const { data: farmSummary } = useFarmSummary(farmId ?? '');
   const farmName = farmSummary?.farm.name ?? t('layout.fallbackFarm');
 
@@ -102,6 +123,7 @@ export function AppLayout() {
                       supaya tidak bersaing dengan judul nama kebun di bawahnya. */}
                   <Link
                     to="/select-farms"
+                    onClick={clearFarm}
                     className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <ArrowLeft className="size-3.5" />
@@ -206,7 +228,7 @@ export function AppLayout() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton disabled>
+              <SidebarMenuButton onClick={() => setIsHelpDialogOpen(true)}>
                 <HelpCircle />
                 <span>{t('layout.nav.helpCenter')}</span>
               </SidebarMenuButton>
@@ -243,6 +265,11 @@ export function AppLayout() {
           <Outlet />
         </main>
       </SidebarInset>
+
+      <HelpCenterDialog
+        isOpen={isHelpDialogOpen}
+        onClose={() => setIsHelpDialogOpen(false)}
+      />
     </SidebarProvider>
   );
 }
