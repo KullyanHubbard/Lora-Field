@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { withMockNodeFallback } from '@/mocks/mockFarmScenario';
 import type { CreateFarmPayload } from '@/types';
 
 export function useFarms() {
@@ -18,7 +17,6 @@ export function useFarmSummary(farmId: string) {
     queryFn: () => api.getFarmSummary(farmId),
     enabled: !!farmId, // jangan fetch kalau farmId kosong
     refetchInterval: 30_000, // auto-refresh tiap 30 detik
-    select: withMockNodeFallback,
   });
 }
 
