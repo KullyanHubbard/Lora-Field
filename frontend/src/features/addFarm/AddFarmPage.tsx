@@ -97,6 +97,23 @@ export default function AddFarmPage() {
             </div>
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="farm-area">{t('farms.addForm.areaLabel')}</Label>
+              <Input
+                id="farm-area"
+                type="text"
+                inputMode="decimal"
+                placeholder={t('farms.addForm.areaPlaceholder')}
+                value={areaHa}
+                onChange={(e) => setAreaHa(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t('farms.addForm.areaHelper')}
+              </p>
+            </div>
+          </div>
+
           <p className="pt-1 text-sm font-medium text-muted-foreground">
             {t('farms.addForm.sectionCoords')}
           </p>
