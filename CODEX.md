@@ -263,9 +263,9 @@ Validasi sebelum selesai:
 
 ## Monitoring mock data
 
-- File: `frontend/src/lib/mockReadings.ts`
+- Single source of truth: `frontend/src/mocks/mockFarmScenario.ts`
 - Mock harus realistis, variatif, dan ditandai jelas sebagai mock
-- Semua file mock frontend harus berada di satu folder terpusat `frontend/src/lib/`
+- Identitas node, sensor reading, irrigation log, dan gateway mock hanya boleh didefinisikan di file tersebut; file adapter lain tidak boleh menyimpan nilai dummy sendiri
 - Jangan tampilkan mock seolah data backend
 
 ## Aturan kerja saat edit
@@ -281,4 +281,3 @@ Validasi sebelum selesai:
 - Jalankan pengecekan type/syntax yang tersedia di repo
 - Pastikan UI tidak pecah di dark/light mode
 - Pastikan flow auth dan dashboard tetap valid
-

@@ -15,7 +15,13 @@ import { useGatewayLogs } from '@/features/gateway/queries';
 export function useGatewayPageViewModel() {
   const { id: farmId } = useParams();
   const summaryQuery = useFarmSummary(farmId ?? '');
-  const logsQuery = useGatewayLogs(farmId);
+  const activeNodeCount = useMemo(
+    () =>
+      summaryQuery.data?.nodes.filter((nodeSummary) => nodeSummary.node.status === 'online')
+        .length ?? 0,
+    [summaryQuery.data?.nodes],
+  );
+  const logsQuery = useGatewayLogs(summaryQuery.data ? farmId : undefined, 20, activeNodeCount);
   const [filter, setFilter] = useState<GatewayEventFilter>('all');
   const [page, setPage] = useState(0);
 
@@ -25,10 +31,7 @@ export function useGatewayPageViewModel() {
     return buildGatewayInfo(summaryQuery.data);
   }, [summaryQuery.data]);
 
-  const filteredLogs = useMemo(
-    () => filterGatewayLogs(rawLogs, filter),
-    [filter, rawLogs],
-  );
+  const filteredLogs = useMemo(() => filterGatewayLogs(rawLogs, filter), [filter, rawLogs]);
   const eventCounts = useMemo(() => buildGatewayEventCounts(rawLogs), [rawLogs]);
   const totalPages = getGatewayTotalPages(filteredLogs.length);
   const safePage = getGatewaySafePage(page, totalPages);

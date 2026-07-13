@@ -266,7 +266,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative mx-auto max-w-[70.60032rem]"
+              className="relative mx-auto max-w-[77.09554944rem]"
             >
               <div className="overflow-hidden rounded-xl border border-border/40 bg-gradient-to-b from-background to-muted/20 shadow-2xl">
                 {!imageError && (
@@ -276,7 +276,7 @@ export default function LandingPage() {
                     width={1280}
                     height={720}
                     alt={t("landing.heroImageAlt")}
-                    className="aspect-video w-full object-fill"
+                    className="aspect-[907/505] w-full object-fill"
                   />
                 )}
                 {imageError && (

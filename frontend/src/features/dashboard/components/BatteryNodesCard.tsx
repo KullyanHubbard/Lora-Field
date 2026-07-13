@@ -97,7 +97,7 @@ export function BatteryNodesCard({
     });
   };
 
-  const showArrows = canScrollLeft || canScrollRight;
+  const showArrows = nodes.length > BATTERY_VISIBLE_COUNT && (canScrollLeft || canScrollRight);
   const itemFlex = `0 0 calc((100% - ${BATTERY_TOTAL_GAP}px) / ${BATTERY_VISIBLE_COUNT})`;
 
   return (

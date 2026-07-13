@@ -48,7 +48,7 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 - Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada").
 - Field yang masih perlu verifikasi shape-nya terhadap response asli: kolom `weather` di decision_logs (kolom ada di schema, tipe perlu cek), struktur summary cuaca termasuk prediksi hujan, serta isi persis response `/summary` dan `/login`. Kalau tidak cocok dengan type, LAPORKAN â€” jangan diam-diam ubah.
 - Data dummy/mock harus ditandai jelas sebagai mock, jangan seolah dari backend.
-- Semua mock frontend harus disentralisasi di satu folder terpusat `frontend/src/lib/` agar tidak tersebar dan tetap rapi.
+- Semua nilai mock frontend harus disentralisasi di `frontend/src/mocks/mockFarmScenario.ts`; query adapter boleh terpisah tetapi tidak boleh mendefinisikan ID, count, status, atau measurement dummy sendiri.
 - Kalau ragu atau butuh keputusan desain: BERHENTI dan tanya.
 
 ## Konvensi Kode

@@ -39,15 +39,15 @@ export function useLogsViewModel() {
   const farmId = routeFarmId ?? '';
 
   const summaryQuery = useFarmSummary(farmId);
-  const logsQuery = useLogs(farmId);
+  const summary = summaryQuery.data;
+  const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
+  const logsQuery = useLogs(summary ? farmId : undefined, 100, nodes, summary?.thresholds);
 
   const [activeFilter, setActiveFilter] = useState<LogFilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
-  const summary = summaryQuery.data;
-  const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
   const logs = useMemo(() => logsQuery.data?.items ?? [], [logsQuery.data?.items]);
 
   const nodeLookup = useMemo(
@@ -94,7 +94,9 @@ export function useLogsViewModel() {
         !q ||
         log.nodeName.toLowerCase().includes(q) ||
         log.nodeLocation.toLowerCase().includes(q) ||
-        String(log.decision || '').toLowerCase().includes(q);
+        String(log.decision || '')
+          .toLowerCase()
+          .includes(q);
       const logMs = log.created_at ? new Date(log.created_at).getTime() : null;
       const matchesFrom = fromMs == null || (logMs != null && logMs >= fromMs);
       const matchesTo = toMs == null || (logMs != null && logMs <= toMs);

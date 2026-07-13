@@ -1,27 +1,31 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { MOCK_GATEWAY_LOGS } from '@/mocks/mockGatewayLogs';
+import { MOCK_ACTIVE_NODE_COUNT, generateMockGatewayLogs } from '@/mocks/mockFarmScenario';
 
 // Log koneksi gateway. Saat hardware belum mengirim data, tampilkan mock agar
 // dashboard tetap terisi selama fase demo/development.
-export function useGatewayLogs(farmId?: string, limit = 20) {
+export function useGatewayLogs(
+  farmId?: string,
+  limit = 20,
+  activeNodeCount = MOCK_ACTIVE_NODE_COUNT,
+) {
   return useQuery({
-    queryKey: ['gateway-logs', farmId, limit],
-    queryFn: () => api.getGatewayLogs(farmId ?? '', limit),
-    enabled: !!farmId,
-    select: (response) => {
+    queryKey: ['gateway-logs', farmId, limit, activeNodeCount],
+    queryFn: async () => {
+      const response = await api.getGatewayLogs(farmId ?? '', limit);
       if (response.items.length > 0) return response;
 
-      const items = MOCK_GATEWAY_LOGS.slice(0, limit).map((log) => ({
-        ...log,
-        farm_id: farmId ?? '',
-      }));
+      const mockLogs = generateMockGatewayLogs({
+        farmId,
+        activeNodeCount,
+      });
 
       return {
         ...response,
-        items,
-        total: MOCK_GATEWAY_LOGS.length,
+        items: mockLogs.slice(0, limit),
+        total: mockLogs.length,
       };
     },
+    enabled: !!farmId,
   });
 }

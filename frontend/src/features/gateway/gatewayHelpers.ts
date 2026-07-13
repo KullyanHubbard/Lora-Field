@@ -1,5 +1,6 @@
 import { getFarmLastUpdate } from '@/features/dashboard/farmStatusHelpers';
 import { getGatewayStatusBadge } from '@/lib/status';
+import { getMockGatewayProfile } from '@/mocks/mockFarmScenario';
 import type { StatusTone } from '@/lib/status';
 import type { FarmSummary, GatewayLog } from '@/types';
 
@@ -34,14 +35,14 @@ export type GatewayInfoViewModel = {
 
 export function buildGatewayInfo(summary: FarmSummary): GatewayInfoViewModel {
   const status = getGatewayStatusBadge(summary.gateway_status);
-  const isOnline = summary.gateway_status === 'online';
+  const mockGateway = getMockGatewayProfile(summary);
 
   return {
-    gatewayId: `gw-${summary.farm.id}`,
+    gatewayId: mockGateway.gatewayId,
     statusLabelKey: status.labelKey,
     statusTone: status.tone,
-    signalValueKey: isOnline ? 'gateway.signalStrong' : 'gateway.signalNone',
-    internetValueKey: isOnline ? 'gateway.internetWifi' : 'gateway.internetNone',
+    signalValueKey: mockGateway.signalValueKey,
+    internetValueKey: mockGateway.internetValueKey,
     lastSeen: getFarmLastUpdate(summary.farm, summary.nodes),
   };
 }
@@ -76,7 +77,10 @@ export function paginateGatewayLogs(logs: GatewayLog[], page: number) {
 
 // Returns i18n key for gateway event label
 export function getGatewayEventLabelKey(event: string): string {
-  return GATEWAY_EVENT_LABEL_KEYS[event] ?? `gateway.filter${event.charAt(0).toUpperCase() + event.slice(1)}`;
+  return (
+    GATEWAY_EVENT_LABEL_KEYS[event] ??
+    `gateway.filter${event.charAt(0).toUpperCase() + event.slice(1)}`
+  );
 }
 
 export function getGatewayEventTone(event: string) {

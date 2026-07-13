@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { withMockNodeFallback } from '@/mocks/mockFarmData';
+import { withMockNodeFallback } from '@/mocks/mockFarmScenario';
 import type { CreateFarmPayload } from '@/types';
 
 export function useFarms() {

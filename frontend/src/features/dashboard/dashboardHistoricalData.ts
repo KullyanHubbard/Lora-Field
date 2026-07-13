@@ -1,8 +1,11 @@
-// ponytail: DATA DUMMY/mock — BUKAN dari backend. Ganti dgn readings asli saat
-// backend punya endpoint riwayat per-node. Dipakai untuk tile Min/Rata-rata/Maks
-// + grafik historis kompak di kartu metrik Dashboard (/farms/:id).
+// Adapter chart untuk historical readings dummy. Nilai dan cadence tetap berasal
+// dari single source of truth mockFarmScenario.
 
-import { ENABLE_MOCK_NODE_FALLBACK, generateMockReadingsForNode, getMockNodeIdForNode } from '@/mocks/mockFarmData';
+import {
+  ENABLE_MOCK_NODE_FALLBACK,
+  MOCK_FARM_SCENARIO,
+  generateMockReadingsForNode,
+} from '@/mocks/mockFarmScenario';
 
 export interface FarmMetricChartPoint {
   label: string; // jam "HH.MM" (format id-ID), jarak antar titik 1 jam
@@ -12,28 +15,21 @@ export interface FarmMetricChartPoint {
   air_humidity: number; // %
 }
 
-// 6 titik, jarak 1 jam. Label = 6 jam terakhir s/d jam berjalan
-// (mis. "08.00, 09.00, 10.00, 11.00, 12.00, 13.00").
-export const POINTS = 6;
-
-function hourlyLabels(count: number): string[] {
-  const anchor = new Date();
-  anchor.setMinutes(0, 0, 0);
-  const labels: string[] = [];
-  for (let i = count - 1; i >= 0; i--) {
-    const d = new Date(anchor.getTime() - i * 3_600_000);
-    labels.push(d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
-  }
-  return labels;
-}
+// 6 titik, jarak 1 jam. Label diambil dari timestamp reading agar cadence dan
+// label tidak bisa saling berbeda.
+export const POINTS = MOCK_FARM_SCENARIO.reading.dashboardHistory.pointCount;
 
 function historicalSeriesFromReadings(nodeId: string): FarmMetricChartPoint[] {
-  const labels = hourlyLabels(POINTS);
-  const readings = generateMockReadingsForNode(nodeId, POINTS).reverse();
+  const readings = generateMockReadingsForNode(nodeId, POINTS, {
+    intervalMinutes: MOCK_FARM_SCENARIO.reading.dashboardHistory.intervalMinutes,
+  }).reverse();
 
-  return readings.map((reading, index) => {
+  return readings.map((reading) => {
     return {
-      label: labels[index] ?? '',
+      label: new Date(reading.created_at).toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       soil_moisture: reading.soil_moisture,
       soil_temp: reading.soil_temp,
       air_temp: reading.air_temp,
@@ -42,14 +38,7 @@ function historicalSeriesFromReadings(nodeId: string): FarmMetricChartPoint[] {
   });
 }
 
-const legacyAliases = ['node-a', 'node-b', 'node-c', 'node-d'];
-
 export function getHistoricalDataForNode(nodeId: string): FarmMetricChartPoint[] {
   if (!ENABLE_MOCK_NODE_FALLBACK) return [];
-
-  const normalizedId = nodeId.trim().toLowerCase();
-  const legacyIndex = legacyAliases.indexOf(normalizedId);
-  const resolvedNodeId = legacyIndex >= 0 ? `mock-node-${legacyIndex + 1}` : getMockNodeIdForNode(normalizedId);
-
-  return resolvedNodeId ? historicalSeriesFromReadings(resolvedNodeId) : [];
+  return nodeId.trim() ? historicalSeriesFromReadings(nodeId) : [];
 }

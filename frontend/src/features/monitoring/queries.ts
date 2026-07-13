@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api';
-import { generateMockReadingsForNode } from '@/mocks/mockFarmData';
+import { generateMockReadingsForNode } from '@/mocks/mockFarmScenario';
 
 function mockReadingResponse(nodeId: string, limit: number) {
   return { items: generateMockReadingsForNode(nodeId, limit) };
