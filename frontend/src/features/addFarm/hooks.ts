@@ -68,7 +68,10 @@ export function useAddFarm(): AddFarmViewModel {
     const missing: string[] = [];
     if (!trimmedLocation) missing.push(t('farms.addForm.fieldLocation'));
     if (!trimmedCrop) missing.push(t('farms.addForm.fieldCrop'));
-    if (areaHa === '') missing.push(t('farms.addForm.fieldArea'));
+    // Area boleh kosong atau "-" untuk kebun kecil (misal: 5 pohon pisang)
+    if (areaHa === '' || areaHa.trim() === '-') {
+      // Tidak wajib, lewati
+    }
     if (missing.length && !forceSubmit) {
       setMissingFields(missing);
       setForceSubmit(true);
@@ -103,7 +106,8 @@ export function useAddFarm(): AddFarmViewModel {
         owner: owner.trim(),
         location: trimmedLocation,
         crop_type: trimmedCrop,
-        area_ha: areaHa !== '' ? parseFloat(areaHa) : null,
+        // Area null jika kosong atau "-" (kebun kecil)
+        area_ha: areaHa.trim() === '' || areaHa.trim() === '-' ? null : parseFloat(areaHa),
         bmkg_adm4_code: resolvedAdm4,
         latitude: parsedLat,
         longitude: parsedLng,
