@@ -8,7 +8,8 @@
   "status": {
     "online": "Online",
     "offline": "Offline",
-    "standby": "Standby"
+    "standby": "Standby",
+    "pending": "Pending"
   },
   "auth": {
     "login": {
@@ -262,7 +263,7 @@
     "deleteCancel": "Cancel",
     "deleteConfirm": "Delete",
     "addForm": {
-      "pageTitle": "Add Farm",
+      "pageTitle": "Register Farm",
       "backLabel": "Back",
       "sectionProfile": "Farm Profile",
       "sectionCoords": "Farm Coordinates",
@@ -277,6 +278,9 @@
       "cropThreshold": "Recommended VWC threshold: {{lower}}% – {{upper}}%",
       "areaLabel": "Area (ha)",
       "areaPlaceholder": "e.g. 1.5",
+      "areaHelper": "Type \"-\" for small farms, e.g.: 5 banana trees",
+      "gatewayIdLabel": "Gateway ID",
+      "gatewayIdPlaceholder": "e.g. GW-001",
       "latLabel": "Latitude",
       "latPlaceholder": "e.g. -7.8014",
       "lngLabel": "Longitude",
@@ -402,6 +406,7 @@
       "selectFarms": "Select Farm",
       "myFarms": "My Farms",
       "registerFarm": "Register Farm",
+      "addNode": "Add Node",
       "settings": "Settings",
       "helpCenter": "Help Center",
       "switchAccount": "Switch Account",
@@ -625,5 +630,13 @@
         "answer": "Very secure. Each user can only access their own farms. Sensor data, irrigation history, and profile information are protected with encryption. We also use JWT authentication and OTP verification to maintain account security."
       }
     ]
+  },
+  "helpCenter": {
+    "contact": {
+      "title": "Contact Us",
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "chatButton": "Chat via WhatsApp"
+    }
   }
 }

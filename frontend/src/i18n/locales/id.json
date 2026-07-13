@@ -8,7 +8,8 @@
   "status": {
     "online": "Online",
     "offline": "Offline",
-    "standby": "Standby"
+    "standby": "Standby",
+    "pending": "Menunggu"
   },
   "auth": {
     "login": {
@@ -262,7 +263,7 @@
     "deleteCancel": "Batal",
     "deleteConfirm": "Hapus",
     "addForm": {
-      "pageTitle": "Tambah Kebun",
+      "pageTitle": "Registrasi Kebun",
       "backLabel": "Kembali",
       "sectionProfile": "Profil Kebun",
       "sectionCoords": "Koordinat Kebun",
@@ -277,6 +278,9 @@
       "cropThreshold": "Threshold VWC disarankan: {{lower}}% – {{upper}}%",
       "areaLabel": "Luas Lahan (ha)",
       "areaPlaceholder": "Contoh: 1.5",
+      "areaHelper": "Ketik \"-\" jika kebun kecil, contoh: 5 pohon pisang",
+      "gatewayIdLabel": "ID Gateway",
+      "gatewayIdPlaceholder": "Contoh: GW-001",
       "latLabel": "Latitude",
       "latPlaceholder": "Contoh: -7.8014",
       "lngLabel": "Longitude",
@@ -394,6 +398,7 @@
       "selectFarms": "Pilih Kebun",
       "myFarms": "Kebun Saya",
       "registerFarm": "Registrasi Kebun",
+      "addNode": "Add Node",
       "settings": "Pengaturan",
       "helpCenter": "Pusat Bantuan",
       "switchAccount": "Ganti Akun",
@@ -617,5 +622,13 @@
     "filterHeartbeat": "Heartbeat",
     "filterDataSync": "Sinkronisasi",
     "eventCount": "{{count}} event"
+  },
+  "helpCenter": {
+    "contact": {
+      "title": "Hubungi Kami",
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "chatButton": "Chat via WhatsApp"
+    }
   }
 }

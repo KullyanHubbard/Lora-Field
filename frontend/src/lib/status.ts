@@ -28,6 +28,7 @@ export function getGatewayStatusBadge(status: string): StatusBadge {
 export function getNodeStatusBadge(status: string): StatusBadge {
   const map: Record<string, StatusBadge> = {
     online: { labelKey: 'status.online', tone: 'green' },
+    pending: { labelKey: 'status.pending', tone: 'yellow' },
     standby: { labelKey: 'status.standby', tone: 'yellow' },
     offline: { labelKey: 'status.offline', tone: 'red' },
   };
