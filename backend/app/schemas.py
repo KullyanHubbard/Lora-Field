@@ -96,3 +96,46 @@ class ChangePasswordRequest(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     phone: str = Field(default="", max_length=20)
+
+
+# ---------------------------------------------------------------------------
+# Auto Node Discovery - Gateway Registration Models
+# ---------------------------------------------------------------------------
+
+class NodeRegistrationItem(BaseModel):
+    """Single node to register via gateway batch endpoint."""
+    node_id: str
+    name: str
+    region: str = ""
+    latitude: float | None = None
+    longitude: float | None = None
+
+
+class GatewayRegisterPayload(BaseModel):
+    """Request body for gateway batch node registration."""
+    farm_id: str
+    nodes: list[NodeRegistrationItem]
+
+
+class RegisteredNode(BaseModel):
+    """Response for a single registered node."""
+    id: str
+    name: str
+    status: str  # "pending" | "active"
+    created: bool
+
+
+class GatewayRegisterResponse(BaseModel):
+    """Response for gateway batch registration."""
+    gateway_id: str
+    farm_id: str
+    status: str  # "registered"
+    nodes: list[RegisteredNode]
+    created_count: int
+
+
+class NodeSelfRegistrationResponse(BaseModel):
+    """Response for node self-registration via readings."""
+    node_created: bool
+    node_id: str
+    node_status: str  # "pending" | "active"
