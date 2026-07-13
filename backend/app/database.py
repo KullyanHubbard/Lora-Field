@@ -153,6 +153,8 @@ def init_db() -> None:
         ensure_column(connection, "nodes", "longitude", "REAL")
         ensure_column(connection, "nodes", "farm_id", "TEXT REFERENCES farms(id)")
         ensure_column(connection, "users", "phone", "TEXT NOT NULL DEFAULT ''")
+        ensure_column(connection, "nodes", "gateway_id", "TEXT")
+        ensure_column(connection, "nodes", "first_seen_at", "TEXT")
 
         seed_wilayah(connection)
 
