@@ -4,6 +4,8 @@ import type {
   CreateFarmPayload,
   Farm,
   FarmSummary,
+  FarmGateway,
+  GatewayClaimPayload,
   GatewayLog,
   Reading,
   IrrigationLog,
@@ -137,6 +139,20 @@ export const api = {
   // GET /api/farms/{id}/gateway-logs — backend main.py. Empty sampai hardware gateway lapor.
   getGatewayLogs: (farmId: string, limit = 20) =>
     apiFetch<{ items: GatewayLog[] }>(`/farms/${farmId}/gateway-logs?limit=${limit}`),
+
+  getFarmGateway: (farmId: string) =>
+    apiFetch<{ gateway: FarmGateway | null }>(`/farms/${farmId}/gateway`),
+
+  claimFarmGateway: (farmId: string, payload: GatewayClaimPayload) =>
+    apiFetch<{ gateway: FarmGateway }>(`/farms/${farmId}/gateway/claim`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  unclaimFarmGateway: (farmId: string) =>
+    apiFetch<{ gateway: FarmGateway }>(`/farms/${farmId}/gateway/unclaim`, {
+      method: 'POST',
+    }),
 
   getLogs: (limit = 50) => apiFetch<{ items: IrrigationLog[] }>(`/logs?limit=${limit}`),
 };

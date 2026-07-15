@@ -2,9 +2,10 @@ import { getFarmLastUpdate } from '@/features/dashboard/farmStatusHelpers';
 import { getGatewayStatusBadge } from '@/lib/status';
 import { getMockGatewayProfile } from '@/mocks/mockFarmScenario';
 import type { StatusTone } from '@/lib/status';
-import type { FarmSummary, GatewayLog } from '@/types';
+import type { FarmGateway, FarmSummary, GatewayLog } from '@/types';
 
 export const GATEWAY_LOGS_PER_PAGE = 10;
+const GATEWAY_ONLINE_WINDOW_MS = 10 * 60 * 1000;
 
 export const GATEWAY_EVENT_FILTERS = [
   'all',
@@ -26,6 +27,7 @@ const GATEWAY_EVENT_LABEL_KEYS: Record<string, string> = {
 
 export type GatewayInfoViewModel = {
   gatewayId: string;
+  displayName: string | null;
   statusLabelKey: string;
   statusTone: StatusTone;
   signalValueKey: string;
@@ -33,17 +35,33 @@ export type GatewayInfoViewModel = {
   lastSeen: string | null;
 };
 
-export function buildGatewayInfo(summary: FarmSummary): GatewayInfoViewModel {
-  const status = getGatewayStatusBadge(summary.gateway_status);
+export function isFarmGatewayOnline(gateway: FarmGateway | null | undefined) {
+  if (!gateway?.last_seen_at) return false;
+  const normalizedTimestamp = gateway.last_seen_at.includes('T')
+    ? gateway.last_seen_at
+    : `${gateway.last_seen_at.replace(' ', 'T')}Z`;
+  const lastSeenMs = new Date(normalizedTimestamp).getTime();
+  return Number.isFinite(lastSeenMs) && Date.now() - lastSeenMs <= GATEWAY_ONLINE_WINDOW_MS;
+}
+
+export function buildGatewayInfo(
+  summary: FarmSummary,
+  gateway?: FarmGateway | null,
+): GatewayInfoViewModel {
+  const gatewayStatus = gateway
+    ? (isFarmGatewayOnline(gateway) ? 'online' : 'offline')
+    : summary.gateway_status;
+  const status = getGatewayStatusBadge(gatewayStatus);
   const mockGateway = getMockGatewayProfile(summary);
 
   return {
-    gatewayId: mockGateway.gatewayId,
+    gatewayId: gateway?.device_id ?? mockGateway.gatewayId,
+    displayName: gateway?.display_name ?? null,
     statusLabelKey: status.labelKey,
     statusTone: status.tone,
     signalValueKey: mockGateway.signalValueKey,
     internetValueKey: mockGateway.internetValueKey,
-    lastSeen: getFarmLastUpdate(summary.farm, summary.nodes),
+    lastSeen: gateway?.last_seen_at ?? getFarmLastUpdate(summary.farm, summary.nodes),
   };
 }
 

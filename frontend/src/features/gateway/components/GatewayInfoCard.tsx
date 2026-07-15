@@ -42,7 +42,9 @@ export function GatewayInfoCard({
         <div>
           <div className="flex items-center gap-2">
             <Radio className="size-4 shrink-0 text-blue-500 dark:text-blue-400" />
-            <h2 className="text-base font-medium text-foreground">{t('gateway.title')}</h2>
+            <h2 className="text-base font-medium text-foreground">
+              {info.displayName || t('gateway.title')}
+            </h2>
           </div>
           <p className="mt-1 font-mono text-xs text-muted-foreground">{info.gatewayId}</p>
         </div>

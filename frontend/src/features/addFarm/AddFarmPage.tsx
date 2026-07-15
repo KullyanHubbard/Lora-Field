@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Info, Plus } from 'lucide-react';
+import { Info, Plus, Radio } from 'lucide-react';
 import { useAddFarm } from '@/features/addFarm/hooks';
 import { CropDropdown, LocationDetector } from '@/features/addFarm/components';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,10 @@ export default function AddFarmPage() {
     setLng,
     adm4,
     setAdm4,
+    gatewayDeviceId,
+    setGatewayDeviceId,
+    gatewayDisplayName,
+    setGatewayDisplayName,
     missingFields,
     feedback,
     busy,
@@ -113,6 +117,38 @@ export default function AddFarmPage() {
               </p>
             </div>
           </div>
+
+          <p className="pt-1 text-sm font-medium text-muted-foreground">
+            {t('farms.addForm.sectionGateway')}
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="farm-gateway">{t('farms.addForm.gatewayIdLabel')}</Label>
+              <Input
+                id="farm-gateway"
+                maxLength={64}
+                placeholder={t('farms.addForm.gatewayIdPlaceholder')}
+                value={gatewayDeviceId}
+                onChange={(e) => setGatewayDeviceId(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="farm-gateway-name">{t('farms.addForm.gatewayDisplayNameLabel')}</Label>
+              <Input
+                id="farm-gateway-name"
+                maxLength={100}
+                placeholder={t('farms.addForm.gatewayDisplayNamePlaceholder')}
+                value={gatewayDisplayName}
+                onChange={(e) => setGatewayDisplayName(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Radio className="size-3.5" /> {t('farms.addForm.gatewayHint')}
+          </p>
 
           <p className="pt-1 text-sm font-medium text-muted-foreground">
             {t('farms.addForm.sectionCoords')}

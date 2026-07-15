@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GatewayInfoCard } from './components/GatewayInfoCard';
 import { GatewayLogContent } from './components/GatewayLogContent';
+import { GatewayProvisioningCard } from './components/GatewayProvisioningCard';
 import { useGatewayPageViewModel } from './useGatewayPageViewModel';
 
 export default function GatewayPage() {
@@ -12,6 +13,17 @@ export default function GatewayPage() {
     gatewayInfo,
     isSummaryLoading,
     summaryError,
+    farmGateway,
+    farmGatewayError,
+    isFarmGatewayLoading,
+    gatewayDeviceId,
+    setGatewayDeviceId,
+    gatewayDisplayName,
+    setGatewayDisplayName,
+    claimSelectedGateway,
+    unclaimCurrentGateway,
+    isClaimingGateway,
+    isUnclaimingGateway,
     totalLogs,
     safePage,
     totalPages,
@@ -47,6 +59,20 @@ export default function GatewayPage() {
       <GatewayInfoCard
         info={gatewayInfo}
         className="shrink-0 rounded-2xl border border-border bg-gradient-to-br from-card to-card/80 p-6 transition-colors"
+      />
+
+      <GatewayProvisioningCard
+        farmGateway={farmGateway}
+        farmGatewayError={farmGatewayError}
+        isFarmGatewayLoading={isFarmGatewayLoading}
+        gatewayDeviceId={gatewayDeviceId}
+        onGatewayDeviceIdChange={setGatewayDeviceId}
+        gatewayDisplayName={gatewayDisplayName}
+        onGatewayDisplayNameChange={setGatewayDisplayName}
+        onClaimGateway={claimSelectedGateway}
+        onUnclaimGateway={unclaimCurrentGateway}
+        isClaimingGateway={isClaimingGateway}
+        isUnclaimingGateway={isUnclaimingGateway}
       />
 
       <Card className="min-h-0 flex-1 overflow-hidden">

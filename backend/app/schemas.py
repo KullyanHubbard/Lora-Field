@@ -26,6 +26,11 @@ class GatewayLogIn(BaseModel):
     detail: str = Field(default="", max_length=300)
 
 
+class GatewayClaimPayload(BaseModel):
+    device_id: str = Field(..., min_length=4, max_length=64)
+    display_name: str = Field(default="", max_length=100)
+
+
 class FarmCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     owner: str = Field(default="", max_length=100)
@@ -35,6 +40,8 @@ class FarmCreate(BaseModel):
     bmkg_adm4_code: str = Field(default="", max_length=20)
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
+    gateway_device_id: str = Field(..., min_length=4, max_length=64)
+    gateway_display_name: str = Field(default="", max_length=100)
 
 
 class FarmUpdate(BaseModel):

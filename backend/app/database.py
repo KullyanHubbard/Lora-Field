@@ -97,12 +97,14 @@ def init_db() -> None:
 
             CREATE TABLE IF NOT EXISTS readings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                farm_id TEXT NOT NULL,
                 node_id TEXT NOT NULL,
                 soil_moisture REAL NOT NULL,
                 soil_temp REAL NOT NULL,
                 air_temp REAL NOT NULL,
                 air_humidity REAL NOT NULL,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (farm_id) REFERENCES farms(id),
                 FOREIGN KEY (node_id) REFERENCES nodes(id)
             );
 
@@ -135,6 +137,19 @@ def init_db() -> None:
 
             CREATE INDEX IF NOT EXISTS idx_gateway_logs_farm ON gateway_logs(farm_id);
 
+            CREATE TABLE IF NOT EXISTS gateways (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                device_id TEXT UNIQUE NOT NULL,
+                farm_id TEXT UNIQUE,
+                display_name TEXT,
+                first_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_seen_at TEXT,
+                claimed_at TEXT,
+                FOREIGN KEY (farm_id) REFERENCES farms(id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_gateways_farm ON gateways(farm_id);
+
             CREATE TABLE IF NOT EXISTS wilayah (
                 kode TEXT PRIMARY KEY,
                 nama TEXT NOT NULL,
@@ -155,8 +170,31 @@ def init_db() -> None:
         ensure_column(connection, "users", "phone", "TEXT NOT NULL DEFAULT ''")
         ensure_column(connection, "nodes", "gateway_id", "TEXT")
         ensure_column(connection, "nodes", "first_seen_at", "TEXT")
+        ensure_column(connection, "readings", "farm_id", "TEXT REFERENCES farms(id)")
+        backfill_reading_farm_ids(connection)
 
         seed_wilayah(connection)
+
+
+def backfill_reading_farm_ids(connection: sqlite3.Connection) -> None:
+    """Isi farm_id snapshot untuk readings lama berdasarkan node pemiliknya."""
+    connection.execute(
+        """
+        UPDATE readings
+        SET farm_id = (
+            SELECT nodes.farm_id
+            FROM nodes
+            WHERE nodes.id = readings.node_id
+        )
+        WHERE (farm_id IS NULL OR farm_id = '')
+          AND EXISTS (
+              SELECT 1
+              FROM nodes
+              WHERE nodes.id = readings.node_id
+                AND nodes.farm_id IS NOT NULL
+          )
+        """
+    )
 
 
 def seed_wilayah(connection: sqlite3.Connection) -> None:

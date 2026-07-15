@@ -55,6 +55,7 @@ from .wilayah_resolver import resolve_adm4_from_freetext, resolve_adm4_from_regi
 from .schemas import (
     FarmCreate,
     FarmUpdate,
+    GatewayClaimPayload,
     GatewayLogIn,
     GatewayRegisterPayload,
     GatewayRegisterResponse,
@@ -875,6 +876,18 @@ def _get_node_owned(connection, node_id: str, user_id: str) -> dict:
     return node
 
 
+def _get_farm_for_gateway_action(connection, farm_id: str, user_id: str) -> dict:
+    """Ambil farm untuk aksi gateway; bedakan not found dan forbidden."""
+    farm = row_to_dict(
+        connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
+    )
+    if farm is None:
+        raise HTTPException(status_code=404, detail="Kebun tidak ditemukan")
+    if farm["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Tidak punya akses ke kebun ini")
+    return farm
+
+
 @app.get("/api/farms")
 def list_farms(current_user: Annotated[dict, Depends(get_current_user)]) -> dict:
     with get_connection() as connection:
@@ -963,6 +976,16 @@ def delete_farm(
 ) -> dict:
     with get_connection() as connection:
         _get_farm_owned(connection, farm_id, current_user["id"])
+        connection.execute(
+            """
+            UPDATE gateways
+            SET farm_id = NULL,
+                display_name = NULL,
+                claimed_at = NULL
+            WHERE farm_id = ?
+            """,
+            (farm_id,),
+        )
         connection.execute("DELETE FROM farms WHERE id = ?", (farm_id,))
     return {"message": "Kebun berhasil dihapus."}
 
@@ -991,8 +1014,31 @@ def create_farm(
         # tiap kali summary/cuaca kebun dimuat (auto-generate setelah buat kebun).
         adm4 = resolve_bmkg_adm4(payload.latitude, payload.longitude, payload.location)
 
+    gateway_device_id = payload.gateway_device_id.strip()
+    gateway_display_name = payload.gateway_display_name.strip()
+    if not gateway_device_id:
+        raise HTTPException(status_code=422, detail="Gateway wajib dipilih.")
+
     farm_id = f"farm-{uuid.uuid4().hex[:8]}"
     with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO gateways (device_id, first_seen_at)
+            VALUES (?, CURRENT_TIMESTAMP)
+            """,
+            (gateway_device_id,),
+        )
+        gateway = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateways WHERE device_id = ?",
+                (gateway_device_id,),
+            ).fetchone()
+        )
+        if gateway is None:
+            raise HTTPException(status_code=404, detail="Gateway gagal disiapkan")
+        if gateway.get("farm_id") is not None:
+            raise HTTPException(status_code=409, detail="Gateway sudah terhubung ke kebun lain")
+
         connection.execute(
             """
             INSERT INTO farms
@@ -1013,10 +1059,29 @@ def create_farm(
                 payload.longitude,
             ),
         )
+        claim_cursor = connection.execute(
+            """
+            UPDATE gateways
+            SET farm_id = ?,
+                display_name = ?,
+                claimed_at = CURRENT_TIMESTAMP
+            WHERE device_id = ?
+              AND farm_id IS NULL
+            """,
+            (farm_id, gateway_display_name, gateway_device_id),
+        )
+        if claim_cursor.rowcount != 1:
+            raise HTTPException(status_code=409, detail="Gateway sudah diklaim. Muat ulang daftar gateway.")
         farm = row_to_dict(
             connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
         )
-    return {"farm": farm}
+        gateway = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateways WHERE device_id = ?",
+                (gateway_device_id,),
+            ).fetchone()
+        )
+    return {"farm": farm, "gateway": gateway}
 
 
 @app.get("/api/farms/{farm_id}/weather")
@@ -1139,8 +1204,125 @@ def create_gateway_log(
 
 
 # ---------------------------------------------------------------------------
-# Auto Node Discovery - Gateway Registration
+# Gateway management
 # ---------------------------------------------------------------------------
+
+
+@app.get("/api/farms/{farm_id}/gateway")
+def get_farm_gateway(
+    farm_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    with get_connection() as connection:
+        _get_farm_for_gateway_action(connection, farm_id, current_user["id"])
+        gateway = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateways WHERE farm_id = ?",
+                (farm_id,),
+            ).fetchone()
+        )
+    return {"gateway": gateway}
+
+
+@app.post("/api/farms/{farm_id}/gateway/claim")
+def claim_farm_gateway(
+    farm_id: str,
+    payload: GatewayClaimPayload,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    device_id = payload.device_id.strip()
+    display_name = payload.display_name.strip()
+    if not device_id:
+        raise HTTPException(status_code=422, detail="device_id wajib diisi")
+
+    with get_connection() as connection:
+        _get_farm_for_gateway_action(connection, farm_id, current_user["id"])
+
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO gateways (device_id, first_seen_at)
+            VALUES (?, CURRENT_TIMESTAMP)
+            """,
+            (device_id,),
+        )
+        gateway = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateways WHERE device_id = ?",
+                (device_id,),
+            ).fetchone()
+        )
+        if gateway is None:
+            raise HTTPException(status_code=404, detail="Gateway gagal disiapkan")
+        if gateway.get("farm_id") is not None:
+            raise HTTPException(status_code=409, detail="Gateway sudah terhubung ke kebun lain")
+
+        existing_farm_gateway = connection.execute(
+            "SELECT 1 FROM gateways WHERE farm_id = ?",
+            (farm_id,),
+        ).fetchone()
+        if existing_farm_gateway is not None:
+            raise HTTPException(status_code=409, detail="Kebun ini sudah punya gateway")
+
+        try:
+            claim_cursor = connection.execute(
+                """
+                UPDATE gateways
+                SET farm_id = ?,
+                    display_name = ?,
+                    claimed_at = CURRENT_TIMESTAMP
+                WHERE device_id = ?
+                  AND farm_id IS NULL
+                """,
+                (farm_id, display_name, device_id),
+            )
+        except sqlite3.IntegrityError as exc:
+            raise HTTPException(status_code=409, detail="Kebun ini sudah punya gateway") from exc
+        if claim_cursor.rowcount != 1:
+            raise HTTPException(status_code=409, detail="Gateway sudah diklaim. Muat ulang daftar gateway.")
+        gateway = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateways WHERE device_id = ?",
+                (device_id,),
+            ).fetchone()
+        )
+
+    return {"gateway": gateway}
+
+
+@app.post("/api/farms/{farm_id}/gateway/unclaim")
+def unclaim_farm_gateway(
+    farm_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    with get_connection() as connection:
+        _get_farm_for_gateway_action(connection, farm_id, current_user["id"])
+        gateway = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateways WHERE farm_id = ?",
+                (farm_id,),
+            ).fetchone()
+        )
+        if gateway is None:
+            raise HTTPException(status_code=404, detail="Kebun ini belum punya gateway")
+
+        connection.execute(
+            """
+            UPDATE gateways
+            SET farm_id = NULL,
+                display_name = NULL,
+                claimed_at = NULL
+            WHERE farm_id = ?
+            """,
+            (farm_id,),
+        )
+        unclaimed_gateway = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateways WHERE device_id = ?",
+                (gateway["device_id"],),
+            ).fetchone()
+        )
+    return {"gateway": unclaimed_gateway}
+
 
 @app.post("/api/gateways/{gateway_id}/register", status_code=200)
 def gateway_register_nodes(
@@ -1157,22 +1339,38 @@ def gateway_register_nodes(
     registered_nodes = []
 
     with get_connection() as connection:
-        # Verify farm ownership
-        farm = connection.execute(
-            "SELECT * FROM farms WHERE id = ? AND user_id = ?",
-            (payload.farm_id, current_user["id"])
-        ).fetchone()
+        _get_farm_owned(connection, payload.farm_id, current_user["id"])
 
-        if not farm:
-            raise HTTPException(status_code=404, detail="Farm not found")
+        gateway = row_to_dict(
+            connection.execute(
+                "SELECT * FROM gateways WHERE device_id = ?",
+                (gateway_id,),
+            ).fetchone()
+        )
+        if gateway is None:
+            raise HTTPException(status_code=404, detail="Gateway belum terdaftar")
+        if gateway.get("farm_id") is None:
+            raise HTTPException(status_code=409, detail="Gateway belum terhubung ke kebun")
+        if gateway["farm_id"] != payload.farm_id:
+            raise HTTPException(status_code=403, detail="Gateway tidak terhubung ke kebun ini")
+
+        connection.execute(
+            "UPDATE gateways SET last_seen_at = CURRENT_TIMESTAMP WHERE device_id = ?",
+            (gateway_id,),
+        )
 
         for node_item in payload.nodes:
             # Check if node already exists
-            existing = connection.execute(
+            existing = row_to_dict(connection.execute(
                 "SELECT * FROM nodes WHERE id = ?", (node_item.node_id,)
-            ).fetchone()
+            ).fetchone())
 
             if existing:
+                if existing.get("farm_id") != payload.farm_id:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Node sudah terdaftar di kebun lain",
+                    )
                 # Update gateway_id and status
                 connection.execute(
                     """UPDATE nodes
@@ -1338,6 +1536,7 @@ def create_reading(
                     detail="farm_id required for first-time node registration"
                 )
 
+            _get_farm_owned(connection, farm_id, current_user["id"])
             connection.execute(
                 """INSERT INTO nodes
                    (id, farm_id, name, location, status, battery, first_seen_at)
@@ -1348,7 +1547,8 @@ def create_reading(
             node_status = "online"
         else:
             # Node exists — verify ownership
-            _get_node_owned(connection, node_id, current_user["id"])
+            node = _get_node_owned(connection, node_id, current_user["id"])
+            farm_id = node["farm_id"]
             node_status = "online"
 
         weather = fetch_weather_with_cache(adm4)
@@ -1356,10 +1556,12 @@ def create_reading(
 
         cursor = connection.execute(
             """
-            INSERT INTO readings (node_id, soil_moisture, soil_temp, air_temp, air_humidity)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO readings
+                (farm_id, node_id, soil_moisture, soil_temp, air_temp, air_humidity)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
+                farm_id,
                 node_id,
                 payload.soil_moisture,
                 payload.soil_temp,
@@ -1394,6 +1596,7 @@ def create_reading(
 
     reading = payload.model_dump()
     reading["id"] = reading_id
+    reading["farm_id"] = farm_id
     reading["node_id"] = node_id
 
     return {

@@ -21,6 +21,10 @@ export interface AddFarmViewModel {
   setLng: (value: string) => void;
   adm4: string;
   setAdm4: (value: string) => void;
+  gatewayDeviceId: string;
+  setGatewayDeviceId: (value: string) => void;
+  gatewayDisplayName: string;
+  setGatewayDisplayName: (value: string) => void;
   missingFields: string[];
   feedback: string;
   busy: boolean;
@@ -46,6 +50,8 @@ export function useAddFarm(): AddFarmViewModel {
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [adm4, setAdm4] = useState('');
+  const [gatewayDeviceId, setGatewayDeviceId] = useState('');
+  const [gatewayDisplayName, setGatewayDisplayName] = useState('');
   const [forceSubmit, setForceSubmit] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [feedback, setFeedback] = useState('');
@@ -64,13 +70,19 @@ export function useAddFarm(): AddFarmViewModel {
 
     const trimmedLocation = location.trim();
     const trimmedCrop = cropType.trim();
+    const trimmedGatewayDeviceId = gatewayDeviceId.trim();
 
     const missing: string[] = [];
+    if (!trimmedGatewayDeviceId) missing.push(t('farms.addForm.fieldGateway'));
     if (!trimmedLocation) missing.push(t('farms.addForm.fieldLocation'));
     if (!trimmedCrop) missing.push(t('farms.addForm.fieldCrop'));
     // Area boleh kosong atau "-" untuk kebun kecil (misal: 5 pohon pisang)
     if (areaHa === '' || areaHa.trim() === '-') {
       // Tidak wajib, lewati
+    }
+    if (!trimmedGatewayDeviceId) {
+      setMissingFields(missing);
+      return;
     }
     if (missing.length && !forceSubmit) {
       setMissingFields(missing);
@@ -111,6 +123,8 @@ export function useAddFarm(): AddFarmViewModel {
         bmkg_adm4_code: resolvedAdm4,
         latitude: parsedLat,
         longitude: parsedLng,
+        gateway_device_id: trimmedGatewayDeviceId,
+        gateway_display_name: gatewayDisplayName.trim(),
       });
     } catch {
       // Kegagalan request sudah ditangani lewat toast di useCreateFarm.onError.
@@ -141,6 +155,10 @@ export function useAddFarm(): AddFarmViewModel {
     setLng,
     adm4,
     setAdm4,
+    gatewayDeviceId,
+    setGatewayDeviceId,
+    gatewayDisplayName,
+    setGatewayDisplayName,
     missingFields,
     feedback,
     busy,

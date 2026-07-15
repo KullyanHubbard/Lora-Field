@@ -17,6 +17,7 @@ export interface Farm {
 
 export interface Reading {
   id: string;
+  farm_id?: string | null;
   soil_moisture: number;
   soil_temp: number;
   air_temp: number;
@@ -53,6 +54,21 @@ export interface GatewayLog {
   event: string;
   detail: string;
   created_at: string;
+}
+
+export interface FarmGateway {
+  id: number;
+  device_id: string;
+  farm_id: string | null;
+  display_name: string | null;
+  first_seen_at: string;
+  last_seen_at: string | null;
+  claimed_at: string | null;
+}
+
+export interface GatewayClaimPayload {
+  device_id: string;
+  display_name: string;
 }
 
 export interface WeatherForecastPoint {
@@ -130,4 +146,6 @@ export interface CreateFarmPayload {
   bmkg_adm4_code: string;
   latitude: number;
   longitude: number;
+  gateway_device_id: string;
+  gateway_display_name: string;
 }

@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/features/auth/AuthContext';
+import { FarmProvider } from '@/contexts/FarmContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,7 +17,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <FarmProvider>{children}</FarmProvider>
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

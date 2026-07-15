@@ -63,15 +63,22 @@ export function AppLayout() {
   const farmMatch = pathname.match(/^\/farms\/([^/]+)/);
   const urlFarmId = farmMatch && farmMatch[1] !== 'add' ? farmMatch[1] : null;
 
-  // Sync: kalau URL punya farmId, simpan ke context
+  // Sync context dengan URL. Route /farms/:id adalah sumber utama mode detail kebun;
+  // saat keluar ke selector/settings, bersihkan farm agar sidebar tidak tertahan.
   useEffect(() => {
-    if (urlFarmId && urlFarmId !== selectedFarmId) {
-      selectFarm(urlFarmId);
+    if (urlFarmId) {
+      if (urlFarmId !== selectedFarmId) {
+        selectFarm(urlFarmId);
+      }
+      return;
     }
-  }, [urlFarmId, selectedFarmId, selectFarm]);
 
-  // Gunakan selectedFarmId dari context sebagai source of truth
-  const farmId = selectedFarmId;
+    if (selectedFarmId) {
+      clearFarm();
+    }
+  }, [urlFarmId, selectedFarmId, selectFarm, clearFarm]);
+
+  const farmId = urlFarmId;
   const { data: farmSummary } = useFarmSummary(farmId ?? '');
   const farmName = farmSummary?.farm.name ?? t('layout.fallbackFarm');
 
