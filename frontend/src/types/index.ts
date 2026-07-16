@@ -106,7 +106,7 @@ export interface NodeSummary {
   // backend kirim null kalau node belum punya reading (main.py:1063)
   latest_reading: Reading | null;
   decision: { decision: string; valve_state: string } | null;
-  signal_rssi?: string; // client-side fallback/mock sampai backend punya field RSSI
+  signal_rssi?: string; // opsional sampai backend punya field RSSI
 }
 
 export interface FarmSummary {
@@ -118,7 +118,6 @@ export interface FarmSummary {
   nodes_problem: number;
   nodes: NodeSummary[];
   weather: Weather | null;
-  is_mock_data?: boolean; // flag client-side saja, TIDAK ada di response backend asli — jangan dikira field API
 }
 
 // ASUMSI - verifikasi dengan backend (isi User belum kelihatan penuh)

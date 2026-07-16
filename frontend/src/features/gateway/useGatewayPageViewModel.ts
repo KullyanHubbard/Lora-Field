@@ -11,10 +11,8 @@ import {
   type GatewayEventFilter,
 } from '@/features/gateway/gatewayHelpers';
 import {
-  useClaimFarmGateway,
   useFarmGateway,
   useGatewayLogs,
-  useUnclaimFarmGateway,
 } from '@/features/gateway/queries';
 
 export function useGatewayPageViewModel() {
@@ -22,17 +20,7 @@ export function useGatewayPageViewModel() {
   const summaryQuery = useFarmSummary(farmId ?? '');
   const farmGatewayQuery = useFarmGateway(farmId);
   const gateway = farmGatewayQuery.data?.gateway ?? null;
-  const claimGateway = useClaimFarmGateway(farmId);
-  const unclaimGateway = useUnclaimFarmGateway(farmId);
-  const [gatewayDeviceId, setGatewayDeviceId] = useState('');
-  const [gatewayDisplayName, setGatewayDisplayName] = useState('');
-  const activeNodeCount = useMemo(
-    () =>
-      summaryQuery.data?.nodes.filter((nodeSummary) => nodeSummary.node.status === 'online')
-        .length ?? 0,
-    [summaryQuery.data?.nodes],
-  );
-  const logsQuery = useGatewayLogs(summaryQuery.data ? farmId : undefined, 20, activeNodeCount);
+  const logsQuery = useGatewayLogs(summaryQuery.data ? farmId : undefined, 20);
   const [filter, setFilter] = useState<GatewayEventFilter>('all');
   const [page, setPage] = useState(0);
 
@@ -64,37 +52,11 @@ export function useGatewayPageViewModel() {
     setPage((currentPage) => Math.min(totalPages - 1, currentPage + 1));
   }
 
-  async function claimSelectedGateway() {
-    if (!farmId || !gatewayDeviceId.trim()) return;
-    await claimGateway.mutateAsync({
-      device_id: gatewayDeviceId.trim(),
-      display_name: gatewayDisplayName,
-    });
-    setGatewayDeviceId('');
-    setGatewayDisplayName('');
-  }
-
-  async function unclaimCurrentGateway() {
-    if (!farmId) return;
-    await unclaimGateway.mutateAsync();
-  }
-
   return {
     farmId,
     summary: summaryQuery.data,
     summaryError: summaryQuery.error,
     isSummaryLoading: summaryQuery.isLoading,
-    farmGateway: gateway,
-    farmGatewayError: farmGatewayQuery.error,
-    isFarmGatewayLoading: farmGatewayQuery.isLoading,
-    gatewayDeviceId,
-    setGatewayDeviceId,
-    gatewayDisplayName,
-    setGatewayDisplayName,
-    claimSelectedGateway,
-    unclaimCurrentGateway,
-    isClaimingGateway: claimGateway.isPending,
-    isUnclaimingGateway: unclaimGateway.isPending,
     gatewayInfo,
     logs: pageLogs,
     totalLogs: filteredLogs.length,

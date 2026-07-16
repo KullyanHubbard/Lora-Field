@@ -41,7 +41,7 @@ export function useLogsViewModel() {
   const summaryQuery = useFarmSummary(farmId);
   const summary = summaryQuery.data;
   const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
-  const logsQuery = useLogs(summary ? farmId : undefined, 100, nodes, summary?.thresholds);
+  const logsQuery = useLogs(summary ? farmId : undefined, 100);
 
   const [activeFilter, setActiveFilter] = useState<LogFilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');

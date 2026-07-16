@@ -1,15 +1,16 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { RedirectIfAuth, RequireAuth } from '@/features/auth';
+import { RedirectIfAuth } from '@/features/auth/RedirectIfAuth';
+import { RequireAuth } from '@/features/auth/RequireAuth';
 
 // Route-based code splitting — Leaflet (Pilih Kebun) dan chart (monitoring)
 // di-load hanya saat route pertama kali dikunjungi.
 const LandingPage = lazy(() => import('@/features/landing').then(m => ({ default: m.LandingPage })));
-const LoginPage = lazy(() => import('@/features/auth').then(m => ({ default: m.LoginPage })));
-const RegisterPage = lazy(() => import('@/features/auth').then(m => ({ default: m.RegisterPage })));
-const ResetPasswordPage = lazy(() => import('@/features/auth').then(m => ({ default: m.ResetPasswordPage })));
-const ChangePasswordPage = lazy(() => import('@/features/auth').then(m => ({ default: m.ChangePasswordPage })));
+const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
+const RegisterPage = lazy(() => import('@/features/auth/RegisterPage'));
+const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'));
+const ChangePasswordPage = lazy(() => import('@/features/auth/ChangePasswordPage'));
 const SelectFarmsPage = lazy(() => import('@/features/selectFarms').then(m => ({ default: m.SelectFarmsPage })));
 const MyFarmsPage = lazy(() => import('@/features/myFarms').then(m => ({ default: m.MyFarmsPage })));
 const AddFarmPage = lazy(() => import('@/features/addFarm').then(m => ({ default: m.AddFarmPage })));

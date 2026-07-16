@@ -1,6 +1,4 @@
-import { getFarmLastUpdate } from '@/features/dashboard/farmStatusHelpers';
 import { getGatewayStatusBadge } from '@/lib/status';
-import { getMockGatewayProfile } from '@/mocks/mockFarmScenario';
 import type { StatusTone } from '@/lib/status';
 import type { FarmGateway, FarmSummary, GatewayLog } from '@/types';
 
@@ -45,23 +43,22 @@ export function isFarmGatewayOnline(gateway: FarmGateway | null | undefined) {
 }
 
 export function buildGatewayInfo(
-  summary: FarmSummary,
+  _summary: FarmSummary,
   gateway?: FarmGateway | null,
 ): GatewayInfoViewModel {
   const gatewayStatus = gateway
     ? (isFarmGatewayOnline(gateway) ? 'online' : 'offline')
-    : summary.gateway_status;
+    : 'offline';
   const status = getGatewayStatusBadge(gatewayStatus);
-  const mockGateway = getMockGatewayProfile(summary);
 
   return {
-    gatewayId: gateway?.device_id ?? mockGateway.gatewayId,
+    gatewayId: gateway?.device_id ?? '—',
     displayName: gateway?.display_name ?? null,
     statusLabelKey: status.labelKey,
     statusTone: status.tone,
-    signalValueKey: mockGateway.signalValueKey,
-    internetValueKey: mockGateway.internetValueKey,
-    lastSeen: gateway?.last_seen_at ?? getFarmLastUpdate(summary.farm, summary.nodes),
+    signalValueKey: 'gateway.signalNone',
+    internetValueKey: 'gateway.internetNotMonitored',
+    lastSeen: gateway?.last_seen_at ?? null,
   };
 }
 

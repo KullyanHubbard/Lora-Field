@@ -394,7 +394,7 @@ function summarizeNodeList(nodes: NodeSummary[]) {
 }
 
 export function withMockNodeFallback(summary: FarmSummary): FarmSummary {
-  if (!ENABLE_MOCK_NODE_FALLBACK) return { ...summary, is_mock_data: false };
+  if (!ENABLE_MOCK_NODE_FALLBACK) return { ...summary };
 
   const needsFullMock = summary.nodes.length === 0;
   const needsMissingReadingMock = summary.nodes.some(
@@ -402,7 +402,7 @@ export function withMockNodeFallback(summary: FarmSummary): FarmSummary {
   );
 
   if (!needsFullMock && !needsMissingReadingMock) {
-    return { ...summary, is_mock_data: false };
+    return { ...summary };
   }
 
   const lowerThreshold = summary.thresholds.lower;
@@ -429,7 +429,6 @@ export function withMockNodeFallback(summary: FarmSummary): FarmSummary {
       ...summary,
       nodes,
       average_soil_moisture: derived.averageSoilMoisture,
-      is_mock_data: true,
     };
   }
 
@@ -439,7 +438,6 @@ export function withMockNodeFallback(summary: FarmSummary): FarmSummary {
     gateway_status: derived.gatewayStatus,
     average_soil_moisture: derived.averageSoilMoisture,
     nodes_problem: derived.nodesProblem,
-    is_mock_data: true,
     // `summary.weather` sengaja tidak diubah.
   };
 }

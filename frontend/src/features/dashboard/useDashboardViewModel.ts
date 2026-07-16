@@ -19,11 +19,7 @@ export function useDashboardViewModel() {
   const weather = summary?.weather ?? null;
 
   const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
-  const activeNodeCount = useMemo(
-    () => nodes.filter((nodeSummary) => nodeSummary.node.status === 'online').length,
-    [nodes],
-  );
-  const activityLogQuery = useGatewayLogs(summary ? farmId : undefined, 2, activeNodeCount);
+  const activityLogQuery = useGatewayLogs(summary ? farmId : undefined, 2);
   const errorMessage = summaryQuery.error
     ? t('dashboard.errorLoad', { message: summaryQuery.error.message })
     : t('dashboard.noData2');
