@@ -64,37 +64,37 @@ Enam masalah yang sudah berdampak nyata.
 Semua item di sini sudah dicek tidak punya pemakai.
 
 Frontend:
-- [ ] Folder `frontend/src/assets/icons/` (63 file, 74 KB). Semua ikon diambil dari lucide-react.
-- [ ] `frontend/src/assets/Hero-Preview1.svg` (480 KB). Landing memakai versi `.png`.
+- [x] Folder `frontend/src/assets/icons/` (63 file, 74 KB). Semua ikon diambil dari lucide-react.
+- [x] `frontend/src/assets/Hero-Preview1.svg` (480 KB). Landing memakai versi `.png`.
 - [ ] Rantai svgr: `frontend/src/types/svg.d.ts`, `svgr()` di `frontend/vite.config.ts`, dan paket `vite-plugin-svgr` (butuh K9).
-- [ ] Empat file mock pembungkus: `mockFarmData.ts`, `mockGatewayData.ts`, `mockGatewayLogs.ts`, `mockLogs.ts`. `mockFarmScenario.ts` mengikuti K6.
-- [ ] `frontend/src/lib/markerColors.ts`.
-- [ ] `frontend/src/components/layout/DashboardBar.tsx` dan komentar yang menyebutnya di `BrandMark.tsx:5`.
-- [ ] `frontend/src/components/layout/.gitkeep`.
-- [ ] Sisa panel daftar kebun lama di halaman peta:
+- [x] Empat file mock pembungkus: `mockFarmData.ts`, `mockGatewayData.ts`, `mockGatewayLogs.ts`, `mockLogs.ts`. `mockFarmScenario.ts` mengikuti K6.
+- [x] `frontend/src/lib/markerColors.ts`.
+- [x] `frontend/src/components/layout/DashboardBar.tsx` dan komentar yang menyebutnya di `BrandMark.tsx:5`.
+- [x] `frontend/src/components/layout/.gitkeep`.
+- [x] Sisa panel daftar kebun lama di halaman peta:
   - `selectFarms/components/SelectFarmsList.tsx`, `SelectFarmsListItem.tsx`, `SelectFarmsAddButton.tsx`
   - `getShortFarmLocation` di `selectFarmsHelpers.ts`
   - `farmStatusTone`, `farmStatusLabelKey`, `FarmStatusTone` di `dashboard/farmStatusHelpers.ts` (`getFarmLastUpdate` tetap, dipakai halaman Irigasi)
   - `components/ui/status-lights.tsx` (pemakainya hanya file di atas)
   - `onAddFarm` dan `onOpenFarm` di `useSelectFarmsViewModel.ts`
   - Teks terjemahan yang jadi yatim karenanya (`selectFarms.title`, `selectFarms.empty`, `selectFarms.openFarm`, `farmStatus.*`), dicek dulu satu per satu.
-- [ ] `frontend/src/features/landing/constants.ts`.
-- [ ] Barrel tanpa pemakai: `features/auth/index.ts`, `features/dashboard/components/index.ts`.
-- [ ] `frontend/esb.txt` (catatan error yang nyasar).
-- [ ] Class `cn-toast` di `components/ui/sonner.tsx` (tidak didefinisikan di mana pun).
+- [x] `frontend/src/features/landing/constants.ts`.
+- [x] Barrel tanpa pemakai: `features/auth/index.ts`, `features/dashboard/components/index.ts`.
+- [x] `frontend/esb.txt` (catatan error yang nyasar).
+- [x] Class `cn-toast` di `components/ui/sonner.tsx` (tidak didefinisikan di mana pun).
 
 Backend:
-- [ ] `backend/app/data/lorafield.db` (file kosong, database asli ada di `backend/data/`). Keluarkan dari git.
-- [ ] Model `NodeSelfRegistrationResponse` di `backend/app/schemas.py:150–153`.
-- [ ] Mount `/static` di `backend/app/main.py:87–89` (foldernya tidak pernah ada).
-- [ ] Paket `resend` dan `python-multipart` di `backend/requirements.txt`.
+- [x] `backend/app/data/lorafield.db` (file kosong, database asli ada di `backend/data/`). Keluarkan dari git.
+- [x] Model `NodeSelfRegistrationResponse` di `backend/app/schemas.py:150–153`.
+- [x] Mount `/static` di `backend/app/main.py:87–89` (foldernya tidak pernah ada).
+- [x] Paket `resend` dan `python-multipart` di `backend/requirements.txt`.
 
 Root repo:
-- [ ] `package-lock.json` di root (kosong, tidak ada `package.json` di root).
-- [ ] `skills-lock.json` dan folder kosong `.agents/`, `.codex/`.
-- [ ] `backend/.gitignore` (semua isinya sudah ada di `.gitignore` root).
-- [ ] `.vscode/settings.json` dikeluarkan dari git dengan `git rm --cached`. File di laptop tetap ada.
-- [ ] `.gitignore` root: tambah `*.db`, `*.db-journal`, `*.db-wal`, `*.db-shm`, dan file hasil `openapi_snapshot.py` (`backend/scripts/openapi_current.json`, `baseline.json`, `sesudah.json`).
+- [x] `package-lock.json` di root (kosong, tidak ada `package.json` di root).
+- [x] `skills-lock.json` dan folder kosong `.agents/`, `.codex/`.
+- [x] `backend/.gitignore` (semua isinya sudah ada di `.gitignore` root).
+- [x] `.vscode/settings.json` dikeluarkan dari git dengan `git rm --cached`. File di laptop tetap ada.
+- [x] `.gitignore` root: tambah `*.db`, `*.db-journal`, `*.db-wal`, `*.db-shm`, dan file hasil `openapi_snapshot.py` (`backend/scripts/openapi_current.json`, `baseline.json`, `sesudah.json`).
 
 Cek tambahan: buka landing, peta kebun, Kebun Saya, dan halaman Irigasi. Semuanya tampil normal.
 

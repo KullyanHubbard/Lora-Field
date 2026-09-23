@@ -84,9 +84,6 @@ if FRONTEND_DIST_DIR.exists():
     dist_assets = FRONTEND_DIST_DIR / "assets"
     if dist_assets.exists():
         app.mount("/assets", StaticFiles(directory=str(dist_assets)), name="dist-assets")
-    dist_static = FRONTEND_DIST_DIR / "static"
-    if dist_static.exists():
-        app.mount("/static", StaticFiles(directory=str(dist_static)), name="dist-static")
 
 app.add_middleware(
     CORSMiddleware,

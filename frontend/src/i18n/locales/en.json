@@ -389,13 +389,6 @@
     "normal": "Normal",
     "needsCheck": "Needs Check"
   },
-  "farmStatus": {
-    "active": "Active",
-    "warning": "Needs Attention",
-    "maintenance": "Maintenance",
-    "inactive": "Inactive",
-    "unknown": "Unknown"
-  },
   "myFarms": {
     "colorPickerTitle": "Marker Color",
     "cardLocation": "Location",
@@ -409,12 +402,6 @@
     "editDialogPlaceholder": "Farm name",
     "editDialogCancel": "Cancel",
     "editDialogSave": "Save"
-  },
-  "selectFarms": {
-    "title": "Select Farm",
-    "errorLoad": "Failed to load farms: {{message}}",
-    "empty": "No farms yet.",
-    "openFarm": "Open {{name}}"
   },
   "layout": {
     "menu": "Menu",

@@ -17,11 +17,18 @@ env/
 *.egg-info/
 .pytest_cache/
 
-# SQLite database files
-backend/data/*.db
-backend/data/*.db-journal
+# SQLite database files (di mana pun; DB runtime ada di backend/data/)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 backend/data/backup-*/
 backend/data/backups/
+
+# Output backend/scripts/openapi_snapshot.py
+backend/scripts/openapi_current.json
+baseline.json
+sesudah.json
 
 # Executables
 ngrok.exe

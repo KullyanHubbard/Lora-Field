@@ -1,45 +1,6 @@
-// Domain logic agregasi farm summary — diport dari frontend React lama (utils/farmStatusHelpers.js).
+// Domain logic agregasi farm summary, diport dari frontend React lama (utils/farmStatusHelpers.js).
 // Murni, tanpa side effect.
 import type { Farm, NodeSummary } from '@/types';
-
-import type { SemanticTone } from '@/types';
-
-export type FarmStatusTone = SemanticTone;
-
-// Mapping status kebun -> tone lampu. SATU sumber kebenaran tone (dipakai
-// SelectFarms dan halaman Kebun Saya/MyFarmsPage). active=hijau;
-// warning/maintenance=kuning; inactive/offline=merah; sisanya neutral.
-export function farmStatusTone(status: string): FarmStatusTone {
-  switch (status) {
-    case 'active':
-      return 'green';
-    case 'warning':
-    case 'maintenance':
-      return 'yellow';
-    case 'inactive':
-    case 'offline':
-      return 'red';
-    default:
-      return 'neutral';
-  }
-}
-
-// Mapping status kebun -> labelKey i18n (untuk teks screen reader).
-export function farmStatusLabelKey(status: string): string {
-  switch (status) {
-    case 'active':
-      return 'farmStatus.active';
-    case 'warning':
-      return 'farmStatus.warning';
-    case 'maintenance':
-      return 'farmStatus.maintenance';
-    case 'inactive':
-    case 'offline':
-      return 'farmStatus.inactive';
-    default:
-      return 'farmStatus.unknown';
-  }
-}
 
 /**
  * Ambil timestamp update paling baru dari farm + readings semua node.

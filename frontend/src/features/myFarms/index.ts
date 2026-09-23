@@ -9,5 +9,5 @@ export { useMyFarmsViewModel } from './useMyFarmsViewModel';
 // Query hooks
 export { useFarms } from '@/features/dashboard/queries';
 
-// Helpers (cross-feature: farmStatusTone/farmStatusLabelKey imported from farms/farmHelpers)
+// Helpers
 export { filterMyFarms } from './myFarmsHelpers';

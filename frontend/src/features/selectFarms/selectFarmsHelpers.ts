@@ -5,10 +5,6 @@ export interface SelectFarmMapPoint {
   pos: [number, number];
 }
 
-export function getShortFarmLocation(location: string) {
-  return location.length > 30 ? `${location.slice(0, 30)}…` : location;
-}
-
 export function getSelectFarmMapPoints(farms: Farm[]): SelectFarmMapPoint[] {
   return farms
     .filter((farm) => Number.isFinite(Number(farm.latitude)) && Number.isFinite(Number(farm.longitude)))

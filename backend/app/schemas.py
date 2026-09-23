@@ -145,9 +145,3 @@ class GatewayRegisterResponse(BaseModel):
     status: str  # "registered"
     nodes: list[RegisteredNode]
     created_count: int
-
-
-class NodeSelfRegistrationResponse(BaseModel):
-    node_created: bool
-    node_id: str
-    node_status: str  # "pending" | "active"

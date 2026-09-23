@@ -9,9 +9,5 @@ export { useSelectFarmsViewModel } from './useSelectFarmsViewModel';
 // Query hooks
 export { useFarms } from '@/features/dashboard/queries';
 
-// Helpers (cross-feature: farmStatusTone imported from farms/farmHelpers)
-export {
-  getShortFarmLocation,
-  getSelectFarmMapPoints,
-  type SelectFarmMapPoint,
-} from './selectFarmsHelpers';
+// Helpers
+export { getSelectFarmMapPoints, type SelectFarmMapPoint } from './selectFarmsHelpers';

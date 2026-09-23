@@ -1,6 +1,6 @@
 import type { AppLanguage } from '@/i18n/language';
 
-// Base semantic tone — used by StatusTone (excludes neutral), GaugeTone, FarmStatusTone, LightTone.
+// Base semantic tone, dipakai StatusTone (tanpa neutral) dan GaugeTone.
 export type SemanticTone = 'green' | 'yellow' | 'red' | 'neutral';
 
 export interface Farm {

@@ -381,13 +381,6 @@
     "normal": "Normal",
     "needsCheck": "Perlu Cek"
   },
-  "farmStatus": {
-    "active": "Aktif",
-    "warning": "Perlu Perhatian",
-    "maintenance": "Perawatan",
-    "inactive": "Tidak Aktif",
-    "unknown": "Tidak Diketahui"
-  },
   "myFarms": {
     "colorPickerTitle": "Pilih Warna Marker",
     "cardLocation": "Lokasi",
@@ -401,12 +394,6 @@
     "editDialogPlaceholder": "Nama kebun",
     "editDialogCancel": "Batal",
     "editDialogSave": "Simpan"
-  },
-  "selectFarms": {
-    "title": "Pilih Kebun",
-    "errorLoad": "Gagal memuat kebun: {{message}}",
-    "empty": "Belum ada kebun.",
-    "openFarm": "Buka {{name}}"
   },
   "layout": {
     "menu": "Menu",
