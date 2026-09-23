@@ -49,7 +49,7 @@ const item = {
   show: { opacity: 1, y: 0 },
 }
 
-// Icons merged into translated features at render time (icons are static)
+// Ikon statis, digabung ke teks i18n saat render.
 const FEATURE_ICONS = [
   <Activity className="size-5" key="activity" />,
   <Droplets className="size-5" key="droplets" />,
@@ -59,7 +59,7 @@ const FEATURE_ICONS = [
   <History className="size-5" key="history" />,
 ]
 
-// Testimonials kept as-is (user content — not translated per instruction)
+// Testimoni sengaja tidak diterjemahkan, ini konten user.
 const testimonials = [
   {
     quote:
@@ -119,7 +119,6 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
 
-  // Translated content from i18n JSON
   const featuresItems = t(
     "landing.featuresItems",
     { returnObjects: true },
@@ -273,10 +272,13 @@ export default function LandingPage() {
                   <img
                     src={heroPreviewImage}
                     onError={handleImageError}
-                    width={1280}
-                    height={720}
+                    width={1919}
+                    height={946}
                     alt={t("landing.heroImageAlt")}
-                    className="aspect-[907/505] w-full object-fill"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                    className="h-auto w-full"
                   />
                 )}
                 {imageError && (

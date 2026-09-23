@@ -1,7 +1,10 @@
 import { createContext, useContext } from 'react';
 import type { User } from '@/types';
 
+export type AuthStatus = 'loading' | 'authenticated' | 'guest';
+
 export interface AuthContextValue {
+  status: AuthStatus;
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;

@@ -1,3 +1,5 @@
+import type { AppLanguage } from '@/i18n/language';
+
 // Base semantic tone — used by StatusTone (excludes neutral), GaugeTone, FarmStatusTone, LightTone.
 export type SemanticTone = 'green' | 'yellow' | 'red' | 'neutral';
 
@@ -38,7 +40,7 @@ export interface IrrigationLog {
   id: string;
   node_id: string;
   soil_moisture: number;
-  // ASUMSI - verifikasi dengan backend (string atau object?)
+  // Belum diverifikasi: backend bisa kirim string atau object. Lihat CLAUDE.md.
   weather: string;
   decision: string;
   valve_state: string;
@@ -120,12 +122,12 @@ export interface FarmSummary {
   weather: Weather | null;
 }
 
-// ASUMSI - verifikasi dengan backend (isi User belum kelihatan penuh)
 export interface User {
   id: string;
   name: string;
   email: string;
   phone?: string;
+  language: AppLanguage;
 }
 
 // GET /api/crops → { crops: Crop[] } (diverifikasi dari backend main.py)

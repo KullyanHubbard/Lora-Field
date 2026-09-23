@@ -61,7 +61,7 @@ def get_current_user(
 
     with get_connection() as connection:
         row = connection.execute(
-            "SELECT id, email, name, phone, created_at FROM users WHERE id = ?",
+            "SELECT id, email, name, phone, language, created_at FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
 

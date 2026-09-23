@@ -1,14 +1,16 @@
 import { type ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
+import { AuthSessionLoading } from '@/features/auth/components/AuthSessionLoading';
 import { useAuth } from './auth-context';
 
-/**
- * Bungkus route auth (login/register/reset). Kalau sudah login,
- * langsung redirect ke dashboard supaya user tidak buang waktu di form login.
- */
+// Route auth. Yang sudah login langsung dilempar ke dashboard.
 export function RedirectIfAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  if (isAuthenticated) {
+  const { status } = useAuth();
+
+  // Tanpa ini form login sempat berkedip sebelum redirect.
+  if (status === 'loading') return <AuthSessionLoading />;
+
+  if (status === 'authenticated') {
     return <Navigate to="/select-farms" replace />;
   }
   return children;

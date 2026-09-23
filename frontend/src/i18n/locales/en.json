@@ -12,6 +12,20 @@
     "pending": "Pending"
   },
   "auth": {
+    "sessionLoading": "Loading your session…",
+    "toast": {
+      "registerSuccess": "Account created. Please sign in.",
+      "registerError": "Could not create the account.",
+      "forgotPasswordError": "Could not send the reset code.",
+      "verifyResetCodeError": "That reset code is not valid.",
+      "resetPasswordSuccess": "Password updated. Please sign in.",
+      "resetPasswordError": "Could not update the password.",
+      "profileSuccess": "Phone number updated.",
+      "profileError": "Could not save the phone number.",
+      "languageError": "Could not save the language preference.",
+      "changePasswordSuccess": "Password updated.",
+      "changePasswordError": "Could not change the password."
+    },
     "login": {
       "backToHome": "Back to LoraField home",
       "headlineLine1": "Monitor your farm",

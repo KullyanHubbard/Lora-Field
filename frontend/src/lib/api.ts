@@ -1,4 +1,5 @@
 import { getToken } from './token';
+import type { AppLanguage } from '@/i18n/language';
 import type {
   Crop,
   CreateFarmPayload,
@@ -14,6 +15,12 @@ import type {
 
 const BASE = '/api';
 
+// Tanpa ini, backend yang menggantung bikin status sesi tidak pernah selesai.
+export const SESSION_REQUEST_TIMEOUT_MS = 8000;
+
+// Dipancarkan saat backend menolak token yang dipakai. AuthProvider yang menangani.
+export const UNAUTHORIZED_EVENT = 'lf:unauthorized';
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -22,7 +29,16 @@ export class ApiError extends Error {
   }
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+interface FetchBehavior {
+  // Di endpoint yang cek kredensial lewat body, 401 berarti input salah, bukan sesi mati.
+  ignoreUnauthorized?: boolean;
+}
+
+async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+  { ignoreUnauthorized = false }: FetchBehavior = {},
+): Promise<T> {
   const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
@@ -34,6 +50,9 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   });
 
   if (!res.ok) {
+    if (res.status === 401 && token && !ignoreUnauthorized) {
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+    }
     let message = res.statusText;
     try {
       const body = await res.json();
@@ -49,59 +68,72 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
 }
 
 export const api = {
-  // --- Auth ---
-  login: (email: string, password: string) =>
+  // Auth
+  login: (email: string, password: string, browserLanguage: AppLanguage) =>
     apiFetch<{ access_token: string; token_type: string; user: User }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, language: browserLanguage }),
     }),
 
-  register: (name: string, email: string, password: string) =>
-    // Response: UserPublic { id, email, name, phone } (diverifikasi dari backend)
+  getMe: (browserLanguage: AppLanguage) =>
+    apiFetch<User>(
+      `/auth/me?${new URLSearchParams({ browser_language: browserLanguage }).toString()}`,
+      { signal: AbortSignal.timeout(SESSION_REQUEST_TIMEOUT_MS) },
+    ),
+
+  register: (name: string, email: string, password: string, browserLanguage: AppLanguage) =>
     apiFetch<User>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, language: browserLanguage }),
     }),
 
   forgotPassword: (email: string) =>
-    // Response { message } (+ reset_token/note saat dev mode). Diverifikasi backend.
+    // reset_token dan note hanya terisi saat dev mode.
     apiFetch<{ message: string; reset_token?: string; note?: string }>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
 
-  // Tahap 1 lupa password: verifikasi OTP. Endpoint dikonfirmasi dari backend asli
-  // (main.py:832 -> /api/auth/reset-password/verify). Catatan: tabel CLAUDE.md
-  // menyebut /api/auth/verify-reset-code yang TIDAK ada di backend.
+  // Tahap 1 lupa password: verifikasi OTP sebelum form password baru dibuka.
   verifyResetCode: (token: string) =>
-    // Response { message: "Kode reset valid." }. Diverifikasi backend.
     apiFetch<{ message: string }>('/auth/reset-password/verify', {
       method: 'POST',
       body: JSON.stringify({ token }),
     }),
 
   resetPassword: (token: string, newPassword: string) =>
-    // Response { message: "Password berhasil diperbarui." }. Diverifikasi backend.
     apiFetch<{ message: string }>('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify({ token, new_password: newPassword }),
     }),
 
   changePassword: (currentPassword: string, newPassword: string) =>
-    // Response { message: "Password berhasil diperbarui." }. Diverifikasi backend.
-    apiFetch<{ message: string }>('/auth/change-password', {
-      method: 'POST',
-      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
-    }),
+    apiFetch<{ message: string }>(
+      '/auth/change-password',
+      {
+        method: 'POST',
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      },
+      { ignoreUnauthorized: true },
+    ),
 
-  updateProfile: (phone: string) =>
-    // Response { user: User } (id, email, name, phone). Diverifikasi backend.
-    apiFetch<{ user: User }>('/auth/profile', {
+  // browser_language dikirim karena backend mem-backfill kolom language di sini.
+  updateProfile: (phone: string, browserLanguage: AppLanguage) =>
+    apiFetch<{ user: User }>(
+      `/auth/profile?${new URLSearchParams({ browser_language: browserLanguage }).toString()}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ phone }),
+      },
+    ),
+
+  updateLanguage: (language: AppLanguage) =>
+    apiFetch<{ language: AppLanguage }>('/auth/preferences/language', {
       method: 'PATCH',
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ language }),
     }),
 
-  // --- Farms ---
+  // Farms
   getFarms: () => apiFetch<{ items: Farm[] }>('/farms'),
   getFarmSummary: (id: string) => apiFetch<FarmSummary>(`/farms/${id}/summary`),
 
@@ -119,7 +151,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  // --- Utils ---
+  // Utils
   getCrops: (q = '') =>
     apiFetch<{ crops: Crop[] }>(`/crops${q ? `?q=${encodeURIComponent(q)}` : ''}`),
 
@@ -132,11 +164,11 @@ export const api = {
       }).toString()}`,
     ),
 
-  // --- Data ---
+  // Data
   getReadings: (nodeId: string, limit = 50) =>
     apiFetch<{ items: Reading[] }>(`/nodes/${nodeId}/readings?limit=${limit}`),
 
-  // GET /api/farms/{id}/gateway-logs — backend main.py. Empty sampai hardware gateway lapor.
+  // Kosong sampai hardware gateway mulai lapor.
   getGatewayLogs: (farmId: string, limit = 20) =>
     apiFetch<{ items: GatewayLog[] }>(`/farms/${farmId}/gateway-logs?limit=${limit}`),
 

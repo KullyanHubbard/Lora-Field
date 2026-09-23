@@ -2,6 +2,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import i18n from '@/i18n/config';
+import { getPreferredLanguage, type AppLanguage } from '@/i18n/language';
 import { useAuth } from './auth-context';
 
 export interface RegisterPayload {
@@ -14,31 +16,30 @@ export function useRegister() {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: (payload: RegisterPayload) =>
-      api.register(payload.name, payload.email, payload.password),
+      api.register(payload.name, payload.email, payload.password, getPreferredLanguage()),
     onSuccess: (_data, variables) => {
-      // Register tidak mengembalikan token → tidak auto-login. Prefill email
-      // untuk LoginPage lalu arahkan ke /login (perilaku lama).
+      // Register tidak mengembalikan token, jadi tidak ada auto-login.
       try {
         sessionStorage.setItem('lf_prefill_email', variables.email);
       } catch {
         // sessionStorage tidak tersedia di sebagian konteks
       }
-      toast.success('Akun berhasil dibuat. Silakan masuk.');
+      toast.success(i18n.t('auth.toast.registerSuccess'));
       navigate('/login', { replace: true });
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal membuat akun.');
+      toast.error(error.message || i18n.t('auth.toast.registerError'));
     },
   });
 }
 
-// --- Lupa password (OTP 2 tahap): forgot -> verify -> reset ---
+// Lupa password, OTP 2 tahap: forgot -> verify -> reset.
 
 export function useForgotPassword() {
   return useMutation({
     mutationFn: (email: string) => api.forgotPassword(email),
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal mengirim kode reset.');
+      toast.error(error.message || i18n.t('auth.toast.forgotPasswordError'));
     },
   });
 }
@@ -47,7 +48,7 @@ export function useVerifyResetCode() {
   return useMutation({
     mutationFn: (token: string) => api.verifyResetCode(token),
     onError: (error: Error) => {
-      toast.error(error.message || 'Kode reset tidak valid.');
+      toast.error(error.message || i18n.t('auth.toast.verifyResetCodeError'));
     },
   });
 }
@@ -58,33 +59,46 @@ export function useResetPassword() {
     mutationFn: (vars: { token: string; newPassword: string }) =>
       api.resetPassword(vars.token, vars.newPassword),
     onSuccess: () => {
-      toast.success('Password berhasil diperbarui. Silakan masuk.');
+      toast.success(i18n.t('auth.toast.resetPasswordSuccess'));
       navigate('/login', { replace: true });
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal memperbarui password.');
+      toast.error(error.message || i18n.t('auth.toast.resetPasswordError'));
     },
   });
 }
 
-// --- Profil: update nomor HP (PATCH /api/auth/profile, JWT) ---
+// Profil: update nomor HP.
 
 export function useUpdateProfile() {
   const { updateUser } = useAuth();
   return useMutation({
-    mutationFn: (phone: string) => api.updateProfile(phone),
+    mutationFn: (phone: string) => api.updateProfile(phone, getPreferredLanguage()),
     onSuccess: (data) => {
-      // Sinkronkan user terbaru ke AuthContext + localStorage (topbar ikut update).
       updateUser(data.user);
-      toast.success('Nomor handphone diperbarui.');
+      toast.success(i18n.t('auth.toast.profileSuccess'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal menyimpan nomor handphone.');
+      toast.error(error.message || i18n.t('auth.toast.profileError'));
     },
   });
 }
 
-// --- Ganti password (sudah login, JWT) — beda dari flow lupa password di atas ---
+export function useUpdateLanguage() {
+  const { user, updateUser } = useAuth();
+  return useMutation({
+    mutationFn: (language: AppLanguage) => api.updateLanguage(language),
+    onSuccess: ({ language }) => {
+      // AuthContext yang menyelaraskan i18n dari user.language.
+      if (user) updateUser({ ...user, language });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || i18n.t('auth.toast.languageError'));
+    },
+  });
+}
+
+// Ganti password saat sudah login. Beda flow dari lupa password di atas.
 
 export function useChangePassword() {
   const navigate = useNavigate();
@@ -92,11 +106,11 @@ export function useChangePassword() {
     mutationFn: (vars: { currentPassword: string; newPassword: string }) =>
       api.changePassword(vars.currentPassword, vars.newPassword),
     onSuccess: () => {
-      toast.success('Password berhasil diperbarui.');
+      toast.success(i18n.t('auth.toast.changePasswordSuccess'));
       navigate('/settings', { replace: true });
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal mengganti password.');
+      toast.error(error.message || i18n.t('auth.toast.changePasswordError'));
     },
   });
 }

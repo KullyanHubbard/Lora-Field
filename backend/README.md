@@ -49,10 +49,11 @@ provider email.
 
 | Method | Endpoint | Fungsi |
 | --- | --- | --- |
-| POST | `/api/auth/register` | Buat akun baru (nama, email, password) |
-| POST | `/api/auth/login` | Login, mengembalikan JWT bearer token |
-| GET | `/api/auth/me` | Profil user dari token bearer, termasuk nomor HP |
+| POST | `/api/auth/register` | Buat akun baru (nama, email, password, bahasa hasil deteksi browser) |
+| POST | `/api/auth/login` | Login, mengembalikan JWT bearer token dan preferensi bahasa akun |
+| GET | `/api/auth/me` | Profil user dari token bearer; bahasa browser menginisialisasi akun lama |
 | PATCH | `/api/auth/profile` | Update profil user (nomor HP) |
+| PATCH | `/api/auth/preferences/language` | Update preferensi bahasa akun |
 | POST | `/api/auth/forgot-password` | Minta kode reset 6 digit; email dikirim via Resend |
 | POST | `/api/auth/reset-password/verify` | Verifikasi kode reset (tahap 1) |
 | POST | `/api/auth/reset-password` | Set password baru dengan kode reset (tahap 2) |

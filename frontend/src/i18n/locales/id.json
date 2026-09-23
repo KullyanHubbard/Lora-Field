@@ -12,6 +12,20 @@
     "pending": "Menunggu"
   },
   "auth": {
+    "sessionLoading": "Memuat sesi…",
+    "toast": {
+      "registerSuccess": "Akun berhasil dibuat. Silakan masuk.",
+      "registerError": "Gagal membuat akun.",
+      "forgotPasswordError": "Gagal mengirim kode reset.",
+      "verifyResetCodeError": "Kode reset tidak valid.",
+      "resetPasswordSuccess": "Password berhasil diperbarui. Silakan masuk.",
+      "resetPasswordError": "Gagal memperbarui password.",
+      "profileSuccess": "Nomor handphone diperbarui.",
+      "profileError": "Gagal menyimpan nomor handphone.",
+      "languageError": "Gagal menyimpan preferensi bahasa.",
+      "changePasswordSuccess": "Password berhasil diperbarui.",
+      "changePasswordError": "Gagal mengganti password."
+    },
     "login": {
       "backToHome": "Kembali ke beranda LoraField",
       "headlineLine1": "Pantau kebun Anda",

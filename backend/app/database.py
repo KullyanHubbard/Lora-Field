@@ -48,6 +48,7 @@ def init_db() -> None:
                 email TEXT NOT NULL UNIQUE,
                 name TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
+                language TEXT CHECK (language IN ('id', 'en')),
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
@@ -168,6 +169,12 @@ def init_db() -> None:
         ensure_column(connection, "nodes", "longitude", "REAL")
         ensure_column(connection, "nodes", "farm_id", "TEXT REFERENCES farms(id)")
         ensure_column(connection, "users", "phone", "TEXT NOT NULL DEFAULT ''")
+        ensure_column(
+            connection,
+            "users",
+            "language",
+            "TEXT CHECK (language IN ('id', 'en'))",
+        )
         ensure_column(connection, "nodes", "gateway_id", "TEXT")
         ensure_column(connection, "nodes", "first_seen_at", "TEXT")
         ensure_column(connection, "readings", "farm_id", "TEXT REFERENCES farms(id)")
@@ -198,12 +205,9 @@ def backfill_reading_farm_ids(connection: sqlite3.Connection) -> None:
 
 
 def seed_wilayah(connection: sqlite3.Connection) -> None:
-    """Isi tabel wilayah dari aset CSV (kode,nama) sekali saja (idempoten).
+    """Isi tabel wilayah dari aset CSV sekali saja (idempoten). Kode sudah format adm4 BMKG.
 
-    Kode sudah format dotted = adm4 BMKG. Level = jumlah segmen titik
-    (1=prov, 2=kab/kota, 3=kec, 4=desa). parent = kode tanpa segmen terakhir.
-    nama_norm dihitung dengan normalisasi yang sama seperti saat query
-    (normalize_region_name) supaya pencocokan konsisten.
+    nama_norm wajib memakai normalize_region_name yang sama dengan saat query.
     """
     already = connection.execute("SELECT COUNT(*) FROM wilayah").fetchone()[0]
     if already:

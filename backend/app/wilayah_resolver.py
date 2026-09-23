@@ -1,11 +1,11 @@
 """Resolusi kode adm4 BMKG dari nama wilayah, offline, via daftar Kemendagri.
 
-Dipakai sebagai fallback di resolve_bmkg_adm4 (main.py): saat OSM tidak punya
+Dipakai sebagai fallback di resolve_bmkg_adm4 (adm4.py): saat OSM tidak punya
 tag kode BPS, kita pakai nama wilayah hasil reverse-geocode Nominatim (atau
 alamat ketikan user) lalu cocokkan hierarkis ke tabel `wilayah`.
 
 Tabel `wilayah` di-seed dari backend/app/data/wilayah.csv (lihat database.py).
-Kolom `nama_norm` dihitung dengan normalize_region_name(nama, level) yang SAMA
+Kolom `nama_norm` dihitung dengan normalize_region_name(nama, level) yang sama
 seperti yang dipakai di sini, supaya pencocokan konsisten.
 """
 
@@ -16,10 +16,8 @@ import unicodedata
 
 from .database import get_connection
 
-# Kata tipe administrasi yang dilepas dari AWAL nama, per level. Kab/Kota memang
-# menyimpan prefix tipe di datanya ("Kabupaten Aceh Selatan", "Kota Banda Aceh"),
-# jadi prefix itu dilepas di level 2 saja. Untuk kec/desa TIDAK dilepas supaya
-# nama seperti "Kota Baru" (desa) tidak rusak.
+# Prefix tipe dilepas dari awal nama. Data kab/kota menyimpannya ("Kabupaten Aceh Selatan"),
+# kec/desa tidak dilepas supaya nama seperti "Kota Baru" (desa) tetap utuh.
 _PREFIXES = {
     1: ("provinsi", "daerah istimewa", "dki", "di"),
     2: ("kabupaten administrasi", "kota administrasi", "kabupaten", "kota", "kab"),
@@ -95,7 +93,7 @@ def resolve_adm4_from_region_names(
 ) -> str:
     """Cocokkan nama wilayah hierarkis -> kode adm4 (13 char) desa.
 
-    Mengembalikan kode hanya bila bisa dipersempit sampai SATU desa. Tahan
+    Mengembalikan kode hanya bila bisa dipersempit sampai satu desa. Tahan
     terhadap level atas yang hilang: tiap level menyempitkan `parent` untuk
     level berikutnya, tapi minimal kecamatan+desa (atau kabupaten+desa) yang
     membuat hasil tak ambigu yang bisa sukses.
@@ -133,7 +131,7 @@ _KEC_RE = re.compile(r"\b(?:kecamatan|distrik|kec)\.?\s+([a-z]+(?:\s+[a-z]+)?)")
 
 def resolve_adm4_from_freetext(text: str) -> str:
     """Best-effort: ekstrak kab/kota & kecamatan dari alamat bebas user, dan
-    pakai token awal sebagai dugaan desa. Dipakai HANYA sebagai fallback kalau
+    pakai token awal sebagai dugaan desa. Dipakai hanya sebagai fallback kalau
     Nominatim gagal; kalau alamat tidak konsisten hasilnya "" (aman)."""
     norm = re.sub(r"[^a-z0-9]+", " ", _deaccent(text or "").lower()).strip()
     if not norm:

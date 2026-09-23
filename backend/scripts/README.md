@@ -9,11 +9,37 @@ Tooling untuk run produksi LoraField di Windows. Pakai semua script ini sebelum 
 | `backup_db.py` | Backup SQLite live (pakai `sqlite3.backup()`). Rotasi 7 backup terakhir. |
 | `backup-db.ps1` | Wrapper PowerShell untuk Task Scheduler. Panggil `backup_db.py` + log. |
 | `start-resilient.ps1` | Auto-restart wrapper uvicorn. Crash → tunggu 5 detik → restart. Stop kalau 5 crash dalam 2 menit. |
+| `smoke_test.py` | Smoke test end-to-end in-process (tanpa server). Menembak hampir semua endpoint, cek status + shape response. Pakai DB sementara, DB dev tidak disentuh. |
+| `openapi_snapshot.py` | Dump skema OpenAPI ke JSON. Dipakai sebagai baseline kontrak API sebelum/sesudah refactor. |
+
+## Verifikasi sebelum/sesudah refactor backend
+
+Dua alat ini jadi jaring pengaman saat struktur backend dirapikan. Backend belum punya
+test suite, jadi keduanya yang menahan kalau ada route kececer atau shape response berubah.
+
+```powershell
+# 1. Sebelum mengubah apa pun: simpan baseline kontrak API
+python backend/scripts/openapi_snapshot.py baseline.json
+
+# 2. Jalankan smoke test, catat hasilnya
+python backend/scripts/smoke_test.py
+
+# 3. Setelah refactor: dump ulang lalu bandingkan. Diff kosong = kontrak utuh.
+python backend/scripts/openapi_snapshot.py sesudah.json
+git diff --no-index baseline.json sesudah.json
+
+# 4. Smoke test harus memberi hasil yang sama persis
+python backend/scripts/smoke_test.py
+```
+
+`smoke_test.py` mengalihkan database ke file sementara, jadi `backend/data/lorafield.db`
+tidak ikut terisi data test. Dua endpoint yang butuh internet (`GET /api/weather` dan
+`GET /api/utils/resolve-adm4`) dilewati kecuali dijalankan dengan `--network`.
 
 Log output di `backend/logs/`:
-- `app.log` (rotating, app-level) — events Python: startup, login, password reset, dll
-- `supervisor.log` — output `start-resilient.ps1`
-- `backup.log` — output backup harian
+- `app.log` (rotating, app-level): events Python: startup, login, password reset, dll
+- `supervisor.log`: output `start-resilient.ps1`
+- `backup.log`: output backup harian
 
 ---
 
@@ -24,7 +50,7 @@ Tujuan: backend otomatis hidup saat Windows boot, dan otomatis restart kalau uvi
 **Langkah:**
 
 1. Buka **Task Scheduler** (`taskschd.msc`)
-2. **Create Task...** (bukan Basic Task — butuh opsi advanced)
+2. **Create Task...** (bukan Basic Task, karena butuh opsi advanced)
 3. **General tab:**
    - Name: `LoraField Backend`
    - Description: `Uvicorn supervisor untuk LoraField`
@@ -82,7 +108,7 @@ copy "backend\data\backups\lorafield-YYYY-MM-DD-HHMMSS.db" "backend\data\lorafie
 
 ---
 
-## 3. Cloudflare WAF — Rate Limiting
+## 3. Cloudflare WAF: Rate Limiting
 
 Karena kita expose via Cloudflare Tunnel, rate limiting paling efisien di edge Cloudflare (zero overhead di backend Python).
 

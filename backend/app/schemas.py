@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 
+from .language_preferences import Language
+
 
 class SensorReadingIn(BaseModel):
     soil_moisture: float = Field(..., ge=0, le=100)
@@ -56,19 +58,17 @@ class FarmUpdate(BaseModel):
     status: str | None = Field(default=None, max_length=30)
 
 
-# ---------------------------------------------------------------------------
-# Auth schemas
-# ---------------------------------------------------------------------------
-
 class UserRegister(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(..., min_length=6, max_length=128)
+    language: Language = "en"
 
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=1, max_length=128)
+    language: Language = "en"
 
 
 class UserPublic(BaseModel):
@@ -76,6 +76,7 @@ class UserPublic(BaseModel):
     email: EmailStr
     name: str
     phone: str = ""
+    language: Language
 
 
 class TokenResponse(BaseModel):
@@ -103,15 +104,22 @@ class ChangePasswordRequest(BaseModel):
 
 
 class UpdateProfileRequest(BaseModel):
-    phone: str = Field(default="", max_length=20)
+    phone: str | None = Field(default=None, max_length=20)
 
 
-# ---------------------------------------------------------------------------
-# Auto Node Discovery - Gateway Registration Models
-# ---------------------------------------------------------------------------
+class UserResponse(BaseModel):
+    user: UserPublic
+
+
+class LanguagePreferenceUpdate(BaseModel):
+    language: Language
+
+
+class LanguagePreferenceResponse(BaseModel):
+    language: Language
+
 
 class NodeRegistrationItem(BaseModel):
-    """Single node to register via gateway batch endpoint."""
     node_id: str
     name: str
     region: str = ""
@@ -120,13 +128,11 @@ class NodeRegistrationItem(BaseModel):
 
 
 class GatewayRegisterPayload(BaseModel):
-    """Request body for gateway batch node registration."""
     farm_id: str
     nodes: list[NodeRegistrationItem]
 
 
 class RegisteredNode(BaseModel):
-    """Response for a single registered node."""
     id: str
     name: str
     status: str  # "pending" | "active"
@@ -134,7 +140,6 @@ class RegisteredNode(BaseModel):
 
 
 class GatewayRegisterResponse(BaseModel):
-    """Response for gateway batch registration."""
     gateway_id: str
     farm_id: str
     status: str  # "registered"
@@ -143,7 +148,6 @@ class GatewayRegisterResponse(BaseModel):
 
 
 class NodeSelfRegistrationResponse(BaseModel):
-    """Response for node self-registration via readings."""
     node_created: bool
     node_id: str
     node_status: str  # "pending" | "active"
