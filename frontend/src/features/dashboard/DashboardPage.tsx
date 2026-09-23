@@ -8,6 +8,7 @@ export default function DashboardPage() {
   const {
     farmId,
     summary,
+    gateway,
     nodes,
     isLoading,
     hasError,
@@ -33,7 +34,7 @@ export default function DashboardPage() {
 
       <DashboardSummaryGrid
         farmId={farmId}
-        summary={summary}
+        gateway={gateway}
         nodes={nodes}
         activityLogs={activityLogs}
         activityLogsLoading={activityLogsLoading}

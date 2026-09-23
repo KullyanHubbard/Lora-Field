@@ -1,6 +1,6 @@
 import { getGatewayStatusBadge } from '@/lib/status';
 import type { StatusTone } from '@/lib/status';
-import type { FarmGateway, FarmSummary, GatewayLog } from '@/types';
+import type { FarmGateway, GatewayLog } from '@/types';
 
 export const GATEWAY_LOGS_PER_PAGE = 10;
 const GATEWAY_ONLINE_WINDOW_MS = 10 * 60 * 1000;
@@ -33,19 +33,18 @@ export type GatewayInfoViewModel = {
   lastSeen: string | null;
 };
 
+// SQLite CURRENT_TIMESTAMP menyimpan UTC tanpa penanda zona ("YYYY-MM-DD HH:MM:SS").
+function toUtcIsoTimestamp(value: string) {
+  return value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
+}
+
 export function isFarmGatewayOnline(gateway: FarmGateway | null | undefined) {
   if (!gateway?.last_seen_at) return false;
-  const normalizedTimestamp = gateway.last_seen_at.includes('T')
-    ? gateway.last_seen_at
-    : `${gateway.last_seen_at.replace(' ', 'T')}Z`;
-  const lastSeenMs = new Date(normalizedTimestamp).getTime();
+  const lastSeenMs = new Date(toUtcIsoTimestamp(gateway.last_seen_at)).getTime();
   return Number.isFinite(lastSeenMs) && Date.now() - lastSeenMs <= GATEWAY_ONLINE_WINDOW_MS;
 }
 
-export function buildGatewayInfo(
-  _summary: FarmSummary,
-  gateway?: FarmGateway | null,
-): GatewayInfoViewModel {
+export function buildGatewayInfo(gateway?: FarmGateway | null): GatewayInfoViewModel {
   const gatewayStatus = gateway
     ? (isFarmGatewayOnline(gateway) ? 'online' : 'offline')
     : 'offline';
@@ -58,7 +57,7 @@ export function buildGatewayInfo(
     statusTone: status.tone,
     signalValueKey: 'gateway.signalNone',
     internetValueKey: 'gateway.internetNotMonitored',
-    lastSeen: gateway?.last_seen_at ?? null,
+    lastSeen: gateway?.last_seen_at ? toUtcIsoTimestamp(gateway.last_seen_at) : null,
   };
 }
 

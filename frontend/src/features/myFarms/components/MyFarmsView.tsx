@@ -81,6 +81,7 @@ export function MyFarmsView({
       )}
 
       <MyFarmEditDialog
+        key={farmPendingEdit?.id ?? 'none'}
         farm={farmPendingEdit}
         isUpdating={isEditing}
         onClose={onCloseEditDialog}

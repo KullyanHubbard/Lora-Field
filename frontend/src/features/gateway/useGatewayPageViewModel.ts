@@ -27,7 +27,7 @@ export function useGatewayPageViewModel() {
   const rawLogs = useMemo(() => logsQuery.data?.items ?? [], [logsQuery.data?.items]);
   const gatewayInfo = useMemo(() => {
     if (!summaryQuery.data) return null;
-    return buildGatewayInfo(summaryQuery.data, gateway);
+    return buildGatewayInfo(gateway);
   }, [gateway, summaryQuery.data]);
 
   const filteredLogs = useMemo(() => filterGatewayLogs(rawLogs, filter), [filter, rawLogs]);

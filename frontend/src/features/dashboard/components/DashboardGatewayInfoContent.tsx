@@ -1,13 +1,13 @@
-import type { FarmSummary } from '@/types';
+import type { FarmGateway } from '@/types';
 import { buildGatewayInfo } from '@/features/gateway/gatewayHelpers';
 import { GatewayInfoCard } from '@/features/gateway/components/GatewayInfoCard';
 
 export function GatewayInfoContent({
-  summary,
+  gateway,
   className,
 }: {
-  summary: FarmSummary;
+  gateway: FarmGateway | null;
   className?: string;
 }) {
-  return <GatewayInfoCard info={buildGatewayInfo(summary)} className={className} />;
+  return <GatewayInfoCard info={buildGatewayInfo(gateway)} className={className} />;
 }

@@ -1,0 +1,17 @@
+# Rahasia: di-inject saat runtime lewat env_file di docker-compose.yml
+backend/.env
+**/.env
+**/.env.*
+
+# Database dan log runtime: di-mount sebagai volume
+backend/data/
+backend/logs/
+
+# Artefak lokal: dibangun ulang di dalam image
+backend/.venv/
+**/__pycache__/
+**/*.py[cod]
+frontend/node_modules/
+frontend/dist/
+
+.git/

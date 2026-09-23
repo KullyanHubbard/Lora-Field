@@ -8,11 +8,11 @@ import { ValveStatCard } from '@/features/dashboard/components/ValveStatCard';
 import { WeatherForecastCard } from '@/features/dashboard/components/WeatherForecastCard';
 import type { FarmMetricChartPoint } from '@/features/dashboard/dashboardHistoricalData';
 import type { ValveSummary, WeatherForecastViewModel } from '@/features/dashboard/dashboardHelpers';
-import type { FarmSummary, GatewayLog, NodeSummary } from '@/types';
+import type { FarmGateway, GatewayLog, NodeSummary } from '@/types';
 
 export function DashboardSummaryGrid({
   farmId,
-  summary,
+  gateway,
   nodes,
   activityLogs,
   activityLogsLoading,
@@ -22,7 +22,7 @@ export function DashboardSummaryGrid({
   weatherForecast,
 }: {
   farmId: string;
-  summary: FarmSummary;
+  gateway: FarmGateway | null;
   nodes: NodeSummary[];
   activityLogs: GatewayLog[];
   activityLogsLoading: boolean;
@@ -40,7 +40,7 @@ export function DashboardSummaryGrid({
 
       <div className="overflow-hidden rounded-xl bg-card text-sm text-card-foreground ring-1 ring-foreground/10 sm:col-span-2 xl:col-start-2 xl:col-end-4 xl:row-start-1">
         <GatewayInfoContent
-          summary={summary}
+          gateway={gateway}
           className="flex-1 p-4"
         />
       </div>

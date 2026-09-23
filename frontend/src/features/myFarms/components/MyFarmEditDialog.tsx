@@ -28,11 +28,7 @@ export function MyFarmEditDialog({
   onConfirm,
 }: MyFarmEditDialogProps) {
   const { t } = useTranslation();
-  const [name, setName] = useState('');
-
-  if (farm && name === '') {
-    setName(farm.name);
-  }
+  const [name, setName] = useState(farm?.name ?? '');
 
   if (!farm) return null;
 
@@ -42,13 +38,8 @@ export function MyFarmEditDialog({
     }
   };
 
-  const handleClose = () => {
-    setName('');
-    onClose();
-  };
-
   return (
-    <AlertDialog open={farm != null} onOpenChange={(open) => { if (!open) handleClose(); }}>
+    <AlertDialog open={farm != null} onOpenChange={(open) => { if (!open) onClose(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t('myFarms.editDialogTitle')}</AlertDialogTitle>

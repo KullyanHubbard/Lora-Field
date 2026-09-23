@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { useGatewayLogs } from '@/features/gateway/queries';
+import { useFarmGateway, useGatewayLogs } from '@/features/gateway/queries';
 import {
   buildNodeHistoricalDataMap,
   buildValveSummary,
@@ -19,6 +19,7 @@ export function useDashboardViewModel() {
   const weather = summary?.weather ?? null;
 
   const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
+  const farmGatewayQuery = useFarmGateway(summary ? farmId : undefined);
   const activityLogQuery = useGatewayLogs(summary ? farmId : undefined, 2);
   const errorMessage = summaryQuery.error
     ? t('dashboard.errorLoad', { message: summaryQuery.error.message })
@@ -41,6 +42,7 @@ export function useDashboardViewModel() {
   return {
     farmId,
     summary,
+    gateway: farmGatewayQuery.data?.gateway ?? null,
     nodes,
     isLoading: summaryQuery.isLoading,
     hasError: Boolean(summaryQuery.error) || !summaryQuery.data,

@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "onboarding@resend.dev"
 
-    frontend_url: str = "http://localhost:8000/static"
+    frontend_url: str = "http://localhost:8000"
 
     # Origins yang diizinkan untuk CORS. Pisah dengan koma di .env:
     #   ALLOWED_ORIGINS=https://app.lorafield.com,https://www.lorafield.com

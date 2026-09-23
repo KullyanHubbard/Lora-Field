@@ -36,7 +36,7 @@ JWT_EXPIRE_MINUTES=1440
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxx
 RESEND_FROM_EMAIL=onboarding@resend.dev
 
-FRONTEND_URL=http://localhost:8000/static
+FRONTEND_URL=http://localhost:8000
 ```
 
 Jika `RESEND_API_KEY` belum diisi, endpoint forgot-password tetap berjalan dan
@@ -102,7 +102,7 @@ provider email.
    khusus → backend memanggil `POST /api/auth/forgot-password`.
 2. Backend menyimpan OTP 6 digit di tabel `password_resets` (kadaluwarsa 30
    menit) dan mengirim email berisi tautan ke
-   `${FRONTEND_URL}/reset-password.html` + kode reset (manual input, bukan
+   `${FRONTEND_URL}/reset-password` + kode reset (manual input, bukan
    auto-fill).
 3. User membuka halaman reset, input kode reset, lalu sistem memverifikasi
    dengan `POST /api/auth/reset-password/verify`.
