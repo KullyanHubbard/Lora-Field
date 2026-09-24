@@ -29,9 +29,12 @@ export function MyFarmDeleteDialog({
   if (!farm) return null;
 
   return (
-    <AlertDialog open={farm != null} onOpenChange={(open) => {
-      if (!open) onClose();
-    }}>
+    <AlertDialog
+      open={farm != null}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t('farms.deleteTitle')}</AlertDialogTitle>
@@ -40,9 +43,7 @@ export function MyFarmDeleteDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
-            {t('farms.deleteCancel')}
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{t('farms.deleteCancel')}</AlertDialogCancel>
           <AlertDialogAction
             data-variant="destructive"
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

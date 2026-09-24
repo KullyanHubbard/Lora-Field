@@ -41,9 +41,7 @@ function isFarmGatewayOnline(gateway: FarmGateway | null | undefined) {
 }
 
 export function buildGatewayInfo(gateway?: FarmGateway | null): GatewayInfoViewModel {
-  const gatewayStatus = gateway
-    ? (isFarmGatewayOnline(gateway) ? 'online' : 'offline')
-    : 'offline';
+  const gatewayStatus = gateway ? (isFarmGatewayOnline(gateway) ? 'online' : 'offline') : 'offline';
   const status = getGatewayStatusBadge(gatewayStatus);
 
   return {

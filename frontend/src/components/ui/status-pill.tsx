@@ -30,7 +30,10 @@ export function StatusPill({
       )}
     >
       {showDot && (
-        <span className={cn('size-1.5 shrink-0 rounded-full', TONE_CLASSES[tone].dot)} aria-hidden="true" />
+        <span
+          className={cn('size-1.5 shrink-0 rounded-full', TONE_CLASSES[tone].dot)}
+          aria-hidden="true"
+        />
       )}
       {label}
     </span>

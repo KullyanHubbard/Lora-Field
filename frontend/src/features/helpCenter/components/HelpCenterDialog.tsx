@@ -1,10 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Mail, MessageCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogContent,
-} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { contactInfo } from '@/features/helpCenter/constants';
 
@@ -29,9 +26,7 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
           <X className="size-4" />
         </Button>
 
-        <h2 className="mb-6 text-xl font-bold tracking-tight">
-          {t('helpCenter.contact.title')}
-        </h2>
+        <h2 className="mb-6 text-xl font-bold tracking-tight">{t('helpCenter.contact.title')}</h2>
 
         <div className="grid gap-4">
           {/* Email */}
@@ -57,9 +52,7 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold">{t('helpCenter.contact.whatsapp')}</h3>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {contactInfo.whatsapp}
-                  </p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{contactInfo.whatsapp}</p>
                 </div>
               </CardContent>
             </Card>

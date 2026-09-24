@@ -34,7 +34,10 @@ export function IrrigationHeaderCard({
             <span className="text-muted-foreground">{t('irrigation.gatewayLabel')}</span>
             <StatusPill tone={gatewayTone} label={gatewayStatus} />
           </div>
-          <MetaPill label={t('irrigation.syncLabel')} value={formatSyncTime(lastSync, i18n.language)} />
+          <MetaPill
+            label={t('irrigation.syncLabel')}
+            value={formatSyncTime(lastSync, i18n.language)}
+          />
         </div>
       </CardContent>
     </Card>

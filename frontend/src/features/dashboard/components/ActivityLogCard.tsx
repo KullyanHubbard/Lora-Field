@@ -2,7 +2,10 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Activity, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getGatewayEventDotClass, getGatewayEventLabelKey } from '@/features/gateway/gatewayHelpers';
+import {
+  getGatewayEventDotClass,
+  getGatewayEventLabelKey,
+} from '@/features/gateway/gatewayHelpers';
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { GatewayLog } from '@/types';
@@ -32,7 +35,9 @@ export function ActivityLogCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col">
         {isLoading ? (
-          <p className="py-4 text-center text-xs text-muted-foreground">{t('dashboard.loadingLogs')}</p>
+          <p className="py-4 text-center text-xs text-muted-foreground">
+            {t('dashboard.loadingLogs')}
+          </p>
         ) : error ? (
           <p className="py-4 text-center text-xs text-muted-foreground">
             {t('dashboard.loadLogsError')}
@@ -46,7 +51,10 @@ export function ActivityLogCard({
             {logs.map((log) => (
               <div key={log.id} className="flex items-start gap-2 py-1.5 first:pt-0 last:pb-0">
                 <span
-                  className={cn('mt-1.5 grid size-2 shrink-0 rounded-full', getGatewayEventDotClass(log.event))}
+                  className={cn(
+                    'mt-1.5 grid size-2 shrink-0 rounded-full',
+                    getGatewayEventDotClass(log.event),
+                  )}
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium text-foreground">

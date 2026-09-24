@@ -11,13 +11,7 @@ import { formatClockTime } from '@/lib/format';
 import type { WeatherForecastPoint } from '@/types';
 
 export type WeatherIconKey =
-  | 'sun'
-  | 'cloud-sun'
-  | 'cloud'
-  | 'cloud-rain'
-  | 'cloud-showers'
-  | 'cloud-bolt'
-  | 'unknown';
+  'sun' | 'cloud-sun' | 'cloud' | 'cloud-rain' | 'cloud-showers' | 'cloud-bolt' | 'unknown';
 
 interface WeatherCodeInfo {
   label: string;
@@ -74,9 +68,7 @@ const WEATHER_CODES: WeatherCodeEntry[] = [
   { code: 63, label: 'weatherCode.heavyRain', iconKey: 'cloud-bolt', isRain: true },
 ];
 
-const WEATHER_CODE_MAP = new Map<number, WeatherCodeEntry>(
-  WEATHER_CODES.map((w) => [w.code, w]),
-);
+const WEATHER_CODE_MAP = new Map<number, WeatherCodeEntry>(WEATHER_CODES.map((w) => [w.code, w]));
 
 export function getWeatherCodeInfo(
   code: number | string | null | undefined,

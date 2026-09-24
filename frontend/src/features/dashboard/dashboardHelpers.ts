@@ -158,7 +158,9 @@ export function buildMetricChartData(
   return points.map((point) => ({ label: point.label, value: Number(point[dataKey]) }));
 }
 
-export function buildNodeHistoricalDataMap(nodes: NodeSummary[]): Record<string, FarmMetricChartPoint[]> {
+export function buildNodeHistoricalDataMap(
+  nodes: NodeSummary[],
+): Record<string, FarmMetricChartPoint[]> {
   const nodeDataMap: Record<string, FarmMetricChartPoint[]> = {};
   nodes.forEach((ns) => {
     nodeDataMap[ns.node.id] = getHistoricalDataForNode(ns.node.id);
@@ -173,10 +175,7 @@ export function buildWeatherForecastViewModel(
 ): WeatherForecastViewModel {
   const currentInfo = getWeatherCodeInfo(weather.code, weather.condition);
   const slots = (weather.forecast ?? []).slice(0, 6).map((point, index) => {
-    const info = getWeatherCodeInfo(
-      point.weather,
-      point.weather_desc,
-    );
+    const info = getWeatherCodeInfo(point.weather, point.weather_desc);
     const temp = pickNumber(point.t);
 
     return {

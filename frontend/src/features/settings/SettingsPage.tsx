@@ -57,8 +57,14 @@ export default function SettingsPage() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <ProfileField label={t('settingsPage.fieldName')} value={user?.name || t('settingsPage.notAvailable')} />
-          <ProfileField label={t('settingsPage.fieldEmail')} value={user?.email || t('settingsPage.notAvailable')} />
+          <ProfileField
+            label={t('settingsPage.fieldName')}
+            value={user?.name || t('settingsPage.notAvailable')}
+          />
+          <ProfileField
+            label={t('settingsPage.fieldEmail')}
+            value={user?.email || t('settingsPage.notAvailable')}
+          />
           <div className="flex items-center justify-between gap-3 border-b border-border py-3 text-sm last:border-b-0">
             <span className="text-muted-foreground">{t('settingsPage.fieldPhone')}</span>
             {editingPhone ? (

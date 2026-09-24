@@ -7,21 +7,41 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
 
 // Route-based code splitting, Leaflet (Pilih Kebun) dan chart (monitoring)
 // di-load hanya saat route pertama kali dikunjungi.
-const LandingPage = lazy(() => import('@/features/landing').then(m => ({ default: m.LandingPage })));
+const LandingPage = lazy(() =>
+  import('@/features/landing').then((m) => ({ default: m.LandingPage })),
+);
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/features/auth/RegisterPage'));
 const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'));
 const ChangePasswordPage = lazy(() => import('@/features/auth/ChangePasswordPage'));
-const SelectFarmsPage = lazy(() => import('@/features/selectFarms').then(m => ({ default: m.SelectFarmsPage })));
-const MyFarmsPage = lazy(() => import('@/features/myFarms').then(m => ({ default: m.MyFarmsPage })));
-const AddFarmPage = lazy(() => import('@/features/addFarm').then(m => ({ default: m.AddFarmPage })));
-const DashboardPage = lazy(() => import('@/features/dashboard').then(m => ({ default: m.DashboardPage })));
-const MonitoringPage = lazy(() => import('@/features/monitoring').then(m => ({ default: m.MonitoringPage })));
-const IrrigationPage = lazy(() => import('@/features/irrigation').then(m => ({ default: m.IrrigationPage })));
-const WeatherPage = lazy(() => import('@/features/weather').then(m => ({ default: m.WeatherPage })));
-const GatewayPage = lazy(() => import('@/features/gateway').then(m => ({ default: m.GatewayPage })));
-const LogsPage = lazy(() => import('@/features/logs').then(m => ({ default: m.LogsPage })));
-const SettingsPage = lazy(() => import('@/features/settings').then(m => ({ default: m.SettingsPage })));
+const SelectFarmsPage = lazy(() =>
+  import('@/features/selectFarms').then((m) => ({ default: m.SelectFarmsPage })),
+);
+const MyFarmsPage = lazy(() =>
+  import('@/features/myFarms').then((m) => ({ default: m.MyFarmsPage })),
+);
+const AddFarmPage = lazy(() =>
+  import('@/features/addFarm').then((m) => ({ default: m.AddFarmPage })),
+);
+const DashboardPage = lazy(() =>
+  import('@/features/dashboard').then((m) => ({ default: m.DashboardPage })),
+);
+const MonitoringPage = lazy(() =>
+  import('@/features/monitoring').then((m) => ({ default: m.MonitoringPage })),
+);
+const IrrigationPage = lazy(() =>
+  import('@/features/irrigation').then((m) => ({ default: m.IrrigationPage })),
+);
+const WeatherPage = lazy(() =>
+  import('@/features/weather').then((m) => ({ default: m.WeatherPage })),
+);
+const GatewayPage = lazy(() =>
+  import('@/features/gateway').then((m) => ({ default: m.GatewayPage })),
+);
+const LogsPage = lazy(() => import('@/features/logs').then((m) => ({ default: m.LogsPage })));
+const SettingsPage = lazy(() =>
+  import('@/features/settings').then((m) => ({ default: m.SettingsPage })),
+);
 
 export function AppRouter() {
   const { t } = useTranslation();

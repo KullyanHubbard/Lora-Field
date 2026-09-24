@@ -23,12 +23,15 @@ export function formatSyncTime(value: string | null | undefined, locale: string)
 }
 
 export function moistureCondition(value: number | null, lower: number, upper: number) {
-  if (value == null) return { labelKey: 'irrigation.waitingData', tone: 'neutral' as const, bar: 'bg-muted' };
+  if (value == null)
+    return { labelKey: 'irrigation.waitingData', tone: 'neutral' as const, bar: 'bg-muted' };
   if (value < lower * 0.75) {
     return { labelKey: 'irrigation.condition.critical', tone: 'red' as const, bar: 'bg-red-500' };
   }
-  if (value < lower) return { labelKey: 'irrigation.condition.dry', tone: 'yellow' as const, bar: 'bg-amber-500' };
-  if (value > upper) return { labelKey: 'irrigation.condition.wet', tone: 'yellow' as const, bar: 'bg-sky-500' };
+  if (value < lower)
+    return { labelKey: 'irrigation.condition.dry', tone: 'yellow' as const, bar: 'bg-amber-500' };
+  if (value > upper)
+    return { labelKey: 'irrigation.condition.wet', tone: 'yellow' as const, bar: 'bg-sky-500' };
   return { labelKey: 'irrigation.condition.normal', tone: 'green' as const, bar: 'bg-emerald-500' };
 }
 
@@ -36,9 +39,7 @@ export function getNodeMoisture(ns: NodeSummary) {
   return ns.latest_reading?.soil_moisture ?? null;
 }
 
-export function valveKeyFromDecision(
-  decision: NodeSummary['decision'] | null | undefined,
-): string {
+export function valveKeyFromDecision(decision: NodeSummary['decision'] | null | undefined): string {
   if (!decision) return 'valve.unknown';
   return decision.valve_state === 'open' ? 'valve.open' : 'valve.closed';
 }

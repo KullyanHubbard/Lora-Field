@@ -24,10 +24,7 @@ export function useMonitoringViewModel(farmId: string) {
 
   const readingsQuery = useReadings(effectiveNodeId, 100);
   const readings = readingsQuery.data?.items ?? [];
-  const selectNode = useCallback(
-    (nodeId: string) => setSelectedNode({ farmId, nodeId }),
-    [farmId],
-  );
+  const selectNode = useCallback((nodeId: string) => setSelectedNode({ farmId, nodeId }), [farmId]);
 
   return {
     summary,

@@ -247,10 +247,7 @@ export function AppLayout() {
         </main>
       </SidebarInset>
 
-      <HelpCenterDialog
-        isOpen={isHelpDialogOpen}
-        onClose={() => setIsHelpDialogOpen(false)}
-      />
+      <HelpCenterDialog isOpen={isHelpDialogOpen} onClose={() => setIsHelpDialogOpen(false)} />
     </SidebarProvider>
   );
 }

@@ -38,7 +38,15 @@ function useAnimatedValue(target: number, enabled: boolean, duration = 800) {
   return enabled ? progress : target;
 }
 
-export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label, animate }: GaugeRingProps) {
+export function GaugeRing({
+  value,
+  centerLabel,
+  centerSub,
+  tone,
+  caption,
+  label,
+  animate,
+}: GaugeRingProps) {
   const clamped = value != null ? Math.max(0, Math.min(100, value)) : 0;
   const displayProgress = useAnimatedValue(clamped, animate === true && clamped > 0);
   const filled = (displayProgress / 100) * CIRCUMFERENCE;
@@ -87,9 +95,7 @@ export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label,
           )}
         </div>
       </div>
-      {caption && (
-        <span className="text-center text-xs text-muted-foreground">{caption}</span>
-      )}
+      {caption && <span className="text-center text-xs text-muted-foreground">{caption}</span>}
     </div>
   );
 }

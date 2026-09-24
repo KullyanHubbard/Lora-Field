@@ -10,13 +10,7 @@ import { getNodeStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
 
-export function NodeSensorCard({
-  nodes,
-  className,
-}: {
-  nodes: NodeSummary[];
-  className?: string;
-}) {
+export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; className?: string }) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
   const selectedNs = getSelectedNodeSummary(nodes, selected);
@@ -55,9 +49,7 @@ export function NodeSensorCard({
           </select>
         )}
         {nodes.length <= 1 && selectedNs && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {getNodeLabel(selectedNs.node)}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{getNodeLabel(selectedNs.node)}</p>
         )}
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-center">
@@ -68,22 +60,42 @@ export function NodeSensorCard({
         ) : (
           <div className="grid grid-cols-2 gap-2">
             <NodeMetricTile
-              icon={<Droplets className="size-4 shrink-0 text-cyan-500 dark:text-cyan-400" aria-hidden="true" />}
+              icon={
+                <Droplets
+                  className="size-4 shrink-0 text-cyan-500 dark:text-cyan-400"
+                  aria-hidden="true"
+                />
+              }
               label={t('dashboard.nodeSensor.metrics.soilMoisture')}
               value={reading ? `${reading.soil_moisture}%` : EMPTY_VALUE}
             />
             <NodeMetricTile
-              icon={<Thermometer className="size-4 shrink-0 text-orange-500 dark:text-orange-400" aria-hidden="true" />}
+              icon={
+                <Thermometer
+                  className="size-4 shrink-0 text-orange-500 dark:text-orange-400"
+                  aria-hidden="true"
+                />
+              }
               label={t('dashboard.nodeSensor.metrics.soilTemp')}
               value={reading ? `${reading.soil_temp}${DEG_C}` : EMPTY_VALUE}
             />
             <NodeMetricTile
-              icon={<Sun className="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />}
+              icon={
+                <Sun
+                  className="size-4 shrink-0 text-amber-500 dark:text-amber-400"
+                  aria-hidden="true"
+                />
+              }
               label={t('dashboard.nodeSensor.metrics.airTemp')}
               value={reading ? `${reading.air_temp}${DEG_C}` : EMPTY_VALUE}
             />
             <NodeMetricTile
-              icon={<Cloud className="size-4 shrink-0 text-sky-500 dark:text-sky-400" aria-hidden="true" />}
+              icon={
+                <Cloud
+                  className="size-4 shrink-0 text-sky-500 dark:text-sky-400"
+                  aria-hidden="true"
+                />
+              }
               label={t('dashboard.nodeSensor.metrics.airHumidity')}
               value={reading ? `${reading.air_humidity}%` : EMPTY_VALUE}
             />
@@ -94,15 +106,7 @@ export function NodeSensorCard({
   );
 }
 
-function NodeMetricTile({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
+function NodeMetricTile({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="summary-subcard-interactive flex items-center gap-2 rounded-xl border border-border bg-gradient-to-b from-muted/50 to-transparent px-3 py-2.5">
       {icon}

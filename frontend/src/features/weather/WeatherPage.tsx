@@ -4,11 +4,7 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Droplets, Wind } from 'lucide-react';
 import { useFarmSummary } from '@/features/dashboard/queries';
 import { useWeatherHistory } from './queries';
-import {
-  formatForecastLabel,
-  getWeatherCodeInfo,
-  pickNumber,
-} from './weatherHelpers';
+import { formatForecastLabel, getWeatherCodeInfo, pickNumber } from './weatherHelpers';
 import { weatherIconMap } from '@/features/weather/weatherIconMap';
 import { DEG_C, EMPTY_VALUE, formatClockTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -30,9 +26,7 @@ const TICK_FILL = 'color-mix(in oklch, var(--foreground) 85%, transparent)';
 const GRID_STROKE = 'color-mix(in oklch, var(--foreground) 25%, transparent)';
 
 const iconColor = (isRain: boolean): string =>
-  isRain
-    ? 'text-sky-500 dark:text-sky-400'
-    : 'text-amber-500 dark:text-amber-400';
+  isRain ? 'text-sky-500 dark:text-sky-400' : 'text-amber-500 dark:text-amber-400';
 
 // Temperature Chart (generic)
 
@@ -65,10 +59,7 @@ function TemperatureChart({ points }: { points: ChartPoint[] }) {
 
   return (
     <ChartContainer config={chartConfig} className="h-full min-h-0 w-full">
-      <AreaChart
-        data={points}
-        margin={{ left: 0, right: 8, top: 4, bottom: 0 }}
-      >
+      <AreaChart data={points} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
         <defs>
           <linearGradient id="wxFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={CHART_COLOR} stopOpacity={0.22} />
@@ -159,9 +150,7 @@ function WeatherMainCard({
 
   const points: ChartPoint[] = (history.data ?? []).map((p) => {
     const d = new Date(p.time);
-    const label = Number.isFinite(d.getTime())
-      ? formatClockTime(d, i18n.language)
-      : p.time;
+    const label = Number.isFinite(d.getTime()) ? formatClockTime(d, i18n.language) : p.time;
     return { label, value: p.temp };
   });
 
@@ -187,9 +176,7 @@ function WeatherMainCard({
               <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
                 {t('weather.labelHumidity')}
               </p>
-              <p className="text-base font-semibold tabular-nums text-foreground">
-                {humText}
-              </p>
+              <p className="text-base font-semibold tabular-nums text-foreground">{humText}</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 rounded-lg border border-border px-4 py-3">
@@ -235,10 +222,7 @@ function WeatherMainCard({
 function ForecastColumn({ weather }: { weather: Weather | null }) {
   const { t, i18n } = useTranslation();
   const forecast = weather?.forecast;
-  const items =
-    Array.isArray(forecast) && forecast.length > 0
-      ? forecast.slice(0, 8)
-      : [];
+  const items = Array.isArray(forecast) && forecast.length > 0 ? forecast.slice(0, 8) : [];
 
   return (
     <Card className="flex flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
@@ -247,27 +231,17 @@ function ForecastColumn({ weather }: { weather: Weather | null }) {
       </CardHeader>
       <CardContent className="lg:flex lg:flex-1 lg:flex-col lg:min-h-0">
         {items.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground">
-            {t('weather.forecastEmpty')}
-          </p>
+          <p className="text-center text-sm text-muted-foreground">{t('weather.forecastEmpty')}</p>
         ) : (
           <div className="divide-y divide-border lg:flex lg:flex-1 lg:flex-col lg:overflow-hidden">
             {items.map((f, i) => {
-              const info = getWeatherCodeInfo(
-                pickNumber(f.weather),
-                f.weather_desc,
-              );
+              const info = getWeatherCodeInfo(pickNumber(f.weather), f.weather_desc);
               const Icon = weatherIconMap[info.iconKey];
               const temp = pickNumber(f.t);
               const tempText = temp != null ? `${temp}${DEG_C}` : EMPTY_VALUE;
               return (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 py-3.5 lg:flex-1"
-                >
-                  <Icon
-                    className={cn('size-8 shrink-0', iconColor(info.isRain))}
-                  />
+                <div key={i} className="flex items-center gap-3 py-3.5 lg:flex-1">
+                  <Icon className={cn('size-8 shrink-0', iconColor(info.isRain))} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-base font-medium tabular-nums text-foreground">
@@ -277,9 +251,7 @@ function ForecastColumn({ weather }: { weather: Weather | null }) {
                         {tempText}
                       </span>
                     </div>
-                    <p className="truncate text-sm text-muted-foreground">
-                      {t(info.label)}
-                    </p>
+                    <p className="truncate text-sm text-muted-foreground">{t(info.label)}</p>
                   </div>
                 </div>
               );
@@ -300,10 +272,7 @@ export default function WeatherPage() {
 
   // Fetch Open-Meteo history PARALEL dengan farm summary, tidak perlu tunggu summary selesai.
   // Query disabled otomatis kalau farmId/koodinat belum ada.
-  const history = useWeatherHistory(
-    summary?.farm.latitude,
-    summary?.farm.longitude,
-  );
+  const history = useWeatherHistory(summary?.farm.latitude, summary?.farm.longitude);
 
   if (isLoading) {
     return (
@@ -320,11 +289,7 @@ export default function WeatherPage() {
     return (
       <div className="mx-auto max-w-6xl">
         <FarmSummaryError
-          message={
-            error
-              ? t('weather.errorLoad', { message: error.message })
-              : t('weather.noData')
-          }
+          message={error ? t('weather.errorLoad', { message: error.message }) : t('weather.noData')}
         />
       </div>
     );

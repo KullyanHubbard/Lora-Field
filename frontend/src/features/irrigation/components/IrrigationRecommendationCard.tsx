@@ -33,12 +33,16 @@ export function IrrigationRecommendationCard({
         {nodes.length === 0 ? (
           <p className="text-xs text-muted-foreground">{t('irrigation.recommendationEmpty')}</p>
         ) : stats.driestNodes.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{t('irrigation.recommendationWaitingMoisture')}</p>
+          <p className="text-xs text-muted-foreground">
+            {t('irrigation.recommendationWaitingMoisture')}
+          </p>
         ) : (
           stats.driestNodes.map((ns) => {
             const moisture = getNodeMoisture(ns);
             const condition = moistureCondition(moisture, lower, upper);
-            const valveBadge = ns.decision ? getValveStatusBadge(valveKeyFromDecision(ns.decision)) : null;
+            const valveBadge = ns.decision
+              ? getValveStatusBadge(valveKeyFromDecision(ns.decision))
+              : null;
 
             return (
               <div
@@ -46,7 +50,9 @@ export function IrrigationRecommendationCard({
                 className="flex items-center justify-between gap-2 rounded-md border border-border px-2.5 py-1.5"
               >
                 <div className="min-w-0">
-                  <div className="truncate text-xs font-medium text-foreground">{ns.node.name || ns.node.id}</div>
+                  <div className="truncate text-xs font-medium text-foreground">
+                    {ns.node.name || ns.node.id}
+                  </div>
                   <div className="truncate text-[11px] text-muted-foreground">
                     {moisture ?? EMPTY_VALUE}% · {t(condition.labelKey)}
                   </div>

@@ -23,9 +23,7 @@ export function BatteryNodesCard({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [hasAnimated, setHasAnimated] = useState(
-    () => typeof IntersectionObserver === 'undefined',
-  );
+  const [hasAnimated, setHasAnimated] = useState(() => typeof IntersectionObserver === 'undefined');
 
   useEffect(() => {
     if (hasAnimated || typeof IntersectionObserver === 'undefined') {
@@ -68,9 +66,8 @@ export function BatteryNodesCard({
     updateScrollState();
     element.addEventListener('scroll', updateScrollState, { passive: true });
     const frame = window.requestAnimationFrame(updateScrollState);
-    const resizeObserver = typeof ResizeObserver !== 'undefined'
-      ? new ResizeObserver(updateScrollState)
-      : null;
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateScrollState) : null;
     resizeObserver?.observe(element);
 
     return () => {

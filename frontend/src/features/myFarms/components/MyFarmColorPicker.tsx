@@ -1,12 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { MARKER_COLORS, type MarkerColorId } from '@/features/myFarms/farmColorStorage';
 
 interface MyFarmColorPickerProps {
@@ -27,7 +22,12 @@ export function MyFarmColorPicker({
   const { t } = useTranslation();
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <SheetContent>
         <SheetHeader>
           <div className="flex items-center justify-between">

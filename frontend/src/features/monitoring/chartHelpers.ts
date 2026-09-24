@@ -1,7 +1,10 @@
 import { formatClockTime, parseServerDate } from '@/lib/format';
 import type { Reading } from '@/types';
 
-type ReadingMetricKey = keyof Pick<Reading, 'soil_moisture' | 'soil_temp' | 'air_temp' | 'air_humidity'>;
+type ReadingMetricKey = keyof Pick<
+  Reading,
+  'soil_moisture' | 'soil_temp' | 'air_temp' | 'air_humidity'
+>;
 
 const HOUR_MS = 60 * 60 * 1000;
 const MONITORING_CHART_HOURS = 12;

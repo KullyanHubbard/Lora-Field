@@ -1,9 +1,22 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Droplets } from 'lucide-react';
-import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, XAxis, YAxis } from 'recharts';
+import {
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ReferenceArea,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
@@ -12,7 +25,12 @@ import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 import { CHART_COLORS } from '@/lib/chartColors';
 
-const PALETTE = { main: CHART_COLORS.violet, light: CHART_COLORS.violetSoft, wet: CHART_COLORS.blue, dry: CHART_COLORS.orange };
+const PALETTE = {
+  main: CHART_COLORS.violet,
+  light: CHART_COLORS.violetSoft,
+  wet: CHART_COLORS.blue,
+  dry: CHART_COLORS.orange,
+};
 const RANGE = { min: 60, max: 85 };
 const CHART_MAX = 100;
 
@@ -45,35 +63,83 @@ export default function AirHumidityZoneLineChart({
 
   const latestHumidity = latestValue(readings, 'air_humidity');
   const latestStatus = latestHumidity != null ? humidityStatus(latestHumidity) : null;
-  const config = { value: { label: `${t('monitoring.chartAirHumidity')} %`, color: PALETTE.main } } satisfies ChartConfig;
+  const config = {
+    value: { label: `${t('monitoring.chartAirHumidity')} %`, color: PALETTE.main },
+  } satisfies ChartConfig;
 
   return (
     <Card
       className={cn(
-        embedded && 'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
+        embedded &&
+          'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
       )}
     >
       <MonitoringChartHeader
         title={t('monitoring.chartAirHumidity')}
-        icon={<Droplets className="size-4 text-violet-500 dark:text-violet-400" aria-hidden="true" />}
+        icon={
+          <Droplets className="size-4 text-violet-500 dark:text-violet-400" aria-hidden="true" />
+        }
         value={latestHumidity != null ? `${latestHumidity.toFixed(0)}%` : null}
-        status={latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined}
+        status={
+          latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined
+        }
         sideLabel={t('monitoring.zoneIdeal')}
         sideValue={`${RANGE.min}–${RANGE.max}%`}
         embedded={embedded}
       />
       <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
-        <ChartContainer config={config} className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}>
+        <ChartContainer
+          config={config}
+          className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}
+        >
           <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.12} />
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              stroke="currentColor"
+              strokeOpacity={0.12}
+            />
             <ReferenceArea y1={0} y2={RANGE.min} fill={PALETTE.dry} fillOpacity={0.05} />
             <ReferenceArea y1={RANGE.min} y2={RANGE.max} fill={PALETTE.main} fillOpacity={0.07} />
             <ReferenceArea y1={RANGE.max} y2={CHART_MAX} fill={PALETTE.wet} fillOpacity={0.05} />
-            <ReferenceLine y={RANGE.min} stroke={PALETTE.dry} strokeOpacity={0.45} strokeDasharray="5 3" />
-            <ReferenceLine y={RANGE.max} stroke={PALETTE.wet} strokeOpacity={0.45} strokeDasharray="5 3" />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval={0} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
-            <YAxis domain={[0, CHART_MAX]} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
-            <ChartTooltip content={<ChartTooltipContent formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(0)}%`, t('monitoring.chartAirHumidity')]} />} />
+            <ReferenceLine
+              y={RANGE.min}
+              stroke={PALETTE.dry}
+              strokeOpacity={0.45}
+              strokeDasharray="5 3"
+            />
+            <ReferenceLine
+              y={RANGE.max}
+              stroke={PALETTE.wet}
+              strokeOpacity={0.45}
+              strokeDasharray="5 3"
+            />
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              interval={0}
+              tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
+            />
+            <YAxis
+              domain={[0, CHART_MAX]}
+              tickLine={false}
+              axisLine={false}
+              width={44}
+              tickFormatter={(v) => `${v}%`}
+              tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  formatter={(v: unknown) => [
+                    `${Number(v ?? 0).toFixed(0)}%`,
+                    t('monitoring.chartAirHumidity'),
+                  ]}
+                />
+              }
+            />
             <Line
               dataKey="value"
               type="monotone"
@@ -93,7 +159,12 @@ export default function AirHumidityZoneLineChart({
                   />
                 );
               }}
-              activeDot={{ r: 5, fill: PALETTE.main, stroke: CHART_COLORS.dotRing, strokeWidth: 1.5 }}
+              activeDot={{
+                r: 5,
+                fill: PALETTE.main,
+                stroke: CHART_COLORS.dotRing,
+                strokeWidth: 1.5,
+              }}
               {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>

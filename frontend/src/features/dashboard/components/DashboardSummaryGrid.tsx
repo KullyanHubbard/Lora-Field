@@ -39,10 +39,7 @@ export function DashboardSummaryGrid({
       />
 
       <div className="overflow-hidden rounded-xl bg-card text-sm text-card-foreground ring-1 ring-foreground/10 sm:col-span-2 xl:col-start-2 xl:col-end-4 xl:row-start-1">
-        <GatewayInfoContent
-          gateway={gateway}
-          className="flex-1 p-4"
-        />
+        <GatewayInfoContent gateway={gateway} className="flex-1 p-4" />
       </div>
 
       <ActivityLogCard

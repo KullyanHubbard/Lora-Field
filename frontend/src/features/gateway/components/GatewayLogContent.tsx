@@ -95,7 +95,12 @@ export function GatewayLogContent({
                       ) : tone === 'red' ? (
                         <WifiOff className="size-3.5 text-red-500 dark:text-red-400" />
                       ) : (
-                        <span className={cn('grid size-2 rounded-full', getGatewayEventDotClass(log.event))} />
+                        <span
+                          className={cn(
+                            'grid size-2 rounded-full',
+                            getGatewayEventDotClass(log.event),
+                          )}
+                        />
                       )}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -104,7 +109,11 @@ export function GatewayLogContent({
                           <p className="truncate text-xs font-medium text-foreground">
                             {t(getGatewayEventLabelKey(log.event))}
                           </p>
-                          {log.detail && <p className="truncate text-[0.65rem] text-muted-foreground">{log.detail}</p>}
+                          {log.detail && (
+                            <p className="truncate text-[0.65rem] text-muted-foreground">
+                              {log.detail}
+                            </p>
+                          )}
                         </div>
                         <span className="shrink-0 tabular-nums text-[0.65rem] text-muted-foreground">
                           {timeAgo(log.created_at, t)}

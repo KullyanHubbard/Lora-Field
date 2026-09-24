@@ -46,7 +46,9 @@ export function LogsTableCard({ logs }: { logs: ScopedLog[] }) {
                   <TableCell>{log.nodeName}</TableCell>
                   <TableCell className="text-muted-foreground">{log.nodeLocation}</TableCell>
                   <TableCell className="tabular-nums">{log.soil_moisture}%</TableCell>
-                  <TableCell className="text-muted-foreground">{log.weather || EMPTY_VALUE}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {log.weather || EMPTY_VALUE}
+                  </TableCell>
                   <TableCell>
                     <StatusPill
                       tone={getDecisionTone(log.type)}

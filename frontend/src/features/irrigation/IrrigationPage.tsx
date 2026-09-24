@@ -26,7 +26,11 @@ export default function IrrigationPage() {
 
   if (error || !summary || !stats) {
     return (
-      <FarmSummaryError message={error ? t('irrigation.errorLoad', { message: error.message }) : t('irrigation.noData')} />
+      <FarmSummaryError
+        message={
+          error ? t('irrigation.errorLoad', { message: error.message }) : t('irrigation.noData')
+        }
+      />
     );
   }
 

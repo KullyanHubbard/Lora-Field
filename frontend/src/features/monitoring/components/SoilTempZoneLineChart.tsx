@@ -11,7 +11,12 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
@@ -26,8 +31,10 @@ const OPTIMAL_SOIL_TEMP = { min: 18, max: 28 };
 const CHART_MAX = 40;
 
 function soilTempStatus(avg: number): { labelKey: string; tone: StatusTone } {
-  if (avg < OPTIMAL_SOIL_TEMP.min) return { labelKey: 'monitoring.soilTempStatus.cold', tone: 'yellow' };
-  if (avg > OPTIMAL_SOIL_TEMP.max) return { labelKey: 'monitoring.soilTempStatus.warm', tone: 'red' };
+  if (avg < OPTIMAL_SOIL_TEMP.min)
+    return { labelKey: 'monitoring.soilTempStatus.cold', tone: 'yellow' };
+  if (avg > OPTIMAL_SOIL_TEMP.max)
+    return { labelKey: 'monitoring.soilTempStatus.warm', tone: 'red' };
   return { labelKey: 'monitoring.soilTempStatus.normal', tone: 'green' };
 }
 
@@ -63,20 +70,30 @@ export default function SoilTempZoneLineChart({
   const latestAvg = latestValue(readings, 'soil_temp');
   const latestStatus = latestAvg != null ? soilTempStatus(latestAvg) : null;
 
-  const config = { value: { label: `${t('monitoring.chartSoilTemp')} ${DEG_C}`, color: PALETTE.main } } satisfies ChartConfig;
+  const config = {
+    value: { label: `${t('monitoring.chartSoilTemp')} ${DEG_C}`, color: PALETTE.main },
+  } satisfies ChartConfig;
 
   return (
     <Card
       className={cn(
-        embedded && 'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
+        embedded &&
+          'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
       )}
     >
       <MonitoringChartHeader
         title={t('monitoring.chartSoilTemp')}
-        icon={<ThermometerSun className="size-4 text-amber-500 dark:text-amber-400" aria-hidden="true" />}
+        icon={
+          <ThermometerSun
+            className="size-4 text-amber-500 dark:text-amber-400"
+            aria-hidden="true"
+          />
+        }
         value={latestAvg != null ? latestAvg.toFixed(1) : null}
         unit={DEG_C}
-        status={latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined}
+        status={
+          latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined
+        }
         sideLabel={t('dashboard.soilTargetCaption', {
           lower: OPTIMAL_SOIL_TEMP.min,
           upper: OPTIMAL_SOIL_TEMP.max,
@@ -85,20 +102,70 @@ export default function SoilTempZoneLineChart({
         embedded={embedded}
       />
       <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
-        <ChartContainer config={config} className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}>
+        <ChartContainer
+          config={config}
+          className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}
+        >
           <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.12} />
-            <ReferenceArea y1={0} y2={OPTIMAL_SOIL_TEMP.min} fill={PALETTE.cool} fillOpacity={0.05} />
-            <ReferenceArea y1={OPTIMAL_SOIL_TEMP.min} y2={OPTIMAL_SOIL_TEMP.max} fill={CHART_COLORS.emerald} fillOpacity={0.07} />
-            <ReferenceArea y1={OPTIMAL_SOIL_TEMP.max} y2={CHART_MAX} fill={PALETTE.hot} fillOpacity={0.05} />
-            <ReferenceLine y={OPTIMAL_SOIL_TEMP.min} stroke={PALETTE.cool} strokeOpacity={0.45} strokeDasharray="5 3" />
-            <ReferenceLine y={OPTIMAL_SOIL_TEMP.max} stroke={PALETTE.hot} strokeOpacity={0.45} strokeDasharray="5 3" />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval={0} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
-            <YAxis domain={[0, CHART_MAX]} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${v}${DEG_C}`} tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }} />
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              stroke="currentColor"
+              strokeOpacity={0.12}
+            />
+            <ReferenceArea
+              y1={0}
+              y2={OPTIMAL_SOIL_TEMP.min}
+              fill={PALETTE.cool}
+              fillOpacity={0.05}
+            />
+            <ReferenceArea
+              y1={OPTIMAL_SOIL_TEMP.min}
+              y2={OPTIMAL_SOIL_TEMP.max}
+              fill={CHART_COLORS.emerald}
+              fillOpacity={0.07}
+            />
+            <ReferenceArea
+              y1={OPTIMAL_SOIL_TEMP.max}
+              y2={CHART_MAX}
+              fill={PALETTE.hot}
+              fillOpacity={0.05}
+            />
+            <ReferenceLine
+              y={OPTIMAL_SOIL_TEMP.min}
+              stroke={PALETTE.cool}
+              strokeOpacity={0.45}
+              strokeDasharray="5 3"
+            />
+            <ReferenceLine
+              y={OPTIMAL_SOIL_TEMP.max}
+              stroke={PALETTE.hot}
+              strokeOpacity={0.45}
+              strokeDasharray="5 3"
+            />
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              interval={0}
+              tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
+            />
+            <YAxis
+              domain={[0, CHART_MAX]}
+              tickLine={false}
+              axisLine={false}
+              width={44}
+              tickFormatter={(v) => `${v}${DEG_C}`}
+              tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
+            />
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(1)}${DEG_C}`, t('monitoring.chartSoilTemp')]}
+                  formatter={(v: unknown) => [
+                    `${Number(v ?? 0).toFixed(1)}${DEG_C}`,
+                    t('monitoring.chartSoilTemp'),
+                  ]}
                 />
               }
             />
@@ -111,7 +178,12 @@ export default function SoilTempZoneLineChart({
                 const { cx, cy, index } = props;
                 if (cx == null || cy == null || index == null) return null;
                 const pt = points[index];
-                const fill = pt?.band === 'cold' ? PALETTE.cool : pt?.band === 'hot' ? PALETTE.hot : PALETTE.main;
+                const fill =
+                  pt?.band === 'cold'
+                    ? PALETTE.cool
+                    : pt?.band === 'hot'
+                      ? PALETTE.hot
+                      : PALETTE.main;
                 return (
                   <rect
                     x={cx - 3.25}
@@ -126,7 +198,12 @@ export default function SoilTempZoneLineChart({
                   />
                 );
               }}
-              activeDot={{ r: 5, fill: PALETTE.main, stroke: CHART_COLORS.dotRing, strokeWidth: 1.5 }}
+              activeDot={{
+                r: 5,
+                fill: PALETTE.main,
+                stroke: CHART_COLORS.dotRing,
+                strokeWidth: 1.5,
+              }}
               {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>

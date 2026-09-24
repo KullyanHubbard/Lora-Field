@@ -8,17 +8,11 @@ interface SelectFarmsViewProps {
   error: Error | null;
 }
 
-export function SelectFarmsView({
-  farms,
-  isLoading,
-  error,
-}: SelectFarmsViewProps) {
+export function SelectFarmsView({ farms, isLoading, error }: SelectFarmsViewProps) {
   if (isLoading) return <SelectFarmsLoadingState />;
 
   if (error) {
-    return (
-      <p className="p-4 text-destructive">{error.message}</p>
-    );
+    return <p className="p-4 text-destructive">{error.message}</p>;
   }
 
   return (

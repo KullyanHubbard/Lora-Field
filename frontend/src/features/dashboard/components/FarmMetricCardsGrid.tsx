@@ -1,6 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Cloud, Droplets, Sun, Thermometer } from 'lucide-react';
-import { MetricStatCard, type MetricStatCardConfig } from '@/features/dashboard/components/MetricStatCard';
+import {
+  MetricStatCard,
+  type MetricStatCardConfig,
+} from '@/features/dashboard/components/MetricStatCard';
 import { DEG_C } from '@/lib/format';
 import type { FarmMetricChartPoint } from '@/features/dashboard/dashboardHistoricalData';
 import type { NodeSummary } from '@/types';
@@ -55,12 +58,7 @@ export function FarmMetricCardsGrid({
   return (
     <div className="grid min-h-0 flex-1 gap-4 sm:col-span-2 sm:grid-cols-2 xl:col-start-1 xl:col-end-6 xl:row-start-3 xl:h-full xl:grid-cols-4 xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden">
       {cards.map((card) => (
-        <MetricStatCard
-          key={card.dataKey}
-          {...card}
-          data={nodeDataMap}
-          nodes={nodes}
-        />
+        <MetricStatCard key={card.dataKey} {...card} data={nodeDataMap} nodes={nodes} />
       ))}
     </div>
   );

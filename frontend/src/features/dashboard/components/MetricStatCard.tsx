@@ -56,7 +56,9 @@ export function MetricStatCard({
   const fmt = (value: number) => value.toFixed(decimals);
 
   return (
-    <div className={cn('flex h-full flex-col rounded-xl border border-border bg-card p-4', className)}>
+    <div
+      className={cn('flex h-full flex-col rounded-xl border border-border bg-card p-4', className)}
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
           <Icon className={cn('size-5 shrink-0', iconColor)} aria-hidden="true" />
@@ -85,7 +87,10 @@ export function MetricStatCard({
         <>
           <div className="mt-3 flex gap-2">
             <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
-              <ArrowDown className="size-3.5 shrink-0 text-blue-500 dark:text-blue-400" aria-hidden="true" />
+              <ArrowDown
+                className="size-3.5 shrink-0 text-blue-500 dark:text-blue-400"
+                aria-hidden="true"
+              />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('dashboard.metricMin')}
               </span>
@@ -95,7 +100,10 @@ export function MetricStatCard({
               </span>
             </div>
             <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
-              <Minus className="size-3.5 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />
+              <Minus
+                className="size-3.5 shrink-0 text-amber-500 dark:text-amber-400"
+                aria-hidden="true"
+              />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('dashboard.metricAvg')}
               </span>
@@ -105,7 +113,10 @@ export function MetricStatCard({
               </span>
             </div>
             <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
-              <ArrowUp className="size-3.5 shrink-0 text-red-500 dark:text-red-400" aria-hidden="true" />
+              <ArrowUp
+                className="size-3.5 shrink-0 text-red-500 dark:text-red-400"
+                aria-hidden="true"
+              />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('dashboard.metricMax')}
               </span>

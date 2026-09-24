@@ -42,10 +42,7 @@ export function formatClockTime(date: Date, locale: string, withSeconds = false)
   });
 }
 
-export function timeAgo(
-  date: string | number | Date | null | undefined,
-  t: TFunction,
-): string {
+export function timeAgo(date: string | number | Date | null | undefined, t: TFunction): string {
   const parsed = parseServerDate(date);
   if (!parsed) return t('time.unavailable');
   const diff = Math.max(Math.floor((Date.now() - parsed.getTime()) / 1000), 0);

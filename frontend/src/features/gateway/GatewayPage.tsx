@@ -36,7 +36,9 @@ export default function GatewayPage() {
     return (
       <FarmSummaryError
         message={
-          summaryError ? t('gateway.errorLoad', { message: summaryError.message }) : t('gateway.noData')
+          summaryError
+            ? t('gateway.errorLoad', { message: summaryError.message })
+            : t('gateway.noData')
         }
       />
     );

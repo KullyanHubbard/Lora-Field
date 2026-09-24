@@ -17,14 +17,19 @@ export function ValveStatCard({
     <div className={cn('flex flex-col rounded-xl border border-border bg-card p-4', className)}>
       <div className="flex items-center gap-2">
         <Droplet className="size-4 shrink-0 text-cyan-500 dark:text-cyan-400" />
-        <span className="text-sm font-medium text-foreground">{t('dashboard.valveStatusCard')}</span>
+        <span className="text-sm font-medium text-foreground">
+          {t('dashboard.valveStatusCard')}
+        </span>
       </div>
 
       <div className="mt-2 flex items-baseline gap-2">
         <span className="text-2xl font-semibold tracking-tight tabular-nums text-foreground">
           {t('dashboard.valveAuto')}
         </span>
-        <Zap className="size-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" aria-hidden="true" />
+        <Zap
+          className="size-3.5 shrink-0 text-emerald-500 dark:text-emerald-400"
+          aria-hidden="true"
+        />
       </div>
 
       <div className="mt-3 space-y-2.5">

@@ -10,10 +10,7 @@ import {
   paginateGatewayLogs,
   type GatewayEventFilter,
 } from '@/features/gateway/gatewayHelpers';
-import {
-  useFarmGateway,
-  useGatewayLogs,
-} from '@/features/gateway/queries';
+import { useFarmGateway, useGatewayLogs } from '@/features/gateway/queries';
 
 export function useGatewayPageViewModel() {
   const { id: farmId } = useParams();

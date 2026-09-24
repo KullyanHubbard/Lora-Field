@@ -11,11 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, UNAUTHORIZED_EVENT } from '@/lib/api';
 import { clearToken, getToken, setToken, TOKEN_KEY } from '@/lib/token';
 import type { User } from '@/types';
-import {
-  AuthContext,
-  type AuthContextValue,
-  type AuthStatus,
-} from '@/features/auth/auth-context';
+import { AuthContext, type AuthContextValue, type AuthStatus } from '@/features/auth/auth-context';
 import i18n from '@/i18n/config';
 import { getPreferredLanguage } from '@/i18n/language';
 import {
@@ -30,9 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [token, setTokenState] = useState<string | null>(() => getToken());
   const [user, setUserState] = useState<User | null>(() => readStoredUser());
-  const [status, setStatus] = useState<AuthStatus>(() =>
-    getToken() ? 'loading' : 'guest',
-  );
+  const [status, setStatus] = useState<AuthStatus>(() => (getToken() ? 'loading' : 'guest'));
   const hydratedTokenRef = useRef<string | null>(null);
 
   const isAuthenticated = status === 'authenticated';
@@ -110,9 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Satu-satunya tempat bahasa diselaraskan: akun pakai preferensi database,
   // guest pakai pilihan tersimpan atau deteksi browser.
   useLayoutEffect(() => {
-    const language = status === 'authenticated' && user
-      ? user.language
-      : getPreferredLanguage();
+    const language = status === 'authenticated' && user ? user.language : getPreferredLanguage();
     if (i18n.resolvedLanguage !== language) {
       void i18n.changeLanguage(language);
     }

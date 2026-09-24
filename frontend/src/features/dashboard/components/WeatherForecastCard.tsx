@@ -1,10 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  Check,
-  ChevronRight,
-  TriangleAlert,
-} from 'lucide-react';
+import { Check, ChevronRight, TriangleAlert } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { WeatherForecastViewModel } from '@/features/dashboard/dashboardHelpers';
 import { weatherIconMap } from '@/features/weather/weatherIconMap';

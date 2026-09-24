@@ -28,18 +28,13 @@ export function MyFarmsCard({
   const { t } = useTranslation();
 
   return (
-    <Card
-      className="relative h-full overflow-hidden p-0 transition-all hover:shadow-md"
-    >
-
+    <Card className="relative h-full overflow-hidden p-0 transition-all hover:shadow-md">
       <Link to={`/farms/${farm.id}`} className="block p-6">
         {/* Header: nama + owner */}
         <div className="flex items-start gap-2">
           <div className="flex min-w-0 flex-col">
             <h3 className="truncate text-lg font-semibold text-foreground">{farm.name}</h3>
-            {farm.owner && (
-              <span className="mt-1 text-sm text-muted-foreground">{farm.owner}</span>
-            )}
+            {farm.owner && <span className="mt-1 text-sm text-muted-foreground">{farm.owner}</span>}
           </div>
         </div>
 
@@ -64,7 +59,6 @@ export function MyFarmsCard({
             </p>
           </div>
         </div>
-
       </Link>
 
       <DropdownMenu>

@@ -21,12 +21,7 @@ interface MyFarmEditDialogProps {
   onConfirm: (newName: string) => void;
 }
 
-export function MyFarmEditDialog({
-  farm,
-  isUpdating,
-  onClose,
-  onConfirm,
-}: MyFarmEditDialogProps) {
+export function MyFarmEditDialog({ farm, isUpdating, onClose, onConfirm }: MyFarmEditDialogProps) {
   const { t } = useTranslation();
   const [name, setName] = useState(farm?.name ?? '');
 
@@ -39,7 +34,12 @@ export function MyFarmEditDialog({
   };
 
   return (
-    <AlertDialog open={farm != null} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <AlertDialog
+      open={farm != null}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t('myFarms.editDialogTitle')}</AlertDialogTitle>
@@ -57,7 +57,9 @@ export function MyFarmEditDialog({
           autoFocus
         />
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isUpdating}>{t('myFarms.editDialogCancel')}</AlertDialogCancel>
+          <AlertDialogCancel disabled={isUpdating}>
+            {t('myFarms.editDialogCancel')}
+          </AlertDialogCancel>
           <AlertDialogAction
             disabled={isUpdating || !name.trim() || name.trim() === farm.name}
             onClick={(e) => {

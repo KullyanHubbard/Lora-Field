@@ -11,7 +11,12 @@ import {
 } from 'recharts';
 import { Droplets } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import { getSoilStatusFromMoisture } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
@@ -64,7 +69,8 @@ export default function SoilMoistureZoneChart({
   return (
     <Card
       className={cn(
-        embedded && 'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
+        embedded &&
+          'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
       )}
     >
       <MonitoringChartHeader
@@ -79,9 +85,17 @@ export default function SoilMoistureZoneChart({
       />
 
       <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
-        <ChartContainer config={config} className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}>
+        <ChartContainer
+          config={config}
+          className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}
+        >
           <ComposedChart data={points} margin={{ left: 0, right: 12, top: 12, bottom: 0 }}>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.12} />
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              stroke="currentColor"
+              strokeOpacity={0.12}
+            />
 
             {/* Zona basah (biru), di atas upper, terlalu basah */}
             <ReferenceArea y1={upper} y2={100} fill={COLOR_WET} fillOpacity={0.12} />
@@ -151,7 +165,12 @@ export default function SoilMoistureZoneChart({
               stroke={COLOR_LINE}
               strokeWidth={2.5}
               dot={{ r: 2.75, fill: COLOR_LINE, stroke: COLOR_WET, strokeWidth: 1 }}
-              activeDot={{ r: 4.5, fill: COLOR_LINE, stroke: CHART_COLORS.dotRing, strokeWidth: 1.5 }}
+              activeDot={{
+                r: 4.5,
+                fill: COLOR_LINE,
+                stroke: CHART_COLORS.dotRing,
+                strokeWidth: 1.5,
+              }}
               {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>

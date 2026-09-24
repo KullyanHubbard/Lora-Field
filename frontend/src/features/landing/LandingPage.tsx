@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from "react"
-import { useTranslation } from "react-i18next"
-import { Link } from "react-router-dom"
-import { motion, AnimatePresence } from "motion/react"
+import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Activity,
   ArrowRight,
@@ -13,25 +13,25 @@ import {
   Menu,
   Sprout,
   X,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import heroPreviewImage from "@/assets/Hero-Preview1.png"
-import "./LandingPage.css"
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import heroPreviewImage from '@/assets/Hero-Preview1.png';
+import './LandingPage.css';
 
 // Lebar konten + padding horizontal yang konsisten.
-const SHELL = "mx-auto w-full max-w-7xl px-4 md:px-6"
+const SHELL = 'mx-auto w-full max-w-7xl px-4 md:px-6';
 
 // Grid garis dekoratif.
 const GRID =
-  "bg-[linear-gradient(to_right,var(--grid-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--grid-line)_1px,transparent_1px)] bg-[size:4rem_4rem]"
+  'bg-[linear-gradient(to_right,var(--grid-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--grid-line)_1px,transparent_1px)] bg-[size:4rem_4rem]';
 
 const container = {
   hidden: { opacity: 0 },
@@ -41,12 +41,12 @@ const container = {
       staggerChildren: 0.1,
     },
   },
-}
+};
 
 const item = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 },
-}
+};
 
 // Ikon statis, digabung ke teks i18n saat render.
 const FEATURE_ICONS = [
@@ -56,49 +56,50 @@ const FEATURE_ICONS = [
   <Sprout className="size-5" key="sprout" />,
   <MapPin className="size-5" key="mappin" />,
   <History className="size-5" key="history" />,
-]
+];
 
 function BrandMark() {
   return (
     <div className="flex items-center font-bold">
       <span className="text-lg">LoraField</span>
     </div>
-  )
+  );
 }
 
 export default function LandingPage() {
-  const { t } = useTranslation()
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [imageError, setImageError] = useState(false)
+  const { t } = useTranslation();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  const featuresItems = t(
-    "landing.featuresItems",
-    { returnObjects: true },
-  ) as Array<{ title: string; description: string }>
-  const stepsItems = t(
-    "landing.stepsItems",
-    { returnObjects: true },
-  ) as Array<{ step: string; title: string; description: string }>
-  const faqItems = t(
-    "landing.faqItems",
-    { returnObjects: true },
-  ) as Array<{ question: string; answer: string }>
+  const featuresItems = t('landing.featuresItems', { returnObjects: true }) as Array<{
+    title: string;
+    description: string;
+  }>;
+  const stepsItems = t('landing.stepsItems', { returnObjects: true }) as Array<{
+    step: string;
+    title: string;
+    description: string;
+  }>;
+  const faqItems = t('landing.faqItems', { returnObjects: true }) as Array<{
+    question: string;
+    answer: string;
+  }>;
 
-  const handleImageError = useCallback(() => setImageError(true), [])
+  const handleImageError = useCallback(() => setImageError(true), []);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div className="landing-page flex min-h-[100dvh] flex-col text-foreground">
       <header
-        className={`sticky top-0 z-50 w-full backdrop-blur-lg transition-all duration-300 ${isScrolled ? "bg-background/80 shadow-sm" : "bg-transparent"}`}
+        className={`sticky top-0 z-50 w-full backdrop-blur-lg transition-all duration-300 ${isScrolled ? 'bg-background/80 shadow-sm' : 'bg-transparent'}`}
       >
         <div className={`${SHELL} relative flex h-16 items-center justify-between`}>
           <BrandMark />
@@ -107,13 +108,13 @@ export default function LandingPage() {
               href="#features"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              {t("landing.navFeatures")}
+              {t('landing.navFeatures')}
             </a>
             <a
               href="#faq"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              {t("landing.navFaq")}
+              {t('landing.navFaq')}
             </a>
           </nav>
           <div className="hidden items-center gap-4 md:flex">
@@ -121,23 +122,19 @@ export default function LandingPage() {
               to="/login"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              {t("landing.navLogin")}
+              {t('landing.navLogin')}
             </Link>
             <Button asChild className="rounded-lg">
               <Link to="/register">
-                {t("landing.navStart")}
+                {t('landing.navStart')}
                 <ChevronRight className="ml-1 size-4" />
               </Link>
             </Button>
           </div>
           <div className="flex items-center gap-4 md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-              <span className="sr-only">{t("landing.toggleMenu")}</span>
+              <span className="sr-only">{t('landing.toggleMenu')}</span>
             </Button>
           </div>
         </div>
@@ -153,19 +150,31 @@ export default function LandingPage() {
               className="absolute inset-x-0 top-16 border-b bg-background/95 backdrop-blur-lg md:hidden"
             >
               <div className={`${SHELL} flex flex-col gap-4 py-4`}>
-                <a href="#features" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  {t("landing.navFeatures")}
+                <a
+                  href="#features"
+                  className="py-2 text-sm font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('landing.navFeatures')}
                 </a>
-                <a href="#faq" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  {t("landing.navFaq")}
+                <a
+                  href="#faq"
+                  className="py-2 text-sm font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('landing.navFaq')}
                 </a>
                 <div className="flex flex-col gap-2 border-t pt-2">
-                  <Link to="/login" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                    {t("landing.navLogin")}
+                  <Link
+                    to="/login"
+                    className="py-2 text-sm font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('landing.navLogin')}
                   </Link>
                   <Button asChild className="rounded-lg">
                     <Link to="/register">
-                      {t("landing.navStart")}
+                      {t('landing.navStart')}
                       <ChevronRight className="ml-1 size-4" />
                     </Link>
                   </Button>
@@ -190,15 +199,15 @@ export default function LandingPage() {
               className="mx-auto mb-6 max-w-3xl text-center"
             >
               <h1 className="mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl lg:text-6xl">
-                {t("landing.heroTitle")}
+                {t('landing.heroTitle')}
               </h1>
               <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-                {t("landing.heroSubtitle")}
+                {t('landing.heroSubtitle')}
               </p>
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
                 <Button asChild size="lg" className="h-12 rounded-lg px-8 text-base">
                   <Link to="/login">
-                    {t("landing.heroCta")}
+                    {t('landing.heroCta')}
                     <ArrowRight className="ml-2 size-4" />
                   </Link>
                 </Button>
@@ -218,7 +227,7 @@ export default function LandingPage() {
                     onError={handleImageError}
                     width={1919}
                     height={946}
-                    alt={t("landing.heroImageAlt")}
+                    alt={t('landing.heroImageAlt')}
                     loading="eager"
                     fetchPriority="high"
                     decoding="async"
@@ -227,7 +236,7 @@ export default function LandingPage() {
                 )}
                 {imageError && (
                   <div className="flex aspect-[16/9] w-full items-center justify-center bg-muted text-muted-foreground">
-                    <p className="text-sm">{t("landing.heroImageFallback")}</p>
+                    <p className="text-sm">{t('landing.heroImageFallback')}</p>
                   </div>
                 )}
                 <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-foreground/10"></div>
@@ -249,13 +258,13 @@ export default function LandingPage() {
               className="mb-12 flex flex-col items-center justify-center space-y-4 text-center"
             >
               <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-                {t("landing.featuresBadge")}
+                {t('landing.featuresBadge')}
               </Badge>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                {t("landing.featuresTitle")}
+                {t('landing.featuresTitle')}
               </h2>
               <p className="max-w-[800px] text-muted-foreground md:text-lg">
-                {t("landing.featuresSubtitle")}
+                {t('landing.featuresSubtitle')}
               </p>
             </motion.div>
 
@@ -298,13 +307,13 @@ export default function LandingPage() {
               className="mb-16 flex flex-col items-center justify-center space-y-4 text-center"
             >
               <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-                {t("landing.howItWorksBadge")}
+                {t('landing.howItWorksBadge')}
               </Badge>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                {t("landing.howItWorksTitle")}
+                {t('landing.howItWorksTitle')}
               </h2>
               <p className="max-w-[800px] text-muted-foreground md:text-lg">
-                {t("landing.howItWorksSubtitle")}
+                {t('landing.howItWorksSubtitle')}
               </p>
             </motion.div>
 
@@ -341,13 +350,13 @@ export default function LandingPage() {
               className="mb-12 flex flex-col items-center justify-center space-y-4 text-center"
             >
               <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-                {t("landing.navFaq")}
+                {t('landing.navFaq')}
               </Badge>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                {t("landing.faqTitle")}
+                {t('landing.faqTitle')}
               </h2>
               <p className="max-w-[800px] text-muted-foreground md:text-lg">
-                {t("landing.faqSubtitle")}
+                {t('landing.faqSubtitle')}
               </p>
             </motion.div>
 
@@ -365,7 +374,9 @@ export default function LandingPage() {
                       <AccordionTrigger className="text-left font-medium hover:no-underline">
                         {faq.question}
                       </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground">{faq.answer}</AccordionContent>
+                      <AccordionContent className="text-muted-foreground">
+                        {faq.answer}
+                      </AccordionContent>
                     </AccordionItem>
                   </motion.div>
                 ))}
@@ -389,15 +400,20 @@ export default function LandingPage() {
               className="flex flex-col items-center justify-center space-y-6 text-center"
             >
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-                {t("landing.ctaTitle")}
+                {t('landing.ctaTitle')}
               </h2>
               <p className="mx-auto max-w-[700px] text-primary-foreground/80 md:text-xl">
-                {t("landing.ctaSubtitle")}
+                {t('landing.ctaSubtitle')}
               </p>
               <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-                <Button asChild size="lg" variant="secondary" className="h-12 rounded-lg px-8 text-base">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="secondary"
+                  className="h-12 rounded-lg px-8 text-base"
+                >
                   <Link to="/login">
-                    {t("landing.ctaButton")}
+                    {t('landing.ctaButton')}
                     <ArrowRight className="ml-2 size-4" />
                   </Link>
                 </Button>
@@ -410,22 +426,28 @@ export default function LandingPage() {
         <div className={`${SHELL} flex flex-col gap-8 py-10 lg:py-16`}>
           <div className="grid gap-8 sm:grid-cols-2">
             <div className="space-y-4">
-              <span className="text-lg font-bold">{t("landing.footerAbout")}</span>
-              <p className="text-sm text-muted-foreground">
-                {t("landing.footerAboutDesc")}
-              </p>
+              <span className="text-lg font-bold">{t('landing.footerAbout')}</span>
+              <p className="text-sm text-muted-foreground">{t('landing.footerAboutDesc')}</p>
             </div>
             <div className="space-y-4">
-              <h4 className="text-sm font-bold">{t("landing.footerNav")}</h4>
+              <h4 className="text-sm font-bold">{t('landing.footerNav')}</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#features" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    {t("landing.footerFeatures")}
+                  <a
+                    href="#features"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('landing.footerFeatures')}
                   </a>
                 </li>
                 <li>
-                  <a href="#faq" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    {t("landing.footerFaq")}
+                  <a
+                    href="#faq"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('landing.footerFaq')}
                   </a>
                 </li>
               </ul>
@@ -434,5 +456,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

@@ -10,7 +10,11 @@ export function IrrigationStatsGrid({ stats }: { stats: IrrigationStats }) {
 
   return (
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-      <SummaryCard label={t('irrigation.totalNodes')} value={stats.totalNodes} icon={<Radio className="size-3.5" />} />
+      <SummaryCard
+        label={t('irrigation.totalNodes')}
+        value={stats.totalNodes}
+        icon={<Radio className="size-3.5" />}
+      />
       <SummaryCard
         label={t('irrigation.openValves')}
         value={stats.openValves}
@@ -52,7 +56,9 @@ function SummaryCard({
   return (
     <Card>
       <CardContent className="p-3">
-        <div className={`flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider ${tone}`}>
+        <div
+          className={`flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider ${tone}`}
+        >
           {icon}
           {label}
         </div>

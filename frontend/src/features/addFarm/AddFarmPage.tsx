@@ -41,9 +41,7 @@ export default function AddFarmPage() {
   return (
     <Card className="mx-auto max-w-2xl">
       <CardHeader>
-        <CardTitle className="text-base">
-          {t('farms.addForm.pageTitle')}
-        </CardTitle>
+        <CardTitle className="text-base">{t('farms.addForm.pageTitle')}</CardTitle>
       </CardHeader>
       <CardContent>
         <form
@@ -112,9 +110,7 @@ export default function AddFarmPage() {
                 value={areaHa}
                 onChange={(e) => setAreaHa(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
-                {t('farms.addForm.areaHelper')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('farms.addForm.areaHelper')}</p>
             </div>
           </div>
 
@@ -135,7 +131,9 @@ export default function AddFarmPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="farm-gateway-name">{t('farms.addForm.gatewayDisplayNameLabel')}</Label>
+              <Label htmlFor="farm-gateway-name">
+                {t('farms.addForm.gatewayDisplayNameLabel')}
+              </Label>
               <Input
                 id="farm-gateway-name"
                 maxLength={100}
