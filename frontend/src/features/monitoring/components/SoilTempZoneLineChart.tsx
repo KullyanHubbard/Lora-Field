@@ -16,11 +16,12 @@ import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
-import { latestValue, getHourlyMonitoringPoints } from '../chartHelpers';
+import { latestValue, getHourlyMonitoringPoints } from '@/features/monitoring/chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
+import { CHART_COLORS } from '@/lib/chartColors';
 
-const PALETTE = { main: '#F59E0B', dark: '#D97706', cool: '#06B6D4', hot: '#EF4444' };
+const PALETTE = { main: CHART_COLORS.amber, cool: CHART_COLORS.cyan, hot: CHART_COLORS.red };
 const OPTIMAL_SOIL_TEMP = { min: 18, max: 28 };
 const CHART_MAX = 40;
 
@@ -88,7 +89,7 @@ export default function SoilTempZoneLineChart({
           <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.12} />
             <ReferenceArea y1={0} y2={OPTIMAL_SOIL_TEMP.min} fill={PALETTE.cool} fillOpacity={0.05} />
-            <ReferenceArea y1={OPTIMAL_SOIL_TEMP.min} y2={OPTIMAL_SOIL_TEMP.max} fill="#10B981" fillOpacity={0.07} />
+            <ReferenceArea y1={OPTIMAL_SOIL_TEMP.min} y2={OPTIMAL_SOIL_TEMP.max} fill={CHART_COLORS.emerald} fillOpacity={0.07} />
             <ReferenceArea y1={OPTIMAL_SOIL_TEMP.max} y2={CHART_MAX} fill={PALETTE.hot} fillOpacity={0.05} />
             <ReferenceLine y={OPTIMAL_SOIL_TEMP.min} stroke={PALETTE.cool} strokeOpacity={0.45} strokeDasharray="5 3" />
             <ReferenceLine y={OPTIMAL_SOIL_TEMP.max} stroke={PALETTE.hot} strokeOpacity={0.45} strokeDasharray="5 3" />
@@ -119,13 +120,13 @@ export default function SoilTempZoneLineChart({
                     height={6.5}
                     rx={1}
                     fill={fill}
-                    stroke="#fff"
+                    stroke={CHART_COLORS.dotRing}
                     strokeWidth={1}
                     transform={`rotate(45 ${cx} ${cy})`}
                   />
                 );
               }}
-              activeDot={{ r: 5, fill: PALETTE.main, stroke: '#fff', strokeWidth: 1.5 }}
+              activeDot={{ r: 5, fill: PALETTE.main, stroke: CHART_COLORS.dotRing, strokeWidth: 1.5 }}
               {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>

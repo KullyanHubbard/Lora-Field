@@ -1,12 +1,12 @@
 import { formatClockTime, parseServerDate } from '@/lib/format';
 import type { Reading } from '@/types';
 
-export type ReadingMetricKey = keyof Pick<Reading, 'soil_moisture' | 'soil_temp' | 'air_temp' | 'air_humidity'>;
+type ReadingMetricKey = keyof Pick<Reading, 'soil_moisture' | 'soil_temp' | 'air_temp' | 'air_humidity'>;
 
 const HOUR_MS = 60 * 60 * 1000;
-export const MONITORING_CHART_HOURS = 12;
+const MONITORING_CHART_HOURS = 12;
 
-export interface HourlyMonitoringPoint {
+interface HourlyMonitoringPoint {
   label: string;
   reading: Reading;
   slotTime: number;
@@ -22,7 +22,7 @@ function startOfHour(time: number): number {
   return date.getTime();
 }
 
-export function normalizeReadings(readings: Reading[]): Reading[] {
+function normalizeReadings(readings: Reading[]): Reading[] {
   return readings
     .map((reading, index) => ({ reading, index, time: readingTime(reading) }))
     .sort((a, b) => {
@@ -68,7 +68,7 @@ export function getHourlyMonitoringPoints(
     }));
 }
 
-export function formatTimeLabel(iso: string | null | undefined, locale: string): string {
+function formatTimeLabel(iso: string | null | undefined, locale: string): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return '';

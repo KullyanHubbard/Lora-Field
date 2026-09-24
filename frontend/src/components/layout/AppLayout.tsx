@@ -101,7 +101,7 @@ export function AppLayout() {
             <>
               <SidebarGroup className="pb-1">
                 <SidebarGroupContent>
-                  {/* Back link — sengaja bukan SidebarMenuButton, bobot visual rendah
+                  {/* Back link, sengaja bukan SidebarMenuButton, bobot visual rendah
                       supaya tidak bersaing dengan judul nama kebun di bawahnya. */}
                   <Link
                     to="/select-farms"
@@ -142,7 +142,7 @@ export function AppLayout() {
             </>
           ) : (
             <>
-              {/* HOME — link ke landing page */}
+              {/* HOME, link ke landing page */}
               <SidebarGroup className="pb-1">
                 <SidebarGroupContent>
                   <SidebarMenu className="gap-1.5 px-3">

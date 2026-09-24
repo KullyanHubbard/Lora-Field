@@ -1,4 +1,4 @@
-// Domain logic cuaca — diport dari frontend React lama (pages/WeatherPage.jsx:
+// Domain logic cuaca: diport dari frontend React lama (pages/WeatherPage.jsx:
 // WEATHER_CODES, getWeatherCodeInfo, pickNumber, formatForecastLabel) dan
 // getWeatherInfo dari utils/farmStatusHelpers.js.
 //
@@ -19,7 +19,7 @@ export type WeatherIconKey =
   | 'cloud-bolt'
   | 'unknown';
 
-export interface WeatherCodeInfo {
+interface WeatherCodeInfo {
   label: string;
   iconKey: WeatherIconKey;
   isRain: boolean;
@@ -37,7 +37,7 @@ export function pickNumber(...values: unknown[]): number | null {
   return null;
 }
 
-export function getWeatherInfo(condition: string = ''): WeatherCodeInfo {
+function getWeatherInfo(condition: string = ''): WeatherCodeInfo {
   const text = String(condition || '').toLowerCase();
   if (text.includes('hujan lebat') || text.includes('thunderstorm')) {
     return { label: 'weatherCode.heavyRain', iconKey: 'cloud-bolt', isRain: true };

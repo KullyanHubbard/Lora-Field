@@ -37,7 +37,7 @@ export function LogsToolbarCard({
       <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter log">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('logs.filterLabel')}>
               {LOG_FILTER_OPTIONS.map((opt) => (
                 <Button
                   key={opt.key}

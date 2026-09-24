@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/auth-context';
 import { useCreateFarm, useFarms } from '@/features/dashboard/queries';
 
-export interface AddFarmViewModel {
+interface AddFarmViewModel {
   name: string;
   setName: (value: string) => void;
   owner: string;

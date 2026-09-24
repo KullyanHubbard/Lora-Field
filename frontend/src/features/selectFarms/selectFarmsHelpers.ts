@@ -1,6 +1,6 @@
 import type { Farm } from '@/types';
 
-export interface SelectFarmMapPoint {
+interface SelectFarmMapPoint {
   farm: Farm;
   pos: [number, number];
 }

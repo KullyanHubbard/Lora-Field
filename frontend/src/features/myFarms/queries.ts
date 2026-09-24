@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import i18n from '@/i18n/config';
 import { api } from '@/lib/api';
-import type { Farm } from '@/types';
+import type { UpdateFarmPayload } from '@/types';
 
 export function useDeleteFarm() {
   const queryClient = useQueryClient();
@@ -9,10 +10,10 @@ export function useDeleteFarm() {
     mutationFn: (id: string) => api.deleteFarm(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farms'] });
-      toast.success('Kebun berhasil dihapus.');
+      toast.success(i18n.t('myFarms.toastDeleteSuccess'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal menghapus kebun.');
+      toast.error(error.message || i18n.t('myFarms.toastDeleteError'));
     },
   });
 }
@@ -20,14 +21,14 @@ export function useDeleteFarm() {
 export function useUpdateFarm() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<Farm> }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateFarmPayload }) =>
       api.updateFarm(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farms'] });
-      toast.success('Kebun berhasil diperbarui.');
+      toast.success(i18n.t('myFarms.toastUpdateSuccess'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal memperbarui kebun.');
+      toast.error(error.message || i18n.t('myFarms.toastUpdateError'));
     },
   });
 }

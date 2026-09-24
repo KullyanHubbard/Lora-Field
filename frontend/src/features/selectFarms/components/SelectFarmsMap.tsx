@@ -1,26 +1,27 @@
 import { MapContainer, Marker, TileLayer, Tooltip } from 'react-leaflet';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import { SelectFarmsMapController } from './SelectFarmsMapController';
-import { useSelectFarmsMapViewModel } from '../useSelectFarmsMapViewModel';
+import { useSelectFarmsMapViewModel } from '@/features/selectFarms/useSelectFarmsMapViewModel';
 import {
   configureSelectFarmsLeafletIcons,
   SELECT_FARMS_DEFAULT_CENTER,
   SELECT_FARMS_DEFAULT_ZOOM,
   createColoredMarkerIcon,
-} from '../selectFarmsMapConfig';
+} from '@/features/selectFarms/selectFarmsMapConfig';
 import { getFarmMarkerColor, MARKER_COLORS } from '@/features/myFarms/farmColorStorage';
 import type { Farm } from '@/types';
 
-/** Convert MarkerColorId to hex color */
+/** Convert MarkerColorId to hex color (fallback: warna default pertama, biru) */
 function markerColorIdToHex(colorId: string): string {
-  const found = MARKER_COLORS.find((c) => c.id === colorId);
-  return found ? found.value : '#3b82f6'; // fallback blue
+  return (MARKER_COLORS.find((c) => c.id === colorId) ?? MARKER_COLORS[0]).value;
 }
 
 configureSelectFarmsLeafletIcons();
 
 export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { points, positions } = useSelectFarmsMapViewModel(farms);
 
@@ -30,7 +31,7 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
       zoom={SELECT_FARMS_DEFAULT_ZOOM}
       scrollWheelZoom={true}
       className="h-full w-full rounded-lg"
-      aria-label="Peta lokasi kebun"
+      aria-label={t('selectFarms.mapLabel')}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'

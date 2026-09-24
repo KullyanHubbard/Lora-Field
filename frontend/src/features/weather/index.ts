@@ -1,20 +1,2 @@
-// Weather feature public API — consumed by farms (WeatherForecastCard), router.
-
-// Page entry point
+// Public API fitur weather: hanya halaman, di-lazy-load oleh router.
 export { default as WeatherPage } from './WeatherPage';
-
-// Query hooks
-export { useFarmSummary } from '@/features/dashboard/queries';
-
-// Weather helpers (used by farms WeatherForecastCard and internally)
-export {
-  getWeatherInfo,
-  getWeatherCodeInfo,
-  pickNumber,
-  formatForecastLabel,
-  type WeatherIconKey,
-  type WeatherCodeInfo,
-} from './weatherHelpers';
-
-// Icon map (separate file)
-export { weatherIconMap } from './weatherIconMap';

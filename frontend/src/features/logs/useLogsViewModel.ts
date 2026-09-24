@@ -126,7 +126,7 @@ export function useLogsViewModel() {
         reason: log.reason,
       };
     });
-    const csv = buildLogsCsv(rows, threshold);
+    const csv = buildLogsCsv(rows, threshold, t);
     const farmName = summary.farm.name || farmId || 'kebun';
     const today = formatLocalDateTime(new Date()).slice(0, 10);
     downloadCsv(`lorafield-logs-${farmName}-${today}.csv`, csv);

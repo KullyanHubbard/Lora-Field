@@ -40,7 +40,7 @@ export interface IrrigationLog {
   id: string;
   node_id: string;
   soil_moisture: number;
-  // Belum diverifikasi: backend bisa kirim string atau object. Lihat CLAUDE.md.
+  // String kondisi cuaca (mis. "Cerah Berawan"), terverifikasi smoke test 2026-09-22.
   weather: string;
   decision: string;
   valve_state: string;
@@ -73,11 +73,8 @@ export interface WeatherForecastPoint {
   datetime?: string;
   utc_datetime?: string;
   weather?: number;
-  code?: number;
   weather_desc?: string;
-  condition?: string;
   t?: number;
-  temperature?: number;
 }
 
 export interface Weather {
@@ -90,7 +87,7 @@ export interface Weather {
   humidity: number;
   wind_speed: number;
   wind_direction: string;
-  // boolean dari backend (main.py:335 → hasil any(...) berupa bool)
+  // boolean dari backend (bmkg.py: hasil any(...))
   rain_next_3h: boolean;
   forecast_time: string;
   updated_at: string;
@@ -100,7 +97,7 @@ export interface Weather {
 
 export interface NodeSummary {
   node: Node;
-  // backend kirim null kalau node belum punya reading (main.py:1063)
+  // null kalau node belum punya reading (routers/farms.py, summary)
   latest_reading: Reading | null;
   decision: { decision: string; valve_state: string } | null;
 }
@@ -108,7 +105,7 @@ export interface NodeSummary {
 export interface FarmSummary {
   farm: Farm;
   gateway_status: 'online' | 'offline';
-  // null kalau belum ada reading sama sekali (main.py:1070)
+  // null kalau belum ada reading sama sekali (routers/farms.py, summary)
   average_soil_moisture: number | null;
   thresholds: { lower: number; upper: number };
   nodes_problem: number;
@@ -124,7 +121,7 @@ export interface User {
   language: AppLanguage;
 }
 
-// GET /api/crops → { crops: Crop[] } (diverifikasi dari backend main.py)
+// GET /api/crops → { crops: Crop[] } (routers/utils.py)
 export interface Crop {
   name: string;
   lower_threshold: number;
@@ -132,6 +129,19 @@ export interface Crop {
 }
 
 // Payload POST /api/farms (field dari addFarm/)
+// PATCH /api/farms/{id}: semua field opsional, sama dengan schema FarmUpdate backend.
+export interface UpdateFarmPayload {
+  name?: string;
+  owner?: string;
+  location?: string;
+  crop_type?: string;
+  area_ha?: number | null;
+  bmkg_adm4_code?: string;
+  latitude?: number;
+  longitude?: number;
+  status?: string;
+}
+
 export interface CreateFarmPayload {
   name: string;
   owner: string;

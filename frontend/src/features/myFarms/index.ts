@@ -1,13 +1,2 @@
-// MyFarms feature public API.
-
-// Page entry point
+// Public API fitur myFarms: hanya halaman, di-lazy-load oleh router.
 export { default as MyFarmsPage } from './MyFarmsPage';
-
-// View model hook
-export { useMyFarmsViewModel } from './useMyFarmsViewModel';
-
-// Query hooks
-export { useFarms } from '@/features/dashboard/queries';
-
-// Helpers
-export { filterMyFarms } from './myFarmsHelpers';

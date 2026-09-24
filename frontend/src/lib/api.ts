@@ -4,6 +4,7 @@ import type {
   Crop,
   CreateFarmPayload,
   Farm,
+  UpdateFarmPayload,
   FarmSummary,
   FarmGateway,
   GatewayLog,
@@ -15,7 +16,7 @@ import type {
 const BASE = '/api';
 
 // Tanpa ini, backend yang menggantung bikin status sesi tidak pernah selesai.
-export const SESSION_REQUEST_TIMEOUT_MS = 8000;
+const SESSION_REQUEST_TIMEOUT_MS = 8000;
 
 // Dipancarkan saat backend menolak token yang dipakai. AuthProvider yang menangani.
 export const UNAUTHORIZED_EVENT = 'lf:unauthorized';
@@ -144,7 +145,7 @@ export const api = {
 
   deleteFarm: (id: string) => apiFetch<void>(`/farms/${id}`, { method: 'DELETE' }),
 
-  updateFarm: (id: string, payload: Partial<Farm>) =>
+  updateFarm: (id: string, payload: UpdateFarmPayload) =>
     apiFetch<{ farm: Farm }>(`/farms/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),

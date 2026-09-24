@@ -1,4 +1,2 @@
-// Landing feature public API — consumed by router.
-
-// Page entry point
+// Public API fitur landing: hanya halaman, di-lazy-load oleh router.
 export { default as LandingPage } from './LandingPage';

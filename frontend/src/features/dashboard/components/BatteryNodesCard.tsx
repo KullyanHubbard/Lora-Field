@@ -9,10 +9,8 @@ import { TONE_CLASSES } from '@/lib/toneClasses';
 import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
 
+// 4 gauge terlihat sekaligus. Lebar item di className: (100% - 3 gap x 16px) / 4.
 const BATTERY_VISIBLE_COUNT = 4;
-const BATTERY_GAP = 16;
-const BATTERY_TOTAL_GAP = BATTERY_GAP * (BATTERY_VISIBLE_COUNT - 1);
-const BATTERY_MIN_ITEM = 144;
 
 export function BatteryNodesCard({
   nodes,
@@ -92,7 +90,6 @@ export function BatteryNodesCard({
   };
 
   const showArrows = nodes.length > BATTERY_VISIBLE_COUNT && (canScrollLeft || canScrollRight);
-  const itemFlex = `0 0 calc((100% - ${BATTERY_TOTAL_GAP}px) / ${BATTERY_VISIBLE_COUNT})`;
 
   return (
     <Card className={cn('battery-section-root', className)}>
@@ -133,20 +130,18 @@ export function BatteryNodesCard({
           <div
             ref={scrollRef}
             className={cn(
-              'flex pb-2',
+              'flex gap-4 pb-2',
               nodes.length === 1
                 ? 'justify-center'
-                : 'snap-x snap-mandatory overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden',
+                : 'snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
             )}
-            style={{ gap: BATTERY_GAP, scrollbarWidth: nodes.length === 1 ? 'auto' : 'none' }}
           >
             {nodes.map((ns) => {
               const model = buildBatteryGaugeModel(ns.node.battery);
               return (
                 <div
                   key={ns.node.id}
-                  className="relative isolate flex shrink-0 snap-start justify-center"
-                  style={{ flex: itemFlex, minWidth: BATTERY_MIN_ITEM }}
+                  className="relative isolate flex min-w-36 shrink-0 grow-0 basis-[calc((100%_-_48px)/4)] snap-start justify-center"
                 >
                   {model.tone !== 'neutral' && (
                     <span

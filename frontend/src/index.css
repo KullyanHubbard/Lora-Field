@@ -49,6 +49,17 @@
 }
 
 :root {
+    /* Palet grafik sensor & cuaca (dipakai lewat src/lib/chartColors.ts). Sama di dua mode. */
+    --chart-cyan: #06b6d4;
+    --chart-emerald: #10b981;
+    --chart-red: #ef4444;
+    --chart-blue: #3b82f6;
+    --chart-orange: #f97316;
+    --chart-amber: #f59e0b;
+    --chart-violet: #8b5cf6;
+    --chart-violet-soft: #a78bfa;
+    --chart-sky: #0ea5e9;
+    --chart-dot-ring: #ffffff;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -153,9 +164,9 @@
     z-index: 0;
     pointer-events: none;
     opacity: 0;
-    border: 1px solid rgb(255 255 255 / 0.42);
+    border: 1px solid color-mix(in oklch, var(--foreground) 42%, transparent);
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 4%, transparent);
     transform: scale(0.992);
     transition:
       opacity 180ms ease,
@@ -163,7 +174,7 @@
   }
 
   .summary-subcard-interactive:hover {
-    border-color: rgb(255 255 255 / 0.18);
+    border-color: color-mix(in oklch, var(--foreground) 18%, transparent);
   }
 
   .summary-subcard-interactive:hover::before {

@@ -1,10 +1,11 @@
 import { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { RedirectIfAuth } from '@/features/auth/RedirectIfAuth';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 
-// Route-based code splitting — Leaflet (Pilih Kebun) dan chart (monitoring)
+// Route-based code splitting, Leaflet (Pilih Kebun) dan chart (monitoring)
 // di-load hanya saat route pertama kali dikunjungi.
 const LandingPage = lazy(() => import('@/features/landing').then(m => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
@@ -23,18 +24,19 @@ const LogsPage = lazy(() => import('@/features/logs').then(m => ({ default: m.Lo
 const SettingsPage = lazy(() => import('@/features/settings').then(m => ({ default: m.SettingsPage })));
 
 export function AppRouter() {
+  const { t } = useTranslation();
   return (
     <Suspense
       fallback={
         <div
           className="p-6 text-muted-foreground"
           aria-busy="true"
-          aria-label="Memuat halaman..."
+          aria-label={t('common.loadingPage')}
         />
       }
     >
       <Routes>
-        {/* Landing page publik — tanpa auth guard, untuk semua pengunjung */}
+        {/* Landing page publik, tanpa auth guard, untuk semua pengunjung */}
         <Route path="/" element={<LandingPage />} />
 
         {/* Auth routes: kalau sudah login, lempar ke Pilih Kebun */}

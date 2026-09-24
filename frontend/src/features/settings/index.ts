@@ -1,4 +1,2 @@
-// Settings feature public API — consumed by router.
-
-// Page entry point
+// Public API fitur settings: hanya halaman, di-lazy-load oleh router.
 export { default as SettingsPage } from './SettingsPage';

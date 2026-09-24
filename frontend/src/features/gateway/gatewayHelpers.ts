@@ -3,7 +3,7 @@ import type { StatusTone } from '@/lib/status';
 import { EMPTY_VALUE, parseServerDate } from '@/lib/format';
 import type { FarmGateway, GatewayLog } from '@/types';
 
-export const GATEWAY_LOGS_PER_PAGE = 10;
+const GATEWAY_LOGS_PER_PAGE = 10;
 const GATEWAY_ONLINE_WINDOW_MS = 10 * 60 * 1000;
 
 export const GATEWAY_EVENT_FILTERS = [
@@ -35,7 +35,7 @@ export type GatewayInfoViewModel = {
   lastSeen: string | null;
 };
 
-export function isFarmGatewayOnline(gateway: FarmGateway | null | undefined) {
+function isFarmGatewayOnline(gateway: FarmGateway | null | undefined) {
   const lastSeen = parseServerDate(gateway?.last_seen_at);
   return lastSeen != null && Date.now() - lastSeen.getTime() <= GATEWAY_ONLINE_WINDOW_MS;
 }

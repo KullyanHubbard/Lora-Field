@@ -6,7 +6,7 @@ import {
   AlertDialogContent,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { contactInfo } from '../constants';
+import { contactInfo } from '@/features/helpCenter/constants';
 
 interface HelpCenterDialogProps {
   isOpen: boolean;

@@ -1,6 +1,7 @@
-// Domain logic LogsPage — diport dari frontend React lama (pages/LogsPage.jsx)
+// Domain logic LogsPage: diport dari frontend React lama (pages/LogsPage.jsx)
 // (FILTER_OPTIONS, classifyLog, getDecisionBadgeClass, formatLogTime, escapeCSV,
 // dan pembentukan string CSV di handleExportCSV). Semua fungsi murni.
+import type { TFunction } from 'i18next';
 import type { IrrigationLog } from '@/types';
 import type { StatusTone } from '@/lib/status';
 import { EMPTY_VALUE, formatClockTime, parseServerDate } from '@/lib/format';
@@ -64,21 +65,24 @@ export function formatLogTime(iso: string | null | undefined, locale: string): s
 }
 
 // -----------------------------------------------------------
-// CSV export (bagian murni saja — pembentukan string. Side effect download
+// CSV export (bagian murni saja, pembentukan string. Side effect download
 // Blob/anchor TIDAK diekstrak, tetap di komponen LogsPage.)
 // -----------------------------------------------------------
 
-const CSV_HEADERS = [
-  'Waktu',
-  'Node',
-  'Lokasi',
-  'Kelembapan (%)',
-  'Threshold',
-  'Cuaca',
-  'Keputusan',
-  'Valve',
-  'Keterangan',
-];
+// Header CSV = judul kolom tabel Riwayat, ikut bahasa aplikasi.
+function csvHeaders(t: TFunction): string[] {
+  return [
+    t('logs.colTime'),
+    t('logs.colNode'),
+    t('logs.colLocation'),
+    `${t('logs.colMoisture')} (%)`,
+    t('logs.colThreshold'),
+    t('logs.colWeather'),
+    t('logs.colDecision'),
+    t('logs.colValve'),
+    t('logs.colReason'),
+  ];
+}
 
 export interface LogCsvRow {
   time: string;
@@ -97,8 +101,8 @@ function escapeCsv(value: unknown): string {
   return str;
 }
 
-export function buildLogsCsv(rows: LogCsvRow[], threshold: string): string {
-  const headerLine = CSV_HEADERS.map(escapeCsv).join(',');
+export function buildLogsCsv(rows: LogCsvRow[], threshold: string, t: TFunction): string {
+  const headerLine = csvHeaders(t).map(escapeCsv).join(',');
   const dataLines = rows.map((row) =>
     [
       row.time,

@@ -6,7 +6,7 @@ import i18n from '@/i18n/config';
 import { getPreferredLanguage, type AppLanguage } from '@/i18n/language';
 import { useAuth } from './auth-context';
 
-export interface RegisterPayload {
+interface RegisterPayload {
   name: string;
   email: string;
   password: string;

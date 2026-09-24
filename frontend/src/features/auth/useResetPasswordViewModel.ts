@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useForgotPassword, useResetPassword, useVerifyResetCode } from './queries';
 import { isPasswordTooShort, isValidEmail } from '@/features/auth/validation';
 
-export type ResetPasswordStep = 'email' | 'otp' | 'password';
+type ResetPasswordStep = 'email' | 'otp' | 'password';
 
 export interface ResetPasswordViewModel {
   step: ResetPasswordStep;

@@ -1,6 +1,6 @@
 import { OPEN_METEO_FORECAST_URL } from '@/features/weather/constants';
 
-export interface OpenMeteoPoint {
+interface OpenMeteoPoint {
   time: string;
   temp: number;
 }

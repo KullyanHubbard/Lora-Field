@@ -1,5 +1,5 @@
 // Aturan input akun, disamakan dengan schema backend (password min_length=6).
-export const MIN_PASSWORD_LENGTH = 6;
+const MIN_PASSWORD_LENGTH = 6;
 
 export function isValidEmail(email: string): boolean {
   return email.includes('@');

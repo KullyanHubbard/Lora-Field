@@ -64,8 +64,8 @@ export function GatewayLogContent({
               className={cn(
                 'inline-flex h-6 items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium leading-none transition-colors',
                 filter === opt.value
-                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
-                  : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-white/20 hover:bg-white/[0.06] hover:text-foreground',
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                  : 'border-border bg-foreground/[0.03] text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.06] hover:text-foreground',
               )}
             >
               {t(opt.labelKey)}

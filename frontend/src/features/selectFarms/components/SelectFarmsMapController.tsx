@@ -1,5 +1,5 @@
 import { useMap } from 'react-leaflet';
-import { useSelectFarmsMapController } from '../useSelectFarmsMapController';
+import { useSelectFarmsMapController } from '@/features/selectFarms/useSelectFarmsMapController';
 
 interface SelectFarmsMapControllerProps {
   points: [number, number][];

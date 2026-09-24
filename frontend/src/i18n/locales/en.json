@@ -3,7 +3,8 @@
     "language": "Language",
     "languageId": "Bahasa Indonesia",
     "languageEn": "English",
-    "backToFarmList": "Back to Farm List"
+    "backToFarmList": "Back to Farm List",
+    "loadingPage": "Loading page..."
   },
   "status": {
     "online": "Online",
@@ -112,7 +113,9 @@
       "errorNewTooShort": "New password must be at least 6 characters.",
       "errorSamePassword": "New password must be different from the current password.",
       "errorMismatch": "Passwords do not match."
-    }
+    },
+    "passwordShow": "Show password",
+    "passwordHide": "Hide password"
   },
   "irrigation": {
     "errorLoad": "Failed to load irrigation data: {{message}}",
@@ -212,7 +215,12 @@
     "batteryLow": "Low",
     "batteryMid": "Medium",
     "batteryOk": "Good",
-    "soilTargetCaption": "Target {{lower}}–{{upper}}%"
+    "soilTargetCaption": "Target {{lower}}–{{upper}}%",
+    "metricNoData": "No data",
+    "metricMin": "Min",
+    "metricAvg": "Average",
+    "metricMax": "Max",
+    "metricLast6h": "Last 6 hours"
   },
   "farms": {
     "searchPlaceholder": "Search farms, location, or crop",
@@ -272,7 +280,9 @@
       "geoError2": "GPS is not available on this device.",
       "geoError3": "Failed to detect location. Make sure GPS is on and try again.",
       "geoErrorFallback": "Failed to detect location."
-    }
+    },
+    "toastCreateSuccess": "Farm added.",
+    "toastCreateError": "Failed to add farm."
   },
   "logFilter": {
     "all": "All Logs",
@@ -343,7 +353,11 @@
     "editDialogDesc": "Change name for \"{{name}}\"",
     "editDialogPlaceholder": "Farm name",
     "editDialogCancel": "Cancel",
-    "editDialogSave": "Save"
+    "editDialogSave": "Save",
+    "toastDeleteSuccess": "Farm deleted.",
+    "toastDeleteError": "Failed to delete farm.",
+    "toastUpdateSuccess": "Farm updated.",
+    "toastUpdateError": "Failed to update farm."
   },
   "layout": {
     "menuNav": "Navigation Menu",
@@ -387,7 +401,9 @@
     "colDecision": "Decision",
     "colValve": "Valve",
     "colReason": "Reason",
-    "empty": "No logs match the current filter."
+    "empty": "No logs match the current filter.",
+    "filterLabel": "Log filter",
+    "colThreshold": "Threshold"
   },
   "weather": {
     "errorLoad": "Failed to load weather data: {{message}}",
@@ -400,7 +416,8 @@
     "hoursAhead": "+{{count}}h",
     "forecastTitle": "Weather Forecast",
     "forecastEmpty": "Forecast not yet available for this farm.",
-    "historyTitle": "Temperature History (Open-Meteo)"
+    "historyTitle": "Temperature History (Open-Meteo)",
+    "windUnit": "km/h"
   },
   "markerColor": {
     "blue": "Blue",
@@ -557,5 +574,8 @@
       "whatsapp": "WhatsApp",
       "chatButton": "Chat via WhatsApp"
     }
+  },
+  "selectFarms": {
+    "mapLabel": "Farm location map"
   }
 }

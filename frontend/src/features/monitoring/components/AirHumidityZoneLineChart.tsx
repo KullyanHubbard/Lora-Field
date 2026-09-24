@@ -7,11 +7,12 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
-import { latestValue, getHourlyMonitoringPoints } from '../chartHelpers';
+import { latestValue, getHourlyMonitoringPoints } from '@/features/monitoring/chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
+import { CHART_COLORS } from '@/lib/chartColors';
 
-const PALETTE = { main: '#8B5CF6', dark: '#7C3AED', light: '#A78BFA', wet: '#3B82F6', dry: '#F97316' };
+const PALETTE = { main: CHART_COLORS.violet, light: CHART_COLORS.violetSoft, wet: CHART_COLORS.blue, dry: CHART_COLORS.orange };
 const RANGE = { min: 60, max: 85 };
 const CHART_MAX = 100;
 
@@ -44,7 +45,7 @@ export default function AirHumidityZoneLineChart({
 
   const latestHumidity = latestValue(readings, 'air_humidity');
   const latestStatus = latestHumidity != null ? humidityStatus(latestHumidity) : null;
-  const config = { hum: { label: `${t('monitoring.chartAirHumidity')} %`, color: PALETTE.main } } satisfies ChartConfig;
+  const config = { value: { label: `${t('monitoring.chartAirHumidity')} %`, color: PALETTE.main } } satisfies ChartConfig;
 
   return (
     <Card
@@ -92,7 +93,7 @@ export default function AirHumidityZoneLineChart({
                   />
                 );
               }}
-              activeDot={{ r: 5, fill: PALETTE.main, stroke: '#fff', strokeWidth: 1.5 }}
+              activeDot={{ r: 5, fill: PALETTE.main, stroke: CHART_COLORS.dotRing, strokeWidth: 1.5 }}
               {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>

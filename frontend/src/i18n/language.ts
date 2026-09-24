@@ -1,4 +1,4 @@
-export const SUPPORTED_LANGUAGES = ['id', 'en'] as const;
+const SUPPORTED_LANGUAGES = ['id', 'en'] as const;
 
 export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
@@ -6,7 +6,7 @@ export function isAppLanguage(value: string | null | undefined): value is AppLan
   return SUPPORTED_LANGUAGES.includes(value as AppLanguage);
 }
 
-export function detectBrowserLanguage(): AppLanguage {
+function detectBrowserLanguage(): AppLanguage {
   if (typeof navigator === 'undefined') return 'en';
   return navigator.language.toLowerCase().startsWith('id') ? 'id' : 'en';
 }

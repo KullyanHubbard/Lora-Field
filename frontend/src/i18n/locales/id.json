@@ -3,7 +3,8 @@
     "language": "Bahasa",
     "languageId": "Bahasa Indonesia",
     "languageEn": "English",
-    "backToFarmList": "Kembali ke Daftar Kebun"
+    "backToFarmList": "Kembali ke Daftar Kebun",
+    "loadingPage": "Memuat halaman..."
   },
   "status": {
     "online": "Online",
@@ -112,7 +113,9 @@
       "errorNewTooShort": "Password baru minimal 6 karakter.",
       "errorSamePassword": "Password baru tidak boleh sama dengan password lama.",
       "errorMismatch": "Konfirmasi password belum sama."
-    }
+    },
+    "passwordShow": "Tampilkan password",
+    "passwordHide": "Sembunyikan password"
   },
   "irrigation": {
     "errorLoad": "Gagal memuat data irigasi: {{message}}",
@@ -212,7 +215,12 @@
     "batteryLow": "Rendah",
     "batteryMid": "Sedang",
     "batteryOk": "Baik",
-    "soilTargetCaption": "Target {{lower}}–{{upper}}%"
+    "soilTargetCaption": "Target {{lower}}–{{upper}}%",
+    "metricNoData": "Tidak ada data",
+    "metricMin": "Minimal",
+    "metricAvg": "Rata-rata",
+    "metricMax": "Maksimal",
+    "metricLast6h": "6 jam terakhir"
   },
   "farms": {
     "searchPlaceholder": "Cari kebun, lokasi, atau tanaman",
@@ -272,7 +280,9 @@
       "geoError2": "GPS tidak tersedia di perangkat ini.",
       "geoError3": "Gagal mendeteksi lokasi. Pastikan GPS aktif dan coba lagi.",
       "geoErrorFallback": "Gagal mendeteksi lokasi."
-    }
+    },
+    "toastCreateSuccess": "Kebun berhasil ditambahkan.",
+    "toastCreateError": "Gagal menambah kebun."
   },
   "logFilter": {
     "all": "Semua Log",
@@ -335,17 +345,21 @@
     "editDialogDesc": "Ubah nama untuk \"{{name}}\"",
     "editDialogPlaceholder": "Nama kebun",
     "editDialogCancel": "Batal",
-    "editDialogSave": "Simpan"
+    "editDialogSave": "Simpan",
+    "toastDeleteSuccess": "Kebun berhasil dihapus.",
+    "toastDeleteError": "Gagal menghapus kebun.",
+    "toastUpdateSuccess": "Kebun berhasil diperbarui.",
+    "toastUpdateError": "Gagal memperbarui kebun."
   },
   "layout": {
     "menuNav": "Menu Navigasi",
     "farmContext": "Detail Kebun",
     "backToSelectFarms": "Pilih Kebun",
-    "logout": "Logout",
+    "logout": "Keluar",
     "fallbackFarm": "Kebun",
     "fallbackUser": "Pengguna",
     "nav": {
-      "home": "Home",
+      "home": "Beranda",
       "selectFarms": "Pilih Kebun",
       "myFarms": "Kebun Saya",
       "registerFarm": "Registrasi Kebun",
@@ -379,7 +393,9 @@
     "colDecision": "Keputusan",
     "colValve": "Valve",
     "colReason": "Keterangan",
-    "empty": "Tidak ada log yang cocok dengan filter."
+    "empty": "Tidak ada log yang cocok dengan filter.",
+    "filterLabel": "Filter log",
+    "colThreshold": "Threshold"
   },
   "weather": {
     "errorLoad": "Gagal memuat data cuaca: {{message}}",
@@ -392,7 +408,8 @@
     "hoursAhead": "+{{count}}j",
     "forecastTitle": "Ramalan Cuaca",
     "forecastEmpty": "Prakiraan belum tersedia untuk kebun ini.",
-    "historyTitle": "Histori Suhu (Open-Meteo)"
+    "historyTitle": "Histori Suhu (Open-Meteo)",
+    "windUnit": "km/jam"
   },
   "settingsPage": {
     "title": "Profil Akun",
@@ -549,5 +566,8 @@
       "whatsapp": "WhatsApp",
       "chatButton": "Chat via WhatsApp"
     }
+  },
+  "selectFarms": {
+    "mapLabel": "Peta lokasi kebun"
   }
 }

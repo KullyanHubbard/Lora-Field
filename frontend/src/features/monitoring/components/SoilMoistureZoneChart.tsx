@@ -15,16 +15,17 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { getSoilStatusFromMoisture } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
-import { getHourlyMonitoringPoints, latestValue } from '../chartHelpers';
+import { getHourlyMonitoringPoints, latestValue } from '@/features/monitoring/chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
+import { CHART_COLORS } from '@/lib/chartColors';
 
 // Konsisten dengan tema: cyan = garis utama, hijau = zona ideal,
 // merah = batas, biru = zona basah.
-const COLOR_LINE = '#06B6D4';
-const COLOR_OK = '#10B981';
-const COLOR_DRY = '#EF4444';
-const COLOR_WET = '#3B82F6';
+const COLOR_LINE = CHART_COLORS.cyan;
+const COLOR_OK = CHART_COLORS.emerald;
+const COLOR_DRY = CHART_COLORS.red;
+const COLOR_WET = CHART_COLORS.blue;
 
 interface Point {
   label: string;
@@ -82,11 +83,11 @@ export default function SoilMoistureZoneChart({
           <ComposedChart data={points} margin={{ left: 0, right: 12, top: 12, bottom: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.12} />
 
-            {/* Zona basah (biru) — di atas upper, terlalu basah */}
+            {/* Zona basah (biru), di atas upper, terlalu basah */}
             <ReferenceArea y1={upper} y2={100} fill={COLOR_WET} fillOpacity={0.12} />
-            {/* Zona ideal (hijau) — antara lower dan upper */}
+            {/* Zona ideal (hijau), antara lower dan upper */}
             <ReferenceArea y1={lower} y2={upper} fill={COLOR_OK} fillOpacity={0.12} />
-            {/* Zona kering (merah) — di bawah lower */}
+            {/* Zona kering (merah), di bawah lower */}
             <ReferenceArea y1={0} y2={lower} fill={COLOR_DRY} fillOpacity={0.07} />
 
             <ReferenceLine
@@ -150,7 +151,7 @@ export default function SoilMoistureZoneChart({
               stroke={COLOR_LINE}
               strokeWidth={2.5}
               dot={{ r: 2.75, fill: COLOR_LINE, stroke: COLOR_WET, strokeWidth: 1 }}
-              activeDot={{ r: 4.5, fill: COLOR_LINE, stroke: '#fff', strokeWidth: 1.5 }}
+              activeDot={{ r: 4.5, fill: COLOR_LINE, stroke: CHART_COLORS.dotRing, strokeWidth: 1.5 }}
               {...MONITORING_LINE_ANIMATION}
             />
           </ComposedChart>

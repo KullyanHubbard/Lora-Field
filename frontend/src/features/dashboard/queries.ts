@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import i18n from '@/i18n/config';
 import { api } from '@/lib/api';
 import type { CreateFarmPayload } from '@/types';
 
@@ -35,11 +36,11 @@ export function useCreateFarm() {
     mutationFn: (payload: CreateFarmPayload) => api.createFarm(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farms'] });
-      toast.success('Kebun berhasil ditambahkan.');
+      toast.success(i18n.t('farms.toastCreateSuccess'));
       navigate('/select-farms', { replace: true });
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Gagal menambah kebun.');
+      toast.error(error.message || i18n.t('farms.toastCreateError'));
     },
   });
 }

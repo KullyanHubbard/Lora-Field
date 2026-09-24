@@ -13,7 +13,7 @@ import {
 } from '@/features/weather/weatherHelpers';
 import type { NodeSummary, SemanticTone, Weather } from '@/types';
 
-export type NumberStats = {
+type NumberStats = {
   min: number;
   max: number;
   avg: number;
@@ -27,14 +27,14 @@ export type ValveSummary = {
   offlineCount: number;
 };
 
-export type BatteryGaugeModel = {
+type BatteryGaugeModel = {
   pct: number | null;
   tone: SemanticTone;
   centerLabel: string;
   centerSubKey?: string;
 };
 
-export type WeatherForecastSlot = {
+type WeatherForecastSlot = {
   key: number;
   time: string;
   iconKey: WeatherIconKey;
@@ -52,23 +52,23 @@ export type WeatherForecastViewModel = {
   slots: WeatherForecastSlot[];
 };
 
-export function toFiniteNumber(value: number | null | undefined): number | null {
+function toFiniteNumber(value: number | null | undefined): number | null {
   if (value == null) return null;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-export function clampPercent(value: number): number {
+function clampPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-export function formatRounded(value: number | null | undefined, suffix = ''): string {
+function formatRounded(value: number | null | undefined, suffix = ''): string {
   const numeric = toFiniteNumber(value);
   return numeric == null ? EMPTY_VALUE : `${Math.round(numeric)}${suffix}`;
 }
 
-export function formatPercent(value: number | null | undefined): string {
+function formatPercent(value: number | null | undefined): string {
   const numeric = toFiniteNumber(value);
   return numeric == null ? EMPTY_VALUE : `${clampPercent(numeric)}%`;
 }
@@ -174,10 +174,10 @@ export function buildWeatherForecastViewModel(
   const currentInfo = getWeatherCodeInfo(weather.code, weather.condition);
   const slots = (weather.forecast ?? []).slice(0, 6).map((point, index) => {
     const info = getWeatherCodeInfo(
-      point.weather ?? point.code,
-      point.weather_desc ?? point.condition,
+      point.weather,
+      point.weather_desc,
     );
-    const temp = pickNumber(point.t, point.temperature);
+    const temp = pickNumber(point.t);
 
     return {
       key: index,

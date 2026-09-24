@@ -7,7 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { MARKER_COLORS, type MarkerColorId } from '../farmColorStorage';
+import { MARKER_COLORS, type MarkerColorId } from '@/features/myFarms/farmColorStorage';
 
 interface MyFarmColorPickerProps {
   farmName: string;

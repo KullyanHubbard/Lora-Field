@@ -22,10 +22,9 @@ import {
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Weather } from '@/types';
+import { CHART_COLORS } from '@/lib/chartColors';
 
-const CHART_COLOR = '#0ea5e9'; // sky-500 solid
-const CHART_FILL_TOP = 'rgba(14,165,233,0.22)';
-const CHART_FILL_BOTTOM = 'rgba(14,165,233,0.0)';
+const CHART_COLOR = CHART_COLORS.sky;
 // token --foreground = oklch; pakai color-mix utk alpha biar aman light+dark
 const TICK_FILL = 'color-mix(in oklch, var(--foreground) 85%, transparent)';
 const GRID_STROKE = 'color-mix(in oklch, var(--foreground) 25%, transparent)';
@@ -35,7 +34,7 @@ const iconColor = (isRain: boolean): string =>
     ? 'text-sky-500 dark:text-sky-400'
     : 'text-amber-500 dark:text-amber-400';
 
-// ——— Temperature Chart (generic) —————————————————————————————————————————————
+// Temperature Chart (generic)
 
 interface ChartPoint {
   label: string;
@@ -72,8 +71,8 @@ function TemperatureChart({ points }: { points: ChartPoint[] }) {
       >
         <defs>
           <linearGradient id="wxFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={CHART_FILL_TOP} />
-            <stop offset="100%" stopColor={CHART_FILL_BOTTOM} />
+            <stop offset="0%" stopColor={CHART_COLOR} stopOpacity={0.22} />
+            <stop offset="100%" stopColor={CHART_COLOR} stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid
@@ -97,7 +96,7 @@ function TemperatureChart({ points }: { points: ChartPoint[] }) {
           tickMargin={4}
           tick={{ fill: TICK_FILL }}
           tickFormatter={(v) => `${v}${DEG_C}`}
-          domain={[Math.floor(dataMin - padding), 36]}
+          domain={[Math.floor(dataMin - padding), Math.max(36, Math.ceil(dataMax + padding))]}
         />
         <ChartTooltip
           content={
@@ -126,7 +125,7 @@ function TemperatureChart({ points }: { points: ChartPoint[] }) {
           activeDot={{
             r: 5,
             fill: CHART_COLOR,
-            stroke: 'hsl(var(--background))',
+            stroke: 'var(--background)',
             strokeWidth: 2,
           }}
         />
@@ -135,7 +134,7 @@ function TemperatureChart({ points }: { points: ChartPoint[] }) {
   );
 }
 
-// ——— Main Weather Card ————————————————————————————————————————————————————————
+// Main Weather Card
 
 function WeatherMainCard({
   weather,
@@ -155,7 +154,7 @@ function WeatherMainCard({
   const direction = weather?.wind_direction;
   const windTextFull =
     wind != null
-      ? `${wind} km/jam${direction ? ` (${direction})` : ''}`
+      ? `${wind} ${t('weather.windUnit')}${direction ? ` (${direction})` : ''}`
       : EMPTY_VALUE;
 
   const points: ChartPoint[] = (history.data ?? []).map((p) => {
@@ -231,7 +230,7 @@ function WeatherMainCard({
   );
 }
 
-// ——— Forecast Column ——————————————————————————————————————————————————————————
+// Forecast Column
 
 function ForecastColumn({ weather }: { weather: Weather | null }) {
   const { t, i18n } = useTranslation();
@@ -255,11 +254,11 @@ function ForecastColumn({ weather }: { weather: Weather | null }) {
           <div className="divide-y divide-border lg:flex lg:flex-1 lg:flex-col lg:overflow-hidden">
             {items.map((f, i) => {
               const info = getWeatherCodeInfo(
-                pickNumber(f.weather, f.code),
-                f.weather_desc || f.condition,
+                pickNumber(f.weather),
+                f.weather_desc,
               );
               const Icon = weatherIconMap[info.iconKey];
-              const temp = pickNumber(f.t, f.temperature);
+              const temp = pickNumber(f.t);
               const tempText = temp != null ? `${temp}${DEG_C}` : EMPTY_VALUE;
               return (
                 <div
@@ -292,14 +291,14 @@ function ForecastColumn({ weather }: { weather: Weather | null }) {
   );
 }
 
-// ——— Page —————————————————————————————————————————————————————————————————————
+// Page
 
 export default function WeatherPage() {
   const { t } = useTranslation();
   const { id: farmId } = useParams();
   const { data: summary, isLoading, error } = useFarmSummary(farmId ?? '');
 
-  // Fetch Open-Meteo history PARALEL dengan farm summary — tidak perlu tunggu summary selesai.
+  // Fetch Open-Meteo history PARALEL dengan farm summary, tidak perlu tunggu summary selesai.
   // Query disabled otomatis kalau farmId/koodinat belum ada.
   const history = useWeatherHistory(
     summary?.farm.latitude,

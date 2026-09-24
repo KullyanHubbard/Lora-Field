@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Area, AreaChart, XAxis, YAxis } from 'recharts';
@@ -44,6 +45,7 @@ export function MetricStatCard({
   nodes: NodeSummary[];
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<string>('');
   const validId = getValidMetricNodeId(nodes, selected);
   const points = data[validId] ?? [];
@@ -77,7 +79,7 @@ export function MetricStatCard({
 
       {!stats ? (
         <p className="mt-4 flex flex-1 items-center justify-center text-center text-sm text-muted-foreground">
-          Tidak ada data
+          {t('dashboard.metricNoData')}
         </p>
       ) : (
         <>
@@ -85,7 +87,7 @@ export function MetricStatCard({
             <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
               <ArrowDown className="size-3.5 shrink-0 text-blue-500 dark:text-blue-400" aria-hidden="true" />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                Minimal
+                {t('dashboard.metricMin')}
               </span>
               <span className="mt-0.5 text-base font-extrabold tabular-nums tracking-tight text-foreground">
                 {fmt(stats.min)}
@@ -95,7 +97,7 @@ export function MetricStatCard({
             <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
               <Minus className="size-3.5 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                Rata-rata
+                {t('dashboard.metricAvg')}
               </span>
               <span className="mt-0.5 text-base font-extrabold tabular-nums tracking-tight text-foreground">
                 {fmt(stats.avg)}
@@ -105,7 +107,7 @@ export function MetricStatCard({
             <div className="summary-subcard-interactive flex flex-1 flex-col items-center justify-center rounded-lg border border-border bg-muted/30 px-2 py-1.5">
               <ArrowUp className="size-3.5 shrink-0 text-red-500 dark:text-red-400" aria-hidden="true" />
               <span className="mt-1 text-[0.58rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                Maksimal
+                {t('dashboard.metricMax')}
               </span>
               <span className="mt-0.5 text-base font-extrabold tabular-nums tracking-tight text-foreground">
                 {fmt(stats.max)}
@@ -116,7 +118,7 @@ export function MetricStatCard({
 
           <div className="mt-2 flex min-h-[64px] flex-1 flex-col">
             <span className="mb-0.5 text-[0.58rem] font-medium uppercase tracking-wider text-muted-foreground">
-              6 jam terakhir
+              {t('dashboard.metricLast6h')}
             </span>
             <ChartContainer config={chartConfig} className="h-full min-h-0 w-full">
               <AreaChart data={chartData} margin={{ left: 4, right: 6, top: 4, bottom: 0 }}>

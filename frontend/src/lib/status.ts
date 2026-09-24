@@ -1,4 +1,4 @@
-// Status/badge mappers murni — diport dari frontend React lama (utils/farmStatusHelpers.js:
+// Status/badge mappers murni: diport dari frontend React lama (utils/farmStatusHelpers.js:
 // getGatewayStatusBadge, getNodeStatusBadge, getValveStatusBadge,
 // getIrrigationStatusBadge, getSoilStatusFromMoisture) dan dari logika gauge di
 // pages/DashboardPage.jsx (SoilGauge).
@@ -12,7 +12,7 @@ import type { SemanticTone } from '@/types';
 
 export type StatusTone = Exclude<SemanticTone, 'neutral'>;
 
-export interface StatusBadge {
+interface StatusBadge {
   labelKey: string;
   tone: StatusTone;
 }
