@@ -42,15 +42,15 @@ export default function SoilMoistureZoneChart({
   upper: number;
   embedded?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const points: Point[] = useMemo(
     () =>
-      getHourlyMonitoringPoints(readings).map(({ label, reading }) => ({
+      getHourlyMonitoringPoints(readings, i18n.language).map(({ label, reading }) => ({
         label,
         value: reading.soil_moisture,
       })),
-    [readings],
+    [readings, i18n.language],
   );
 
   const latest = latestValue(readings, 'soil_moisture');

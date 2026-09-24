@@ -63,9 +63,6 @@ def init_db() -> None:
                 FOREIGN KEY (user_id) REFERENCES users(id)
             );
 
-            CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
-            CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-
             CREATE TABLE IF NOT EXISTS farms (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
@@ -148,8 +145,6 @@ def init_db() -> None:
                 claimed_at TEXT,
                 FOREIGN KEY (farm_id) REFERENCES farms(id)
             );
-
-            CREATE INDEX IF NOT EXISTS idx_gateways_farm ON gateways(farm_id);
 
             CREATE TABLE IF NOT EXISTS wilayah (
                 kode TEXT PRIMARY KEY,

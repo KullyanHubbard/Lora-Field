@@ -1,5 +1,6 @@
 """Resolusi kode wilayah adm4 BMKG dari koordinat GPS atau teks alamat."""
 
+import logging
 import re
 
 import httpx
@@ -8,10 +9,12 @@ from .database import get_connection
 from .wilayah_resolver import resolve_adm4_from_freetext, resolve_adm4_from_region_names
 
 
+logger = logging.getLogger("lorafield")
+
+
 ADM4_PATTERN = re.compile(r"^\d{2}\.\d{2}\.\d{2}\.\d{4}$")
 LOCAL_ADM4_ALIASES = {
     ("balecatur", "gamping", "sleman"): "34.04.01.2001",
-    ("gejawan kulon", "balecatur", "gamping", "sleman"): "34.04.01.2001",
     ("ambarketawang", "gamping", "sleman"): "34.04.01.2002",
     ("banyuraden", "gamping", "sleman"): "34.04.01.2003",
     ("nogotirto", "gamping", "sleman"): "34.04.01.2004",
@@ -123,8 +126,8 @@ def resolve_bmkg_adm4(lat: float, lng: float, location_hint: str = "") -> str:
         )
         if adm4:
             return adm4
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("resolve-adm4 | nominatim-failed | lat=%s lng=%s | %s", lat, lng, exc)
 
     # Fallback terakhir (offline): alamat ketikan user. Berguna saat Nominatim
     # gagal/timeout dan user mengisi alamat yang konsisten.

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { api } from '@/lib/api';
+import { useResolveAdm4 } from '@/features/addFarm/queries';
 import { cn } from '@/lib/utils';
 
 interface LocationDetectorProps {
@@ -25,6 +25,7 @@ export function LocationDetector({
   locationHint,
 }: LocationDetectorProps) {
   const { t } = useTranslation();
+  const { mutateAsync: resolveAdm4 } = useResolveAdm4();
   const [detecting, setDetecting] = useState(false);
   const [status, setStatus] = useState<{ message: string; type: 'error' | 'warning' | '' }>({
     message: '',
@@ -54,7 +55,7 @@ export function LocationDetector({
           onAdm4Change('');
           const accText = acc ? `GPS (±${acc}m)` : 'GPS';
           try {
-            const res = await api.resolveAdm4(dLat, dLng, locationHint);
+            const res = await resolveAdm4({ lat: dLat, lng: dLng, hint: locationHint });
             if (res.found && res.adm4) {
               onAdm4Change(res.adm4);
               setStatus({
@@ -97,7 +98,7 @@ export function LocationDetector({
         { timeout: 20000, enableHighAccuracy: true, maximumAge: 0 },
       );
     },
-    [locationHint, onLatChange, onLngChange, onAdm4Change, t],
+    [locationHint, onLatChange, onLngChange, onAdm4Change, resolveAdm4, t],
   );
 
   // Auto-detect once on mount if coordinates are still empty (preserves original behaviour).

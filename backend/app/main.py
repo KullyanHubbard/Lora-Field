@@ -45,10 +45,6 @@ from .routers import auth, farms, gateways, logs, nodes, utils  # noqa: E402
 FRONTEND_DIST_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
 _DEV_ORIGINS = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://127.0.0.1:5501",
-    "http://localhost:5501",
     "http://127.0.0.1:5173",
     "http://localhost:5173",
 ]
@@ -65,7 +61,7 @@ async def lifespan(app: FastAPI):
         )
     init_db()
     logger.info(
-        "LoraField backend startup: dist_dir=%s cors_origins=%d",
+        "LoraField backend startup: dist_found=%s cors_origins=%d",
         FRONTEND_DIST_DIR.exists(),
         len(_CORS_ORIGINS),
     )
@@ -133,15 +129,6 @@ def root():
     if react_index is not None:
         return react_index
     return {"service": "LoraField Backend", "status": "ready", "health": "/health"}
-
-
-@app.get("/{page_name}.html")
-def static_html_page(page_name: str):
-    # Kompat URL lama berakhiran .html: arahkan ke React index (routing client-side).
-    react_index = _serve_react_index()
-    if react_index is not None:
-        return react_index
-    raise HTTPException(status_code=404, detail="Halaman tidak ditemukan")
 
 
 @app.get("/health")

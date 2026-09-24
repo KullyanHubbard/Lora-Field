@@ -133,12 +133,14 @@ def resolve_adm4_from_freetext(text: str) -> str:
     """Best-effort: ekstrak kab/kota & kecamatan dari alamat bebas user, dan
     pakai token awal sebagai dugaan desa. Dipakai hanya sebagai fallback kalau
     Nominatim gagal; kalau alamat tidak konsisten hasilnya "" (aman)."""
-    norm = re.sub(r"[^a-z0-9]+", " ", _deaccent(text or "").lower()).strip()
+    norm = normalize_region_name(text)
     if not norm:
         return ""
 
-    regency = (_KAB_RE.search(norm).group(1) if _KAB_RE.search(norm) else "")
-    district = (_KEC_RE.search(norm).group(1) if _KEC_RE.search(norm) else "")
+    regency_match = _KAB_RE.search(norm)
+    district_match = _KEC_RE.search(norm)
+    regency = regency_match.group(1) if regency_match else ""
+    district = district_match.group(1) if district_match else ""
 
     # Dugaan desa: potongan kata di awal sebelum kata tipe pertama.
     head = re.split(r"\b(?:kabupaten|kota|kecamatan|distrik|kelurahan|desa|kab|kec)\b", norm, 1)[0]

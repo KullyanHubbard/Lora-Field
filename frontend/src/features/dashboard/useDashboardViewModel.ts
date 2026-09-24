@@ -11,7 +11,7 @@ import { useFarmSummary } from '@/features/dashboard/queries';
 
 export function useDashboardViewModel() {
   const { id: routeFarmId } = useParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const farmId = routeFarmId ?? '';
 
   const summaryQuery = useFarmSummary(farmId);
@@ -36,8 +36,8 @@ export function useDashboardViewModel() {
   const valveSummary = useMemo(() => buildValveSummary(nodes), [nodes]);
   const nodeHistoricalDataMap = useMemo(() => buildNodeHistoricalDataMap(nodes), [nodes]);
   const weatherForecast = useMemo(() => {
-    return weather ? buildWeatherForecastViewModel(weather) : null;
-  }, [weather]);
+    return weather ? buildWeatherForecastViewModel(weather, t, i18n.language) : null;
+  }, [weather, t, i18n.language]);
 
   return {
     farmId,

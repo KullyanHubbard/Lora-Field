@@ -1,6 +1,6 @@
 import type { AppLanguage } from '@/i18n/language';
 
-// Base semantic tone, dipakai StatusTone (tanpa neutral) dan GaugeTone.
+// Base semantic tone. StatusTone = versi tanpa neutral. Kelas warnanya di lib/toneClasses.ts.
 export type SemanticTone = 'green' | 'yellow' | 'red' | 'neutral';
 
 export interface Farm {

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import type { IrrigationStats } from '@/features/irrigation/irrigationHelpers';
+import { EMPTY_VALUE } from '@/lib/format';
 
 export function IrrigationStatsGrid({ stats }: { stats: IrrigationStats }) {
   const { t } = useTranslation();
@@ -24,7 +25,7 @@ export function IrrigationStatsGrid({ stats }: { stats: IrrigationStats }) {
       />
       <SummaryCard
         label={t('irrigation.avgMoistureShort')}
-        value={stats.avgMoisture == null ? '—' : `${stats.avgMoisture.toFixed(0)}%`}
+        value={stats.avgMoisture == null ? EMPTY_VALUE : `${stats.avgMoisture.toFixed(0)}%`}
         icon={<Droplets className="size-3.5" />}
       />
       <SummaryCard

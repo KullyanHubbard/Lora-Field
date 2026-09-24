@@ -33,14 +33,14 @@ export default function AirHumidityZoneLineChart({
   readings: Reading[];
   embedded?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
-    return getHourlyMonitoringPoints(readings).map(({ label, reading }) => ({
+    return getHourlyMonitoringPoints(readings, i18n.language).map(({ label, reading }) => ({
       label,
       value: Number(reading.air_humidity),
     }));
-  }, [readings]);
+  }, [readings, i18n.language]);
 
   const latestHumidity = latestValue(readings, 'air_humidity');
   const latestStatus = latestHumidity != null ? humidityStatus(latestHumidity) : null;

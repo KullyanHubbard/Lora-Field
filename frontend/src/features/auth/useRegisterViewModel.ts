@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegister } from './queries';
+import { isPasswordTooShort, isValidEmail } from '@/features/auth/validation';
 
 export interface RegisterViewModel {
   name: string;
@@ -33,11 +34,11 @@ export function useRegisterViewModel(): RegisterViewModel {
       setError(t('auth.register.errorNameRequired'));
       return;
     }
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+    if (!isValidEmail(trimmedEmail)) {
       setError(t('auth.register.errorEmailInvalid'));
       return;
     }
-    if (password.length < 6) {
+    if (isPasswordTooShort(password)) {
       setError(t('auth.register.errorPasswordTooShort'));
       return;
     }

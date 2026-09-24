@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/auth-context';
-import { api } from '@/lib/api';
 import { useCreateFarm, useFarms } from '@/features/dashboard/queries';
 
 export interface AddFarmViewModel {
@@ -76,10 +75,6 @@ export function useAddFarm(): AddFarmViewModel {
     if (!trimmedGatewayDeviceId) missing.push(t('farms.addForm.fieldGateway'));
     if (!trimmedLocation) missing.push(t('farms.addForm.fieldLocation'));
     if (!trimmedCrop) missing.push(t('farms.addForm.fieldCrop'));
-    // Area boleh kosong atau "-" untuk kebun kecil (misal: 5 pohon pisang)
-    if (areaHa === '' || areaHa.trim() === '-') {
-      // Tidak wajib, lewati
-    }
     if (!trimmedGatewayDeviceId) {
       setMissingFields(missing);
       return;
@@ -100,27 +95,15 @@ export function useAddFarm(): AddFarmViewModel {
 
     setSubmitting(true);
     try {
-      // Best-effort resolve kode BMKG dari koordinat + alamat. Kalau belum ketemu,
-      // kebun TETAP dibuat dengan kode kosong; backend meng-resolve otomatis nanti
-      // (ensure_farm_bmkg_adm4) saat detail/cuaca kebun pertama dibuka.
-      let resolvedAdm4 = adm4.trim();
-      if (!resolvedAdm4) {
-        try {
-          const res = await api.resolveAdm4(parsedLat, parsedLng, trimmedLocation);
-          resolvedAdm4 = res.found && res.adm4 ? res.adm4 : '';
-        } catch {
-          resolvedAdm4 = '';
-        }
-      }
-
       await createFarm.mutateAsync({
         name: effectiveName,
         owner: owner.trim(),
         location: trimmedLocation,
         crop_type: trimmedCrop,
-        // Area null jika kosong atau "-" (kebun kecil)
+        // Area boleh kosong atau "-" untuk kebun kecil (mis. 5 pohon pisang): kirim null.
         area_ha: areaHa.trim() === '' || areaHa.trim() === '-' ? null : parseFloat(areaHa),
-        bmkg_adm4_code: resolvedAdm4,
+        // Kosong = backend meng-resolve sendiri dari koordinat + alamat saat kebun dibuat.
+        bmkg_adm4_code: adm4.trim(),
         latitude: parsedLat,
         longitude: parsedLng,
         gateway_device_id: trimmedGatewayDeviceId,

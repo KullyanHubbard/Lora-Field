@@ -41,15 +41,15 @@ export default function AirTempZoneLineChart({
   readings: Reading[];
   embedded?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
-    return getHourlyMonitoringPoints(readings).map(({ label, reading }) => ({
+    return getHourlyMonitoringPoints(readings, i18n.language).map(({ label, reading }) => ({
       label,
       value: reading.air_temp,
       band: classifyBand(reading.air_temp),
     }));
-  }, [readings]);
+  }, [readings, i18n.language]);
 
   const latestAvg = latestValue(readings, 'air_temp');
   const latestStatus = latestAvg != null ? airTempStatus(latestAvg) : null;

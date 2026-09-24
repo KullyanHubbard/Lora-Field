@@ -108,14 +108,13 @@ def create_reading(
     # Node yang belum terdaftar dibuat di sini, dipakai firmware yang langsung kirim
     # reading tanpa registrasi lewat gateway.
     node_created = False
-    node_status = "pending"
 
     with get_connection() as connection:
-        existing_node = connection.execute(
-            "SELECT * FROM nodes WHERE id = ?", (node_id,)
+        node_exists = connection.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (node_id,)
         ).fetchone()
 
-        if not existing_node:
+        if not node_exists:
             farm_id = payload.farm_id
 
             if not farm_id:
@@ -127,11 +126,8 @@ def create_reading(
             get_farm_owned(connection, farm_id, current_user["id"])
             insert_node(connection, node_id, farm_id, f"Node {node_id[:8]}")
             node_created = True
-            node_status = "online"
         else:
-            node = get_node_owned(connection, node_id, current_user["id"])
-            farm_id = node["farm_id"]
-            node_status = "online"
+            farm_id = get_node_owned(connection, node_id, current_user["id"])["farm_id"]
 
         weather = fetch_weather_with_cache(adm4)
         decision = calculate_decision(payload.soil_moisture, weather["rain_next_3h"])
@@ -146,5 +142,6 @@ def create_reading(
         "reading": reading,
         "decision": decision,
         "node_created": node_created,
-        "node_status": node_status,
+        # Node baru maupun lama tersimpan "online" (lihat node_service.insert_node).
+        "node_status": "online",
     }

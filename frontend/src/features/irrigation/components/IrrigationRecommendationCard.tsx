@@ -9,6 +9,7 @@ import {
 } from '@/features/irrigation/irrigationHelpers';
 import { getValveStatusBadge } from '@/lib/status';
 import type { NodeSummary } from '@/types';
+import { EMPTY_VALUE } from '@/lib/format';
 
 export function IrrigationRecommendationCard({
   nodes,
@@ -47,13 +48,13 @@ export function IrrigationRecommendationCard({
                 <div className="min-w-0">
                   <div className="truncate text-xs font-medium text-foreground">{ns.node.name || ns.node.id}</div>
                   <div className="truncate text-[11px] text-muted-foreground">
-                    {moisture ?? '—'}% · {t(condition.labelKey)}
+                    {moisture ?? EMPTY_VALUE}% · {t(condition.labelKey)}
                   </div>
                 </div>
                 {valveBadge ? (
                   <StatusPill tone={valveBadge.tone} label={t(valveBadge.labelKey)} />
                 ) : (
-                  <StatusPill tone="neutral" label="—" />
+                  <StatusPill tone="neutral" label={EMPTY_VALUE} />
                 )}
               </div>
             );

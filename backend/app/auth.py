@@ -22,7 +22,7 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
-def create_access_token(subject: str, extra_claims: dict | None = None) -> str:
+def create_access_token(subject: str) -> str:
     now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=settings.jwt_expire_minutes)
     payload = {
@@ -30,8 +30,6 @@ def create_access_token(subject: str, extra_claims: dict | None = None) -> str:
         "iat": int(now.timestamp()),
         "exp": int(expire.timestamp()),
     }
-    if extra_claims:
-        payload.update(extra_claims)
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
@@ -61,7 +59,7 @@ def get_current_user(
 
     with get_connection() as connection:
         row = connection.execute(
-            "SELECT id, email, name, phone, language, created_at FROM users WHERE id = ?",
+            "SELECT id, email, name, phone, language FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
 

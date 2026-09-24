@@ -10,7 +10,7 @@ import {
   pickNumber,
 } from './weatherHelpers';
 import { weatherIconMap } from '@/features/weather/weatherIconMap';
-import { DEG_C } from '@/lib/format';
+import { DEG_C, EMPTY_VALUE, formatClockTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,24 +144,24 @@ function WeatherMainCard({
   weather: Weather | null;
   history: ReturnType<typeof useWeatherHistory>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const info = getWeatherCodeInfo(weather?.code, weather?.condition);
   const Icon = weatherIconMap[info.iconKey];
   const temp = pickNumber(weather?.temperature);
   const humidity = pickNumber(weather?.humidity);
   const wind = pickNumber(weather?.wind_speed);
-  const tempText = temp != null ? `${temp}${DEG_C}` : '—';
-  const humText = humidity != null ? `${humidity}%` : '—';
+  const tempText = temp != null ? `${temp}${DEG_C}` : EMPTY_VALUE;
+  const humText = humidity != null ? `${humidity}%` : EMPTY_VALUE;
   const direction = weather?.wind_direction;
   const windTextFull =
     wind != null
       ? `${wind} km/jam${direction ? ` (${direction})` : ''}`
-      : '—';
+      : EMPTY_VALUE;
 
   const points: ChartPoint[] = (history.data ?? []).map((p) => {
     const d = new Date(p.time);
     const label = Number.isFinite(d.getTime())
-      ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      ? formatClockTime(d, i18n.language)
       : p.time;
     return { label, value: p.temp };
   });
@@ -234,7 +234,7 @@ function WeatherMainCard({
 // ——— Forecast Column ——————————————————————————————————————————————————————————
 
 function ForecastColumn({ weather }: { weather: Weather | null }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const forecast = weather?.forecast;
   const items =
     Array.isArray(forecast) && forecast.length > 0
@@ -260,7 +260,7 @@ function ForecastColumn({ weather }: { weather: Weather | null }) {
               );
               const Icon = weatherIconMap[info.iconKey];
               const temp = pickNumber(f.t, f.temperature);
-              const tempText = temp != null ? `${temp}${DEG_C}` : '—';
+              const tempText = temp != null ? `${temp}${DEG_C}` : EMPTY_VALUE;
               return (
                 <div
                   key={i}
@@ -272,7 +272,7 @@ function ForecastColumn({ weather }: { weather: Weather | null }) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-base font-medium tabular-nums text-foreground">
-                        {formatForecastLabel(f, i)}
+                        {formatForecastLabel(f, i, t, i18n.language)}
                       </span>
                       <span className="text-xl font-semibold tabular-nums text-foreground">
                         {tempText}

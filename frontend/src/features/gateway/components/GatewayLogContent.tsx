@@ -5,6 +5,7 @@ import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import {
+  GATEWAY_EVENT_FILTERS,
   getGatewayEventDotClass,
   getGatewayEventLabelKey,
   getGatewayEventTone,
@@ -35,13 +36,10 @@ export function GatewayLogContent({
 }) {
   const { t } = useTranslation();
 
-  const filterOptions: { value: GatewayEventFilter; labelKey: string }[] = [
-    { value: 'all', labelKey: 'gateway.filterAll' },
-    { value: 'connected', labelKey: 'gateway.filterConnected' },
-    { value: 'disconnected', labelKey: 'gateway.filterDisconnected' },
-    { value: 'heartbeat', labelKey: 'gateway.filterHeartbeat' },
-    { value: 'data_sync', labelKey: 'gateway.filterDataSync' },
-  ];
+  const filterOptions = GATEWAY_EVENT_FILTERS.map((value) => ({
+    value,
+    labelKey: getGatewayEventLabelKey(value),
+  }));
 
   return (
     <>

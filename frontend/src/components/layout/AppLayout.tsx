@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -35,7 +35,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { BrandMark } from '@/components/layout/BrandMark';
 import { useAuth } from '@/features/auth/auth-context';
-import { useSelectedFarm } from '@/contexts/FarmContext';
 import { DashboardActiveNodeBadge } from '@/features/dashboard/components/DashboardActiveNodeBadge';
 import { useFarmSummary } from '@/features/dashboard/queries';
 import { HelpCenterDialog } from '@/features/helpCenter';
@@ -47,38 +46,14 @@ type NavItem = {
 };
 
 export function AppLayout() {
-  const { user, logout: authLogout } = useAuth();
+  const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const { t } = useTranslation();
-  const { selectedFarmId, selectFarm, clearFarm } = useSelectedFarm();
   const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false);
 
-  // Wrapper logout: clear farm state + auth logout
-  const logout = useCallback(() => {
-    clearFarm();
-    authLogout();
-  }, [clearFarm, authLogout]);
-
-  // Deteksi farmId dari URL (untuk inisialisasi saat masuk via direct URL)
+  // Route /farms/:id adalah satu-satunya sumber mode detail kebun di sidebar.
   const farmMatch = pathname.match(/^\/farms\/([^/]+)/);
-  const urlFarmId = farmMatch && farmMatch[1] !== 'add' ? farmMatch[1] : null;
-
-  // Sync context dengan URL. Route /farms/:id adalah sumber utama mode detail kebun;
-  // saat keluar ke selector/settings, bersihkan farm agar sidebar tidak tertahan.
-  useEffect(() => {
-    if (urlFarmId) {
-      if (urlFarmId !== selectedFarmId) {
-        selectFarm(urlFarmId);
-      }
-      return;
-    }
-
-    if (selectedFarmId) {
-      clearFarm();
-    }
-  }, [urlFarmId, selectedFarmId, selectFarm, clearFarm]);
-
-  const farmId = urlFarmId;
+  const farmId = farmMatch ? farmMatch[1] : null;
   const { data: farmSummary } = useFarmSummary(farmId ?? '');
   const farmName = farmSummary?.farm.name ?? t('layout.fallbackFarm');
 
@@ -130,7 +105,6 @@ export function AppLayout() {
                       supaya tidak bersaing dengan judul nama kebun di bawahnya. */}
                   <Link
                     to="/select-farms"
-                    onClick={clearFarm}
                     className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <ArrowLeft className="size-3.5" />

@@ -604,6 +604,18 @@ def run(report: Report, with_network: bool) -> None:
             ("gateway",),
         )
         report.check("gateway terklaim ulang", reclaimed.get("gateway", {}).get("farm_id") == farm_id)
+        second = client.post(
+            f"/api/farms/{farm_id}/gateway/claim",
+            json={"device_id": f"GW-KEDUA-{suffix}", "display_name": "Gateway Kedua"},
+            headers=auth,
+        )
+        report.check(
+            "klaim gateway kedua ke kebun yang sudah punya gateway ditolak 409",
+            second.status_code == 409 and second.json().get("detail") == "Kebun ini sudah punya gateway",
+            f"status {second.status_code}, detail {second.json().get('detail')!r}",
+        )
+        still = client.get(f"/api/farms/{farm_id}/gateway", headers=auth).json().get("gateway") or {}
+        report.check("gateway lama tetap terpasang", still.get("device_id") == device_id)
 
         section("Isolasi antar user")
         other_email = f"smoke-other-{suffix}@lorafield-smoke.com"

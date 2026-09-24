@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Clock, Radio, Signal, Wifi } from 'lucide-react';
 import { StatusPill } from '@/components/ui/status-pill';
 import type { GatewayInfoViewModel } from '@/features/gateway/gatewayHelpers';
-import { timeAgo } from '@/lib/format';
+import { EMPTY_VALUE, timeAgo } from '@/lib/format';
 
 function StatTile({
   icon,
@@ -65,7 +65,7 @@ export function GatewayInfoCard({
         <StatTile
           icon={<Clock className="size-3.5 text-muted-foreground" />}
           label={t('gateway.lastSeenShort')}
-          value={info.lastSeen ? timeAgo(info.lastSeen, t) : '-'}
+          value={info.lastSeen ? timeAgo(info.lastSeen, t) : EMPTY_VALUE}
         />
       </div>
     </div>

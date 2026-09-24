@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForgotPassword, useResetPassword, useVerifyResetCode } from './queries';
+import { isPasswordTooShort, isValidEmail } from '@/features/auth/validation';
 
 export type ResetPasswordStep = 'email' | 'otp' | 'password';
 
@@ -42,7 +43,7 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
 
   const submitEmail = () => {
     const trimmed = email.trim();
-    if (!trimmed || !trimmed.includes('@')) {
+    if (!isValidEmail(trimmed)) {
       setError(t('auth.resetPassword.errorEmailInvalid'));
       return;
     }
@@ -68,7 +69,7 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
   };
 
   const submitPassword = () => {
-    if (password.length < 6) {
+    if (isPasswordTooShort(password)) {
       setError(t('auth.resetPassword.errorPasswordTooShort'));
       return;
     }

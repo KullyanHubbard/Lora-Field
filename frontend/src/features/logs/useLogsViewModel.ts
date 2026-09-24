@@ -11,6 +11,7 @@ import {
   type LogFilterKey,
   type LogType,
 } from '@/features/logs/logHelpers';
+import { EMPTY_VALUE, formatLocalDateTime, parseServerDate } from '@/lib/format';
 import type { IrrigationLog } from '@/types';
 
 export interface ScopedLog extends IrrigationLog {
@@ -35,7 +36,7 @@ function downloadCsv(filename: string, content: string) {
 
 export function useLogsViewModel() {
   const { id: routeFarmId } = useParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const farmId = routeFarmId ?? '';
 
   const summaryQuery = useFarmSummary(farmId);
@@ -63,7 +64,7 @@ export function useLogsViewModel() {
 
   const threshold = summary?.thresholds
     ? `${summary.thresholds.lower}%-${summary.thresholds.upper}%`
-    : '—';
+    : EMPTY_VALUE;
 
   const scopedLogs = useMemo<ScopedLog[]>(
     () =>
@@ -73,14 +74,14 @@ export function useLogsViewModel() {
           const node = nodeLookup.get(log.node_id);
           return {
             ...log,
-            time: formatLogTime(log.created_at),
+            time: formatLogTime(log.created_at, i18n.language),
             type: classifyLog(log),
             nodeName: node?.name || log.node_id,
-            nodeLocation: node?.location || '—',
+            nodeLocation: node?.location || EMPTY_VALUE,
             valveLabel: log.valve_state === 'open' ? t('logs.valveOpen') : t('logs.valveClosed'),
           };
         }),
-    [logs, nodeLookup, t],
+    [logs, nodeLookup, t, i18n.language],
   );
 
   const filteredLogs = useMemo(() => {
@@ -97,7 +98,7 @@ export function useLogsViewModel() {
         String(log.decision || '')
           .toLowerCase()
           .includes(q);
-      const logMs = log.created_at ? new Date(log.created_at).getTime() : null;
+      const logMs = parseServerDate(log.created_at)?.getTime() ?? null;
       const matchesFrom = fromMs == null || (logMs != null && logMs >= fromMs);
       const matchesTo = toMs == null || (logMs != null && logMs <= toMs);
       return matchesFilter && matchesSearch && matchesFrom && matchesTo;
@@ -112,19 +113,22 @@ export function useLogsViewModel() {
   const exportCsv = () => {
     if (!summary || filteredLogs.length === 0) return;
 
-    const rows: LogCsvRow[] = filteredLogs.map((log) => ({
-      time: log.created_at || log.time,
-      nodeName: log.nodeName,
-      nodeLocation: log.nodeLocation,
-      soilMoisture: log.soil_moisture,
-      weather: log.weather,
-      decision: log.decision,
-      valveLabel: log.valveLabel,
-      reason: log.reason,
-    }));
+    const rows: LogCsvRow[] = filteredLogs.map((log) => {
+      const created = parseServerDate(log.created_at);
+      return {
+        time: created ? formatLocalDateTime(created) : log.time,
+        nodeName: log.nodeName,
+        nodeLocation: log.nodeLocation,
+        soilMoisture: log.soil_moisture,
+        weather: log.weather,
+        decision: log.decision,
+        valveLabel: log.valveLabel,
+        reason: log.reason,
+      };
+    });
     const csv = buildLogsCsv(rows, threshold);
     const farmName = summary.farm.name || farmId || 'kebun';
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatLocalDateTime(new Date()).slice(0, 10);
     downloadCsv(`lorafield-logs-${farmName}-${today}.csv`, csv);
   };
 

@@ -3,19 +3,21 @@ import {
   type FarmMetricChartPoint,
 } from '@/features/dashboard/dashboardHistoricalData';
 import { batteryTone } from '@/lib/status';
-import { DEG_C } from '@/lib/format';
-import { getWeatherCodeInfo, pickNumber, type WeatherIconKey } from '@/features/weather/weatherHelpers';
-import type { GatewayLog, NodeSummary, Weather, WeatherForecastPoint } from '@/types';
-
-export const DASH = '—';
+import type { TFunction } from 'i18next';
+import { DEG_C, EMPTY_VALUE } from '@/lib/format';
+import {
+  formatForecastLabel,
+  getWeatherCodeInfo,
+  pickNumber,
+  type WeatherIconKey,
+} from '@/features/weather/weatherHelpers';
+import type { NodeSummary, SemanticTone, Weather } from '@/types';
 
 export type NumberStats = {
   min: number;
   max: number;
   avg: number;
 };
-
-export type BatteryGaugeTone = 'green' | 'yellow' | 'red' | 'neutral';
 
 export type ValveSummary = {
   bars: string[];
@@ -27,7 +29,7 @@ export type ValveSummary = {
 
 export type BatteryGaugeModel = {
   pct: number | null;
-  tone: BatteryGaugeTone;
+  tone: SemanticTone;
   centerLabel: string;
   centerSubKey?: string;
 };
@@ -50,11 +52,6 @@ export type WeatherForecastViewModel = {
   slots: WeatherForecastSlot[];
 };
 
-export type GatewayLogMeta = {
-  labelKey: string;
-  dotClassName: string;
-};
-
 export function toFiniteNumber(value: number | null | undefined): number | null {
   if (value == null) return null;
   const numeric = Number(value);
@@ -68,12 +65,12 @@ export function clampPercent(value: number): number {
 
 export function formatRounded(value: number | null | undefined, suffix = ''): string {
   const numeric = toFiniteNumber(value);
-  return numeric == null ? DASH : `${Math.round(numeric)}${suffix}`;
+  return numeric == null ? EMPTY_VALUE : `${Math.round(numeric)}${suffix}`;
 }
 
 export function formatPercent(value: number | null | undefined): string {
   const numeric = toFiniteNumber(value);
-  return numeric == null ? DASH : `${clampPercent(numeric)}%`;
+  return numeric == null ? EMPTY_VALUE : `${clampPercent(numeric)}%`;
 }
 
 export function calcMinMaxAvg(values: number[]): NumberStats | null {
@@ -111,7 +108,7 @@ export function buildValveSummary(nodes: NodeSummary[]): ValveSummary {
 export function buildBatteryGaugeModel(value: number | null | undefined): BatteryGaugeModel {
   const numeric = toFiniteNumber(value);
   const pct = numeric != null ? clampPercent(numeric) : null;
-  const tone: BatteryGaugeTone = pct != null ? (batteryTone(pct) as BatteryGaugeTone) : 'neutral';
+  const tone: SemanticTone = pct != null ? batteryTone(pct) : 'neutral';
   const centerSubKey =
     pct == null
       ? undefined
@@ -124,9 +121,14 @@ export function buildBatteryGaugeModel(value: number | null | undefined): Batter
   return {
     pct,
     tone,
-    centerLabel: pct != null ? `${pct}%` : DASH,
+    centerLabel: pct != null ? `${pct}%` : EMPTY_VALUE,
     centerSubKey,
   };
+}
+
+// Label node untuk UI: nama, kalau kosong lokasi, kalau kosong ID.
+export function getNodeLabel(node: NodeSummary['node']): string {
+  return node.name || node.location || node.id;
 }
 
 export function getSelectedNodeSummary(
@@ -164,21 +166,11 @@ export function buildNodeHistoricalDataMap(nodes: NodeSummary[]): Record<string,
   return nodeDataMap;
 }
 
-export function forecastSlotTime(point: WeatherForecastPoint, index: number): string {
-  const raw = point.local_datetime || point.datetime || point.utc_datetime;
-  if (!raw) return index === 0 ? DASH : `+${index * 3}j`;
-
-  const normalized = String(raw).replace(' ', 'T');
-  const date = new Date(normalized);
-  if (!Number.isNaN(date.getTime())) {
-    return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  }
-
-  const timePart = String(raw).split(/[ T]/)[1];
-  return timePart ? timePart.slice(0, 5) : DASH;
-}
-
-export function buildWeatherForecastViewModel(weather: Weather): WeatherForecastViewModel {
+export function buildWeatherForecastViewModel(
+  weather: Weather,
+  t: TFunction,
+  locale: string,
+): WeatherForecastViewModel {
   const currentInfo = getWeatherCodeInfo(weather.code, weather.condition);
   const slots = (weather.forecast ?? []).slice(0, 6).map((point, index) => {
     const info = getWeatherCodeInfo(
@@ -189,10 +181,10 @@ export function buildWeatherForecastViewModel(weather: Weather): WeatherForecast
 
     return {
       key: index,
-      time: forecastSlotTime(point, index),
+      time: formatForecastLabel(point, index, t, locale),
       iconKey: info.iconKey,
       labelKey: info.label,
-      temp: temp != null ? `${Math.round(temp)}${DEG_C}` : DASH,
+      temp: temp != null ? `${Math.round(temp)}${DEG_C}` : EMPTY_VALUE,
       isRain: info.isRain,
     };
   });
@@ -204,28 +196,5 @@ export function buildWeatherForecastViewModel(weather: Weather): WeatherForecast
     currentHumidity: formatPercent(weather.humidity),
     rainNext3h: weather.rain_next_3h === true,
     slots,
-  };
-}
-
-// TODO: Keterangan di sini nantinya akan di-generate oleh Decision Engine.
-// Pastikan saat membuat Decision Engine, output teksnya harus mengikuti bahasa (locale) yang sedang aktif di aplikasi.
-export function getGatewayLogMeta(log: GatewayLog): GatewayLogMeta {
-  const labelKeyByEvent: Record<string, string> = {
-    connected: 'gateway.filterConnected',
-    disconnected: 'gateway.filterDisconnected',
-    heartbeat: 'gateway.filterHeartbeat',
-    data_sync: 'gateway.filterDataSync',
-  };
-
-  const dotByEvent: Record<string, string> = {
-    connected: 'bg-emerald-500',
-    disconnected: 'bg-red-500',
-    heartbeat: 'bg-blue-500',
-    data_sync: 'bg-violet-500',
-  };
-
-  return {
-    labelKey: labelKeyByEvent[log.event] ?? `gateway.filter${log.event.charAt(0).toUpperCase() + log.event.slice(1)}`,
-    dotClassName: dotByEvent[log.event] ?? 'bg-muted-foreground',
   };
 }

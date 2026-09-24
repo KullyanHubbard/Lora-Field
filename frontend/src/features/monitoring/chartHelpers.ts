@@ -1,3 +1,4 @@
+import { formatClockTime, parseServerDate } from '@/lib/format';
 import type { Reading } from '@/types';
 
 export type ReadingMetricKey = keyof Pick<Reading, 'soil_moisture' | 'soil_temp' | 'air_temp' | 'air_humidity'>;
@@ -12,8 +13,7 @@ export interface HourlyMonitoringPoint {
 }
 
 function readingTime(reading: Reading): number | null {
-  const time = Date.parse(reading.created_at);
-  return Number.isFinite(time) ? time : null;
+  return parseServerDate(reading.created_at)?.getTime() ?? null;
 }
 
 function startOfHour(time: number): number {
@@ -34,6 +34,7 @@ export function normalizeReadings(readings: Reading[]): Reading[] {
 
 export function getHourlyMonitoringPoints(
   readings: Reading[],
+  locale: string,
   hours = MONITORING_CHART_HOURS,
 ): HourlyMonitoringPoint[] {
   const timedReadings = normalizeReadings(readings)
@@ -61,17 +62,17 @@ export function getHourlyMonitoringPoints(
   return Array.from(selectedBySlot.entries())
     .sort(([a], [b]) => a - b)
     .map(([, item]) => ({
-      label: formatTimeLabel(new Date(item.slotTime).toISOString()),
+      label: formatTimeLabel(new Date(item.slotTime).toISOString(), locale),
       reading: item.reading,
       slotTime: item.slotTime,
     }));
 }
 
-export function formatTimeLabel(iso: string | null | undefined): string {
+export function formatTimeLabel(iso: string | null | undefined, locale: string): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return '';
-  return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  return formatClockTime(d, locale);
 }
 
 /** Latest reading value for a key, or null */

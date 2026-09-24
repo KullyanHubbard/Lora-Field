@@ -3,6 +3,7 @@
 // dan pembentukan string CSV di handleExportCSV). Semua fungsi murni.
 import type { IrrigationLog } from '@/types';
 import type { StatusTone } from '@/lib/status';
+import { EMPTY_VALUE, formatClockTime, parseServerDate } from '@/lib/format';
 
 export const LOG_FILTER_OPTIONS = [
   { key: 'all', label: 'logFilter.all' },
@@ -56,15 +57,10 @@ export function getDecisionTone(type: LogType): StatusTone {
   }
 }
 
-export function formatLogTime(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return String(iso);
-  return d.toLocaleTimeString('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
+export function formatLogTime(iso: string | null | undefined, locale: string): string {
+  if (!iso) return EMPTY_VALUE;
+  const d = parseServerDate(iso);
+  return d ? formatClockTime(d, locale, true) : String(iso);
 }
 
 // -----------------------------------------------------------
@@ -110,10 +106,10 @@ export function buildLogsCsv(rows: LogCsvRow[], threshold: string): string {
       row.nodeLocation,
       row.soilMoisture,
       threshold,
-      row.weather || '—',
+      row.weather || EMPTY_VALUE,
       row.decision,
       row.valveLabel,
-      row.reason || '—',
+      row.reason || EMPTY_VALUE,
     ]
       .map(escapeCsv)
       .join(','),

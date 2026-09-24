@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Cloud, Cpu, Droplets, Sun, Thermometer } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusPill } from '@/components/ui/status-pill';
-import { DASH, getSelectedNodeSummary } from '@/features/dashboard/dashboardHelpers';
-import { DEG_C } from '@/lib/format';
+import { getNodeLabel, getSelectedNodeSummary } from '@/features/dashboard/dashboardHelpers';
+import { DEG_C, EMPTY_VALUE } from '@/lib/format';
 import { getNodeStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
@@ -34,7 +34,7 @@ export function NodeSensorCard({
           {selectedNs && (
             <div className="flex items-center gap-2">
               <span className="text-xs tabular-nums text-muted-foreground">
-                {selectedNs.signal_rssi ?? `${DASH} dBm`}
+                {selectedNs.signal_rssi ?? `${EMPTY_VALUE} dBm`}
               </span>
               {badge && <StatusPill tone={badge.tone} label={t(badge.labelKey)} />}
             </div>
@@ -48,14 +48,14 @@ export function NodeSensorCard({
           >
             {nodes.map((ns) => (
               <option key={ns.node.id} value={ns.node.id}>
-                {ns.node.name || ns.node.location || ns.node.id}
+                {getNodeLabel(ns.node)}
               </option>
             ))}
           </select>
         )}
         {nodes.length <= 1 && selectedNs && (
           <p className="mt-1 text-xs text-muted-foreground">
-            {selectedNs.node.name || selectedNs.node.location || selectedNs.node.id}
+            {getNodeLabel(selectedNs.node)}
           </p>
         )}
       </CardHeader>
@@ -69,22 +69,22 @@ export function NodeSensorCard({
             <NodeMetricTile
               icon={<Droplets className="size-4 shrink-0 text-cyan-500 dark:text-cyan-400" aria-hidden="true" />}
               label={t('dashboard.nodeSensor.metrics.soilMoisture')}
-              value={reading ? `${reading.soil_moisture}%` : DASH}
+              value={reading ? `${reading.soil_moisture}%` : EMPTY_VALUE}
             />
             <NodeMetricTile
               icon={<Thermometer className="size-4 shrink-0 text-orange-500 dark:text-orange-400" aria-hidden="true" />}
               label={t('dashboard.nodeSensor.metrics.soilTemp')}
-              value={reading ? `${reading.soil_temp}${DEG_C}` : DASH}
+              value={reading ? `${reading.soil_temp}${DEG_C}` : EMPTY_VALUE}
             />
             <NodeMetricTile
               icon={<Sun className="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />}
               label={t('dashboard.nodeSensor.metrics.airTemp')}
-              value={reading ? `${reading.air_temp}${DEG_C}` : DASH}
+              value={reading ? `${reading.air_temp}${DEG_C}` : EMPTY_VALUE}
             />
             <NodeMetricTile
               icon={<Cloud className="size-4 shrink-0 text-sky-500 dark:text-sky-400" aria-hidden="true" />}
               label={t('dashboard.nodeSensor.metrics.airHumidity')}
-              value={reading ? `${reading.air_humidity}%` : DASH}
+              value={reading ? `${reading.air_humidity}%` : EMPTY_VALUE}
             />
           </div>
         )}

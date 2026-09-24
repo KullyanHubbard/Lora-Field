@@ -95,14 +95,7 @@ def claim_farm_gateway(
         get_farm_for_gateway_action(connection, farm_id, current_user["id"])
 
         ensure_gateway_unclaimed(connection, device_id)
-
-        existing_farm_gateway = connection.execute(
-            "SELECT 1 FROM gateways WHERE farm_id = ?",
-            (farm_id,),
-        ).fetchone()
-        if existing_farm_gateway is not None:
-            raise HTTPException(status_code=409, detail="Kebun ini sudah punya gateway")
-
+        # Kebun yang sudah punya gateway ditolak 409 di sini lewat UNIQUE gateways.farm_id.
         gateway = claim_gateway_for_farm(connection, device_id, display_name, farm_id)
 
     return {"gateway": gateway}

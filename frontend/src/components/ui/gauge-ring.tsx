@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
+import { TONE_CLASSES } from '@/lib/toneClasses';
 import { cn } from '@/lib/utils';
 import type { SemanticTone } from '@/types';
-
-export type GaugeTone = SemanticTone;
 
 interface GaugeRingProps {
   value: number | null;
   centerLabel: string;
   centerSub?: string;
-  tone: GaugeTone;
+  tone: SemanticTone;
   caption?: string;
   label?: string;
   animate?: boolean;
@@ -16,20 +15,6 @@ interface GaugeRingProps {
 
 const RADIUS = 40;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-
-const toneStrokeClass: Record<GaugeTone, string> = {
-  green: 'stroke-emerald-500 dark:stroke-emerald-400',
-  yellow: 'stroke-amber-500 dark:stroke-amber-400',
-  red: 'stroke-red-500 dark:stroke-red-400',
-  neutral: 'stroke-foreground/30',
-};
-
-const toneLabelClass: Record<GaugeTone, string> = {
-  green: 'text-emerald-500 dark:text-emerald-400',
-  yellow: 'text-amber-500 dark:text-amber-400',
-  red: 'text-red-500 dark:text-red-400',
-  neutral: 'text-muted-foreground',
-};
 
 function useAnimatedValue(target: number, enabled: boolean, duration = 800) {
   const [progress, setProgress] = useState(0);
@@ -80,7 +65,7 @@ export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label,
               fill="none"
               strokeWidth="10"
               strokeLinecap="round"
-              className={cn(toneStrokeClass[tone], animate && 'transition-colors duration-500')}
+              className={cn(TONE_CLASSES[tone].stroke, animate && 'transition-colors duration-500')}
               style={{ strokeDasharray: `${filled} ${CIRCUMFERENCE}` }}
             />
           )}
@@ -89,7 +74,7 @@ export function GaugeRing({ value, centerLabel, centerSub, tone, caption, label,
           <span
             className={cn(
               'text-2xl font-bold tabular-nums leading-none',
-              hasData ? toneLabelClass[tone] : 'text-muted-foreground',
+              hasData ? TONE_CLASSES[tone].text : 'text-muted-foreground',
               animate && 'transition-colors duration-500',
             )}
           >

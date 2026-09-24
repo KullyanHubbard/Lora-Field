@@ -1,19 +1,10 @@
+import { TONE_CLASSES } from '@/lib/toneClasses';
 import { cn } from '@/lib/utils';
-import type { StatusTone } from '@/lib/status';
-
-// Tone kompatibel dengan helper lib/status.ts (return 'green' | 'yellow' | 'red')
-// PLUS 'neutral' untuk kondisi no-data / unknown.
-export type PillTone = StatusTone | 'neutral';
+import type { SemanticTone } from '@/types';
 
 // Badge TANPA fill berwarna: surface netral halus yang menyatu dengan kartu.
-// Warna status HANYA di dot kecil — SOLID NEON, sehue ring Baterai Node
-// (emerald-500/-400 mint, amber-500/-400 oranye, red-500/-400). Teks netral.
-const DOT: Record<PillTone, string> = {
-  green: 'bg-emerald-500 dark:bg-emerald-400',
-  yellow: 'bg-amber-500 dark:bg-amber-400',
-  red: 'bg-red-500 dark:bg-red-400',
-  neutral: 'bg-muted-foreground/50',
-};
+// Warna status HANYA di dot kecil, sehue ring Baterai Node. Teks netral.
+// 'neutral' untuk kondisi no-data / unknown.
 
 /**
  * Badge status: kotak rounded-md, surface netral (border tipis + bg netral
@@ -26,7 +17,7 @@ export function StatusPill({
   showDot = true,
   className,
 }: {
-  tone: PillTone;
+  tone: SemanticTone;
   label: string;
   showDot?: boolean;
   className?: string;
@@ -39,7 +30,7 @@ export function StatusPill({
       )}
     >
       {showDot && (
-        <span className={cn('size-1.5 shrink-0 rounded-full', DOT[tone])} aria-hidden="true" />
+        <span className={cn('size-1.5 shrink-0 rounded-full', TONE_CLASSES[tone].dot)} aria-hidden="true" />
       )}
       {label}
     </span>

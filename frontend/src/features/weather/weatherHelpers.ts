@@ -6,6 +6,8 @@
 // Build baru pakai lucide, jadi di sini ikon disimpan sebagai `iconKey` semantik;
 // pemetaan iconKey -> komponen ikon dilakukan di lapisan UI. Label/isRain/kode
 // dipertahankan apa adanya.
+import type { TFunction } from 'i18next';
+import { formatClockTime } from '@/lib/format';
 import type { WeatherForecastPoint } from '@/types';
 
 export type WeatherIconKey =
@@ -88,14 +90,17 @@ export function getWeatherCodeInfo(
   return getWeatherInfo(condition);
 }
 
-export function formatForecastLabel(item: WeatherForecastPoint, index: number): string {
+export function formatForecastLabel(
+  item: WeatherForecastPoint,
+  index: number,
+  t: TFunction,
+  locale: string,
+): string {
+  const fallback = index === 0 ? t('weather.now') : t('weather.hoursAhead', { count: index * 3 });
   const rawTime = item.local_datetime || item.datetime || item.utc_datetime;
-  if (!rawTime) return index === 0 ? 'Sekarang' : `+${index * 3}j`;
-  const normalized = String(rawTime).replace(' ', 'T');
-  const date = new Date(normalized);
-  if (Number.isNaN(date.getTime())) {
-    const timePart = String(rawTime).split(' ')[1];
-    return timePart ? timePart.slice(0, 5) : index === 0 ? 'Sekarang' : `+${index * 3}j`;
-  }
-  return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  if (!rawTime) return fallback;
+  const date = new Date(String(rawTime).replace(' ', 'T'));
+  if (!Number.isNaN(date.getTime())) return formatClockTime(date, locale);
+  const timePart = String(rawTime).split(/[ T]/)[1];
+  return timePart ? timePart.slice(0, 5) : fallback;
 }

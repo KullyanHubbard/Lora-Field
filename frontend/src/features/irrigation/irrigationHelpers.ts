@@ -1,4 +1,5 @@
 import type { FarmSummary, NodeSummary } from '@/types';
+import { EMPTY_VALUE, parseServerDate } from '@/lib/format';
 
 export type IrrigationStats = {
   totalNodes: number;
@@ -10,10 +11,8 @@ export type IrrigationStats = {
 };
 
 export function formatSyncTime(value: string | null | undefined, locale: string) {
-  if (!value) return '—';
-
-  const d = new Date(value);
-  if (!Number.isFinite(d.getTime())) return '—';
+  const d = parseServerDate(value);
+  if (!d) return EMPTY_VALUE;
 
   return d.toLocaleString(locale, {
     day: '2-digit',

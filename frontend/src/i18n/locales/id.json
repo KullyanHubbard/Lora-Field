@@ -466,6 +466,7 @@
     "labelWeatherCode": "Kode Cuaca",
     "labelTemperature": "Suhu",
     "now": "Sekarang",
+    "hoursAhead": "+{{count}}j",
     "forecastTitle": "Ramalan Cuaca",
     "forecastEmpty": "Prakiraan belum tersedia untuk kebun ini.",
     "historyTitle": "Histori Suhu (Open-Meteo)",

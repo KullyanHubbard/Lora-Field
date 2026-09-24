@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { getDecisionTone, LOG_TYPE_LABEL } from '@/features/logs/logHelpers';
 import type { ScopedLog } from '@/features/logs/useLogsViewModel';
+import { EMPTY_VALUE } from '@/lib/format';
 
 export function LogsTableCard({ logs }: { logs: ScopedLog[] }) {
   const { t } = useTranslation();
@@ -45,7 +46,7 @@ export function LogsTableCard({ logs }: { logs: ScopedLog[] }) {
                   <TableCell>{log.nodeName}</TableCell>
                   <TableCell className="text-muted-foreground">{log.nodeLocation}</TableCell>
                   <TableCell className="tabular-nums">{log.soil_moisture}%</TableCell>
-                  <TableCell className="text-muted-foreground">{log.weather || '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">{log.weather || EMPTY_VALUE}</TableCell>
                   <TableCell>
                     <StatusPill
                       tone={getDecisionTone(log.type)}
@@ -54,7 +55,7 @@ export function LogsTableCard({ logs }: { logs: ScopedLog[] }) {
                   </TableCell>
                   <TableCell>{log.valveLabel}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {log.reason || '—'}
+                    {log.reason || EMPTY_VALUE}
                   </TableCell>
                 </TableRow>
               ))

@@ -1,5 +1,6 @@
 import { getGatewayStatusBadge } from '@/lib/status';
 import type { StatusTone } from '@/lib/status';
+import { EMPTY_VALUE, parseServerDate } from '@/lib/format';
 import type { FarmGateway, GatewayLog } from '@/types';
 
 export const GATEWAY_LOGS_PER_PAGE = 10;
@@ -17,6 +18,7 @@ export type GatewayEventFilter = (typeof GATEWAY_EVENT_FILTERS)[number];
 
 // Map of event values to their i18n keys
 const GATEWAY_EVENT_LABEL_KEYS: Record<string, string> = {
+  all: 'gateway.filterAll',
   connected: 'gateway.filterConnected',
   disconnected: 'gateway.filterDisconnected',
   heartbeat: 'gateway.filterHeartbeat',
@@ -33,15 +35,9 @@ export type GatewayInfoViewModel = {
   lastSeen: string | null;
 };
 
-// SQLite CURRENT_TIMESTAMP menyimpan UTC tanpa penanda zona ("YYYY-MM-DD HH:MM:SS").
-function toUtcIsoTimestamp(value: string) {
-  return value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
-}
-
 export function isFarmGatewayOnline(gateway: FarmGateway | null | undefined) {
-  if (!gateway?.last_seen_at) return false;
-  const lastSeenMs = new Date(toUtcIsoTimestamp(gateway.last_seen_at)).getTime();
-  return Number.isFinite(lastSeenMs) && Date.now() - lastSeenMs <= GATEWAY_ONLINE_WINDOW_MS;
+  const lastSeen = parseServerDate(gateway?.last_seen_at);
+  return lastSeen != null && Date.now() - lastSeen.getTime() <= GATEWAY_ONLINE_WINDOW_MS;
 }
 
 export function buildGatewayInfo(gateway?: FarmGateway | null): GatewayInfoViewModel {
@@ -51,13 +47,13 @@ export function buildGatewayInfo(gateway?: FarmGateway | null): GatewayInfoViewM
   const status = getGatewayStatusBadge(gatewayStatus);
 
   return {
-    gatewayId: gateway?.device_id ?? '—',
+    gatewayId: gateway?.device_id ?? EMPTY_VALUE,
     displayName: gateway?.display_name ?? null,
     statusLabelKey: status.labelKey,
     statusTone: status.tone,
     signalValueKey: 'gateway.signalNone',
     internetValueKey: 'gateway.internetNotMonitored',
-    lastSeen: gateway?.last_seen_at ? toUtcIsoTimestamp(gateway.last_seen_at) : null,
+    lastSeen: gateway?.last_seen_at ?? null,
   };
 }
 

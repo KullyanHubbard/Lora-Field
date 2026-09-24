@@ -1,5 +1,6 @@
 // Domain logic agregasi farm summary, diport dari frontend React lama (utils/farmStatusHelpers.js).
 // Murni, tanpa side effect.
+import { parseServerDate } from '@/lib/format';
 import type { Farm, NodeSummary } from '@/types';
 
 /**
@@ -15,10 +16,10 @@ export function getFarmLastUpdate(farm: Farm, nodeSummaries: NodeSummary[] = [])
   }
   if (!candidates.length) return null;
   return candidates.reduce((latest, current) => {
-    const a = new Date(current).getTime();
-    const b = new Date(latest).getTime();
-    if (!Number.isFinite(a)) return latest;
-    if (!Number.isFinite(b)) return current;
+    const a = parseServerDate(current);
+    const b = parseServerDate(latest);
+    if (!a) return latest;
+    if (!b) return current;
     return a > b ? current : latest;
   }, candidates[0]);
 }

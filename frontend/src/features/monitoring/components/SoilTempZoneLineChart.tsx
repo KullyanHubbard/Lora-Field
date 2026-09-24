@@ -49,15 +49,15 @@ export default function SoilTempZoneLineChart({
   readings: Reading[];
   embedded?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const points = useMemo<Point[]>(() => {
-    return getHourlyMonitoringPoints(readings).map(({ label, reading }) => ({
+    return getHourlyMonitoringPoints(readings, i18n.language).map(({ label, reading }) => ({
       label,
       value: reading.soil_temp,
       band: classifyBand(reading.soil_temp),
     }));
-  }, [readings]);
+  }, [readings, i18n.language]);
 
   const latestAvg = latestValue(readings, 'soil_temp');
   const latestStatus = latestAvg != null ? soilTempStatus(latestAvg) : null;

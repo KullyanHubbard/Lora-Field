@@ -474,6 +474,7 @@
     "labelWeatherCode": "Weather Code",
     "labelTemperature": "Temperature",
     "now": "Now",
+    "hoursAhead": "+{{count}}h",
     "forecastTitle": "Weather Forecast",
     "forecastEmpty": "Forecast not yet available for this farm.",
     "historyTitle": "Temperature History (Open-Meteo)",

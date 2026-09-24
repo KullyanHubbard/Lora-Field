@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { BatteryFull, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { GaugeRing, type GaugeTone } from '@/components/ui/gauge-ring';
-import { buildBatteryGaugeModel } from '@/features/dashboard/dashboardHelpers';
+import { GaugeRing } from '@/components/ui/gauge-ring';
+import { buildBatteryGaugeModel, getNodeLabel } from '@/features/dashboard/dashboardHelpers';
+import { TONE_CLASSES } from '@/lib/toneClasses';
 import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
 
@@ -12,13 +13,6 @@ const BATTERY_VISIBLE_COUNT = 4;
 const BATTERY_GAP = 16;
 const BATTERY_TOTAL_GAP = BATTERY_GAP * (BATTERY_VISIBLE_COUNT - 1);
 const BATTERY_MIN_ITEM = 144;
-
-const batteryGlowClass: Record<GaugeTone, string> = {
-  green: 'bg-emerald-500/15 dark:bg-emerald-400/12',
-  yellow: 'bg-amber-500/15 dark:bg-amber-400/12',
-  red: 'bg-red-500/15 dark:bg-red-400/12',
-  neutral: '',
-};
 
 export function BatteryNodesCard({
   nodes,
@@ -159,7 +153,7 @@ export function BatteryNodesCard({
                       aria-hidden="true"
                       className={cn(
                         'pointer-events-none absolute left-1/2 top-10 -z-10 size-16 -translate-x-1/2 rounded-full blur-2xl',
-                        batteryGlowClass[model.tone],
+                        TONE_CLASSES[model.tone].glow,
                       )}
                     />
                   )}
@@ -168,7 +162,7 @@ export function BatteryNodesCard({
                     centerLabel={model.centerLabel}
                     centerSub={model.centerSubKey ? t(model.centerSubKey) : undefined}
                     tone={model.tone}
-                    caption={ns.node.name || ns.node.location || ns.node.id}
+                    caption={getNodeLabel(ns.node)}
                     animate={hasAnimated}
                   />
                 </div>

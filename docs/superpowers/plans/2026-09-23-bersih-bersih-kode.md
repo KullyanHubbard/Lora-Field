@@ -30,6 +30,7 @@ Jawab dengan kode, misalnya "K1 ya, K2 hapus". Fase 1 sampai 3 bisa jalan tanpa 
 | K9 | Boleh mengubah `package.json`? (hapus `vite-plugin-svgr`, pindahkan `shadcn`, `tailwindcss`, `@tailwindcss/vite`, `tw-animate-css` ke devDependencies) | Ya. `shadcn` sendiri menyumbang 9 dari 14 peringatan keamanan npm. |
 | K10 | Notifikasi (toast) mengikuti tema OS, padahal aplikasi selalu gelap. | Kunci toast ke tema gelap sekarang. Atur ulang saat toggle light mode dibuat. |
 | K11 | Akses dari luar: `start-ngrok.bat` atau Cloudflare Tunnel (yang tertulis di dokumentasi)? | Cloudflare Tunnel. Hapus `start-ngrok.bat`. |
+| K12 | Testimoni di landing page memakai nama dan klaim karangan (mis. "hasil panen naik 20%"). Hapus atau ganti dengan testimoni asli? | Hapus section testimoni sampai ada testimoni asli yang bisa diverifikasi. |
 
 ## Fase 1: Perbaikan mendesak
 
@@ -103,28 +104,28 @@ Cek tambahan: buka landing, peta kebun, Kebun Saya, dan halaman Irigasi. Semuany
 Tujuannya supaya satu aturan cukup diubah di satu tempat. Tampilan tidak berubah, kecuali format jam yang sekarang ikut bahasa aplikasi.
 
 Frontend:
-- [ ] **3.1 Label event log gateway** ditulis 2 kali. Pakai versi di `gateway/gatewayHelpers.ts`, hapus `getGatewayLogMeta` di `dashboard/dashboardHelpers.ts`. Daftar filter di `GatewayLogContent.tsx` diambil dari `GATEWAY_EVENT_FILTERS`.
-- [ ] **3.2 Jam prakiraan cuaca** ditulis 2 kali (`forecastSlotTime` di dashboardHelpers, `formatForecastLabel` di weatherHelpers). Satukan di weatherHelpers. Label "Sekarang" lewat terjemahan.
-- [ ] **3.3 Format jam terkunci ke bahasa Indonesia** di 5 tempat. Buat satu helper di `lib/format.ts` yang ikut bahasa aplikasi.
-- [ ] **3.4 Tanda nilai kosong** jadi satu konstanta di `lib/format.ts`. Isinya mengikuti K5.
-- [ ] **3.5 Aturan password dan email** di register, reset password, dan ganti password disatukan jadi satu helper di `features/auth`.
-- [ ] **3.6 Logo LoraField** ditulis ulang di `LandingPage.tsx` dan `AuthSplitLayout.tsx`. Pakai `BrandMark` bersama, pastikan ukurannya tetap sama.
-- [ ] **3.7 Warna status hijau/kuning/merah** didefinisikan di 4 tempat (`status-pill`, `gauge-ring`, `BatteryNodesCard`, dan tipe-tipenya). Satukan di `lib/status.ts`.
-- [ ] **3.8 Nama node** (`name`, kalau kosong lokasi, kalau kosong ID) ditulis ulang di 6 tempat. Jadikan satu helper.
-- [ ] **3.9 FarmContext** hanya menyalin ID kebun dari URL dan tidak dibaca siapa pun. Hapus `contexts/FarmContext.tsx`, pemasangannya di `app/providers.tsx`, dan efek sinkronnya di `AppLayout.tsx`. Hapus juga sisa rute lama `'add'` di `AppLayout.tsx:64`. Ini sekaligus membereskan 1 dari 2 error lint.
-- [ ] **3.10 Pencarian kode wilayah BMKG** dipanggil langsung dari komponen (`LocationDetector.tsx`, `addFarm/hooks.ts`). Pindahkan ke `addFarm/queries.ts` sesuai aturan data fetching.
+- [x] **3.1 Label event log gateway** ditulis 2 kali. Pakai versi di `gateway/gatewayHelpers.ts`, hapus `getGatewayLogMeta` di `dashboard/dashboardHelpers.ts`. Daftar filter di `GatewayLogContent.tsx` diambil dari `GATEWAY_EVENT_FILTERS`.
+- [x] **3.2 Jam prakiraan cuaca** ditulis 2 kali (`forecastSlotTime` di dashboardHelpers, `formatForecastLabel` di weatherHelpers). Satukan di weatherHelpers. Label "Sekarang" lewat terjemahan.
+- [x] **3.3 Format jam terkunci ke bahasa Indonesia** di 5 tempat. Buat satu helper di `lib/format.ts` yang ikut bahasa aplikasi.
+- [x] **3.4 Tanda nilai kosong** jadi satu konstanta di `lib/format.ts`. Isinya mengikuti K5.
+- [x] **3.5 Aturan password dan email** di register, reset password, dan ganti password disatukan jadi satu helper di `features/auth`.
+- [x] ~~**3.6 Logo LoraField** ditulis ulang di `LandingPage.tsx` dan `AuthSplitLayout.tsx`. Pakai `BrandMark` bersama, pastikan ukurannya tetap sama.~~ Dilewati: tiga logo sengaja beda bentuk (link dengan hover di sidebar, teks tebal di navbar landing, teks besar di panel login). Disatukan berarti mengubah tampilan dan perilaku.
+- [x] **3.7 Warna status hijau/kuning/merah** didefinisikan di 4 tempat (`status-pill`, `gauge-ring`, `BatteryNodesCard`, dan tipe-tipenya). Satukan di `lib/status.ts`.
+- [x] **3.8 Nama node** (`name`, kalau kosong lokasi, kalau kosong ID) ditulis ulang di 6 tempat. Jadikan satu helper. Catatan: hanya 3 pemakaian pola nama/lokasi/ID di Ringkasan Kebun yang disatukan. Pola nama/ID di Irigasi dan Riwayat sengaja dibiarkan karena lokasi sudah tampil terpisah.
+- [x] **3.9 FarmContext** hanya menyalin ID kebun dari URL dan tidak dibaca siapa pun. Hapus `contexts/FarmContext.tsx`, pemasangannya di `app/providers.tsx`, dan efek sinkronnya di `AppLayout.tsx`. Hapus juga sisa rute lama `'add'` di `AppLayout.tsx:64`. Ini sekaligus membereskan 1 dari 2 error lint.
+- [x] **3.10 Pencarian kode wilayah BMKG** dipanggil langsung dari komponen (`LocationDetector.tsx`, `addFarm/hooks.ts`). Pindahkan ke `addFarm/queries.ts` sesuai aturan data fetching.
 
 Backend:
-- [ ] **3.11 Cek "kebun sudah punya gateway"** dilakukan 2 kali. Hapus cek di `routers/gateways.py:99–104` karena `gateway_service.py` sudah menanganinya. Tambah 1 kasus uji di `smoke_test.py` untuk skenario ini.
-- [ ] **3.12 Pembersih nama wilayah dobel**: `wilayah_resolver.py:136–141` pakai `normalize_region_name`. `language_preferences.py` pakai satu fungsi UPDATE. Hapus alias yang tidak pernah terjangkau di `adm4.py:14`.
-- [ ] **3.13 Sisa kecil backend**:
+- [x] **3.11 Cek "kebun sudah punya gateway"** dilakukan 2 kali. Hapus cek di `routers/gateways.py:99–104` karena `gateway_service.py` sudah menanganinya. Tambah 1 kasus uji di `smoke_test.py` untuk skenario ini.
+- [x] **3.12 Pembersih nama wilayah dobel**: `wilayah_resolver.py:136–141` pakai `normalize_region_name`. `language_preferences.py` pakai satu fungsi UPDATE. Hapus alias yang tidak pernah terjangkau di `adm4.py:14`.
+- [x] **3.13 Sisa kecil backend**:
   - parameter `extra_claims` yang tidak dipakai (`auth.py`)
   - nilai awal mati dan query node dobel (`routers/nodes.py:111–132`)
   - kolom `created_at` yang tidak dibaca (`auth.py:64`)
   - 3 index dobel (`database.py:66`, `67`, `152`)
   - error Nominatim yang ditelan diam-diam, beri log (`adm4.py:126`)
   - label log yang salah (`main.py:67–71`)
-- [ ] **3.14 Sisa frontend lama di backend**: route `/{page_name}.html` (`main.py:141–147`) dan port Live Server 5500/5501 (`main.py:47–51`). Diff OpenAPI berkurang 1 path, itu disengaja.
+- [x] **3.14 Sisa frontend lama di backend**: route `/{page_name}.html` (`main.py:141–147`) dan port Live Server 5500/5501 (`main.py:47–51`). Diff OpenAPI berkurang 1 path, itu disengaja.
 
 Opsional, hanya kalau diminta (refactor besar):
 - Gabungkan 4 grafik monitoring yang hampir identik jadi satu komponen.
@@ -164,7 +165,7 @@ Rapikan kecil:
 - [ ] Teks yang belum lewat terjemahan: `MetricStatCard`, toast di queries dashboard dan Kebun Saya, header CSV, "km/jam". Di `id.json`, "Logout" dan "Home" diganti Bahasa Indonesia.
 - [ ] 10 import `../` diganti alias `@/`.
 - [ ] Bug kecil di `WeatherPage.tsx`: sumbu suhu mentok 36°C, warna garis tidak valid. Login jangan memotong spasi di password.
-- [ ] Waktu dari backend disimpan UTC tanpa penanda zona, lalu dibaca sebagai WIB, jadi meleset 7 jam. Card Gateway sudah dibetulkan di Fase 1. Kemungkinan masalah yang sama ada di `ActivityLogCard.tsx` dan `GatewayLogContent.tsx` (waktu log gateway), perlu dicek.
+- [x] **Prioritas.** Waktu dari backend disimpan UTC tanpa penanda zona, lalu dibaca sebagai WIB, jadi meleset 7 jam. Selesai (2026-09-24): satu fungsi `parseServerDate` di `lib/format.ts`, dipakai di log aktivitas, halaman Gateway, Monitoring, Riwayat (termasuk filter tanggal dan ekspor CSV), dan Irigasi.
 - [ ] Tipe data: hapus `signal_rssi` (tidak ada di backend), rapikan field forecast yang tidak pernah terisi, buat tipe khusus untuk `updateFarm`, hapus komentar basi di `types/index.ts`.
 - [ ] Kata `export` yang tidak perlu (sekitar 30 fungsi dan tipe yang hanya dipakai di file sendiri).
 - [ ] Em dash di 25 baris komentar kode.

@@ -7,6 +7,7 @@ import { formatSyncTime, moistureCondition, valveKeyFromDecision } from '@/featu
 import { getIrrigationStatusBadge, getValveStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
+import { EMPTY_VALUE } from '@/lib/format';
 
 export function IrrigationNodeCard({ ns, lower, upper }: { ns: NodeSummary; lower: number; upper: number }) {
   const { t, i18n } = useTranslation();
@@ -27,7 +28,7 @@ export function IrrigationNodeCard({ ns, lower, upper }: { ns: NodeSummary; lowe
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="truncate text-[0.95rem] font-medium text-foreground">{ns.node.name || ns.node.id}</div>
-          <div className="truncate text-xs text-muted-foreground">{ns.node.location || '—'}</div>
+          <div className="truncate text-xs text-muted-foreground">{ns.node.location || EMPTY_VALUE}</div>
         </div>
         {valveBadge ? (
           <StatusPill tone={valveBadge.tone} label={t(valveBadge.labelKey)} />
@@ -39,14 +40,14 @@ export function IrrigationNodeCard({ ns, lower, upper }: { ns: NodeSummary; lowe
       <div className="mt-3 flex items-end justify-between gap-3">
         <div className="flex items-baseline gap-2">
           <span className="text-3xl font-semibold tabular-nums text-foreground">
-            {moisture == null ? '—' : `${moisture}%`}
+            {moisture == null ? EMPTY_VALUE : `${moisture}%`}
           </span>
           <StatusPill tone={condition.tone} label={t(condition.labelKey)} />
         </div>
         {irrBadge ? (
           <StatusPill tone={irrBadge.tone} label={t(irrBadge.labelKey)} />
         ) : (
-          <StatusPill tone="neutral" label="—" />
+          <StatusPill tone="neutral" label={EMPTY_VALUE} />
         )}
       </div>
 

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getPreferredLanguage, isAppLanguage } from '@/i18n/language';
+import { EMPTY_VALUE } from '@/lib/format';
 
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
@@ -86,7 +87,7 @@ export default function SettingsPage() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="font-medium text-foreground">{user?.phone || '—'}</span>
+                <span className="font-medium text-foreground">{user?.phone || EMPTY_VALUE}</span>
                 <Button
                   size="icon"
                   variant="ghost"

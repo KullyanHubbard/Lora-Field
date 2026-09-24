@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatAreaHa } from '@/lib/format';
+import { EMPTY_VALUE, formatAreaHa } from '@/lib/format';
 import type { Farm } from '@/types';
 
 interface MyFarmsCardProps {
@@ -48,13 +48,13 @@ export function MyFarmsCard({
           <div className="rounded-lg bg-muted/40 p-3">
             <div className="text-xs text-muted-foreground">{t('myFarms.cardLocation')}</div>
             <p className="mt-1 truncate text-sm font-medium text-foreground">
-              {farm.location || '—'}
+              {farm.location || EMPTY_VALUE}
             </p>
           </div>
           <div className="rounded-lg bg-muted/40 p-3">
             <div className="text-xs text-muted-foreground">{t('myFarms.cardCrop')}</div>
             <p className="mt-1 truncate text-sm font-medium text-foreground">
-              {farm.crop_type || '—'}
+              {farm.crop_type || EMPTY_VALUE}
             </p>
           </div>
           <div className="rounded-lg bg-muted/40 p-3">

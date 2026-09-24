@@ -24,10 +24,7 @@ def ensure_user_language(
 ) -> Language:
     language = resolve_language(stored_language, browser_language)
     if stored_language != language:
-        connection.execute(
-            "UPDATE users SET language = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (language, user_id),
-        )
+        set_user_language(connection, user_id, language)
     return language
 
 
