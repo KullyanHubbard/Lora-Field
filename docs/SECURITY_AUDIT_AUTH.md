@@ -2,9 +2,8 @@
 
 **Date:** 2026-06-30  
 **Scope:** Frontend + Backend Auth endpoints  
-**Status:** 🔴 **CRITICAL VULNERABILITIES FOUND**
-
----
+**Status:** 🔴 **CRITICAL VULNERABILITIES FOUND**  
+**Updated:** 2026-09-24. Code references now point to `backend/app/routers/auth.py` (the backend was split into routers). All findings below are still open. The Cloudflare rate limiting rule that was the only mitigation has been removed.
 
 ## Executive Summary
 
@@ -16,8 +15,6 @@ The LoraField authentication system has **3 critical security flaws** and **1 mo
 4. **No brute-force attack detection or lockout** (missing)
 
 These vulnerabilities allow attackers to brute-force passwords, OTP codes, and compromise accounts without detection.
-
----
 
 ## Critical Issues
 
@@ -34,8 +31,8 @@ These vulnerabilities allow attackers to brute-force passwords, OTP codes, and c
 
 **Code Reference:**
 ```python
-# backend/app/main.py:839
-@app.post("/api/auth/reset-password/verify")
+# backend/app/routers/auth.py:298
+@router.post("/api/auth/reset-password/verify")
 def verify_reset_code(payload: ResetCodeVerifyRequest) -> dict:
     token = payload.token.strip()
     with get_connection() as connection:
@@ -50,8 +47,6 @@ def verify_reset_code(payload: ResetCodeVerifyRequest) -> dict:
 - Return 429 after limit exceeded
 - Consider: exponential backoff, IP-based tracking, CAPTCHA after 3 failed
 
----
-
 ### 2. Login Brute-Force Vulnerability (CRITICAL)
 
 **Location:** `POST /api/auth/login`
@@ -64,12 +59,12 @@ def verify_reset_code(payload: ResetCodeVerifyRequest) -> dict:
 
 **Code Reference:**
 ```python
-# backend/app/main.py:679
-@app.post("/api/auth/login", response_model=TokenResponse)
+# backend/app/routers/auth.py:104
+@router.post("/api/auth/login", response_model=TokenResponse)
 def login(payload: UserLogin, request: Request) -> dict:
     # ← No rate limit middleware
     email = payload.email.lower().strip()
-    ip = _client_ip(request)
+    ip = client_ip(request)
     # Logging is present but not enforced
     if not user or not verify_password(payload.password, user["password_hash"]):
         logger.warning("login | failed | ip=%s email=%s", ip, email)
@@ -85,8 +80,6 @@ def login(payload: UserLogin, request: Request) -> dict:
 - Return 429 with retry-after header
 - Log all failed attempts for audit trail
 
----
-
 ### 3. Dev Token Exposure in Forgot-Password (CRITICAL)
 
 **Location:** `POST /api/auth/forgot-password`
@@ -98,7 +91,7 @@ def login(payload: UserLogin, request: Request) -> dict:
 
 **Code Reference:**
 ```python
-# backend/app/main.py:814
+# backend/app/routers/auth.py:273
 if not email_sent and settings.expose_dev_tokens:
     response["reset_token"] = reset_token  # ← Token exposed!
     response["note"] = "Email provider belum aktif..."
@@ -106,7 +99,7 @@ if not email_sent and settings.expose_dev_tokens:
 
 **Config File:**
 ```python
-# backend/app/config.py:32
+# backend/app/config.py:31
 # WAJIB False di production — default False untuk fail-secure.
 expose_dev_tokens: bool = False
 ```
@@ -117,8 +110,6 @@ expose_dev_tokens: bool = False
 - Add startup validation: raise error if `expose_dev_tokens=True` and not localhost
 - Never return reset_token in production response
 - Add monitoring alert if this setting is enabled
-
----
 
 ## Moderate Issues
 
@@ -140,8 +131,6 @@ expose_dev_tokens: bool = False
   - POST /auth/reset-password/verify: 5 attempts / 15 min per token
   - POST /auth/reset-password: 5 attempts / 15 min per token
 
----
-
 ## Frontend Security Status
 
 ### What's Good ✅
@@ -156,8 +145,6 @@ expose_dev_tokens: bool = False
 - No CAPTCHA or challenge after N failed login attempts
 - No account lockout warning in UI
 - Login response doesn't expose rate-limit headers to client
-
----
 
 ## Attack Scenarios
 
@@ -197,8 +184,6 @@ Time to test 10M credentials: ~5–10 hours
 Detection: None (logs exist but not monitored)
 ```
 
----
-
 ## Recommendations (Priority Order)
 
 | Priority | Issue | Fix | Effort | Impact |
@@ -210,8 +195,6 @@ Detection: None (logs exist but not monitored)
 | 🟡 P1 | Account lockout UX | Show cooldown timer in UI | 1 hr | High |
 | 🟢 P2 | Failed login logging | Implement log aggregation | 4–6 hrs | Medium |
 | 🟢 P2 | CAPTCHA support | Add reCAPTCHA v3 option | 2–3 hrs | Medium |
-
----
 
 ## Implementation Checklist
 
@@ -235,8 +218,6 @@ Detection: None (logs exist but not monitored)
 - [ ] Set alert threshold (>50 429s in 5 min)
 - [ ] Review auth logs daily during beta
 
----
-
 ## Testing the Fixes
 
 ### Brute Force Test (after fix)
@@ -259,16 +240,12 @@ done
 python backend/app/main.py  # Should raise error if not localhost
 ```
 
----
-
 ## References
 
 - OWASP: [Credential Stuffing](https://owasp.org/www-community/attacks/Credential_stuffing)
 - OWASP: [Brute Force Attack](https://owasp.org/www-community/attacks/Brute_force_attack)
 - slowapi docs: [https://github.com/laurentS/slowapi](https://github.com/laurentS/slowapi)
 - NIST: [Digital Identity Guidelines - Authentication](https://pages.nist.gov/800-63-3/sp800-63b.html)
-
----
 
 ## Questions for Team
 

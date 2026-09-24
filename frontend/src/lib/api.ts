@@ -6,7 +6,6 @@ import type {
   Farm,
   FarmSummary,
   FarmGateway,
-  GatewayClaimPayload,
   GatewayLog,
   Reading,
   IrrigationLog,
@@ -174,17 +173,6 @@ export const api = {
 
   getFarmGateway: (farmId: string) =>
     apiFetch<{ gateway: FarmGateway | null }>(`/farms/${farmId}/gateway`),
-
-  claimFarmGateway: (farmId: string, payload: GatewayClaimPayload) =>
-    apiFetch<{ gateway: FarmGateway }>(`/farms/${farmId}/gateway/claim`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  unclaimFarmGateway: (farmId: string) =>
-    apiFetch<{ gateway: FarmGateway }>(`/farms/${farmId}/gateway/unclaim`, {
-      method: 'POST',
-    }),
 
   getLogs: (limit = 50) => apiFetch<{ items: IrrigationLog[] }>(`/logs?limit=${limit}`),
 };

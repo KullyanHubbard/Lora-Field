@@ -46,7 +46,7 @@ Modul di `backend/app/` (hasil Fase 1 sampai Fase 4 rapikan backend, 2026-09-23)
 | `auth.py`, `config.py`, `database.py`, `schemas.py`, `wilayah_resolver.py`, `language_preferences.py` | Sudah ada sebelumnya |
 
 Entrypoint tetap `app.main:app`. Aturan urutan route: catch-all SPA `/{full_path:path}` di `main.py` WAJIB tetap terdaftar paling akhir, setelah semua `include_router`. Kalau digeser ke atas, semua route API akan ketelan. Startup pakai `lifespan` (bukan `on_event` yang sudah deprecated).
-- **Sumber kebenaran tunggal untuk langkah rebuild:** `frontend/docs/Panduan-Rebuild-Frontend-LoraField.md`. Tiap fase ikuti bagian relevan; jangan menambah teknologi, library, atau langkah di luar panduan.
+- **Panduan rebuild lama** (`frontend/docs/Panduan-Rebuild-Frontend-LoraField.md`) sudah dihapus. Acuan sekarang CLAUDE.md ini; jangan menambah teknologi atau library di luar section Stack.
 
 Label UI: Bahasa Indonesia. Istilah teknis dipertahankan: LoRa, VWC, MQTT, Gateway, Node, BMKG, RSSI.
 
@@ -72,7 +72,7 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 - Field yang masih perlu verifikasi shape-nya terhadap response asli: struktur detail forecast BMKG di dalam summary cuaca. Kalau tidak cocok dengan type, LAPORKAN, jangan diam-diam ubah.
 - Sudah terverifikasi lewat `backend/scripts/smoke_test.py` (2026-09-22): kolom `weather` di decision_logs berisi string kondisi cuaca (mis. `Cerah Berawan`), bukan JSON. Response `/login` = `{ access_token, token_type, user }`. Response `/summary` = `{ farm, weather, thresholds, gateway_status, average_soil_moisture, nodes_total, nodes_online, nodes_problem, nodes }`.
 - Data dummy/mock harus ditandai jelas sebagai mock, jangan seolah dari backend.
-- Semua nilai mock frontend harus disentralisasi di `frontend/src/mocks/mockFarmScenario.ts`; query adapter boleh terpisah tetapi tidak boleh mendefinisikan ID, count, status, atau measurement dummy sendiri.
+- Saat ini frontend tidak punya data mock (`src/mocks/` sudah dihapus). Kalau mock dibutuhkan lagi, taruh semua nilainya terpusat di satu file di `frontend/src/mocks/`; query adapter tidak boleh mendefinisikan ID, count, status, atau measurement dummy sendiri.
 - Kalau ragu atau butuh keputusan desain: BERHENTI dan tanya.
 
 ## Konvensi Kode
@@ -82,6 +82,7 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 - Data fetching HANYA lewat TanStack Query hooks (`src/features/*/queries.ts`). Tidak ada useEffect + fetch manual di komponen.
 - Styling: Tailwind utility + CSS variable tema shadcn. DILARANG warna hardcoded di JS (pakai token tema seperti `text-primary`). DILARANG inline style kecuali nilai dinamis yang wajib (mis. tinggi bar dari data).
 - Import pakai alias `@/` (bukan `../../`).
+- Waktu dari backend (UTC tanpa penanda zona) dibaca lewat `parseServerDate` di `src/lib/format.ts`, jangan `new Date()` langsung. Waktu prakiraan BMKG/Open-Meteo sudah jam lokal, jangan lewat fungsi itu.
 
 ## Backend Endpoints
 
@@ -117,8 +118,8 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 |----------|--------|-----------|
 | `/api/farms/{farm_id}/gateway` | GET | Gateway yang terpasang di kebun. Return `{ gateway }`, isinya `null` kalau kebun belum punya gateway. routers/gateways.py:67 |
 | `/api/farms/{farm_id}/gateway/claim` | POST | Klaim gateway ke kebun. Body `GatewayClaimPayload` (`device_id`, `display_name`). 409 kalau gateway sudah dipakai kebun lain atau kebun sudah punya gateway. Return `{ gateway }`. routers/gateways.py:83 |
-| `/api/farms/{farm_id}/gateway/unclaim` | POST | Lepas gateway dari kebun. Baris `gateways` tidak dihapus, hanya `farm_id`, `display_name`, dan `claimed_at` yang dikosongkan supaya device bisa dipakai kebun lain. Return `{ gateway }`. routers/gateways.py:111 |
-| `/api/gateways/{gateway_id}/register` | POST | Batch register node dari firmware gateway. `gateway_id` di path = `device_id`, bukan kolom `id`. Body `GatewayRegisterPayload` (`farm_id`, `nodes[]`). Node yang belum ada dibuat otomatis. Response menyebut status `pending` untuk node baru dan `active` untuk node lama, tapi di DB keduanya tersimpan `online` (baterai awal 100, belum dari perangkat). Idempoten. Return `GatewayRegisterResponse`. routers/gateways.py:137 |
+| `/api/farms/{farm_id}/gateway/unclaim` | POST | Lepas gateway dari kebun. Baris `gateways` tidak dihapus, hanya `farm_id`, `display_name`, dan `claimed_at` yang dikosongkan supaya device bisa dipakai kebun lain. Return `{ gateway }`. routers/gateways.py:104 |
+| `/api/gateways/{gateway_id}/register` | POST | Batch register node dari firmware gateway. `gateway_id` di path = `device_id`, bukan kolom `id`. Body `GatewayRegisterPayload` (`farm_id`, `nodes[]`). Node yang belum ada dibuat otomatis. Response menyebut status `pending` untuk node baru dan `active` untuk node lama, tapi di DB keduanya tersimpan `online` (baterai awal 100, belum dari perangkat). Idempoten. Return `GatewayRegisterResponse`. routers/gateways.py:130 |
 
 ### Utils
 
@@ -166,7 +167,7 @@ Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun 
 
 - Rate limit brute-force untuk endpoint auth sensitif belum ada.
 
-> Catatan (2026-06-24): `PATCH /api/farms/{farm_id}` SUDAH ADA di backend (routers/farms.py:43), sebelumnya tertulis belum ada. Frontend `src/lib/api.ts` belum memanggilnya; kalau mau pakai fitur edit kebun, tambahkan method-nya dulu sesuai schema `FarmUpdate`.
+> Catatan (2026-06-24): `PATCH /api/farms/{farm_id}` SUDAH ADA di backend (routers/farms.py:43), sebelumnya tertulis belum ada. Frontend memanggilnya lewat `api.updateFarm` (`src/lib/api.ts`) untuk edit nama kebun di Kebun Saya.
 
 ## Logika Irigasi
 
@@ -174,7 +175,7 @@ Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun 
 - Valve ditutup jika kelembapan tanah sudah cukup.
 - Irigasi ditunda jika BMKG memprediksi hujan.
 - Sistem menunggu data sensor terbaru jika gateway offline.
-- RSSI tidak disimpan di backend, selalu tampilkan `—` di tabel node.
+- RSSI tidak disimpan di backend, selalu tampilkan `-` (konstanta `EMPTY_VALUE` di `src/lib/format.ts`, penanda nilai kosong untuk seluruh UI).
 
 ## Akses User
 
@@ -190,7 +191,7 @@ Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun 
 - Badge status warna konsisten: green/yellow/red.
 - Progress bar selalu sertakan label range `0%` dan `100%`.
 - Landing page marketing publik ADA di route `/` (lihat tabel Routes). Aturan lama "jangan buat landing page" sudah dicabut user (2026-06-21). Dashboard tetap pengalaman utama bagi user yang sudah login; landing hanya etalase di `/` (publik, tanpa auth guard, untuk semua pengunjung).
-- Logo/brand: ikon `Sprout` (lucide-react) + teks "LoraField". Lihat `BrandMark` di `frontend/src/components/layout/AppLayout.tsx` dan landing. Favicon: `frontend/public/favicon.svg`.
+- Logo/brand: teks "LoraField" (ikon `Sprout` sementara dihapus). Lihat `BrandMark` di `frontend/src/components/layout/BrandMark.tsx`. Favicon: `frontend/public/favicon.svg` (masih logo bawaan Vite, belum diganti).
 
 ### Pondasi Layout Ringkasan Kebun
 
@@ -287,9 +288,9 @@ Validasi sebelum selesai:
 - Tidak ada section lain berubah.
 - Tidak ada file tidak relevan ikut berubah.
 
-### Routes & Pages (target rebuild)
+### Routes & Pages
 
-Route dan path dipertahankan sama. File `.jsx` lama = referensi porting.
+Rute aktual ada di `frontend/src/app/router.tsx`. Kolom kedua = referensi porting dari frontend lama. Rute lain (`*`) diarahkan ke `/select-farms`.
 
 | Route | Page (referensi lama) | Keterangan |
 |-------|------|-----------|
@@ -297,15 +298,14 @@ Route dan path dipertahankan sama. File `.jsx` lama = referensi porting.
 | `/login` | `LoginPage.jsx` | Login + inline forgot password 2-step |
 | `/register` | `RegisterPage.jsx` | Daftar akun baru |
 | `/reset-password` | `ResetPasswordPage.jsx` | Flow lupa password (OTP 2 tahap) |
-| `/dashboard` | `DashboardPage.jsx` | Peta kebun (Leaflet) + card kebun + search + hapus |
-| `/farms` | `FarmsPage.jsx` | Daftar kebun tanpa peta |
-| `/farms/add` | `AddFarmPage.jsx` | Form tambah kebun baru |
+| `/select-farms` | `DashboardPage.jsx` | Peta kebun (Leaflet), pilih kebun lewat marker. Halaman awal setelah login |
+| `/my-farms` | `FarmsPage.jsx` | Card kebun + search + edit nama, warna marker, hapus |
+| `/addFarm` | `AddFarmPage.jsx` | Form tambah kebun baru |
 | `/farms/:id` | `FarmDetailPage.jsx` | Info kebun + status + node table |
 | `/farms/:id/monitoring` | `MonitoringPage.jsx` | Grafik sensor + tabel reading |
-| `/farms/:id/irrigation` | `IrrigationPage.jsx` | Status valve + tabel logika + panel keputusan |
-| `/farms/:id/weather` | `WeatherPage.jsx` | Prakiraan cuaca BMKG + impact card |
+| `/farms/:id/irrigation` | `IrrigationPage.jsx` | Status irigasi, statistik, kartu per node, rekomendasi |
+| `/farms/:id/weather` | `WeatherPage.jsx` | Cuaca sekarang, grafik suhu, prakiraan BMKG |
 | `/farms/:id/gateway` | `GatewayPage.jsx` | Status gateway |
-| `/farms/:id/nodes` | `NodesPage.jsx` | Tabel node sensor |
 | `/farms/:id/logs` | `LogsPage.jsx` | Riwayat irigasi, filter + export CSV |
 | `/settings` | `SettingsPage.jsx` | Profil akun, edit nomor HP, ganti sandi, logout |
 | `/change-password` | `ChangePasswordPage.jsx` | Ganti password (sudah login) |
@@ -316,14 +316,18 @@ Sidebar otomatis ganti isi saat masuk farm context:
 
 ```text
 [Selector mode]       [Farm context mode]
-Dashboard             (FarmSwitcher pill di Topbar)
+Home (ke landing)     < Pilih Kebun + nama kebun
+Pilih Kebun           Dashboard
 Kebun Saya            Monitoring
-Settings              Irigasi
+Registrasi Kebun      Irigasi
                       Gateway
-                      Node Sensor
                       Cuaca
                       Riwayat
+
+Footer (dua mode): Pengaturan, Pusat Bantuan, Ganti Akun
 ```
+
+Mode ditentukan dari URL: `/farms/:id/*` = farm context mode.
 
 Jangan mengubah struktur sidebar kecuali user meminta eksplisit.
 
@@ -360,7 +364,7 @@ Jangan mengubah struktur sidebar kecuali user meminta eksplisit.
 
 ## Cara Kerja (anti-error)
 
-- Kerjakan SATU fase per instruksi. Setelah selesai: jalankan `npx tsc --noEmit` dan `npm run dev`, pastikan nol error.
+- Kerjakan SATU fase per instruksi. Setelah selesai: jalankan `npx tsc -p tsconfig.app.json --noEmit` dan `npm run dev`, pastikan nol error. (`npx tsc --noEmit` polos tidak memeriksa apa pun karena `tsconfig.json` root hanya berisi references.)
 - Kalau yang diubah backend, verifikasinya `python backend/scripts/smoke_test.py` (harus nol gagal) plus diff `backend/scripts/openapi_snapshot.py` sebelum/sesudah (harus kosong kalau kontrak API tidak diniatkan berubah).
 - Tampilkan ringkasan file yang dibuat/diubah.
 - JANGAN lanjut ke fase berikutnya tanpa diminta. Akurasi di atas kecepatan.

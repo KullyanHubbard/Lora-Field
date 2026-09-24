@@ -34,7 +34,8 @@ export function NodeSensorCard({
           {selectedNs && (
             <div className="flex items-center gap-2">
               <span className="text-xs tabular-nums text-muted-foreground">
-                {selectedNs.signal_rssi ?? `${EMPTY_VALUE} dBm`}
+                {/* RSSI belum disimpan backend, jadi selalu kosong. */}
+                {`${EMPTY_VALUE} dBm`}
               </span>
               {badge && <StatusPill tone={badge.tone} label={t(badge.labelKey)} />}
             </div>

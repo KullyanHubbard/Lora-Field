@@ -6,11 +6,7 @@ from .database import row_to_dict
 
 
 def client_ip(request: Request) -> str:
-    """Ambil IP klien sebenarnya. Kalau di belakang Cloudflare Tunnel, pakai
-    header CF-Connecting-IP. Fallback ke X-Forwarded-For atau remote_addr."""
-    cf = request.headers.get("CF-Connecting-IP")
-    if cf:
-        return cf
+    """Ambil IP klien untuk log: X-Forwarded-For (kalau lewat proxy), lalu remote_addr."""
     xff = request.headers.get("X-Forwarded-For", "")
     if xff:
         return xff.split(",")[0].strip()

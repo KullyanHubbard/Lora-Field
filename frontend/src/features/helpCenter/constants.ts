@@ -9,5 +9,6 @@
 
 export const contactInfo = {
   email: 'support@lorafield.id',
-  whatsapp: '+6281234567890',
+  // Kosong = kontak WhatsApp disembunyikan. Isi dengan nomor asli (format +62...).
+  whatsapp: '',
 };

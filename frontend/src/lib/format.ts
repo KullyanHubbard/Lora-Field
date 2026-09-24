@@ -5,7 +5,7 @@ import type { TFunction } from 'i18next';
 export const DEG_C = '°C';
 
 // Penanda nilai kosong di seluruh UI. Satu tempat supaya gampang diganti.
-export const EMPTY_VALUE = '—';
+export const EMPTY_VALUE = '-';
 
 // Waktu dari backend (SQLite CURRENT_TIMESTAMP) = UTC tanpa penanda zona,
 // "YYYY-MM-DD HH:MM:SS". new Date() membacanya sebagai jam lokal (meleset 7 jam

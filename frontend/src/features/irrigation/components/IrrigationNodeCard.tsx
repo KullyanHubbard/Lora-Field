@@ -1,7 +1,6 @@
 import { Timer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { StatusPill } from '@/components/ui/status-pill';
-import { Button } from '@/components/ui/button';
 import { NODE_CARD_MIN_HEIGHT_CLASS } from '@/features/irrigation/irrigationLayout';
 import { formatSyncTime, moistureCondition, valveKeyFromDecision } from '@/features/irrigation/irrigationHelpers';
 import { getIrrigationStatusBadge, getValveStatusBadge } from '@/lib/status';
@@ -67,15 +66,6 @@ export function IrrigationNodeCard({ ns, lower, upper }: { ns: NodeSummary; lowe
           <Timer className="mr-1 inline size-3" aria-hidden="true" />
           {formatSyncTime(reading?.created_at ?? ns.node.updated_at, i18n.language)}
         </span>
-      </div>
-
-      <div className="mt-auto grid grid-cols-2 gap-2 pt-3">
-        <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
-          {t('irrigation.detailAction')}
-        </Button>
-        <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
-          {t('irrigation.manualAction')}
-        </Button>
       </div>
     </div>
   );

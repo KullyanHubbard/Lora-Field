@@ -14,8 +14,6 @@ export interface LoginViewModel {
   setEmail: (value: string) => void;
   password: string;
   setPassword: (value: string) => void;
-  rememberMe: boolean;
-  setRememberMe: (value: boolean) => void;
   submitting: boolean;
   error: string;
   submit: () => Promise<void>;
@@ -46,14 +44,13 @@ export function useLoginViewModel(): LoginViewModel {
 
   const [email, setEmail] = useState(readPrefillEmail);
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const submit = async () => {
+    // Password dikirim apa adanya (tidak di-trim), sama seperti saat register.
     const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    if (!trimmedEmail || !trimmedPassword) {
+    if (!trimmedEmail || !password) {
       setError(t('auth.login.errorRequired'));
       return;
     }
@@ -61,7 +58,7 @@ export function useLoginViewModel(): LoginViewModel {
     setError('');
     setSubmitting(true);
     try {
-      await login(trimmedEmail, trimmedPassword);
+      await login(trimmedEmail, password);
       navigate(getRedirectPath(location.state), { replace: true });
     } catch (err) {
       setError((err as Error).message || t('auth.login.errorFallback'));
@@ -74,8 +71,6 @@ export function useLoginViewModel(): LoginViewModel {
     setEmail,
     password,
     setPassword,
-    rememberMe,
-    setRememberMe,
     submitting,
     error,
     submit,

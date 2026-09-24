@@ -1,6 +1,6 @@
 # Backend Operations Scripts
 
-Tooling untuk run produksi LoraField di Windows. Pakai semua script ini sebelum expose backend ke Cloudflare Tunnel.
+Tooling untuk run produksi LoraField di Windows.
 
 ## Isi folder
 
@@ -41,8 +41,6 @@ Log output di `backend/logs/`:
 - `supervisor.log`: output `start-resilient.ps1`
 - `backup.log`: output backup harian
 
----
-
 ## 1. Setup auto-restart (Task Scheduler)
 
 Tujuan: backend otomatis hidup saat Windows boot, dan otomatis restart kalau uvicorn crash.
@@ -78,8 +76,6 @@ Tujuan: backend otomatis hidup saat Windows boot, dan otomatis restart kalau uvi
 - `curl http://127.0.0.1:8000/health` harus 200.
 - Reboot Windows. Setelah login, backend harus hidup tanpa intervensi.
 
----
-
 ## 2. Setup backup harian (Task Scheduler)
 
 Tujuan: salin `lorafield.db` setiap hari ke folder `data/backups/`, simpan 7 backup terakhir.
@@ -106,35 +102,7 @@ copy "backend\data\backups\lorafield-YYYY-MM-DD-HHMMSS.db" "backend\data\lorafie
 # Restart backend
 ```
 
----
-
-## 3. Cloudflare WAF: Rate Limiting
-
-Karena kita expose via Cloudflare Tunnel, rate limiting paling efisien di edge Cloudflare (zero overhead di backend Python).
-
-**Setup (free tier punya 1 rule, cukup untuk MVP):**
-
-1. Login [dash.cloudflare.com](https://dash.cloudflare.com) → pilih domain
-2. **Security → WAF → Rate limiting rules → Create rule**
-3. Settings:
-   - **Rule name**: `LoraField auth bruteforce protection`
-   - **If incoming requests match**: 
-     - Field: `URI Path` | Operator: `starts with` | Value: `/api/auth/`
-   - **When rate exceeds**: `10 requests per 1 minute` (per IP)
-   - **Then take action**: `Block` selama `1 minute`
-4. **Deploy**
-
-**Rule tambahan (opsional, kalau punya paket Pro+):**
-- `/api/auth/login` saja: 5 req/menit (lebih ketat)
-- `/api/auth/forgot-password`: 3 req/menit
-
-**Verifikasi:**
-- Coba login salah 11x dari 1 browser/IP → request ke-11 harus 429 dari Cloudflare.
-- Cek **Security → Events** di dashboard Cloudflare untuk lihat rule trigger.
-
----
-
-## 4. Manual operations
+## 3. Manual operations
 
 **Cek status:**
 ```powershell

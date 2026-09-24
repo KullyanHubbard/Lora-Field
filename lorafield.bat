@@ -3,8 +3,8 @@ setlocal enabledelayedexpansion
 title LoraField Backend Manager
 
 rem ============================================================
-rem  LoraField Backend Manager — start / stop / restart / status
-rem  Pengganti start.bat. Klik dua kali, pilih menu.
+rem  LoraField Backend Manager: start / stop / restart / status
+rem  Klik dua kali, pilih menu.
 rem ============================================================
 
 set "BACKEND_DIR=%~dp0backend"

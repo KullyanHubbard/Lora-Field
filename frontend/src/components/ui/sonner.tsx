@@ -1,15 +1,14 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheck, Info, TriangleAlert, OctagonX, Loader2 } from "lucide-react"
 
+// Aplikasi selalu tema gelap (<html class="dark">), jadi toast dikunci gelap juga.
+// Ganti jadi mengikuti tema aplikasi saat toggle light mode dibuat.
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="dark"
       className="toaster group"
       icons={{
         success: (

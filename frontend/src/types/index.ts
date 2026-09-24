@@ -68,11 +68,6 @@ export interface FarmGateway {
   claimed_at: string | null;
 }
 
-export interface GatewayClaimPayload {
-  device_id: string;
-  display_name: string;
-}
-
 export interface WeatherForecastPoint {
   local_datetime?: string;
   datetime?: string;
@@ -108,7 +103,6 @@ export interface NodeSummary {
   // backend kirim null kalau node belum punya reading (main.py:1063)
   latest_reading: Reading | null;
   decision: { decision: string; valve_state: string } | null;
-  signal_rssi?: string; // opsional sampai backend punya field RSSI
 }
 
 export interface FarmSummary {

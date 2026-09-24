@@ -31,7 +31,6 @@ baseline.json
 sesudah.json
 
 # Executables
-ngrok.exe
 *.exe
 
 # Node / Vite

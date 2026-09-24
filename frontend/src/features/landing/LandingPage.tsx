@@ -12,7 +12,6 @@ import {
   MapPin,
   Menu,
   Sprout,
-  Star,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -57,52 +56,6 @@ const FEATURE_ICONS = [
   <Sprout className="size-5" key="sprout" />,
   <MapPin className="size-5" key="mappin" />,
   <History className="size-5" key="history" />,
-]
-
-// Testimoni sengaja tidak diterjemahkan, ini konten user.
-const testimonials = [
-  {
-    quote:
-      "Sejak pakai LoraField, saya nggak perlu bolak-balik cek sawah lagi. Katup irigasi buka sendiri saat tanah kering, hasil panen malah naik 20%.",
-    author: "Budi Santoso",
-    role: "Petani Padi, Jawa Barat",
-    rating: 5,
-  },
-  {
-    quote:
-      "Dulu sering kebanjiran atau kekeringan gara-gara lupa nutup air. Sekarang sistem yang atur, cabai saya jadi lebih sehat dan pertumbuhannya merata.",
-    author: "Siti Aminah",
-    role: "Petani Cabai, Jawa Tengah",
-    rating: 5,
-  },
-  {
-    quote:
-      "Kami kelola banyak kebun sekaligus. Dengan peta interaktif dan monitoring real-time, semua kebun terpantau dari satu dashboard saja.",
-    author: "Ahmad Rizki",
-    role: "Pengelola Perkebunan, Sumatera",
-    rating: 5,
-  },
-  {
-    quote:
-      "Fitur prediksi cuaca BMKG sangat membantu. Kalau ada prediksi hujan, irigasi otomatis ditunda. Air terbuang lebih sedikit, biaya operasional turun.",
-    author: "Dewi Lestari",
-    role: "Petani Sayuran, Malang",
-    rating: 5,
-  },
-  {
-    quote:
-      "Saya awalnya ragu sama teknologi. Tapi pasang sensor dan gateway cukup mudah. Dalam seminggu, saya sudah bisa pantau kebun dari HP.",
-    author: "Pak Tarno",
-    role: "Petani Melon, Yogyakarta",
-    rating: 5,
-  },
-  {
-    quote:
-      "Untuk tanaman organik, kontrol air harus tepat. LoraField bantu kami menjaga kelembaban tanah ideal tanpa over-irrigasi.",
-    author: "Made Wirawan",
-    role: "Petani Organik, Bali",
-    rating: 5,
-  },
 ]
 
 function BrandMark() {
@@ -157,12 +110,6 @@ export default function LandingPage() {
               {t("landing.navFeatures")}
             </a>
             <a
-              href="#testimonials"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t("landing.navTestimonials")}
-            </a>
-            <a
               href="#faq"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
@@ -208,9 +155,6 @@ export default function LandingPage() {
               <div className={`${SHELL} flex flex-col gap-4 py-4`}>
                 <a href="#features" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
                   {t("landing.navFeatures")}
-                </a>
-                <a href="#testimonials" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  {t("landing.navTestimonials")}
                 </a>
                 <a href="#faq" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
                   {t("landing.navFaq")}
@@ -387,63 +331,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
-        <section id="testimonials" className="w-full py-20 md:py-32">
-          <div className={SHELL}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="mb-12 flex flex-col items-center justify-center space-y-4 text-center"
-            >
-              <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-                {t("landing.navTestimonials")}
-              </Badge>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                {t("landing.testimonialsTitle")}
-              </h2>
-              <p className="max-w-[800px] text-muted-foreground md:text-lg">
-                {t("landing.testimonialsSubtitle")}
-              </p>
-            </motion.div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {testimonials.map((testimonial, i) => (
-                <motion.div
-                  key={testimonial.author}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.05 }}
-                >
-                  <Card className="h-full overflow-hidden border border-border/40 bg-gradient-to-b from-background to-muted/10 py-0 backdrop-blur transition-all hover:shadow-md">
-                    <CardContent className="flex h-full flex-col p-6">
-                      <div className="mb-4 flex">
-                        {Array(testimonial.rating)
-                          .fill(0)
-                          .map((_, j) => (
-                            <Star key={j} className="size-4 fill-primary text-primary" />
-                          ))}
-                      </div>
-                      <p className="mb-6 flex-grow text-lg">{testimonial.quote}</p>
-                      <div className="mt-auto flex items-center gap-4 border-t border-border/40 pt-4">
-                        <div className="flex size-10 items-center justify-center rounded-full bg-muted font-medium text-foreground">
-                          {testimonial.author.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-medium">{testimonial.author}</p>
-                          <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         <section id="faq" className="w-full py-20 md:py-32">
           <div className={SHELL}>
             <motion.div
@@ -534,11 +421,6 @@ export default function LandingPage() {
                 <li>
                   <a href="#features" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                     {t("landing.footerFeatures")}
-                  </a>
-                </li>
-                <li>
-                  <a href="#testimonials" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    {t("landing.footerTestimonials")}
                   </a>
                 </li>
                 <li>

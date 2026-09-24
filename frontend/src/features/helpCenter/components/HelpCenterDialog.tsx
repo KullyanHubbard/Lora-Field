@@ -49,35 +49,38 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
             </CardContent>
           </Card>
 
-          {/* WhatsApp */}
-          <Card>
-            <CardContent className="flex items-start gap-4 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                <MessageCircle className="size-5 text-green-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold">{t('helpCenter.contact.whatsapp')}</h3>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {contactInfo.whatsapp}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {contactInfo.whatsapp && (
+            <Card>
+              <CardContent className="flex items-start gap-4 p-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                  <MessageCircle className="size-5 text-green-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold">{t('helpCenter.contact.whatsapp')}</h3>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {contactInfo.whatsapp}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        <div className="mt-4 flex justify-center">
-          <Button asChild>
-            <a
-              href={`https://wa.me/${contactInfo.whatsapp.replace(/[^0-9]/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={onClose}
-            >
-              <MessageCircle className="mr-2 size-4" />
-              {t('helpCenter.contact.chatButton')}
-            </a>
-          </Button>
-        </div>
+        {contactInfo.whatsapp && (
+          <div className="mt-4 flex justify-center">
+            <Button asChild>
+              <a
+                href={`https://wa.me/${contactInfo.whatsapp.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onClose}
+              >
+                <MessageCircle className="mr-2 size-4" />
+                {t('helpCenter.contact.chatButton')}
+              </a>
+            </Button>
+          </div>
+        )}
       </AlertDialogContent>
     </AlertDialog>
   );
