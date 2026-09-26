@@ -33,9 +33,11 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
       className="h-full w-full rounded-lg"
       aria-label={t('selectFarms.mapLabel')}
     >
+      {/* Tile OpenStreetMap: gratis tanpa key (CARTO kini wajib API key). Server OSM
+          dikelola relawan: atribusi wajib tampil dan pemakaian harus wajar. */}
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {points.map(({ farm, pos }) => (
         <Marker
