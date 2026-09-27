@@ -3,6 +3,8 @@ import type { AppLanguage } from '@/i18n/language';
 // Base semantic tone. StatusTone = versi tanpa neutral. Kelas warnanya di lib/toneClasses.ts.
 export type SemanticTone = 'green' | 'yellow' | 'red' | 'neutral';
 
+export type IrrigationMode = 'auto' | 'manual';
+
 export interface Farm {
   id: string;
   name: string;
@@ -14,7 +16,11 @@ export interface Farm {
   longitude: number;
   bmkg_adm4_code: string;
   status: string;
+  irrigation_mode: IrrigationMode;
   updated_at: string;
+  // Threshold VWC dari jenis tanaman. null = tanaman tidak dikenal, backend pakai default.
+  lower_threshold?: number | null;
+  upper_threshold?: number | null;
 }
 
 export interface Reading {
@@ -24,6 +30,8 @@ export interface Reading {
   soil_temp: number;
   air_temp: number;
   air_humidity: number;
+  // dBm, diukur gateway saat menerima paket. null untuk reading tanpa laporan RSSI.
+  rssi?: number | null;
   created_at: string;
 }
 
@@ -31,9 +39,38 @@ export interface Node {
   id: string;
   name: string;
   location: string;
-  status: string;
-  battery: number;
+  // Diturunkan backend dari last_seen_at: offline kalau tidak ada data melewati batas waktu.
+  status: 'online' | 'offline';
+  // null kalau perangkat belum pernah melaporkan baterai.
+  battery: number | null;
+  last_seen_at?: string | null;
+  // Perintah valve mode manual. sent_at NULL = belum terkirim ke alat (MQTT belum ada).
+  valve_command: 'open' | 'closed' | null;
+  valve_command_at: string | null;
+  valve_command_sent_at: string | null;
+  // Waktu tutup otomatis valve yang dibuka manual (UTC, format waktu server).
+  valve_auto_close_at: string | null;
   updated_at: string;
+}
+
+// Jenis keputusan irigasi dari backend (irrigation.py calculate_decision).
+// disconnected hanya dari summary untuk node offline, tidak pernah tercatat di decision_logs.
+// manual_* untuk kebun mode manual; manual_timeout hanya tercatat di decision_logs.
+export type DecisionType =
+  | 'open'
+  | 'delayed'
+  | 'closed'
+  | 'standby'
+  | 'disconnected'
+  | 'manual_open'
+  | 'manual_closed'
+  | 'manual_timeout';
+
+interface IrrigationDecision {
+  type: DecisionType;
+  decision: string;
+  valve_state: string;
+  reason: string;
 }
 
 export interface IrrigationLog {
@@ -43,6 +80,8 @@ export interface IrrigationLog {
   // String kondisi cuaca (mis. "Cerah Berawan"), terverifikasi smoke test 2026-09-22.
   weather: string;
   decision: string;
+  // null untuk log lama yang teks keputusannya tidak dikenali saat migrasi.
+  decision_type: DecisionType | null;
   valve_state: string;
   reason: string;
   created_at: string;
@@ -99,7 +138,7 @@ export interface NodeSummary {
   node: Node;
   // null kalau node belum punya reading (routers/farms.py, summary)
   latest_reading: Reading | null;
-  decision: { decision: string; valve_state: string } | null;
+  decision: IrrigationDecision | null;
 }
 
 export interface FarmSummary {

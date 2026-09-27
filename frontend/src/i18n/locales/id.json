@@ -8,9 +8,7 @@
   },
   "status": {
     "online": "Online",
-    "offline": "Offline",
-    "standby": "Standby",
-    "pending": "Menunggu"
+    "offline": "Offline"
   },
   "auth": {
     "sessionLoading": "Memuat sesi…",
@@ -57,7 +55,7 @@
       "emailLabel": "Email",
       "emailPlaceholder": "nama@email.com",
       "passwordLabel": "Password",
-      "passwordPlaceholder": "Minimal 6 karakter",
+      "passwordPlaceholder": "Minimal {{min}} karakter",
       "confirmLabel": "Ulangi Password",
       "confirmPlaceholder": "Ulangi password",
       "submit": "Buat Akun",
@@ -66,7 +64,7 @@
       "loginLink": "Masuk",
       "errorNameRequired": "Nama lengkap wajib diisi.",
       "errorEmailInvalid": "Email belum valid.",
-      "errorPasswordTooShort": "Password minimal 6 karakter.",
+      "errorPasswordTooShort": "Password minimal {{min}} karakter.",
       "errorPasswordMismatch": "Ulangi password belum sama."
     },
     "resetPassword": {
@@ -75,18 +73,18 @@
       "copyright": "© 2026 LoraField",
       "privacyPolicy": "Kebijakan Privasi",
       "title": "Atur Ulang Password",
-      "descEmail": "Masukkan email akun Anda untuk menerima kode reset 6 digit.",
-      "descOtp": "Masukkan kode 6 digit yang dikirim ke {{email}}.",
+      "descEmail": "Masukkan email akun Anda untuk menerima kode reset {{digits}} digit.",
+      "descOtp": "Masukkan kode {{digits}} digit yang dikirim ke {{email}}.",
       "descPassword": "Buat password baru untuk akun Anda.",
       "emailLabel": "Email Akun",
       "emailPlaceholder": "nama@email.com",
       "sendCode": "Kirim Kode Reset",
-      "otpLabel": "Kode Reset (6 Digit)",
+      "otpLabel": "Kode Reset ({{digits}} Digit)",
       "otpPlaceholder": "Contoh: 123456",
       "verifyCode": "Verifikasi Kode",
       "changeEmail": "Ganti email",
       "newPasswordLabel": "Password Baru",
-      "newPasswordPlaceholder": "Minimal 6 karakter",
+      "newPasswordPlaceholder": "Minimal {{min}} karakter",
       "confirmLabel": "Ulangi Password Baru",
       "confirmPlaceholder": "Ulangi password baru",
       "updatePassword": "Perbarui Password",
@@ -94,8 +92,8 @@
       "backToLoginText": "Kembali ke",
       "loginLink": "Masuk",
       "errorEmailInvalid": "Email belum valid.",
-      "errorOtpInvalid": "Kode reset harus 6 digit angka.",
-      "errorPasswordTooShort": "Password baru minimal 6 karakter.",
+      "errorOtpInvalid": "Kode reset harus {{digits}} digit angka.",
+      "errorPasswordTooShort": "Password baru minimal {{min}} karakter.",
       "errorPasswordMismatch": "Konfirmasi password belum sama."
     },
     "changePassword": {
@@ -104,13 +102,13 @@
       "currentLabel": "Password Saat Ini",
       "currentPlaceholder": "Masukkan password saat ini",
       "newLabel": "Password Baru",
-      "newPlaceholder": "Minimal 6 karakter",
+      "newPlaceholder": "Minimal {{min}} karakter",
       "confirmLabel": "Ulangi Password Baru",
       "confirmPlaceholder": "Ulangi password baru",
       "submit": "Simpan Password Baru",
       "backToSettings": "Kembali ke Pengaturan",
       "errorCurrentRequired": "Password saat ini wajib diisi.",
-      "errorNewTooShort": "Password baru minimal 6 karakter.",
+      "errorNewTooShort": "Password baru minimal {{min}} karakter.",
       "errorSamePassword": "Password baru tidak boleh sama dengan password lama.",
       "errorMismatch": "Konfirmasi password belum sama."
     },
@@ -120,14 +118,18 @@
   "irrigation": {
     "errorLoad": "Gagal memuat data irigasi: {{message}}",
     "noData": "Data tidak tersedia.",
-    "modeLabel": "Mode",
     "perNodeTitle": "Detail per Node",
     "perNodeEmpty": "Belum ada node untuk kebun ini.",
     "waitingData": "Menunggu data",
     "title": "Irigasi",
-    "subtitle": "Pantau kelembapan, keputusan irigasi, dan status valve semua node.",
-    "modeActive": "Irigasi aktif",
-    "modeMonitor": "Mode pantau",
+    "activity": {
+      "active": "Aktif",
+      "standby": "Standby",
+      "delayed": "Tertunda",
+      "offline": "Offline",
+      "initializing": "Inisialisasi",
+      "notConfigured": "Belum Terhubung"
+    },
     "gatewayLabel": "Gateway",
     "syncLabel": "Sync",
     "totalNodes": "Total node",
@@ -189,10 +191,27 @@
     "weatherReadMore": "Selengkapnya",
     "valveStatusCard": "Status Valve",
     "valveAuto": "Otomatis",
+    "valveManual": "Manual",
+    "valveDisconnected": "Terputus",
+    "valveModeGroup": "Mode valve",
+    "valveModeConfirm": "Ganti ke mode {{mode}}?",
+    "valveModeApply": "Terapkan",
+    "valveModeCancel": "Batal",
+    "valveModeChanged": "Mode valve diganti ke {{mode}}.",
+    "valveStart": "Jalankan Pengairan",
+    "valveStop": "Hentikan Pengairan",
+    "valveManage": "Atur Valve",
+    "valveSheetDescription": "Buka atau tutup valve tiap node. Valve yang dibuka manual berhenti sendiri setelah batas waktu.",
+    "valveUnsentNote": "Posisi switch adalah perintah yang tersimpan di server. Valve fisik belum bergerak karena perintah belum terkirim ke alat (MQTT belum tersambung).",
+    "valveAutoCloseAt": "Berhenti otomatis {{time}}",
+    "valveNoSensorData": "Belum ada data sensor",
+    "valveNoNodes": "Kebun ini belum punya node.",
+    "valveCommandSaved": "Perintah valve disimpan.",
+    "valveCommandUnsent": "Belum terkirim ke alat karena MQTT belum tersambung.",
+    "valveCommandError": "Perintah valve gagal disimpan.",
     "valveOpen": "buka",
     "valveClosed": "tutup",
     "valveOffline": "offline",
-    "valveOpenCount": "{{openCount}}/{{totalCount}} terbuka",
     "activityLogCard": "Log Aktivitas",
     "loadingLogs": "Memuat log...",
     "loadLogsError": "Log gateway belum bisa dimuat",
@@ -216,11 +235,11 @@
     "batteryMid": "Sedang",
     "batteryOk": "Baik",
     "soilTargetCaption": "Target {{lower}}–{{upper}}%",
-    "metricNoData": "Tidak ada data",
+    "metricNoData": "Tidak ada data sensor, cek koneksi pada node.",
     "metricMin": "Minimal",
     "metricAvg": "Rata-rata",
     "metricMax": "Maksimal",
-    "metricLast6h": "6 jam terakhir"
+    "metricLastHours": "{{hours}} jam terakhir"
   },
   "farms": {
     "searchPlaceholder": "Cari kebun, lokasi, atau tanaman",
@@ -244,8 +263,10 @@
       "locationLabel": "Lokasi / Alamat",
       "locationPlaceholder": "Contoh: Jl. Parangtritis, Bantul",
       "cropLabel": "Jenis Tanaman",
-      "cropPlaceholder": "Cari atau ketik jenis tanaman...",
+      "cropPlaceholder": "Pilih jenis tanaman",
       "cropThreshold": "Threshold VWC disarankan: {{lower}}% – {{upper}}%",
+      "cropLoadError": "Daftar tanaman gagal dimuat.",
+      "cropRetry": "Coba lagi",
       "areaLabel": "Luas Lahan (ha)",
       "areaPlaceholder": "Contoh: 1.5",
       "areaHelper": "Ketik \"-\" jika kebun kecil, contoh: 5 pohon pisang",
@@ -288,8 +309,7 @@
     "all": "Semua Log",
     "open": "Irigasi Dijalankan",
     "delayed": "Irigasi Ditunda",
-    "closed": "Valve Tertutup",
-    "warning": "Peringatan"
+    "closed": "Valve Tertutup"
   },
   "logClass": {
     "open": "Irigasi Aktif",
@@ -331,7 +351,18 @@
     "delayed": "Ditunda",
     "closed": "Berhenti",
     "normal": "Normal",
-    "needsCheck": "Perlu Cek"
+    "disconnected": "Terputus",
+    "manual": "Manual"
+  },
+  "irrigationReason": {
+    "open": "Kelembapan tanah berada di bawah threshold bawah dan tidak ada prediksi hujan.",
+    "delayed": "Kelembapan rendah, tetapi BMKG memprediksi hujan dalam 3 jam ke depan.",
+    "closed": "Kelembapan tanah sudah melewati threshold atas.",
+    "standby": "Kelembapan tanah berada pada rentang aman.",
+    "disconnected": "Tidak ada data dari node melewati batas waktu. Sistem menunggu data sensor terbaru.",
+    "manual_open": "Valve terbuka, dikendalikan manual oleh pengguna.",
+    "manual_closed": "Valve tertutup, dikendalikan manual oleh pengguna.",
+    "manual_timeout": "Valve ditutup otomatis setelah batas waktu pengairan manual."
   },
   "myFarms": {
     "colorPickerTitle": "Pilih Warna Marker",
@@ -421,7 +452,8 @@
     "cancel": "Batal",
     "editPhone": "Edit nomor handphone",
     "changePassword": "Ganti Sandi",
-    "logout": "Keluar"
+    "logout": "Keluar",
+    "phonePlaceholder": "Contoh: 08123456789"
   },
   "landing": {
     "navFeatures": "Fitur",
@@ -557,7 +589,8 @@
     "filterDisconnected": "Terputus",
     "filterHeartbeat": "Heartbeat",
     "filterDataSync": "Sinkronisasi",
-    "eventCount": "{{count}} event"
+    "eventCount": "{{count}} event",
+    "heartbeatNodes": "{{heard}} dari {{total}} node terdengar"
   },
   "helpCenter": {
     "contact": {

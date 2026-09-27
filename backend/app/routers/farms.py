@@ -7,14 +7,19 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..adm4 import ensure_farm_bmkg_adm4, resolve_bmkg_adm4
 from ..auth import get_current_user
-from ..bmkg import fetch_weather_with_cache
+from ..bmkg import get_weather_for_decision
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned
 from ..gateway_service import claim_gateway_for_farm, ensure_gateway_unclaimed, release_gateway
-from ..irrigation import THRESHOLDS, calculate_decision
+from ..crops import find_crop_thresholds
+from ..irrigation import DISCONNECTED_DECISION, calculate_decision, farm_thresholds, manual_decision
+from ..node_service import is_recently_seen, present_node
 from ..schemas import FarmCreate, FarmUpdate
+from ..valve_control import expire_manual_valves
 
 router = APIRouter()
+
+UNKNOWN_CROP_DETAIL = "Jenis tanaman wajib dipilih dari daftar tanaman."
 
 
 @router.get("/api/farms")
@@ -72,6 +77,13 @@ def update_farm(
             location_hint = updates.get("location") or current_farm.get("location") or ""
             updates["bmkg_adm4_code"] = resolve_bmkg_adm4(lat, lng, location_hint)
 
+        if "crop_type" in updates:
+            crop_thresholds = find_crop_thresholds(updates["crop_type"])
+            if crop_thresholds is None:
+                raise HTTPException(status_code=422, detail=UNKNOWN_CROP_DETAIL)
+            updates["lower_threshold"] = crop_thresholds.lower
+            updates["upper_threshold"] = crop_thresholds.upper
+
         allowed_columns = {
             "name",
             "owner",
@@ -82,6 +94,8 @@ def update_farm(
             "latitude",
             "longitude",
             "status",
+            "lower_threshold",
+            "upper_threshold",
         }
         assignments = [f"{column} = ?" for column in updates if column in allowed_columns]
         values = [updates[column] for column in updates if column in allowed_columns]
@@ -141,6 +155,10 @@ def create_farm(
     if not gateway_device_id:
         raise HTTPException(status_code=422, detail="Gateway wajib dipilih.")
 
+    crop_thresholds = find_crop_thresholds(payload.crop_type)
+    if crop_thresholds is None:
+        raise HTTPException(status_code=422, detail=UNKNOWN_CROP_DETAIL)
+
     farm_id = f"farm-{uuid.uuid4().hex[:8]}"
     with get_connection() as connection:
         ensure_gateway_unclaimed(connection, gateway_device_id)
@@ -149,8 +167,8 @@ def create_farm(
             """
             INSERT INTO farms
                 (id, user_id, name, owner, location, crop_type, area_ha,
-                 bmkg_adm4_code, latitude, longitude, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+                 bmkg_adm4_code, latitude, longitude, lower_threshold, upper_threshold, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
             """,
             (
                 farm_id,
@@ -163,6 +181,8 @@ def create_farm(
                 adm4,
                 payload.latitude,
                 payload.longitude,
+                crop_thresholds.lower,
+                crop_thresholds.upper,
             ),
         )
         gateway = claim_gateway_for_farm(
@@ -184,17 +204,17 @@ def get_farm_weather(
     farm = ensure_farm_bmkg_adm4(farm)
     if not farm.get("bmkg_adm4_code"):
         raise HTTPException(status_code=422, detail="Kode BMKG kebun belum tersedia.")
-    return fetch_weather_with_cache(farm["bmkg_adm4_code"])
+    weather = get_weather_for_decision(farm["bmkg_adm4_code"])
+    if weather is None:
+        raise HTTPException(status_code=502, detail="Gagal mengambil data cuaca dari BMKG")
+    return weather
 
 
 def _farm_weather_or_none(farm: dict) -> dict | None:
-    """Cuaca untuk summary: kode BMKG kosong atau BMKG gagal diturunkan jadi None."""
+    """Cuaca untuk summary: kode BMKG kosong atau cuaca tidak tersedia jadi None."""
     if not farm.get("bmkg_adm4_code"):
         return None
-    try:
-        return fetch_weather_with_cache(farm["bmkg_adm4_code"])
-    except HTTPException:
-        return None
+    return get_weather_for_decision(farm["bmkg_adm4_code"])
 
 
 @router.get("/api/farms/{farm_id}/summary")
@@ -204,13 +224,19 @@ def get_farm_summary(
 ) -> dict:
     with get_connection() as connection:
         farm = get_farm_owned(connection, farm_id, current_user["id"])
+        expire_manual_valves(connection, farm_id)
         nodes = [
-            dict(row)
+            present_node(dict(row))
             for row in connection.execute(
                 "SELECT * FROM nodes WHERE farm_id = ? ORDER BY id",
                 (farm_id,),
             ).fetchall()
         ]
+        gateway = row_to_dict(
+            connection.execute(
+                "SELECT last_seen_at FROM gateways WHERE farm_id = ?", (farm_id,)
+            ).fetchone()
+        )
         latest_by_node = {
             row["node_id"]: dict(row)
             for row in connection.execute(
@@ -231,11 +257,19 @@ def get_farm_summary(
     farm = ensure_farm_bmkg_adm4(farm)
     weather = _farm_weather_or_none(farm)
     rain_next_3h = weather["rain_next_3h"] if weather else False
+    thresholds = farm_thresholds(farm)
 
     node_summaries = []
     for node in nodes:
         reading = latest_by_node.get(node["id"])
-        decision = calculate_decision(reading["soil_moisture"], rain_next_3h) if reading else None
+        if node["status"] == "offline":
+            decision = dict(DISCONNECTED_DECISION)
+        elif farm.get("irrigation_mode") == "manual":
+            decision = manual_decision(node)
+        elif reading:
+            decision = calculate_decision(reading["soil_moisture"], rain_next_3h, thresholds)
+        else:
+            decision = None
         node_summaries.append({"node": node, "latest_reading": reading, "decision": decision})
 
     moistures = [
@@ -247,12 +281,13 @@ def get_farm_summary(
 
     nodes_online = [n for n in nodes if n["status"] == "online"]
     nodes_problem = [n for n in nodes if n["status"] == "offline"]
-    gateway_status = "online" if nodes_online else "offline"
+    gateway_seen = gateway is not None and is_recently_seen(gateway.get("last_seen_at"))
+    gateway_status = "online" if nodes_online or gateway_seen else "offline"
 
     return {
         "farm": farm,
         "weather": weather,
-        "thresholds": THRESHOLDS.model_dump(),
+        "thresholds": thresholds.model_dump(),
         "gateway_status": gateway_status,
         "average_soil_moisture": avg_moisture,
         "nodes_total": len(nodes),

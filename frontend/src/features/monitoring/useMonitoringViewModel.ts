@@ -22,7 +22,7 @@ export function useMonitoringViewModel(farmId: string) {
       : '';
   const effectiveNodeId = selectedNodeId || (nodes[0]?.id ?? '');
 
-  const readingsQuery = useReadings(effectiveNodeId, 100);
+  const readingsQuery = useReadings(effectiveNodeId);
   const readings = readingsQuery.data?.items ?? [];
   const selectNode = useCallback((nodeId: string) => setSelectedNode({ farmId, nodeId }), [farmId]);
 

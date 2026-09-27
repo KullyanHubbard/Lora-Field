@@ -25,7 +25,7 @@ export function IrrigationNodeCard({
   const reading = ns.latest_reading;
   const moisture = reading?.soil_moisture ?? null;
   const condition = moistureCondition(moisture, lower, upper);
-  const irrBadge = ns.decision ? getIrrigationStatusBadge(ns.decision.decision) : null;
+  const irrBadge = ns.decision ? getIrrigationStatusBadge(ns.decision.type) : null;
   const valveBadge = ns.decision ? getValveStatusBadge(valveKeyFromDecision(ns.decision)) : null;
   const progress = moisture == null ? 0 : Math.max(0, Math.min(100, moisture));
 

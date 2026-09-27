@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import type { IrrigationStats } from '@/features/irrigation/irrigationHelpers';
 import { EMPTY_VALUE } from '@/lib/format';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
 
 export function IrrigationStatsGrid({ stats }: { stats: IrrigationStats }) {
   const { t } = useTranslation();
@@ -19,13 +20,13 @@ export function IrrigationStatsGrid({ stats }: { stats: IrrigationStats }) {
         label={t('irrigation.openValves')}
         value={stats.openValves}
         icon={<Waves className="size-3.5" />}
-        tone="text-emerald-500"
+        tone={ACCENT_TEXT.emerald}
       />
       <SummaryCard
         label={t('irrigation.closedValves')}
         value={stats.closedValves}
         icon={<Waves className="size-3.5" />}
-        tone="text-amber-500"
+        tone={ACCENT_TEXT.amber}
       />
       <SummaryCard
         label={t('irrigation.avgMoistureShort')}
@@ -36,7 +37,7 @@ export function IrrigationStatsGrid({ stats }: { stats: IrrigationStats }) {
         label={t('irrigation.belowThreshold')}
         value={stats.belowThresholdNodes}
         icon={<Gauge className="size-3.5" />}
-        tone="text-red-500"
+        tone={ACCENT_TEXT.red}
       />
     </div>
   );

@@ -21,14 +21,18 @@ import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
-import { latestValue, getHourlyMonitoringPoints } from '@/features/monitoring/chartHelpers';
+import {
+  getHourlyMonitoringPoints,
+  latestValue,
+  TEMP_CHART_MAX_C,
+} from '@/features/monitoring/chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 import { CHART_COLORS } from '@/lib/chartColors';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
 
 const PALETTE = { main: CHART_COLORS.amber, cool: CHART_COLORS.cyan, hot: CHART_COLORS.red };
 const COMFORT = { min: 24, max: 32 };
-const CHART_MAX = 40;
 
 function airTempStatus(value: number): { labelKey: string; tone: StatusTone } {
   if (value < COMFORT.min) return { labelKey: 'monitoring.airStatus.cool', tone: 'green' };
@@ -80,9 +84,7 @@ export default function AirTempZoneLineChart({
     >
       <MonitoringChartHeader
         title={t('monitoring.chartAirTemp')}
-        icon={
-          <ThermometerSun className="size-4 text-red-500 dark:text-red-400" aria-hidden="true" />
-        }
+        icon={<ThermometerSun className={cn('size-4', ACCENT_TEXT.red)} aria-hidden="true" />}
         value={latestAvg != null ? latestAvg.toFixed(1) : null}
         unit={DEG_C}
         status={
@@ -111,7 +113,12 @@ export default function AirTempZoneLineChart({
               fill={CHART_COLORS.emerald}
               fillOpacity={0.07}
             />
-            <ReferenceArea y1={COMFORT.max} y2={CHART_MAX} fill={PALETTE.hot} fillOpacity={0.05} />
+            <ReferenceArea
+              y1={COMFORT.max}
+              y2={TEMP_CHART_MAX_C}
+              fill={PALETTE.hot}
+              fillOpacity={0.05}
+            />
             <ReferenceLine
               y={COMFORT.min}
               stroke={PALETTE.cool}
@@ -133,7 +140,7 @@ export default function AirTempZoneLineChart({
               tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
             />
             <YAxis
-              domain={[0, CHART_MAX]}
+              domain={[0, TEMP_CHART_MAX_C]}
               tickLine={false}
               axisLine={false}
               width={44}

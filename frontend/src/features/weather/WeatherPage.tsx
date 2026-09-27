@@ -19,14 +19,15 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Weather } from '@/types';
 import { CHART_COLORS } from '@/lib/chartColors';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
+import { WEATHER_CHART_MIN_TOP_C } from '@/features/weather/constants';
 
 const CHART_COLOR = CHART_COLORS.sky;
 // token --foreground = oklch; pakai color-mix utk alpha biar aman light+dark
 const TICK_FILL = 'color-mix(in oklch, var(--foreground) 85%, transparent)';
 const GRID_STROKE = 'color-mix(in oklch, var(--foreground) 25%, transparent)';
 
-const iconColor = (isRain: boolean): string =>
-  isRain ? 'text-sky-500 dark:text-sky-400' : 'text-amber-500 dark:text-amber-400';
+const iconColor = (isRain: boolean): string => (isRain ? ACCENT_TEXT.sky : ACCENT_TEXT.amber);
 
 // Temperature Chart (generic)
 
@@ -87,7 +88,10 @@ function TemperatureChart({ points }: { points: ChartPoint[] }) {
           tickMargin={4}
           tick={{ fill: TICK_FILL }}
           tickFormatter={(v) => `${v}${DEG_C}`}
-          domain={[Math.floor(dataMin - padding), Math.max(36, Math.ceil(dataMax + padding))]}
+          domain={[
+            Math.floor(dataMin - padding),
+            Math.max(WEATHER_CHART_MIN_TOP_C, Math.ceil(dataMax + padding)),
+          ]}
         />
         <ChartTooltip
           content={
@@ -171,7 +175,7 @@ function WeatherMainCard({
 
         <div className="mt-7 grid w-full max-w-sm grid-cols-2 gap-3">
           <div className="flex items-center gap-2.5 rounded-lg border border-border px-4 py-3">
-            <Droplets className="size-4 shrink-0 text-sky-500 dark:text-sky-400" />
+            <Droplets className={cn('size-4 shrink-0', ACCENT_TEXT.sky)} />
             <div className="min-w-0">
               <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
                 {t('weather.labelHumidity')}
@@ -180,7 +184,7 @@ function WeatherMainCard({
             </div>
           </div>
           <div className="flex items-center gap-2.5 rounded-lg border border-border px-4 py-3">
-            <Wind className="size-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
+            <Wind className={cn('size-4 shrink-0', ACCENT_TEXT.emerald)} />
             <div className="min-w-0">
               <p className="text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
                 {t('weather.labelWindSpeed')}
@@ -222,7 +226,7 @@ function WeatherMainCard({
 function ForecastColumn({ weather }: { weather: Weather | null }) {
   const { t, i18n } = useTranslation();
   const forecast = weather?.forecast;
-  const items = Array.isArray(forecast) && forecast.length > 0 ? forecast.slice(0, 8) : [];
+  const items = Array.isArray(forecast) && forecast.length > 0 ? forecast : [];
 
   return (
     <Card className="flex flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">

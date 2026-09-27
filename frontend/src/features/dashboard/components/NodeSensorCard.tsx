@@ -3,12 +3,20 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cloud, Cpu, Droplets, Sun, Thermometer } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { StatusPill } from '@/components/ui/status-pill';
 import { getNodeLabel, getSelectedNodeSummary } from '@/features/dashboard/dashboardHelpers';
 import { DEG_C, EMPTY_VALUE } from '@/lib/format';
 import { getNodeStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
+import { ACCENT_TEXT, METRIC_ACCENT_TEXT } from '@/lib/toneClasses';
 
 export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; className?: string }) {
   const { t } = useTranslation();
@@ -22,31 +30,31 @@ export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; cla
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Cpu className="size-4 shrink-0 text-violet-500 dark:text-violet-400" />
+            <Cpu className={cn('size-4 shrink-0', ACCENT_TEXT.violet)} />
             {t('dashboard.nodeSensor.title')}
           </CardTitle>
           {selectedNs && (
             <div className="flex items-center gap-2">
               <span className="text-xs tabular-nums text-muted-foreground">
-                {/* RSSI belum disimpan backend, jadi selalu kosong. */}
-                {`${EMPTY_VALUE} dBm`}
+                {`${reading?.rssi != null ? Math.round(reading.rssi) : EMPTY_VALUE} dBm`}
               </span>
               {badge && <StatusPill tone={badge.tone} label={t(badge.labelKey)} />}
             </div>
           )}
         </div>
         {nodes.length > 1 && (
-          <select
-            value={selected ?? nodes[0]?.node.id ?? ''}
-            onChange={(event) => setSelected(event.target.value)}
-            className="mt-2 w-full rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
-          >
-            {nodes.map((ns) => (
-              <option key={ns.node.id} value={ns.node.id}>
-                {getNodeLabel(ns.node)}
-              </option>
-            ))}
-          </select>
+          <Select value={selected ?? nodes[0]?.node.id ?? ''} onValueChange={setSelected}>
+            <SelectTrigger className="mt-2 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {nodes.map((ns) => (
+                <SelectItem key={ns.node.id} value={ns.node.id}>
+                  {getNodeLabel(ns.node)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
         {nodes.length <= 1 && selectedNs && (
           <p className="mt-1 text-xs text-muted-foreground">{getNodeLabel(selectedNs.node)}</p>
@@ -62,7 +70,7 @@ export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; cla
             <NodeMetricTile
               icon={
                 <Droplets
-                  className="size-4 shrink-0 text-cyan-500 dark:text-cyan-400"
+                  className={cn('size-4 shrink-0', METRIC_ACCENT_TEXT.soil_moisture)}
                   aria-hidden="true"
                 />
               }
@@ -72,7 +80,7 @@ export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; cla
             <NodeMetricTile
               icon={
                 <Thermometer
-                  className="size-4 shrink-0 text-orange-500 dark:text-orange-400"
+                  className={cn('size-4 shrink-0', METRIC_ACCENT_TEXT.soil_temp)}
                   aria-hidden="true"
                 />
               }
@@ -82,7 +90,7 @@ export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; cla
             <NodeMetricTile
               icon={
                 <Sun
-                  className="size-4 shrink-0 text-amber-500 dark:text-amber-400"
+                  className={cn('size-4 shrink-0', METRIC_ACCENT_TEXT.air_temp)}
                   aria-hidden="true"
                 />
               }
@@ -92,7 +100,7 @@ export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; cla
             <NodeMetricTile
               icon={
                 <Cloud
-                  className="size-4 shrink-0 text-sky-500 dark:text-sky-400"
+                  className={cn('size-4 shrink-0', METRIC_ACCENT_TEXT.air_humidity)}
                   aria-hidden="true"
                 />
               }

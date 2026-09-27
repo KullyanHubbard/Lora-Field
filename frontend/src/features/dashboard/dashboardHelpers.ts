@@ -1,8 +1,8 @@
 import {
-  getHistoricalDataForNode,
+  buildSlotMetricPoints,
   type FarmMetricChartPoint,
 } from '@/features/dashboard/dashboardHistoricalData';
-import { batteryTone } from '@/lib/status';
+import { BATTERY_LOW_PCT, BATTERY_MID_PCT, batteryTone } from '@/lib/status';
 import type { TFunction } from 'i18next';
 import { DEG_C, EMPTY_VALUE } from '@/lib/format';
 import {
@@ -11,13 +11,17 @@ import {
   pickNumber,
   type WeatherIconKey,
 } from '@/features/weather/weatherHelpers';
-import type { NodeSummary, SemanticTone, Weather } from '@/types';
+import type { NodeSummary, Reading, SemanticTone, Weather } from '@/types';
+import { ACCENT_BG } from '@/lib/toneClasses';
 
 type NumberStats = {
   min: number;
   max: number;
   avg: number;
 };
+
+// Jumlah slot prakiraan di kartu Prediksi Cuaca Ringkasan Kebun.
+const FORECAST_CARD_SLOTS = 6;
 
 export type ValveSummary = {
   bars: string[];
@@ -91,15 +95,24 @@ export function calcMinMaxAvg(values: number[]): NumberStats | null {
   return { min, max, avg: sum / values.length };
 }
 
+export const VALVE_BAR_CLASSES = {
+  open: ACCENT_BG.emerald,
+  closed: ACCENT_BG.amber,
+  offline: ACCENT_BG.red,
+} as const;
+
+type ValveBarState = keyof typeof VALVE_BAR_CLASSES;
+
 export function buildValveSummary(nodes: NodeSummary[]): ValveSummary {
-  const bars = nodes.map((ns) => {
-    if (ns.node.status === 'offline') return 'bg-red-500';
-    return ns.decision?.valve_state === 'open' ? 'bg-emerald-500' : 'bg-amber-500';
+  const states: ValveBarState[] = nodes.map((ns) => {
+    if (ns.node.status === 'offline') return 'offline';
+    return ns.decision?.valve_state === 'open' ? 'open' : 'closed';
   });
 
+  const bars = states.map((state) => VALVE_BAR_CLASSES[state]);
   const totalCount = nodes.length;
-  const openCount = bars.filter((className) => className === 'bg-emerald-500').length;
-  const offlineCount = bars.filter((className) => className === 'bg-red-500').length;
+  const openCount = states.filter((state) => state === 'open').length;
+  const offlineCount = states.filter((state) => state === 'offline').length;
   const closedCount = totalCount - openCount - offlineCount;
 
   return { bars, totalCount, openCount, closedCount, offlineCount };
@@ -112,9 +125,9 @@ export function buildBatteryGaugeModel(value: number | null | undefined): Batter
   const centerSubKey =
     pct == null
       ? undefined
-      : pct < 20
+      : pct < BATTERY_LOW_PCT
         ? 'dashboard.batteryLow'
-        : pct <= 50
+        : pct <= BATTERY_MID_PCT
           ? 'dashboard.batteryMid'
           : 'dashboard.batteryOk';
 
@@ -155,15 +168,22 @@ export function buildMetricChartData(
   points: FarmMetricChartPoint[],
   dataKey: keyof FarmMetricChartPoint,
 ) {
-  return points.map((point) => ({ label: point.label, value: Number(point[dataKey]) }));
+  // null = celah di grafik untuk jam yang metriknya kosong.
+  return points.map((point) => {
+    const value = Number(point[dataKey]);
+    return { label: point.label, value: Number.isFinite(value) ? value : null };
+  });
 }
 
 export function buildNodeHistoricalDataMap(
   nodes: NodeSummary[],
+  readingsByNode: Record<string, Reading[]>,
+  now: number,
+  locale: string,
 ): Record<string, FarmMetricChartPoint[]> {
   const nodeDataMap: Record<string, FarmMetricChartPoint[]> = {};
   nodes.forEach((ns) => {
-    nodeDataMap[ns.node.id] = getHistoricalDataForNode(ns.node.id);
+    nodeDataMap[ns.node.id] = buildSlotMetricPoints(readingsByNode[ns.node.id] ?? [], now, locale);
   });
   return nodeDataMap;
 }
@@ -174,7 +194,7 @@ export function buildWeatherForecastViewModel(
   locale: string,
 ): WeatherForecastViewModel {
   const currentInfo = getWeatherCodeInfo(weather.code, weather.condition);
-  const slots = (weather.forecast ?? []).slice(0, 6).map((point, index) => {
+  const slots = (weather.forecast ?? []).slice(0, FORECAST_CARD_SLOTS).map((point, index) => {
     const info = getWeatherCodeInfo(point.weather, point.weather_desc);
     const temp = pickNumber(point.t);
 

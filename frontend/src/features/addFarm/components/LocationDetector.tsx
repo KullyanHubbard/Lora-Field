@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useResolveAdm4 } from '@/features/addFarm/queries';
 import { cn } from '@/lib/utils';
+import { NOTICE_CLASSES } from '@/lib/toneClasses';
 
 interface LocationDetectorProps {
   lat: string;
@@ -15,6 +16,10 @@ interface LocationDetectorProps {
   onAdm4Change: (value: string) => void;
   locationHint: string;
 }
+
+const GEOLOCATION_TIMEOUT_MS = 20_000;
+// Jeda deteksi otomatis setelah form tampil, supaya prompt izin lokasi tidak muncul sebelum halaman siap.
+const AUTO_DETECT_DELAY_MS = 350;
 
 export function LocationDetector({
   lat,
@@ -95,7 +100,7 @@ export function LocationDetector({
           });
           setDetecting(false);
         },
-        { timeout: 20000, enableHighAccuracy: true, maximumAge: 0 },
+        { timeout: GEOLOCATION_TIMEOUT_MS, enableHighAccuracy: true, maximumAge: 0 },
       );
     },
     [locationHint, onLatChange, onLngChange, onAdm4Change, resolveAdm4, t],
@@ -107,7 +112,7 @@ export function LocationDetector({
     autoTriggered.current = true;
     const h = window.setTimeout(() => {
       if (!lat && !lng) detect('auto');
-    }, 350);
+    }, AUTO_DETECT_DELAY_MS);
     return () => window.clearTimeout(h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -116,7 +121,7 @@ export function LocationDetector({
     status.type === 'error'
       ? 'text-destructive'
       : status.type === 'warning'
-        ? 'text-amber-600 dark:text-amber-400'
+        ? NOTICE_CLASSES.warningText
         : 'text-muted-foreground';
 
   return (

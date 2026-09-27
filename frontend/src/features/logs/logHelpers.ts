@@ -11,35 +11,35 @@ export const LOG_FILTER_OPTIONS = [
   { key: 'open', label: 'logFilter.open' },
   { key: 'delayed', label: 'logFilter.delayed' },
   { key: 'closed', label: 'logFilter.closed' },
-  { key: 'warning', label: 'logFilter.warning' },
 ] as const;
 
 export const LOG_TYPE_LABEL: Record<LogType, string> = {
   open: 'logClass.open',
   delayed: 'logClass.delayed',
   closed: 'logClass.closed',
-  warning: 'logClass.warning',
   normal: 'logClass.normal',
 };
 
 export type LogFilterKey = (typeof LOG_FILTER_OPTIONS)[number]['key'];
 
-export type LogType = 'open' | 'delayed' | 'closed' | 'warning' | 'normal';
+export type LogType = 'open' | 'delayed' | 'closed' | 'normal';
 
-export function classifyLog(log: Pick<IrrigationLog, 'decision' | 'valve_state'>): LogType {
-  const decision = String(log.decision || '').toLowerCase();
-  if (
-    decision.includes('reconnect') ||
-    decision.includes('delay') ||
-    decision.includes('anomali') ||
-    decision.includes('peringatan')
-  ) {
-    return 'warning';
+// Dari decision_type backend. Aksi manual ikut kelompok buka/tutup valve-nya.
+// Standby dan log lama tanpa type dianggap normal.
+export function classifyLog(log: Pick<IrrigationLog, 'decision_type'>): LogType {
+  switch (log.decision_type) {
+    case 'open':
+    case 'manual_open':
+      return 'open';
+    case 'delayed':
+      return 'delayed';
+    case 'closed':
+    case 'manual_closed':
+    case 'manual_timeout':
+      return 'closed';
+    default:
+      return 'normal';
   }
-  if (log.valve_state === 'open') return 'open';
-  if (decision.includes('ditunda')) return 'delayed';
-  if (log.valve_state === 'closed' && decision.includes('berhenti')) return 'closed';
-  return 'normal';
 }
 
 // Versi lama: getDecisionBadgeClass -> 'badge-green' dst. Sekarang return tone.
@@ -51,8 +51,6 @@ export function getDecisionTone(type: LogType): StatusTone {
       return 'yellow';
     case 'closed':
       return 'yellow';
-    case 'warning':
-      return 'red';
     default:
       return 'green';
   }

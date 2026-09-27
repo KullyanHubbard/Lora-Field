@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { AuthErrorMessage } from '@/features/auth/components/AuthErrorMessage';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import type { ResetPasswordViewModel } from '@/features/auth/useResetPasswordViewModel';
+import { MIN_PASSWORD_LENGTH, OTP_LENGTH } from '@/features/auth/validation';
 
 export function ResetPasswordView({ viewModel }: { viewModel: ResetPasswordViewModel }) {
   const { t } = useTranslation();
@@ -80,13 +81,15 @@ function ResetOtpForm({ viewModel }: { viewModel: ResetPasswordViewModel }) {
       className="space-y-4"
     >
       <div className="space-y-1.5">
-        <Label htmlFor="reset-otp">{t('auth.resetPassword.otpLabel')}</Label>
+        <Label htmlFor="reset-otp">
+          {t('auth.resetPassword.otpLabel', { digits: OTP_LENGTH })}
+        </Label>
         <Input
           id="reset-otp"
           inputMode="numeric"
           autoComplete="one-time-code"
-          pattern="[0-9]{6}"
-          maxLength={6}
+          pattern={`[0-9]{${OTP_LENGTH}}`}
+          maxLength={OTP_LENGTH}
           placeholder={t('auth.resetPassword.otpPlaceholder')}
           value={viewModel.otp}
           onChange={(event) => viewModel.setOtp(event.target.value)}
@@ -124,7 +127,7 @@ function ResetNewPasswordForm({ viewModel }: { viewModel: ResetPasswordViewModel
         <PasswordInput
           id="reset-password"
           autoComplete="new-password"
-          placeholder={t('auth.resetPassword.newPasswordPlaceholder')}
+          placeholder={t('auth.resetPassword.newPasswordPlaceholder', { min: MIN_PASSWORD_LENGTH })}
           value={viewModel.password}
           onChange={(event) => viewModel.setPassword(event.target.value)}
           required

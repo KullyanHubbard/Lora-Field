@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegister } from './queries';
-import { isPasswordTooShort, isValidEmail } from '@/features/auth/validation';
+import { isPasswordTooShort, MIN_PASSWORD_LENGTH, isValidEmail } from '@/features/auth/validation';
 
 export interface RegisterViewModel {
   name: string;
@@ -39,7 +39,7 @@ export function useRegisterViewModel(): RegisterViewModel {
       return;
     }
     if (isPasswordTooShort(password)) {
-      setError(t('auth.register.errorPasswordTooShort'));
+      setError(t('auth.register.errorPasswordTooShort', { min: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (password !== confirm) {

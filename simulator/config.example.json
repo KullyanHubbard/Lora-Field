@@ -1,0 +1,73 @@
+{
+  "api_base_url": "http://127.0.0.1:8000",
+  "http_timeout_seconds": 20,
+  "interval_seconds": 60,
+  "packet_loss_rate": 0.03,
+  "gateway_heartbeat_minutes": 10,
+  "max_step_hours": 2,
+  "outage": {
+    "chance_per_reading": 0.0005,
+    "minutes_min": 8,
+    "minutes_max": 30
+  },
+  "rain_keywords": ["hujan", "rain", "shower", "thunderstorm"],
+  "cloud_keywords": ["berawan", "hujan", "kabut", "asap", "cloud", "rain", "fog"],
+  "fallback_climate": {
+    "temp_min_c": 23,
+    "temp_max_c": 32,
+    "temp_peak_hour": 14,
+    "humidity_min_pct": 60,
+    "humidity_max_pct": 92
+  },
+  "soil": {
+    "initial_moisture_min_pct": 50,
+    "initial_moisture_max_pct": 72,
+    "drying_pct_per_hour": 0.8,
+    "irrigation_gain_pct_per_hour": 14,
+    "rain_gain_pct_per_hour": 6,
+    "min_moisture_pct": 8,
+    "max_moisture_pct": 95,
+    "temp_offset_c": 2.0,
+    "temp_lag_hours": 3,
+    "sensor_noise_pct": 0.4,
+    "sensor_noise_temp_c": 0.1
+  },
+  "air": {
+    "node_offset_temp_max_c": 0.8,
+    "node_offset_humidity_max_pct": 3,
+    "sensor_noise_temp_c": 0.2,
+    "sensor_noise_humidity_pct": 1.0
+  },
+  "battery": {
+    "initial_min_pct": 70,
+    "initial_max_pct": 100,
+    "drain_pct_per_reading": 0.01,
+    "solar_charge_pct_per_hour": 2.5,
+    "daylight_start_hour": 6,
+    "daylight_end_hour": 18,
+    "cloudy_charge_factor": 0.4,
+    "shutdown_pct": 3,
+    "wake_pct": 8
+  },
+  "radio": {
+    "rssi_base_min_dbm": -110,
+    "rssi_base_max_dbm": -70,
+    "rssi_noise_db": 3,
+    "rssi_min_dbm": -140,
+    "rssi_max_dbm": -30
+  },
+  "farms": [
+    {
+      "key": "demo-1",
+      "name": "Kebun Cabai Balecatur",
+      "owner": "",
+      "crop_type": "Cabai",
+      "location": "Balecatur, Gamping, Sleman",
+      "latitude": -7.7934,
+      "longitude": 110.312,
+      "area_ha": 0.8,
+      "bmkg_adm4_code": "34.04.01.2001",
+      "nodes": ["Blok Utara", "Blok Tengah", "Blok Selatan"]
+    }
+  ]
+}

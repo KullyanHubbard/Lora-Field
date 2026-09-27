@@ -6,6 +6,8 @@ import { SelectFarmsMapController } from './SelectFarmsMapController';
 import { useSelectFarmsMapViewModel } from '@/features/selectFarms/useSelectFarmsMapViewModel';
 import {
   configureSelectFarmsLeafletIcons,
+  MAP_TILE_ATTRIBUTION,
+  MAP_TILE_URL,
   SELECT_FARMS_DEFAULT_CENTER,
   SELECT_FARMS_DEFAULT_ZOOM,
   createColoredMarkerIcon,
@@ -14,7 +16,7 @@ import { getFarmMarkerColor, MARKER_COLORS } from '@/features/myFarms/farmColorS
 import type { Farm } from '@/types';
 
 /** Convert MarkerColorId to hex color (fallback: warna default pertama, biru) */
-function markerColorIdToHex(colorId: string): string {
+function markerColorIdToValue(colorId: string): string {
   return (MARKER_COLORS.find((c) => c.id === colorId) ?? MARKER_COLORS[0]).value;
 }
 
@@ -35,15 +37,12 @@ export function SelectFarmsMap({ farms }: { farms: Farm[] }) {
     >
       {/* Tile OpenStreetMap: gratis tanpa key (CARTO kini wajib API key). Server OSM
           dikelola relawan: atribusi wajib tampil dan pemakaian harus wajar. */}
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <TileLayer attribution={MAP_TILE_ATTRIBUTION} url={MAP_TILE_URL} />
       {points.map(({ farm, pos }) => (
         <Marker
           key={farm.id}
           position={pos}
-          icon={createColoredMarkerIcon(markerColorIdToHex(getFarmMarkerColor(farm.id)))}
+          icon={createColoredMarkerIcon(markerColorIdToValue(getFarmMarkerColor(farm.id)))}
           eventHandlers={{ click: () => navigate(`/farms/${farm.id}`) }}
         >
           <Tooltip direction="top" offset={[0, -35]} opacity={1} permanent={false}>

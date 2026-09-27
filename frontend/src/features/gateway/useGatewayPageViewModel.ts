@@ -4,6 +4,7 @@ import { useFarmSummary } from '@/features/dashboard/queries';
 import {
   buildGatewayEventCounts,
   buildGatewayInfo,
+  GATEWAY_LOGS_FETCH_LIMIT,
   filterGatewayLogs,
   getGatewaySafePage,
   getGatewayTotalPages,
@@ -17,14 +18,17 @@ export function useGatewayPageViewModel() {
   const summaryQuery = useFarmSummary(farmId ?? '');
   const farmGatewayQuery = useFarmGateway(farmId);
   const gateway = farmGatewayQuery.data?.gateway ?? null;
-  const logsQuery = useGatewayLogs(summaryQuery.data ? farmId : undefined, 20);
+  const logsQuery = useGatewayLogs(
+    summaryQuery.data ? farmId : undefined,
+    GATEWAY_LOGS_FETCH_LIMIT,
+  );
   const [filter, setFilter] = useState<GatewayEventFilter>('all');
   const [page, setPage] = useState(0);
 
   const rawLogs = useMemo(() => logsQuery.data?.items ?? [], [logsQuery.data?.items]);
   const gatewayInfo = useMemo(() => {
     if (!summaryQuery.data) return null;
-    return buildGatewayInfo(gateway);
+    return buildGatewayInfo(gateway, summaryQuery.data.gateway_status);
   }, [gateway, summaryQuery.data]);
 
   const filteredLogs = useMemo(() => filterGatewayLogs(rawLogs, filter), [filter, rawLogs]);

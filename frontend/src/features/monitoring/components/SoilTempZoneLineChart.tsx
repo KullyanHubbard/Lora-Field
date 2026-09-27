@@ -21,14 +21,18 @@ import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
-import { latestValue, getHourlyMonitoringPoints } from '@/features/monitoring/chartHelpers';
+import {
+  getHourlyMonitoringPoints,
+  latestValue,
+  TEMP_CHART_MAX_C,
+} from '@/features/monitoring/chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 import { CHART_COLORS } from '@/lib/chartColors';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
 
 const PALETTE = { main: CHART_COLORS.amber, cool: CHART_COLORS.cyan, hot: CHART_COLORS.red };
 const OPTIMAL_SOIL_TEMP = { min: 18, max: 28 };
-const CHART_MAX = 40;
 
 function soilTempStatus(avg: number): { labelKey: string; tone: StatusTone } {
   if (avg < OPTIMAL_SOIL_TEMP.min)
@@ -83,12 +87,7 @@ export default function SoilTempZoneLineChart({
     >
       <MonitoringChartHeader
         title={t('monitoring.chartSoilTemp')}
-        icon={
-          <ThermometerSun
-            className="size-4 text-amber-500 dark:text-amber-400"
-            aria-hidden="true"
-          />
-        }
+        icon={<ThermometerSun className={cn('size-4', ACCENT_TEXT.amber)} aria-hidden="true" />}
         value={latestAvg != null ? latestAvg.toFixed(1) : null}
         unit={DEG_C}
         status={
@@ -127,7 +126,7 @@ export default function SoilTempZoneLineChart({
             />
             <ReferenceArea
               y1={OPTIMAL_SOIL_TEMP.max}
-              y2={CHART_MAX}
+              y2={TEMP_CHART_MAX_C}
               fill={PALETTE.hot}
               fillOpacity={0.05}
             />
@@ -152,7 +151,7 @@ export default function SoilTempZoneLineChart({
               tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
             />
             <YAxis
-              domain={[0, CHART_MAX]}
+              domain={[0, TEMP_CHART_MAX_C]}
               tickLine={false}
               axisLine={false}
               width={44}

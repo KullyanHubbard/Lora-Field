@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useChangePassword } from './queries';
-import { isPasswordTooShort } from '@/features/auth/validation';
+import { isPasswordTooShort, MIN_PASSWORD_LENGTH } from '@/features/auth/validation';
 
 export interface ChangePasswordViewModel {
   currentPassword: string;
@@ -30,7 +30,7 @@ export function useChangePasswordViewModel(): ChangePasswordViewModel {
       return;
     }
     if (isPasswordTooShort(newPassword)) {
-      setError(t('auth.changePassword.errorNewTooShort'));
+      setError(t('auth.changePassword.errorNewTooShort', { min: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (newPassword === currentPassword) {

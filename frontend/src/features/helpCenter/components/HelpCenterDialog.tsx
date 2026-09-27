@@ -31,12 +31,10 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
         <div className="grid gap-4">
           {/* Email */}
           <Card>
-            <CardContent className="flex items-start gap-4 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Mail className="size-5 text-primary" />
-              </div>
+            <CardContent className="flex items-start gap-3.5 p-4">
+              <Mail className="mt-0.5 size-5 shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
-                <h3 className="font-semibold">{t('helpCenter.contact.email')}</h3>
+                <h3 className="font-semibold text-foreground">{t('helpCenter.contact.email')}</h3>
                 <p className="mt-0.5 text-sm text-muted-foreground break-all">
                   {contactInfo.email}
                 </p>
@@ -46,12 +44,12 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
 
           {contactInfo.whatsapp && (
             <Card>
-              <CardContent className="flex items-start gap-4 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                  <MessageCircle className="size-5 text-green-600" />
-                </div>
+              <CardContent className="flex items-start gap-3.5 p-4">
+                <MessageCircle className="mt-0.5 size-5 shrink-0 text-primary" />
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold">{t('helpCenter.contact.whatsapp')}</h3>
+                  <h3 className="font-semibold text-foreground">
+                    {t('helpCenter.contact.whatsapp')}
+                  </h3>
                   <p className="mt-0.5 text-sm text-muted-foreground">{contactInfo.whatsapp}</p>
                 </div>
               </CardContent>

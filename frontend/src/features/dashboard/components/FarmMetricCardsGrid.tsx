@@ -4,7 +4,9 @@ import {
   MetricStatCard,
   type MetricStatCardConfig,
 } from '@/features/dashboard/components/MetricStatCard';
+import { METRIC_CHART_COLORS } from '@/lib/chartColors';
 import { DEG_C } from '@/lib/format';
+import { METRIC_ACCENT_TEXT } from '@/lib/toneClasses';
 import type { FarmMetricChartPoint } from '@/features/dashboard/dashboardHistoricalData';
 import type { NodeSummary } from '@/types';
 
@@ -20,8 +22,8 @@ export function FarmMetricCardsGrid({
     {
       title: t('dashboard.nodeSensor.metrics.soilMoisture'),
       icon: Droplets,
-      iconColor: 'text-cyan-500 dark:text-cyan-400',
-      chartColor: { light: '#06b6d4', dark: '#22d3ee' },
+      iconColor: METRIC_ACCENT_TEXT.soil_moisture,
+      chartColor: METRIC_CHART_COLORS.soil_moisture,
       dataKey: 'soil_moisture' as keyof FarmMetricChartPoint,
       unit: '%',
       decimals: 0,
@@ -29,8 +31,8 @@ export function FarmMetricCardsGrid({
     {
       title: t('dashboard.nodeSensor.metrics.soilTemp'),
       icon: Thermometer,
-      iconColor: 'text-orange-500 dark:text-orange-400',
-      chartColor: { light: '#f97316', dark: '#fb923c' },
+      iconColor: METRIC_ACCENT_TEXT.soil_temp,
+      chartColor: METRIC_CHART_COLORS.soil_temp,
       dataKey: 'soil_temp' as keyof FarmMetricChartPoint,
       unit: DEG_C,
       decimals: 1,
@@ -38,8 +40,8 @@ export function FarmMetricCardsGrid({
     {
       title: t('dashboard.nodeSensor.metrics.airTemp'),
       icon: Sun,
-      iconColor: 'text-amber-500 dark:text-amber-400',
-      chartColor: { light: '#f59e0b', dark: '#fbbf24' },
+      iconColor: METRIC_ACCENT_TEXT.air_temp,
+      chartColor: METRIC_CHART_COLORS.air_temp,
       dataKey: 'air_temp' as keyof FarmMetricChartPoint,
       unit: DEG_C,
       decimals: 1,
@@ -47,8 +49,8 @@ export function FarmMetricCardsGrid({
     {
       title: t('dashboard.nodeSensor.metrics.airHumidity'),
       icon: Cloud,
-      iconColor: 'text-sky-500 dark:text-sky-400',
-      chartColor: { light: '#0ea5e9', dark: '#38bdf8' },
+      iconColor: METRIC_ACCENT_TEXT.air_humidity,
+      chartColor: METRIC_CHART_COLORS.air_humidity,
       dataKey: 'air_humidity' as keyof FarmMetricChartPoint,
       unit: '%',
       decimals: 0,

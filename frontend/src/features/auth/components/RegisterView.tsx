@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { AuthErrorMessage } from '@/features/auth/components/AuthErrorMessage';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import type { RegisterViewModel } from '@/features/auth/useRegisterViewModel';
+import { MIN_PASSWORD_LENGTH } from '@/features/auth/validation';
 
 export function RegisterView({ viewModel }: { viewModel: RegisterViewModel }) {
   const { t } = useTranslation();
@@ -56,7 +57,7 @@ export function RegisterView({ viewModel }: { viewModel: RegisterViewModel }) {
           <PasswordInput
             id="register-password"
             autoComplete="new-password"
-            placeholder={t('auth.register.passwordPlaceholder')}
+            placeholder={t('auth.register.passwordPlaceholder', { min: MIN_PASSWORD_LENGTH })}
             value={viewModel.password}
             onChange={(event) => viewModel.setPassword(event.target.value)}
             required

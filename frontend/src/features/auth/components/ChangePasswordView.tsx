@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { AuthErrorMessage } from '@/features/auth/components/AuthErrorMessage';
 import type { ChangePasswordViewModel } from '@/features/auth/useChangePasswordViewModel';
+import { MIN_PASSWORD_LENGTH } from '@/features/auth/validation';
 
 export function ChangePasswordView({ viewModel }: { viewModel: ChangePasswordViewModel }) {
   const { t } = useTranslation();
@@ -39,7 +40,7 @@ export function ChangePasswordView({ viewModel }: { viewModel: ChangePasswordVie
             <PasswordInput
               id="new-password"
               autoComplete="new-password"
-              placeholder={t('auth.changePassword.newPlaceholder')}
+              placeholder={t('auth.changePassword.newPlaceholder', { min: MIN_PASSWORD_LENGTH })}
               value={viewModel.newPassword}
               onChange={(event) => viewModel.setNewPassword(event.target.value)}
             />

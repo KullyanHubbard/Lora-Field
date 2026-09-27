@@ -5,6 +5,7 @@ import re
 
 import httpx
 
+from .config import APP_VERSION
 from .database import get_connection
 from .wilayah_resolver import resolve_adm4_from_freetext, resolve_adm4_from_region_names
 
@@ -13,14 +14,8 @@ logger = logging.getLogger("lorafield")
 
 
 ADM4_PATTERN = re.compile(r"^\d{2}\.\d{2}\.\d{2}\.\d{4}$")
-LOCAL_ADM4_ALIASES = {
-    ("balecatur", "gamping", "sleman"): "34.04.01.2001",
-    ("ambarketawang", "gamping", "sleman"): "34.04.01.2002",
-    ("banyuraden", "gamping", "sleman"): "34.04.01.2003",
-    ("nogotirto", "gamping", "sleman"): "34.04.01.2004",
-    ("trihanggo", "gamping", "sleman"): "34.04.01.2005",
-    ("sinduharjo", "ngaglik", "sleman"): "34.04.12.2003",
-}
+NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
+NOMINATIM_TIMEOUT_SECONDS = 8
 
 
 def normalize_adm4_code(value: str | None) -> str:
@@ -30,20 +25,6 @@ def normalize_adm4_code(value: str | None) -> str:
     digits = re.sub(r"\D", "", raw)
     if len(digits) == 10:
         return f"{digits[0:2]}.{digits[2:4]}.{digits[4:6]}.{digits[6:10]}"
-    return ""
-
-
-def normalize_location_text(value: str | None) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
-
-
-def resolve_adm4_from_text(*parts: str | None) -> str:
-    text = normalize_location_text(" ".join(part for part in parts if part))
-    if not text:
-        return ""
-    for keywords, adm4 in LOCAL_ADM4_ALIASES.items():
-        if all(keyword in text for keyword in keywords):
-            return adm4
     return ""
 
 
@@ -60,16 +41,7 @@ def extract_adm4_from_nominatim(data: dict) -> str:
         adm4 = normalize_adm4_code(extratags.get(key))
         if adm4:
             return adm4
-
-    address = data.get("address") or {}
-    return resolve_adm4_from_text(
-        data.get("display_name"),
-        address.get("village"),
-        address.get("suburb"),
-        address.get("city_district"),
-        address.get("county"),
-        address.get("state"),
-    )
+    return ""
 
 
 def resolve_bmkg_adm4(lat: float, lng: float, location_hint: str = "") -> str:
@@ -79,14 +51,10 @@ def resolve_bmkg_adm4(lat: float, lng: float, location_hint: str = "") -> str:
     Format BPS 10-digit (mis. '3402011001') dikonversi ke format BMKG
     dengan titik (mis. '34.02.01.1001').
     """
-    adm4_from_hint = resolve_adm4_from_text(location_hint)
-    if adm4_from_hint:
-        return adm4_from_hint
-
     try:
-        with httpx.Client(timeout=8) as client:
+        with httpx.Client(timeout=NOMINATIM_TIMEOUT_SECONDS) as client:
             response = client.get(
-                "https://nominatim.openstreetmap.org/reverse",
+                NOMINATIM_REVERSE_URL,
                 params={
                     "lat": lat,
                     "lon": lng,
@@ -95,7 +63,7 @@ def resolve_bmkg_adm4(lat: float, lng: float, location_hint: str = "") -> str:
                     "extratags": "1",
                     "zoom": "16",
                 },
-                headers={"User-Agent": "LoraField/1.3 farm-dashboard"},
+                headers={"User-Agent": f"LoraField/{APP_VERSION} farm-dashboard"},
             )
             response.raise_for_status()
         data = response.json()

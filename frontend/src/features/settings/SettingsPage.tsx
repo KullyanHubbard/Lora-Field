@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { getPreferredLanguage, isAppLanguage } from '@/i18n/language';
 import { EMPTY_VALUE } from '@/lib/format';
+import { PHONE_MAX_LENGTH } from '@/lib/fieldLimits';
 
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
@@ -72,8 +73,8 @@ export default function SettingsPage() {
                 <Input
                   type="tel"
                   autoComplete="tel"
-                  maxLength={20}
-                  placeholder="Contoh: 08123456789"
+                  maxLength={PHONE_MAX_LENGTH}
+                  placeholder={t('settingsPage.phonePlaceholder')}
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
                   className="h-8 w-44"

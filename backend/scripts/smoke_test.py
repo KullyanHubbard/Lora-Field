@@ -27,6 +27,7 @@ import shutil
 import sys
 import tempfile
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -45,8 +46,10 @@ settings.resend_api_key = ""       # jangan sampai kirim email sungguhan
 settings.expose_dev_tokens = True  # supaya OTP bisa dibaca dari response
 
 from fastapi.testclient import TestClient  # noqa: E402
+import app.bmkg as bmkg_module  # noqa: E402
 from app.bmkg import set_cached_weather  # noqa: E402
 from app.main import app  # noqa: E402
+from app.routers import auth as auth_router  # noqa: E402
 
 
 ADM4 = "34.04.01.2001"
@@ -235,6 +238,41 @@ def run(report: Report, with_network: bool) -> None:
             ("message",),
         )
         otp = forgot.get("reset_token", "")
+        captured_emails: list[str] = []
+        original_send = auth_router.send_email_via_resend
+        original_frontend_url = settings.frontend_url
+        auth_router.send_email_via_resend = lambda to, subject, html: captured_emails.append(html) or False
+        try:
+            settings.frontend_url = ""
+            client.post(
+                "/api/auth/forgot-password",
+                json={"email": email},
+                headers={"Host": "evil.example.com"},
+            )
+            settings.frontend_url = "https://app.lorafield.test"
+            client.post(
+                "/api/auth/forgot-password",
+                json={"email": email},
+                headers={"Host": "evil.example.com"},
+            )
+        finally:
+            auth_router.send_email_via_resend = original_send
+            settings.frontend_url = original_frontend_url
+        report.check(
+            "email reset tanpa FRONTEND_URL tidak memuat link",
+            len(captured_emails) == 2 and "href" not in captured_emails[0],
+            f"email = {captured_emails[:1]}",
+        )
+        report.check(
+            "link email reset memakai FRONTEND_URL, bukan header Host",
+            len(captured_emails) == 2
+            and "https://app.lorafield.test/reset-password" in captured_emails[1]
+            and "evil.example.com" not in "".join(captured_emails),
+            f"email = {captured_emails[1:]}",
+        )
+        # OTP lama sudah dimatikan oleh permintaan di atas; ambil OTP baru.
+        forgot = client.post("/api/auth/forgot-password", json={"email": email}).json()
+        otp = forgot.get("reset_token", "")
         if report.check("OTP terbit (expose_dev_tokens)", bool(otp), "reset_token tidak ada di response"):
             report.expect(
                 "POST /api/auth/reset-password/verify",
@@ -292,6 +330,21 @@ def run(report: Report, with_network: bool) -> None:
         )
         farm_id = created.get("farm", {}).get("id", "")
         report.check(
+            "POST /api/farms dengan tanaman di luar daftar ditolak",
+            client.post(
+                "/api/farms",
+                json={
+                    "name": "Kebun Tanaman Asing",
+                    "crop_type": "Durian",
+                    "latitude": -7.79,
+                    "longitude": 110.31,
+                    "bmkg_adm4_code": ADM4,
+                    "gateway_device_id": f"gw-{suffix}-asing",
+                },
+                headers=auth,
+            ).status_code == 422,
+        )
+        report.check(
             "POST /api/farms langsung mengklaim gateway",
             created.get("gateway", {}).get("farm_id") == farm_id,
             f"gateway.farm_id = {created.get('gateway', {}).get('farm_id')}",
@@ -304,6 +357,7 @@ def run(report: Report, with_network: bool) -> None:
             "/api/farms",
             json={
                 "name": "Kebun Rebutan",
+                "crop_type": "Jagung",
                 "bmkg_adm4_code": ADM4,
                 "gateway_device_id": device_id,
                 "gateway_display_name": "Gateway Sama",
@@ -434,11 +488,18 @@ def run(report: Report, with_network: bool) -> None:
                     "soil_temp": 26.0,
                     "air_temp": 30.0,
                     "air_humidity": 70.0,
+                    "battery": 76,
+                    "rssi": -92.5,
                 },
                 headers=auth,
             ),
             201,
             ("reading", "decision", "node_created", "node_status"),
+        )
+        report.check(
+            "rssi ikut tersimpan di reading",
+            reading.get("reading", {}).get("rssi") == -92.5,
+            f"dapat {reading.get('reading', {}).get('rssi')}",
         )
         report.check(
             "kelembapan 30% tanpa hujan -> valve open",
@@ -466,6 +527,19 @@ def run(report: Report, with_network: bool) -> None:
             ("reading", "decision", "node_created"),
         )
         report.check("node baru terbuat lewat readings", selfreg.get("node_created") is True)
+        with database.get_connection() as connection:
+            connection.execute(
+                "UPDATE readings SET created_at = datetime('now', '-2 days') WHERE node_id = ?",
+                (node_self,),
+            )
+        stale_window = client.get(
+            f"/api/nodes/{node_self}/readings", params={"hours": 12}, headers=auth
+        ).json()
+        report.check(
+            "readings?hours node yang lama diam tetap berisi data terakhirnya",
+            len(stale_window.get("items", [])) == 1,
+            f"dapat {len(stale_window.get('items', []))}",
+        )
         report.check(
             "kelembapan 80% -> valve closed",
             selfreg.get("decision", {}).get("valve_state") == "closed",
@@ -496,6 +570,21 @@ def run(report: Report, with_network: bool) -> None:
             len(readings.get("items", [])) == 1,
             f"dapat {len(readings.get('items', []))}",
         )
+        windowed = report.expect(
+            "GET /api/nodes/{id}/readings?hours=12",
+            client.get(f"/api/nodes/{node_a}/readings", params={"hours": 12}, headers=auth),
+            200,
+            ("items",),
+        )
+        report.check(
+            "readings per rentang jam ikut reading terbaru",
+            len(windowed.get("items", [])) == 1,
+            f"dapat {len(windowed.get('items', []))}",
+        )
+        report.check(
+            "readings hours di atas batas ditolak",
+            client.get(f"/api/nodes/{node_a}/readings", params={"hours": 1000}, headers=auth).status_code == 422,
+        )
 
         dec = report.expect(
             "GET /api/decision",
@@ -517,6 +606,11 @@ def run(report: Report, with_network: bool) -> None:
             "kolom weather di decision_logs berisi string kondisi",
             isinstance(first_log.get("weather"), str),
             f"tipe = {type(first_log.get('weather')).__name__}",
+        )
+        report.check(
+            "decision log menyimpan decision_type",
+            {item.get("decision_type") for item in log_items} == {"open", "standby"},
+            f"dapat {[item.get('decision_type') for item in log_items]}",
         )
 
         section("Summary & cuaca")
@@ -542,6 +636,72 @@ def run(report: Report, with_network: bool) -> None:
             summary.get("average_soil_moisture") == 55.0,
             f"dapat {summary.get('average_soil_moisture')}",
         )
+        report.check(
+            "threshold summary ikut tanaman kebun (Padi 60-80)",
+            summary.get("thresholds") == {"lower": 60.0, "upper": 80.0},
+            f"dapat {summary.get('thresholds')}",
+        )
+        summary_nodes = {ns["node"]["id"]: ns for ns in summary.get("nodes", [])}
+        node_a_summary = summary_nodes.get(node_a, {})
+        report.check(
+            "baterai node diisi dari laporan perangkat",
+            node_a_summary.get("node", {}).get("battery") == 76,
+            f"dapat {node_a_summary.get('node', {}).get('battery')}",
+        )
+        report.check(
+            "rssi reading terakhir ikut di summary",
+            (node_a_summary.get("latest_reading") or {}).get("rssi") == -92.5,
+            f"dapat {(node_a_summary.get('latest_reading') or {}).get('rssi')}",
+        )
+        report.check(
+            "rssi reading tanpa laporan gateway = null",
+            (summary_nodes.get(node_self, {}).get("latest_reading") or {}).get("rssi", "x") is None,
+            f"dapat {(summary_nodes.get(node_self, {}).get('latest_reading') or {}).get('rssi', 'x')}",
+        )
+        report.check(
+            "baterai node yang belum melapor = null",
+            summary_nodes.get(node_self, {}).get("node", {}).get("battery", "x") is None,
+            f"dapat {summary_nodes.get(node_self, {}).get('node', {}).get('battery', 'x')}",
+        )
+        report.check(
+            "decision summary membawa type",
+            node_a_summary.get("decision", {}).get("type") == "open",
+            f"dapat {node_a_summary.get('decision')}",
+        )
+        with database.get_connection() as connection:
+            connection.execute(
+                "UPDATE nodes SET last_seen_at = datetime('now', '-1 day') WHERE farm_id = ?",
+                (farm_id,),
+            )
+            connection.execute(
+                "UPDATE gateways SET last_seen_at = datetime('now', '-1 day') WHERE farm_id = ?",
+                (farm_id,),
+            )
+        stale = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+        report.check(
+            "node tanpa data lebih dari batas waktu -> offline",
+            stale.get("nodes_online") == 0
+            and stale.get("nodes_problem") == 3
+            and stale.get("gateway_status") == "offline",
+            f"online={stale.get('nodes_online')} problem={stale.get('nodes_problem')} gateway={stale.get('gateway_status')}",
+        )
+        stale_types = {(ns.get("decision") or {}).get("type") for ns in stale.get("nodes", [])}
+        report.check(
+            "node offline -> decision disconnected, bukan keputusan lama",
+            stale_types == {"disconnected"},
+            f"dapat {stale_types}",
+        )
+        with database.get_connection() as connection:
+            connection.execute(
+                "UPDATE gateways SET last_seen_at = CURRENT_TIMESTAMP WHERE farm_id = ?",
+                (farm_id,),
+            )
+        gateway_seen = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+        report.check(
+            "gateway yang baru melapor tetap online walau node diam",
+            gateway_seen.get("gateway_status") == "online",
+            f"gateway={gateway_seen.get('gateway_status')}",
+        )
         weather = report.expect(
             "GET /api/farms/{id}/weather",
             client.get(f"/api/farms/{farm_id}/weather", headers=auth),
@@ -565,6 +725,412 @@ def run(report: Report, with_network: bool) -> None:
         else:
             report.skip("GET /api/weather?adm4=", "butuh internet, pakai --network")
             report.skip("GET /api/utils/resolve-adm4", "butuh internet, pakai --network")
+
+        section("Kendali valve")
+        # Node dibuat offline di section sebelumnya; hidupkan lagi untuk tes mode manual.
+        with database.get_connection() as connection:
+            connection.execute(
+                "UPDATE nodes SET last_seen_at = CURRENT_TIMESTAMP WHERE farm_id = ?", (farm_id,)
+            )
+        report.check(
+            "valve per node ditolak di mode otomatis",
+            client.patch(f"/api/nodes/{node_a}/valve", json={"open": True}, headers=auth).status_code
+            == 409,
+        )
+        switched = report.expect(
+            "PATCH /api/farms/{id}/irrigation-mode manual",
+            client.patch(f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "manual"}, headers=auth),
+            200,
+            ("farm",),
+        )
+        report.check(
+            "mode kebun tersimpan manual",
+            switched.get("farm", {}).get("irrigation_mode") == "manual",
+            f"dapat {switched.get('farm', {}).get('irrigation_mode')}",
+        )
+        manual_summary = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+        report.check(
+            "mode manual mulai dengan semua valve tertutup",
+            {(ns.get("decision") or {}).get("type") for ns in manual_summary.get("nodes", [])}
+            == {"manual_closed"},
+            f"dapat {[(ns.get('decision') or {}).get('type') for ns in manual_summary.get('nodes', [])]}",
+        )
+        opened = report.expect(
+            "PATCH /api/nodes/{id}/valve buka",
+            client.patch(f"/api/nodes/{node_a}/valve", json={"open": True}, headers=auth),
+            200,
+            ("node",),
+        )
+        report.check(
+            "valve terbuka membawa waktu tutup otomatis, belum terkirim ke alat",
+            opened.get("node", {}).get("valve_command") == "open"
+            and opened.get("node", {}).get("valve_auto_close_at") is not None
+            and opened.get("node", {}).get("valve_command_sent_at") is None,
+            f"node = {opened.get('node')}",
+        )
+        report.check(
+            "node tanpa data sensor tidak bisa dibuka",
+            client.patch(f"/api/nodes/{node_b}/valve", json={"open": True}, headers=auth).status_code
+            == 409,
+        )
+        manual_reading = client.post(
+            f"/api/nodes/{node_a}/readings",
+            params={"adm4": ADM4},
+            json={"soil_moisture": 90.0, "soil_temp": 26.0, "air_temp": 30.0, "air_humidity": 70.0},
+            headers=auth,
+        ).json()
+        report.check(
+            "mode manual: reading mengikuti perintah valve, bukan kelembapan",
+            manual_reading.get("decision", {}).get("type") == "manual_open",
+            f"decision = {manual_reading.get('decision')}",
+        )
+        with database.get_connection() as connection:
+            connection.execute(
+                "UPDATE nodes SET valve_command_at = datetime('now', '-1 day') WHERE id = ?",
+                (node_a,),
+            )
+        expired_summary = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+        expired_a = next(
+            (ns for ns in expired_summary.get("nodes", []) if ns["node"]["id"] == node_a), {}
+        )
+        report.check(
+            "valve manual tertutup otomatis setelah batas waktu",
+            expired_a.get("decision", {}).get("valve_state") == "closed",
+            f"decision = {expired_a.get('decision')}",
+        )
+        timeout_logs = [
+            item
+            for item in client.get("/api/logs", headers=auth).json().get("items", [])
+            if item.get("decision_type") == "manual_timeout"
+        ]
+        report.check("penutupan otomatis tercatat di riwayat", len(timeout_logs) == 1, f"dapat {len(timeout_logs)}")
+        started = report.expect(
+            "POST /api/farms/{id}/irrigation/start",
+            client.post(f"/api/farms/{farm_id}/irrigation/start", headers=auth),
+            200,
+            ("nodes",),
+        )
+        report.check(
+            "jalankan pengairan membuka valve node yang punya data",
+            {n["id"]: n.get("valve_command") for n in started.get("nodes", [])}.get(node_a) == "open",
+            f"nodes = {[(n['id'], n.get('valve_command')) for n in started.get('nodes', [])]}",
+        )
+        stopped = report.expect(
+            "POST /api/farms/{id}/irrigation/stop",
+            client.post(f"/api/farms/{farm_id}/irrigation/stop", headers=auth),
+            200,
+            ("nodes",),
+        )
+        report.check(
+            "hentikan pengairan menutup semua valve",
+            all(n.get("valve_command") != "open" for n in stopped.get("nodes", [])),
+            f"nodes = {[(n['id'], n.get('valve_command')) for n in stopped.get('nodes', [])]}",
+        )
+        with database.get_connection() as connection:
+            connection.execute(
+                "UPDATE nodes SET last_seen_at = datetime('now', '-1 day') WHERE farm_id = ?",
+                (farm_id,),
+            )
+        report.check(
+            "mode tidak bisa diganti saat semua node offline",
+            client.patch(
+                f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "auto"}, headers=auth
+            ).status_code
+            == 409,
+        )
+        with database.get_connection() as connection:
+            connection.execute(
+                "UPDATE nodes SET last_seen_at = CURRENT_TIMESTAMP WHERE farm_id = ?", (farm_id,)
+            )
+        back_to_auto = report.expect(
+            "PATCH /api/farms/{id}/irrigation-mode auto",
+            client.patch(f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "auto"}, headers=auth),
+            200,
+            ("farm",),
+        )
+        report.check(
+            "kembali ke mode otomatis",
+            back_to_auto.get("farm", {}).get("irrigation_mode") == "auto",
+            f"dapat {back_to_auto.get('farm', {}).get('irrigation_mode')}",
+        )
+        decimal_battery = client.post(
+            f"/api/nodes/{node_a}/readings",
+            params={"adm4": ADM4},
+            json={
+                "soil_moisture": 50.0,
+                "soil_temp": 26.0,
+                "air_temp": 30.0,
+                "air_humidity": 70.0,
+                "battery": 76.6,
+            },
+            headers=auth,
+        )
+        battery_nodes = {
+            ns["node"]["id"]: ns["node"]["battery"]
+            for ns in client.get(f"/api/farms/{farm_id}/summary", headers=auth).json().get("nodes", [])
+        }
+        report.check(
+            "baterai desimal diterima dan dibulatkan",
+            decimal_battery.status_code == 201 and battery_nodes.get(node_a) == 77,
+            f"status {decimal_battery.status_code}, battery {battery_nodes.get(node_a)}",
+        )
+
+        section("Cuaca cadangan")
+
+        from fastapi import HTTPException as _HTTPException  # noqa: E402
+
+        def slot(hours_offset: float, desc: str) -> dict:
+            waktu = (datetime.now(timezone.utc) + timedelta(hours=hours_offset)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+            return {
+                "utc_datetime": waktu,
+                "weather_desc": desc,
+                "weather": 1 if "Hujan" in desc else 0,
+                "t": 28,
+                "hu": 70,
+            }
+
+        def age_cache(hours: int) -> None:
+            with database.get_connection() as connection:
+                connection.execute(
+                    "UPDATE weather_cache SET updated_at = datetime('now', ?) WHERE adm4 = ?",
+                    (f"-{hours} hours", ADM4),
+                )
+
+        def bmkg_gagal_dengan(exc_factory):
+            calls = {"count": 0}
+
+            def gagal(adm4: str) -> dict:
+                calls["count"] += 1
+                raise exc_factory()
+
+            return calls, gagal
+
+        def kering_payload() -> dict:
+            return {
+                "soil_moisture": 30.0,
+                "soil_temp": 26.0,
+                "air_temp": 30.0,
+                "air_humidity": 70.0,
+            }
+
+        def reset_cuaca_cadangan() -> None:
+            bmkg_module.fetch_bmkg_weather = original_fetch_bmkg
+            set_cached_weather(ADM4, FAKE_WEATHER)
+            bmkg_module._bmkg_failed_at.clear()
+
+        original_fetch_bmkg = bmkg_module.fetch_bmkg_weather
+
+        # 1. Slot sekarang dipilih benar: cache lama 2 jam, slot hujan ada di masa lalu dekat.
+        calls, gagal = bmkg_gagal_dengan(lambda: _HTTPException(status_code=502, detail="gangguan"))
+        bmkg_module.fetch_bmkg_weather = gagal
+        try:
+            set_cached_weather(
+                ADM4,
+                {
+                    **FAKE_WEATHER,
+                    "forecast": [
+                        slot(-7, "Cerah"),
+                        slot(-4, "Cerah"),
+                        slot(-1, "Hujan Ringan"),
+                        slot(2, "Cerah"),
+                        slot(5, "Cerah"),
+                    ],
+                },
+            )
+            age_cache(2)
+            resp = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            body = resp.json() if resp.status_code == 201 else {}
+            report.check(
+                "cuaca cadangan: slot sekarang dipilih benar -> irigasi ditunda",
+                resp.status_code == 201 and body.get("decision", {}).get("type") == "delayed",
+                f"status {resp.status_code}, decision {body.get('decision')}",
+            )
+        finally:
+            reset_cuaca_cadangan()
+
+        # 2. Info hujan tersimpan di level atas tidak boleh dipakai, hanya forecast yang dihitung ulang.
+        calls, gagal = bmkg_gagal_dengan(lambda: _HTTPException(status_code=502, detail="gangguan"))
+        bmkg_module.fetch_bmkg_weather = gagal
+        try:
+            set_cached_weather(
+                ADM4,
+                {
+                    **FAKE_WEATHER,
+                    "rain_next_3h": True,
+                    "condition": "Hujan Lebat",
+                    "forecast": [
+                        slot(-4, "Hujan Ringan"),
+                        slot(-1, "Cerah"),
+                        slot(2, "Cerah"),
+                    ],
+                },
+            )
+            age_cache(2)
+            resp = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            body = resp.json() if resp.status_code == 201 else {}
+            report.check(
+                "cuaca cadangan: info hujan tersimpan tidak dipakai -> irigasi jalan",
+                resp.status_code == 201 and body.get("decision", {}).get("type") == "open",
+                f"status {resp.status_code}, decision {body.get('decision')}",
+            )
+        finally:
+            reset_cuaca_cadangan()
+
+        # 3. Cache terlalu tua (13 jam, batas 12) -> dianggap tidak tersedia, weather log kosong.
+        calls, gagal = bmkg_gagal_dengan(lambda: _HTTPException(status_code=502, detail="gangguan"))
+        bmkg_module.fetch_bmkg_weather = gagal
+        try:
+            set_cached_weather(
+                ADM4,
+                {
+                    **FAKE_WEATHER,
+                    "forecast": [slot(-1, "Hujan Ringan"), slot(2, "Hujan Ringan")],
+                },
+            )
+            age_cache(13)
+            resp = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            body = resp.json() if resp.status_code == 201 else {}
+            with database.get_connection() as connection:
+                log_row = connection.execute(
+                    """
+                    SELECT weather FROM decision_logs
+                    WHERE node_id = ?
+                    ORDER BY created_at DESC, id DESC
+                    LIMIT 1
+                    """,
+                    (node_a,),
+                ).fetchone()
+            report.check(
+                "cuaca cadangan: cache terlalu tua -> tanpa cuaca, irigasi tetap jalan",
+                resp.status_code == 201
+                and body.get("decision", {}).get("type") == "open"
+                and log_row is not None
+                and log_row["weather"] == "",
+                f"status {resp.status_code}, decision {body.get('decision')}, weather log {log_row['weather'] if log_row else None!r}",
+            )
+        finally:
+            reset_cuaca_cadangan()
+
+        # 4. Error jenis lain (bukan HTTPException) tertangkap, tanpa cache sama sekali.
+        calls, gagal = bmkg_gagal_dengan(lambda: ValueError("data BMKG rusak"))
+        bmkg_module.fetch_bmkg_weather = gagal
+        try:
+            with database.get_connection() as connection:
+                connection.execute("DELETE FROM weather_cache WHERE adm4 = ?", (ADM4,))
+            resp = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            body = resp.json() if resp.status_code == 201 else {}
+            latest = client.get(
+                f"/api/nodes/{node_a}/readings", params={"limit": 1}, headers=auth
+            ).json()
+            latest_id = (latest.get("items") or [{}])[0].get("id")
+            node_status = {
+                n["id"]: n.get("status")
+                for n in client.get("/api/nodes", params={"farm_id": farm_id}, headers=auth)
+                .json()
+                .get("items", [])
+            }
+            report.check(
+                "cuaca cadangan: error non-HTTPException tertangkap, reading tetap tersimpan",
+                resp.status_code == 201
+                and latest_id == body.get("reading", {}).get("id")
+                and node_status.get(node_a) == "online",
+                f"status {resp.status_code}, latest_id {latest_id}, reading_id {body.get('reading', {}).get('id')}, node_status {node_status.get(node_a)}",
+            )
+        finally:
+            reset_cuaca_cadangan()
+
+        # 5. Jeda percobaan ulang: BMKG gagal sekali, lalu tidak dicoba lagi dalam 5 menit.
+        calls, gagal = bmkg_gagal_dengan(lambda: _HTTPException(status_code=502, detail="gangguan"))
+        bmkg_module.fetch_bmkg_weather = gagal
+        try:
+            with database.get_connection() as connection:
+                connection.execute("DELETE FROM weather_cache WHERE adm4 = ?", (ADM4,))
+            resp1 = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            resp2 = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            report.check(
+                "cuaca cadangan: jeda percobaan ulang, BMKG cuma dipanggil sekali",
+                resp1.status_code == 201 and resp2.status_code == 201 and calls["count"] == 1,
+                f"status {resp1.status_code}/{resp2.status_code}, panggilan BMKG = {calls['count']}",
+            )
+        finally:
+            reset_cuaca_cadangan()
+
+        # 6. Summary ikut memakai cache lama dan menandai is_stale.
+        calls, gagal = bmkg_gagal_dengan(lambda: _HTTPException(status_code=502, detail="gangguan"))
+        bmkg_module.fetch_bmkg_weather = gagal
+        try:
+            set_cached_weather(
+                ADM4,
+                {
+                    **FAKE_WEATHER,
+                    "forecast": [
+                        slot(-7, "Cerah"),
+                        slot(-4, "Cerah"),
+                        slot(-1, "Hujan Ringan"),
+                        slot(2, "Cerah"),
+                        slot(5, "Cerah"),
+                    ],
+                },
+            )
+            age_cache(2)
+            summary_stale = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+            weather_stale = summary_stale.get("weather")
+            report.check(
+                "cuaca cadangan: summary menandai is_stale dan rain_next_3h benar",
+                weather_stale is not None
+                and weather_stale.get("is_stale") is True
+                and weather_stale.get("rain_next_3h") is True,
+                f"weather = {weather_stale}",
+            )
+        finally:
+            reset_cuaca_cadangan()
+
+        # 7. Endpoint cuaca kebun balas 502 kalau BMKG gagal dan tidak ada cache.
+        calls, gagal = bmkg_gagal_dengan(lambda: _HTTPException(status_code=502, detail="gangguan"))
+        bmkg_module.fetch_bmkg_weather = gagal
+        try:
+            with database.get_connection() as connection:
+                connection.execute("DELETE FROM weather_cache WHERE adm4 = ?", (ADM4,))
+            resp = client.get(f"/api/farms/{farm_id}/weather", headers=auth)
+            report.check(
+                "cuaca cadangan: GET weather kebun 502 saat BMKG gagal tanpa cache",
+                resp.status_code == 502,
+                f"status {resp.status_code}",
+            )
+        finally:
+            reset_cuaca_cadangan()
 
         section("Gateway logs")
         report.expect(

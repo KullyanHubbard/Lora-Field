@@ -2,37 +2,41 @@ import { Waves } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatSyncTime } from '@/features/irrigation/irrigationHelpers';
+import {
+  formatSyncTime,
+  IRRIGATION_ACTIVITY_LABEL_KEYS,
+  type IrrigationActivity,
+} from '@/features/irrigation/irrigationHelpers';
 import type { FarmSummary } from '@/types';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
+import { cn } from '@/lib/utils';
 
 export function IrrigationHeaderCard({
   gatewayStatus,
   lastSync,
-  openValves,
+  activity,
 }: {
   gatewayStatus: FarmSummary['gateway_status'];
   lastSync: string | null;
-  openValves: number;
+  activity: IrrigationActivity;
 }) {
   const { t, i18n } = useTranslation();
   const gatewayTone = gatewayStatus === 'online' ? 'green' : 'red';
-  const modeLabel = openValves > 0 ? t('irrigation.modeActive') : t('irrigation.modeMonitor');
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-2.5">
-          <Waves className="mt-0.5 size-4 text-emerald-500" aria-hidden="true" />
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">{t('irrigation.title')}</h1>
-            <p className="text-xs text-muted-foreground">{t('irrigation.subtitle')}</p>
-          </div>
+      <CardContent className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <Waves className={cn('size-6', ACCENT_TEXT.emerald)} aria-hidden="true" />
+          <h1 className="text-2xl font-semibold tracking-tight">{t('irrigation.title')}</h1>
         </div>
-        <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3 lg:flex lg:items-center lg:gap-3">
-          <MetaPill label={t('irrigation.modeLabel')} value={modeLabel} />
-          <div className="flex items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2 py-1">
+        <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3 lg:flex lg:items-center lg:gap-3">
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5 font-semibold text-foreground">
+            {t(IRRIGATION_ACTIVITY_LABEL_KEYS[activity])}
+          </div>
+          <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-1.5">
             <span className="text-muted-foreground">{t('irrigation.gatewayLabel')}</span>
-            <StatusPill tone={gatewayTone} label={gatewayStatus} />
+            <StatusPill tone={gatewayTone} label={gatewayStatus} className="text-sm" />
           </div>
           <MetaPill
             label={t('irrigation.syncLabel')}
@@ -46,7 +50,7 @@ export function IrrigationHeaderCard({
 
 function MetaPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-border bg-muted/30 px-2 py-1">
+    <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
       <span className="text-muted-foreground">{label} </span>
       <span className="font-medium text-foreground">{value}</span>
     </div>

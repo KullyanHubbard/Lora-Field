@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GaugeRing } from '@/components/ui/gauge-ring';
 import { buildBatteryGaugeModel, getNodeLabel } from '@/features/dashboard/dashboardHelpers';
-import { TONE_CLASSES } from '@/lib/toneClasses';
+import { ACCENT_TEXT, TONE_CLASSES } from '@/lib/toneClasses';
 import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
 
@@ -92,7 +92,7 @@ export function BatteryNodesCard({
     <Card className={cn('battery-section-root', className)}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
-          <BatteryFull className="size-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
+          <BatteryFull className={cn('size-4 shrink-0', ACCENT_TEXT.emerald)} />
           {t('dashboard.gaugeBatteryCardTitle')}
         </CardTitle>
         {showArrows && (

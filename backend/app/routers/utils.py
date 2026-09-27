@@ -12,7 +12,7 @@ from ..adm4 import resolve_bmkg_adm4
 from ..auth import get_current_user
 from ..bmkg import fetch_bmkg_weather
 from ..crops import CROP_THRESHOLDS
-from ..irrigation import THRESHOLDS, calculate_decision
+from ..irrigation import DEFAULT_THRESHOLDS, calculate_decision
 
 router = APIRouter()
 
@@ -56,6 +56,6 @@ def get_decision(
     return {
         "soil_moisture": soil_moisture,
         "rain_next_3h": rain_next_3h,
-        "thresholds": THRESHOLDS.model_dump(),
+        "thresholds": DEFAULT_THRESHOLDS.model_dump(),
         "decision": calculate_decision(soil_moisture, rain_next_3h),
     }

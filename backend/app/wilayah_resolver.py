@@ -90,6 +90,7 @@ def resolve_adm4_from_region_names(
     regency: str = "",
     district: str = "",
     village: str = "",
+    require_parent: bool = False,
 ) -> str:
     """Cocokkan nama wilayah hierarkis -> kode adm4 (13 char) desa.
 
@@ -112,6 +113,8 @@ def resolve_adm4_from_region_names(
 
         # Desa: sempitkan ke kecamatan kalau ada, kalau tidak ke kabupaten.
         parent = kec_code or kab_code
+        if require_parent and parent is None:
+            return ""
         desa_code = _match_level(connection, 4, village, parent)
         if desa_code:
             return desa_code
@@ -146,8 +149,18 @@ def resolve_adm4_from_freetext(text: str) -> str:
     head = re.split(r"\b(?:kabupaten|kota|kecamatan|distrik|kelurahan|desa|kab|kec)\b", norm, 1)[0]
     village = head.strip()
 
+    # Alamat tanpa kata tipe, mis. "Balecatur, Gamping, Sleman": urutannya dianggap
+    # desa, kecamatan, kabupaten. Desa hanya dicari di bawah kecamatan/kabupaten yang
+    # ketemu, supaya nama desa kembar di provinsi lain tidak ikut tercocokkan.
+    parts = [part.strip() for part in text.split(",") if part.strip()]
+    comma_format = not regency and not district and len(parts) >= 2
+    if comma_format:
+        village = parts[0]
+        district = parts[1]
+        regency = parts[2] if len(parts) > 2 else ""
+
     if not village:
         return ""
     return resolve_adm4_from_region_names(
-        regency=regency, district=district, village=village
+        regency=regency, district=district, village=village, require_parent=comma_format
     )

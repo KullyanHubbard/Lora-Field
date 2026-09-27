@@ -35,15 +35,19 @@ Modul di `backend/app/` (hasil Fase 1 sampai Fase 4 rapikan backend, 2026-09-23)
 | `routers/nodes.py` | Route `/api/nodes*` dan pembacaan sensor |
 | `routers/logs.py` | Route `/api/logs` |
 | `routers/utils.py` | Route `/api/crops`, `/api/utils/resolve-adm4`, `/api/weather`, `/api/decision` |
+| `routers/valves.py` | Route kendali valve: ganti mode otomatis/manual, jalankan/hentikan pengairan, valve per node |
+| `valve_control.py` | Perintah valve mode manual, tutup otomatis setelah batas waktu, catatan ke decision_logs |
 | `deps.py` | Helper bersama antar-router: `client_ip` dan verifikasi kepemilikan farm/node |
 | `gateway_service.py` | `ensure_gateway_unclaimed` + `claim_gateway_for_farm` (dipakai `create_farm` dan `claim_farm_gateway`), `release_gateway` (dipakai `delete_farm` dan `unclaim_farm_gateway`) |
 | `node_service.py` | `insert_node` (dipakai registrasi batch gateway dan self-registration) dan `record_reading` (simpan reading + decision_log) |
 | `irrigation.py` | `THRESHOLDS` + `calculate_decision`, aturan buka/tutup valve |
 | `bmkg.py` | Fetch prakiraan BMKG, normalisasi response, cache per adm4 |
-| `adm4.py` | Resolusi kode adm4 dari koordinat (Nominatim + tabel wilayah + alias lokal) |
+| `adm4.py` | Resolusi kode adm4 dari koordinat (Nominatim + tabel wilayah; fallback alamat ketikan, termasuk format "Desa, Kecamatan, Kabupaten") |
 | `crops.py` | `CROP_THRESHOLDS`, 30 tanaman, sumber `GET /api/crops` |
 | `mailer.py` | Kirim email lewat Resend, plus template HTML email reset password |
 | `auth.py`, `config.py`, `database.py`, `schemas.py`, `wilayah_resolver.py`, `language_preferences.py` | Sudah ada sebelumnya |
+
+- **Simulator perangkat: `simulator/`**. Script Python yang berperan sebagai gateway dan node sensor selama firmware belum ada. Mengirim data lewat endpoint yang sama dengan firmware (register node, POST readings, gateway-logs); nilai sensor dihitung dari cuaca BMKG kebun dan model fisik di `config.example.json`. Selalu membuat kebun demo sendiri (hapus dengan `cleanup`), dan ID alat diawali `SIM-` sebagai penanda mock. Cara pakai di `simulator/README.md`.
 
 Entrypoint tetap `app.main:app`. Aturan urutan route: catch-all SPA `/{full_path:path}` di `main.py` WAJIB tetap terdaftar paling akhir, setelah semua `include_router`. Kalau digeser ke atas, semua route API akan ketelan. Startup pakai `lifespan` (bukan `on_event` yang sudah deprecated).
 - **Panduan rebuild lama** (`frontend/docs/Panduan-Rebuild-Frontend-LoraField.md`) sudah dihapus. Acuan sekarang CLAUDE.md ini; jangan menambah teknologi atau library di luar section Stack.
@@ -70,9 +74,9 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 - API contract = section "Backend Endpoints" + "Database Schema" di CLAUDE.md ini, plus `src/types/index.ts`. JANGAN mengarang endpoint, field, atau shape response.
 - Endpoint yang BELUM ADA jangan dipanggil dan jangan diasumsikan ada (lihat section "Endpoint Belum Ada").
 - Field yang masih perlu verifikasi shape-nya terhadap response asli: struktur detail forecast BMKG di dalam summary cuaca. Kalau tidak cocok dengan type, LAPORKAN, jangan diam-diam ubah.
-- Sudah terverifikasi lewat `backend/scripts/smoke_test.py` (2026-09-22): kolom `weather` di decision_logs berisi string kondisi cuaca (mis. `Cerah Berawan`), bukan JSON. Response `/login` = `{ access_token, token_type, user }`. Response `/summary` = `{ farm, weather, thresholds, gateway_status, average_soil_moisture, nodes_total, nodes_online, nodes_problem, nodes }`.
+- Sudah terverifikasi lewat `backend/scripts/smoke_test.py` (2026-09-22): kolom `weather` di decision_logs berisi string kondisi cuaca (mis. `Cerah Berawan`), bukan JSON; string kosong `""` kalau cuaca tidak tersedia (BMKG gagal dan tidak ada cache cadangan yang layak pakai). Response `/login` = `{ access_token, token_type, user }`. Response `/summary` = `{ farm, weather, thresholds, gateway_status, average_soil_moisture, nodes_total, nodes_online, nodes_problem, nodes }`.
 - Data dummy/mock harus ditandai jelas sebagai mock, jangan seolah dari backend.
-- Saat ini frontend tidak punya data mock (`src/mocks/` sudah dihapus). Kalau mock dibutuhkan lagi, taruh semua nilainya terpusat di satu file di `frontend/src/mocks/`; query adapter tidak boleh mendefinisikan ID, count, status, atau measurement dummy sendiri.
+- Saat ini frontend tidak punya data mock (`src/mocks/` sudah dihapus). Data uji perangkat dibuat oleh `simulator/` lewat API, bukan di kode frontend. Kalau mock dibutuhkan lagi, taruh semua nilainya terpusat di satu file di `frontend/src/mocks/`; query adapter tidak boleh mendefinisikan ID, count, status, atau measurement dummy sendiri.
 - Kalau ragu atau butuh keputusan desain: BERHENTI dan tanya.
 
 ## Konvensi Kode
@@ -133,33 +137,48 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | Endpoint | Keterangan |
 |----------|-----------|
 | `GET /api/farms/{id}/summary` | Summary kebun (gateway, nodes, soil avg, valve, threshold, decision). routers/farms.py:200 |
-| `GET /api/farms/{id}/weather` | Prakiraan cuaca BMKG untuk kebun (auto-resolve adm4, cache 30 menit). **Ini endpoint cuaca yang dipakai frontend.** routers/farms.py:177 |
+| `GET /api/farms/{id}/weather` | Prakiraan cuaca BMKG untuk kebun (auto-resolve adm4, cache 30 menit). Kalau BMKG gangguan, pakai cache lama sampai umurnya WEATHER_STALE_MAX_HOURS (default 12 jam), lalu balas 502 kalau tidak ada cache yang layak pakai. **Ini endpoint cuaca yang dipakai frontend.** routers/farms.py:177 |
 | `GET /api/nodes` | List node (filter `?farm_id=`). Return `{ items, total }`. routers/nodes.py:18 |
 | `PATCH /api/nodes/{id}/location` | Update lokasi/region/koordinat node. Return `{ node }`. routers/nodes.py:49 |
-| `GET /api/nodes/{id}/readings` | Pembacaan sensor node (`limit` 1–100, default 20). routers/nodes.py:81 |
-| `POST /api/nodes/{id}/readings` | Insert reading + hitung decision + tulis decision_log. Query wajib `?adm4=`. Kalau node belum ada, node dibuat otomatis (self-registration) dan body WAJIB menyertakan `farm_id`, kalau tidak 400. Return `{ reading, decision, node_created, node_status }`. routers/nodes.py:101 |
+| `GET /api/nodes/{id}/readings` | Pembacaan sensor node (`limit` 1–100, default 20). Opsional `hours` (1–72): semua reading dalam N jam sebelum reading terbaru node, `limit` diabaikan. Frontend memakai `hours` (`READINGS_FETCH_HOURS` di `src/lib/timeWindows.ts`). routers/nodes.py |
+| `POST /api/nodes/{id}/readings` | Insert reading + hitung decision (threshold kebun) + tulis decision_log. Query wajib `?adm4=`. Body boleh menyertakan `battery` (0–100) dari perangkat dan `rssi` (dBm, -150 sampai 0) yang diukur gateway saat menerima paket. Kalau node belum ada, node dibuat otomatis (self-registration) dan body WAJIB menyertakan `farm_id`, kalau tidak 400. Reading tidak pernah gagal karena BMKG gangguan: kalau cuaca tidak tersedia, keputusan otomatis pakai rain_next_3h=false. Return `{ reading, decision, node_created, node_status }`. routers/nodes.py:101 |
 | `GET /api/weather?adm4=X` | Cuaca BMKG mentah by adm4 (debug, butuh auth, bypass cache jadi selalu memanggil BMKG). routers/utils.py:42 |
 | `GET /api/decision?soil_moisture=X&rain_next_3h=bool` | Simulator keputusan irigasi (stateless, butuh auth). routers/utils.py:50 |
-| `GET /api/logs` | Decision logs milik user (`limit` 1–100, default 20; filter client-side per farm) |
+| `GET /api/logs` | Decision logs milik user (`limit` 1–100, default 20; filter client-side per farm). Tiap item membawa `decision_type` (`open`/`delayed`/`closed`/`standby`, null untuk log lama tak dikenal); frontend membaca ini, bukan teks `decision` |
 | `GET /api/farms/{id}/gateway-logs` | Log koneksi gateway kebun (`limit` 1–100, default 20). Verifikasi kepemilikan. Return `{ items, total }`. Kosong sampai hardware gateway lapor. routers/gateways.py:26 |
 | `POST /api/farms/{id}/gateway-logs` | Insert log koneksi gateway (scaffolding hardware). Body `GatewayLogIn` (`event`, `detail`). Return `{ log }`, status 201. routers/gateways.py:47 |
+
+### Kendali Valve
+
+| Endpoint | Method | Keterangan |
+|----------|--------|-----------|
+| `/api/farms/{farm_id}/irrigation-mode` | PATCH | Body `{ mode: 'auto' \| 'manual' }`. 409 kalau semua node offline. Masuk manual = semua perintah valve `closed`; kembali otomatis = perintah dihapus. Return `{ farm }` |
+| `/api/farms/{farm_id}/irrigation/start` | POST | Mode manual saja. Buka valve semua node online yang punya reading. Return `{ nodes }` |
+| `/api/farms/{farm_id}/irrigation/stop` | POST | Mode manual saja. Tutup semua valve terbuka, termasuk node offline. Return `{ nodes }` |
+| `/api/nodes/{node_id}/valve` | PATCH | Mode manual saja. Body `{ open }`. Membuka butuh node online dan sudah punya reading (409 kalau tidak). Return `{ node }` |
+
+Perintah valve hanya disimpan di server (`nodes.valve_command`). `valve_command_sent_at` tetap NULL sampai ada jalur MQTT ke gateway, dan UI wajib menyebut perintah "belum terkirim ke alat" selama NULL.
 
 ## Database Schema (SQLite)
 
 ```text
 users           : id, email, name, password_hash, phone, language, created_at, updated_at
-farms           : id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status
-nodes           : id, farm_id, gateway_id, name, location, region, latitude, longitude, status, battery, first_seen_at, updated_at
-readings        : id, farm_id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, created_at
-decision_logs   : id, node_id, soil_moisture, weather, decision, valve_state, reason, created_at
+farms           : id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status, lower_threshold, upper_threshold, irrigation_mode
+nodes           : id, farm_id, gateway_id, name, location, region, latitude, longitude, status, battery, first_seen_at, last_seen_at, battery_updated_at, valve_command, valve_command_at, valve_command_sent_at, updated_at
+readings        : id, farm_id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, rssi, created_at
+decision_logs   : id, node_id, soil_moisture, weather, decision, decision_type, valve_state, reason, created_at
 gateways        : id, device_id (UNIQUE), farm_id (UNIQUE, NULL kalau belum diklaim), display_name, first_seen_at, last_seen_at, claimed_at
 gateway_logs    : id, farm_id, event, detail, created_at; log koneksi gateway (kosong sampai hardware lapor)
-weather_cache   : adm4 (PK), data (JSON), updated_at; TTL 30 menit
+weather_cache   : adm4 (PK), data (JSON), updated_at; TTL 30 menit. Cache lewat TTL tetap dipakai sebagai cadangan (dihitung ulang dari isi "forecast") kalau BMKG gagal, sampai umurnya WEATHER_STALE_MAX_HOURS (default 12 jam). BMKG yang gagal untuk suatu adm4 tidak dicoba lagi selama 5 menit (jeda percobaan ulang, in-memory per proses)
 wilayah         : kode (PK, format adm4 BMKG), nama, nama_norm, level (1=provinsi s/d 4=desa), parent; di-seed sekali dari app/data/wilayah.csv
 password_resets : id, user_id, token (6-digit OTP), expires_at, used, created_at
 ```
 
-Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di frontend = id, name, email, phone (opsional), language; `created_at`/`updated_at` tidak ikut dikirim ke frontend. Kolom `phone` dan `language` ditambahkan via `ensure_column` (migration otomatis saat startup). `language` bernilai `'id'` atau `'en'` (CHECK constraint), dan NULL untuk baris lama sampai login, `/auth/me`, atau `/auth/profile` mem-backfill-nya. Kolom `nodes.gateway_id`, `nodes.first_seen_at`, dan `readings.farm_id` juga ditambahkan via `ensure_column`.
+Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di frontend = id, name, email, phone (opsional), language; `created_at`/`updated_at` tidak ikut dikirim ke frontend. Kolom `phone` dan `language` ditambahkan via `ensure_column` (migration otomatis saat startup). `language` bernilai `'id'` atau `'en'` (CHECK constraint), dan NULL untuk baris lama sampai login, `/auth/me`, atau `/auth/profile` mem-backfill-nya. Kolom `nodes.gateway_id`, `nodes.first_seen_at`, dan `readings.farm_id` juga ditambahkan via `ensure_column`, begitu juga `farms.lower_threshold`/`upper_threshold`, `nodes.last_seen_at`/`battery_updated_at`, `readings.rssi`, dan `decision_logs.decision_type` (di-backfill saat startup).
+
+Catatan gateway: `summary.gateway_status` = `online` kalau ada node online atau gateway melapor (`gateways.last_seen_at`) dalam batas waktu yang sama. Kartu Gateway di frontend membaca nilai ini, tidak menghitung sendiri.
+
+Catatan node (via `present_node` di `node_service.py`): kolom `nodes.status` hanya diisi saat insert dan tidak dibaca lagi. `status` di response API diturunkan dari `last_seen_at`, `offline` kalau tidak ada data melewati `NODE_OFFLINE_AFTER_MINUTES` (default 15). `battery` di response = null kalau perangkat belum pernah melaporkannya.
 
 Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun FK yang pakai `ON DELETE CASCADE`. Jadi kode yang menghapus baris induk wajib menghapus baris anaknya lebih dulu. Lihat `delete_farm` (routers/farms.py:101) sebagai contoh urutannya.
 
@@ -171,11 +190,13 @@ Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun 
 
 ## Logika Irigasi
 
+- Threshold per kebun, diambil dari jenis tanaman (`crops.py`) saat kebun dibuat atau `crop_type` diubah. `crop_type` wajib salah satu dari daftar `GET /api/crops` (POST/PATCH farm menolak 422 kalau tidak); form Tambah Kebun hanya menyediakan pilihan, tanpa ketik bebas. Default 40–70% (`DEFAULT_THRESHOLDS` di `irrigation.py`) hanya untuk kebun lama yang tanamannya tidak dikenal. `summary.thresholds` berisi threshold kebun itu.
 - Valve dibuka jika kelembapan tanah di bawah threshold dan tidak ada prediksi hujan.
 - Valve ditutup jika kelembapan tanah sudah cukup.
 - Irigasi ditunda jika BMKG memprediksi hujan.
-- Sistem menunggu data sensor terbaru jika gateway offline.
-- RSSI tidak disimpan di backend, selalu tampilkan `-` (konstanta `EMPTY_VALUE` di `src/lib/format.ts`, penanda nilai kosong untuk seluruh UI).
+- Mode per kebun: `auto` (aturan di atas) atau `manual` (valve mengikuti perintah pengguna, decision `manual_open`/`manual_closed`). Valve yang dibuka manual ditutup otomatis setelah `MANUAL_IRRIGATION_MAX_MINUTES` (default 30) dan tercatat `manual_timeout`. Ganti mode 2 langkah di kartu Status Valve: pilih, lalu Terapkan.
+- Sistem menunggu data sensor terbaru jika gateway offline. Di summary, node yang offline mendapat decision `disconnected` (tampil "Terputus", valve `unknown`), bukan keputusan terakhir yang sudah basi. `disconnected` tidak pernah tercatat di decision_logs.
+- RSSI disimpan per reading (`readings.rssi`, dBm, NULL kalau gateway tidak melaporkannya). Kartu Sensor Node menampilkan RSSI dari `latest_reading` node terpilih, dan `-` kalau kosong (konstanta `EMPTY_VALUE` di `src/lib/format.ts`, penanda nilai kosong untuk seluruh UI).
 
 ## Akses User
 
@@ -220,6 +241,7 @@ Kolom 1:
 - Kolom 1 adalah area status sistem.
 - Ukuran card, urutan elemen, dan posisi card tidak boleh diubah tanpa persetujuan.
 - Jangan pindahkan Status Valve, Gateway, atau Log Aktivitas ke kolom lain tanpa persetujuan.
+- Kartu Status Valve berisi switch mode Otomatis/Manual, tombol Jalankan/Hentikan Pengairan (mode manual), dan panel Atur Valve (disetujui pemilik, 2026-09-26). Di mode Otomatis tingginya sama dengan baseline.
 
 Kolom 2:
 

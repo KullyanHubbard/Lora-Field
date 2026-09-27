@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, Field
 
 from .language_preferences import Language
@@ -8,6 +10,8 @@ class SensorReadingIn(BaseModel):
     soil_temp: float = Field(..., ge=-20, le=80)
     air_temp: float = Field(..., ge=-20, le=80)
     air_humidity: float = Field(..., ge=0, le=100)
+    battery: float | None = Field(default=None, ge=0, le=100, description="Persentase baterai node, kalau perangkat melaporkannya")
+    rssi: float | None = Field(default=None, ge=-150, le=0, description="Kuat sinyal paket ini (dBm), diukur gateway saat menerima")
     farm_id: str | None = Field(default=None, description="Required for first-time node self-registration")
 
 
@@ -21,6 +25,14 @@ class NodeLocationUpdate(BaseModel):
 class ThresholdConfig(BaseModel):
     lower: float = Field(default=40, ge=0, le=100)
     upper: float = Field(default=70, ge=0, le=100)
+
+
+class IrrigationModeUpdate(BaseModel):
+    mode: Literal["auto", "manual"]
+
+
+class ValveCommandUpdate(BaseModel):
+    open: bool
 
 
 class GatewayLogIn(BaseModel):

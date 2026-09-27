@@ -49,3 +49,8 @@ Thumbs.db
 # source frontend/src/features/logs/)
 *.log
 backend/logs/
+
+# Simulator perangkat: state lokal dan config pribadi (contoh ada di config.example.json)
+simulator/.state.json
+simulator/.state.tmp
+simulator/config.json

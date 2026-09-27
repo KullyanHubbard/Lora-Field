@@ -4,6 +4,8 @@ import { Clock, Radio, Signal, Wifi } from 'lucide-react';
 import { StatusPill } from '@/components/ui/status-pill';
 import type { GatewayInfoViewModel } from '@/features/gateway/gatewayHelpers';
 import { EMPTY_VALUE, timeAgo } from '@/lib/format';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
+import { cn } from '@/lib/utils';
 
 function StatTile({
   icon,
@@ -41,7 +43,7 @@ export function GatewayInfoCard({
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Radio className="size-4 shrink-0 text-blue-500 dark:text-blue-400" />
+            <Radio className={cn('size-4 shrink-0', ACCENT_TEXT.blue)} />
             <h2 className="text-base font-medium text-foreground">
               {info.displayName || t('gateway.title')}
             </h2>
@@ -53,12 +55,12 @@ export function GatewayInfoCard({
 
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
         <StatTile
-          icon={<Signal className="size-3.5 text-blue-500 dark:text-blue-400" />}
+          icon={<Signal className={cn('size-3.5', ACCENT_TEXT.blue)} />}
           label={t('gateway.signal')}
           value={t(info.signalValueKey)}
         />
         <StatTile
-          icon={<Wifi className="size-3.5 text-cyan-500 dark:text-cyan-400" />}
+          icon={<Wifi className={cn('size-3.5', ACCENT_TEXT.cyan)} />}
           label={t('gateway.internet')}
           value={t(info.internetValueKey)}
         />

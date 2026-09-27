@@ -9,9 +9,11 @@ import {
   getGatewayEventDotClass,
   getGatewayEventLabelKey,
   getGatewayEventTone,
+  parseHeartbeatNodeCount,
   type GatewayEventFilter,
 } from '@/features/gateway/gatewayHelpers';
 import type { GatewayLog } from '@/types';
+import { ACCENT_TEXT, NOTICE_CLASSES } from '@/lib/toneClasses';
 
 export function GatewayLogContent({
   logs,
@@ -64,7 +66,7 @@ export function GatewayLogContent({
               className={cn(
                 'inline-flex h-6 items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium leading-none transition-colors',
                 filter === opt.value
-                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                  ? NOTICE_CLASSES.successPill
                   : 'border-border bg-foreground/[0.03] text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.06] hover:text-foreground',
               )}
             >
@@ -87,13 +89,20 @@ export function GatewayLogContent({
             <div className="divide-y divide-border/30">
               {logs.map((log) => {
                 const tone = getGatewayEventTone(log.event);
+                const nodeCount = parseHeartbeatNodeCount(log);
+                const missingNodes = nodeCount != null && nodeCount.heard < nodeCount.total;
                 return (
                   <div key={log.id} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
                     <span className="mt-1 shrink-0">
                       {tone === 'green' ? (
-                        <RadioTower className="size-3.5 text-emerald-500 dark:text-emerald-400" />
+                        <RadioTower
+                          className={cn(
+                            'size-3.5',
+                            missingNodes ? NOTICE_CLASSES.warningText : ACCENT_TEXT.emerald,
+                          )}
+                        />
                       ) : tone === 'red' ? (
-                        <WifiOff className="size-3.5 text-red-500 dark:text-red-400" />
+                        <WifiOff className={cn('size-3.5', ACCENT_TEXT.red)} />
                       ) : (
                         <span
                           className={cn(
@@ -110,8 +119,15 @@ export function GatewayLogContent({
                             {t(getGatewayEventLabelKey(log.event))}
                           </p>
                           {log.detail && (
-                            <p className="truncate text-[0.65rem] text-muted-foreground">
-                              {log.detail}
+                            <p
+                              className={cn(
+                                'truncate text-[0.65rem]',
+                                missingNodes
+                                  ? `font-medium ${NOTICE_CLASSES.warningText}`
+                                  : 'text-muted-foreground',
+                              )}
+                            >
+                              {nodeCount ? t('gateway.heartbeatNodes', nodeCount) : log.detail}
                             </p>
                           )}
                         </div>

@@ -8,9 +8,7 @@
   },
   "status": {
     "online": "Online",
-    "offline": "Offline",
-    "standby": "Standby",
-    "pending": "Pending"
+    "offline": "Offline"
   },
   "auth": {
     "sessionLoading": "Loading your session…",
@@ -57,7 +55,7 @@
       "emailLabel": "Email",
       "emailPlaceholder": "name@email.com",
       "passwordLabel": "Password",
-      "passwordPlaceholder": "At least 6 characters",
+      "passwordPlaceholder": "At least {{min}} characters",
       "confirmLabel": "Confirm Password",
       "confirmPlaceholder": "Repeat password",
       "submit": "Create Account",
@@ -66,7 +64,7 @@
       "loginLink": "Sign In",
       "errorNameRequired": "Full name is required.",
       "errorEmailInvalid": "Email is not valid.",
-      "errorPasswordTooShort": "Password must be at least 6 characters.",
+      "errorPasswordTooShort": "Password must be at least {{min}} characters.",
       "errorPasswordMismatch": "Passwords do not match."
     },
     "resetPassword": {
@@ -75,18 +73,18 @@
       "copyright": "© 2026 LoraField",
       "privacyPolicy": "Privacy Policy",
       "title": "Reset Password",
-      "descEmail": "Enter your account email to receive a 6-digit reset code.",
-      "descOtp": "Enter the 6-digit code sent to {{email}}.",
+      "descEmail": "Enter your account email to receive a {{digits}}-digit reset code.",
+      "descOtp": "Enter the {{digits}}-digit code sent to {{email}}.",
       "descPassword": "Create a new password for your account.",
       "emailLabel": "Account Email",
       "emailPlaceholder": "name@email.com",
       "sendCode": "Send Reset Code",
-      "otpLabel": "Reset Code (6 Digits)",
+      "otpLabel": "Reset Code ({{digits}} Digits)",
       "otpPlaceholder": "Example: 123456",
       "verifyCode": "Verify Code",
       "changeEmail": "Change email",
       "newPasswordLabel": "New Password",
-      "newPasswordPlaceholder": "At least 6 characters",
+      "newPasswordPlaceholder": "At least {{min}} characters",
       "confirmLabel": "Repeat New Password",
       "confirmPlaceholder": "Repeat new password",
       "updatePassword": "Update Password",
@@ -94,8 +92,8 @@
       "backToLoginText": "Back to",
       "loginLink": "Sign In",
       "errorEmailInvalid": "Email is not valid.",
-      "errorOtpInvalid": "Reset code must be 6 digits.",
-      "errorPasswordTooShort": "New password must be at least 6 characters.",
+      "errorOtpInvalid": "Reset code must be {{digits}} digits.",
+      "errorPasswordTooShort": "New password must be at least {{min}} characters.",
       "errorPasswordMismatch": "Passwords do not match."
     },
     "changePassword": {
@@ -104,13 +102,13 @@
       "currentLabel": "Current Password",
       "currentPlaceholder": "Enter current password",
       "newLabel": "New Password",
-      "newPlaceholder": "At least 6 characters",
+      "newPlaceholder": "At least {{min}} characters",
       "confirmLabel": "Repeat New Password",
       "confirmPlaceholder": "Repeat new password",
       "submit": "Save New Password",
       "backToSettings": "Back to Settings",
       "errorCurrentRequired": "Current password is required.",
-      "errorNewTooShort": "New password must be at least 6 characters.",
+      "errorNewTooShort": "New password must be at least {{min}} characters.",
       "errorSamePassword": "New password must be different from the current password.",
       "errorMismatch": "Passwords do not match."
     },
@@ -120,14 +118,18 @@
   "irrigation": {
     "errorLoad": "Failed to load irrigation data: {{message}}",
     "noData": "Data not available.",
-    "modeLabel": "Mode",
     "perNodeTitle": "Per-Node Detail",
     "perNodeEmpty": "No nodes for this farm yet.",
     "waitingData": "Waiting for data",
     "title": "Irrigation",
-    "subtitle": "Monitor moisture, irrigation decisions, and valve status across all nodes.",
-    "modeActive": "Irrigation active",
-    "modeMonitor": "Monitoring mode",
+    "activity": {
+      "active": "Active",
+      "standby": "Standby",
+      "delayed": "Delayed",
+      "offline": "Offline",
+      "initializing": "Initializing",
+      "notConfigured": "Not Configured"
+    },
     "gatewayLabel": "Gateway",
     "syncLabel": "Sync",
     "totalNodes": "Total nodes",
@@ -189,10 +191,27 @@
     "weatherReadMore": "Read More",
     "valveStatusCard": "Valve Status",
     "valveAuto": "Automatic",
+    "valveManual": "Manual",
+    "valveDisconnected": "Disconnected",
+    "valveModeGroup": "Valve mode",
+    "valveModeConfirm": "Switch to {{mode}} mode?",
+    "valveModeApply": "Apply",
+    "valveModeCancel": "Cancel",
+    "valveModeChanged": "Valve mode switched to {{mode}}.",
+    "valveStart": "Start Irrigation",
+    "valveStop": "Stop Irrigation",
+    "valveManage": "Manage Valves",
+    "valveSheetDescription": "Open or close each node's valve. Manually opened valves stop on their own after a time limit.",
+    "valveUnsentNote": "Switch positions are commands saved on the server. The physical valves have not moved because the commands have not reached the devices (MQTT is not connected).",
+    "valveAutoCloseAt": "Stops automatically at {{time}}",
+    "valveNoSensorData": "No sensor data yet",
+    "valveNoNodes": "This farm has no nodes yet.",
+    "valveCommandSaved": "Valve command saved.",
+    "valveCommandUnsent": "Not sent to the device yet because MQTT is not connected.",
+    "valveCommandError": "Failed to save the valve command.",
     "valveOpen": "open",
     "valveClosed": "closed",
     "valveOffline": "offline",
-    "valveOpenCount": "{{openCount}}/{{totalCount}} open",
     "activityLogCard": "Activity Log",
     "loadingLogs": "Loading logs...",
     "loadLogsError": "Failed to load gateway logs",
@@ -216,11 +235,11 @@
     "batteryMid": "Medium",
     "batteryOk": "Good",
     "soilTargetCaption": "Target {{lower}}–{{upper}}%",
-    "metricNoData": "No data",
+    "metricNoData": "No sensor data, check the node connection.",
     "metricMin": "Min",
     "metricAvg": "Average",
     "metricMax": "Max",
-    "metricLast6h": "Last 6 hours"
+    "metricLastHours": "Last {{hours}} hours"
   },
   "farms": {
     "searchPlaceholder": "Search farms, location, or crop",
@@ -244,8 +263,10 @@
       "locationLabel": "Location / Address",
       "locationPlaceholder": "e.g. Jl. Parangtritis, Bantul",
       "cropLabel": "Crop Type",
-      "cropPlaceholder": "Search or type crop type...",
+      "cropPlaceholder": "Select a crop type",
       "cropThreshold": "Recommended VWC threshold: {{lower}}% – {{upper}}%",
+      "cropLoadError": "Couldn't load the crop list.",
+      "cropRetry": "Try again",
       "areaLabel": "Area (ha)",
       "areaPlaceholder": "e.g. 1.5",
       "areaHelper": "Type \"-\" for small farms, e.g.: 5 banana trees",
@@ -288,8 +309,7 @@
     "all": "All Logs",
     "open": "Irrigation Running",
     "delayed": "Irrigation Delayed",
-    "closed": "Valve Closed",
-    "warning": "Warning"
+    "closed": "Valve Closed"
   },
   "logClass": {
     "open": "Irrigation Active",
@@ -339,7 +359,18 @@
     "delayed": "Delayed",
     "closed": "Stopped",
     "normal": "Normal",
-    "needsCheck": "Needs Check"
+    "disconnected": "Disconnected",
+    "manual": "Manual"
+  },
+  "irrigationReason": {
+    "open": "Soil moisture is below the lower threshold and no rain is forecast.",
+    "delayed": "Soil moisture is low, but BMKG forecasts rain within the next 3 hours.",
+    "closed": "Soil moisture is above the upper threshold.",
+    "standby": "Soil moisture is within the safe range.",
+    "disconnected": "No data from this node within the time limit. Waiting for the latest sensor data.",
+    "manual_open": "Valve open, controlled manually by the user.",
+    "manual_closed": "Valve closed, controlled manually by the user.",
+    "manual_timeout": "Valve closed automatically after the manual irrigation time limit."
   },
   "myFarms": {
     "colorPickerTitle": "Marker Color",
@@ -456,7 +487,8 @@
     "filterDisconnected": "Disconnected",
     "filterHeartbeat": "Heartbeat",
     "filterDataSync": "Sync",
-    "eventCount": "{{count}} event(s)"
+    "eventCount": "{{count}} event(s)",
+    "heartbeatNodes": "{{heard}} of {{total}} node(s) heard"
   },
   "settingsPage": {
     "title": "Account Profile",
@@ -468,7 +500,8 @@
     "cancel": "Cancel",
     "editPhone": "Edit phone number",
     "changePassword": "Change Password",
-    "logout": "Logout"
+    "logout": "Logout",
+    "phonePlaceholder": "Example: 08123456789"
   },
   "landing": {
     "navFeatures": "Features",

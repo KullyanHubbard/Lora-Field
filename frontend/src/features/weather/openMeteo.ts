@@ -1,4 +1,5 @@
-import { OPEN_METEO_FORECAST_URL } from '@/features/weather/constants';
+import { OPEN_METEO_FORECAST_URL, WEATHER_HISTORY_HOURS } from '@/features/weather/constants';
+import { HOUR_MS } from '@/lib/timeWindows';
 
 interface OpenMeteoPoint {
   time: string;
@@ -25,10 +26,10 @@ export async function fetchWeatherHistory(lat: number, lon: number): Promise<Ope
   const json: OpenMeteoResponse = await res.json();
   const { time, temperature_2m } = json.hourly;
 
-  // Ambil hanya 6 jam terakhir sampai sekarang (buang jam ke depan)
+  // Ambil hanya WEATHER_HISTORY_HOURS terakhir sampai sekarang (buang jam ke depan)
   // ponytail: timezone=auto kirim ISO naive (TZ kebun); cocok krn user+kebun se-TZ (WIB). beda TZ → tambah offset
   const now = Date.now();
-  const from = now - 6 * 60 * 60_000; // 6 jam saja, sesuai label chart
+  const from = now - WEATHER_HISTORY_HOURS * HOUR_MS;
   const out: OpenMeteoPoint[] = [];
   for (let i = 0; i < time.length; i++) {
     const t = temperature_2m[i];

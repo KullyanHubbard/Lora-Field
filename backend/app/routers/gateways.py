@@ -170,7 +170,8 @@ def gateway_register_nodes(
                     )
                 connection.execute(
                     """UPDATE nodes
-                       SET gateway_id = ?, status = 'online', updated_at = CURRENT_TIMESTAMP
+                       SET gateway_id = ?,
+                           last_seen_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
                        WHERE id = ?""",
                     (gateway_id, node_item.node_id)
                 )

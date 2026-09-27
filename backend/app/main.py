@@ -36,10 +36,10 @@ logging.basicConfig(level=logging.INFO, handlers=[_file_handler, _console_handle
 
 logger = logging.getLogger("lorafield")
 
-from .config import settings  # noqa: E402
+from .config import APP_VERSION, settings  # noqa: E402
 from .database import init_db  # noqa: E402
 from .deps import client_ip  # noqa: E402
-from .routers import auth, farms, gateways, logs, nodes, utils  # noqa: E402
+from .routers import auth, farms, gateways, logs, nodes, utils, valves  # noqa: E402
 
 
 FRONTEND_DIST_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
@@ -59,6 +59,10 @@ async def lifespan(app: FastAPI):
             "JWT_SECRET_KEY tidak dikonfigurasi. "
             "Tambahkan JWT_SECRET_KEY ke file .env sebelum menjalankan server."
         )
+    if settings.resend_api_key and not settings.resend_from_email:
+        logger.warning("RESEND_FROM_EMAIL kosong: email reset password tidak akan dikirim.")
+    if not settings.frontend_url:
+        logger.warning("FRONTEND_URL kosong: email reset password dikirim tanpa tombol link.")
     init_db()
     logger.info(
         "LoraField backend startup: dist_found=%s cors_origins=%d",
@@ -71,7 +75,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="LoraField Backend",
     description="API untuk dashboard monitoring pertanian LoraField.",
-    version="1.3.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
@@ -112,6 +116,7 @@ app.include_router(gateways.router)
 app.include_router(nodes.router)
 app.include_router(logs.router)
 app.include_router(utils.router)
+app.include_router(valves.router)
 
 
 def _serve_react_index() -> FileResponse | None:

@@ -10,6 +10,8 @@ import type {
   GatewayLog,
   Reading,
   IrrigationLog,
+  IrrigationMode,
+  Node,
   User,
 } from '@/types';
 
@@ -151,6 +153,25 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  // Kendali valve
+  setIrrigationMode: (farmId: string, mode: IrrigationMode) =>
+    apiFetch<{ farm: Farm }>(`/farms/${farmId}/irrigation-mode`, {
+      method: 'PATCH',
+      body: JSON.stringify({ mode }),
+    }),
+
+  startIrrigation: (farmId: string) =>
+    apiFetch<{ nodes: Node[] }>(`/farms/${farmId}/irrigation/start`, { method: 'POST' }),
+
+  stopIrrigation: (farmId: string) =>
+    apiFetch<{ nodes: Node[] }>(`/farms/${farmId}/irrigation/stop`, { method: 'POST' }),
+
+  setValve: (nodeId: string, open: boolean) =>
+    apiFetch<{ node: Node }>(`/nodes/${nodeId}/valve`, {
+      method: 'PATCH',
+      body: JSON.stringify({ open }),
+    }),
+
   // Utils
   getCrops: (q = '') =>
     apiFetch<{ crops: Crop[] }>(`/crops${q ? `?q=${encodeURIComponent(q)}` : ''}`),
@@ -165,15 +186,17 @@ export const api = {
     ),
 
   // Data
-  getReadings: (nodeId: string, limit = 50) =>
-    apiFetch<{ items: Reading[] }>(`/nodes/${nodeId}/readings?limit=${limit}`),
+  // Semua reading dalam N jam sebelum reading terbaru node, sehingga node yang sudah lama
+  // diam tetap menampilkan data terakhirnya.
+  getReadings: (nodeId: string, hours: number) =>
+    apiFetch<{ items: Reading[] }>(`/nodes/${nodeId}/readings?hours=${hours}`),
 
   // Kosong sampai hardware gateway mulai lapor.
-  getGatewayLogs: (farmId: string, limit = 20) =>
+  getGatewayLogs: (farmId: string, limit: number) =>
     apiFetch<{ items: GatewayLog[] }>(`/farms/${farmId}/gateway-logs?limit=${limit}`),
 
   getFarmGateway: (farmId: string) =>
     apiFetch<{ gateway: FarmGateway | null }>(`/farms/${farmId}/gateway`),
 
-  getLogs: (limit = 50) => apiFetch<{ items: IrrigationLog[] }>(`/logs?limit=${limit}`),
+  getLogs: (limit: number) => apiFetch<{ items: IrrigationLog[] }>(`/logs?limit=${limit}`),
 };

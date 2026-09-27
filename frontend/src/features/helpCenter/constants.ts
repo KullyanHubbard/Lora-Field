@@ -8,7 +8,7 @@
 // ============================================================================
 
 export const contactInfo = {
-  email: 'support@lorafield.id',
+  email: 'gitoedotensei@gmail.com',
   // Kosong = kontak WhatsApp disembunyikan. Isi dengan nomor asli (format +62...).
   whatsapp: '',
 };

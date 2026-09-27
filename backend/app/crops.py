@@ -1,5 +1,7 @@
 """Daftar jenis tanaman dan threshold VWC-nya, sumber data untuk GET /api/crops."""
 
+from .schemas import ThresholdConfig
+
 # Threshold VWC per jenis tanaman (FAO Irrigation Paper No. 56, adaptasi lokal)
 CROP_THRESHOLDS: list[dict] = [
     {"name": "Padi",          "lower_threshold": 60, "upper_threshold": 80},
@@ -33,3 +35,12 @@ CROP_THRESHOLDS: list[dict] = [
     {"name": "Kakao",         "lower_threshold": 55, "upper_threshold": 75},
     {"name": "Kelapa Sawit",  "lower_threshold": 50, "upper_threshold": 75},
 ]
+
+
+def find_crop_thresholds(crop_type: str | None) -> ThresholdConfig | None:
+    """Threshold VWC untuk nama tanaman (tidak peka huruf besar), None kalau tidak dikenal."""
+    key = (crop_type or "").strip().lower()
+    for crop in CROP_THRESHOLDS:
+        if crop["name"].lower() == key:
+            return ThresholdConfig(lower=crop["lower_threshold"], upper=crop["upper_threshold"])
+    return None

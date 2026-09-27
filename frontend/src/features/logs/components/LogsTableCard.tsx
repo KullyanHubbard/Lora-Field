@@ -57,7 +57,7 @@ export function LogsTableCard({ logs }: { logs: ScopedLog[] }) {
                   </TableCell>
                   <TableCell>{log.valveLabel}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {log.reason || EMPTY_VALUE}
+                    {log.reasonLabel || EMPTY_VALUE}
                   </TableCell>
                 </TableRow>
               ))

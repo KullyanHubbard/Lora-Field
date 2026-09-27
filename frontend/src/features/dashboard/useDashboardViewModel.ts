@@ -7,7 +7,11 @@ import {
   buildValveSummary,
   buildWeatherForecastViewModel,
 } from '@/features/dashboard/dashboardHelpers';
-import { useFarmSummary } from '@/features/dashboard/queries';
+import { useFarmSummary, useNodesReadings } from '@/features/dashboard/queries';
+import type { Reading } from '@/types';
+
+// Jumlah log gateway terbaru di kartu Log Aktivitas.
+const ACTIVITY_LOG_PREVIEW_COUNT = 2;
 
 export function useDashboardViewModel() {
   const { id: routeFarmId } = useParams();
@@ -20,7 +24,7 @@ export function useDashboardViewModel() {
 
   const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
   const farmGatewayQuery = useFarmGateway(summary ? farmId : undefined);
-  const activityLogQuery = useGatewayLogs(summary ? farmId : undefined, 2);
+  const activityLogQuery = useGatewayLogs(summary ? farmId : undefined, ACTIVITY_LOG_PREVIEW_COUNT);
   const errorMessage = summaryQuery.error
     ? t('dashboard.errorLoad', { message: summaryQuery.error.message })
     : t('dashboard.noData2');
@@ -34,7 +38,20 @@ export function useDashboardViewModel() {
     [activityLogQuery.data?.items],
   );
   const valveSummary = useMemo(() => buildValveSummary(nodes), [nodes]);
-  const nodeHistoricalDataMap = useMemo(() => buildNodeHistoricalDataMap(nodes), [nodes]);
+  const nodeIds = useMemo(() => nodes.map((ns) => ns.node.id), [nodes]);
+  const readingsQueries = useNodesReadings(nodeIds);
+  const readingsByNode: Record<string, Reading[]> = {};
+  nodeIds.forEach((nodeId, index) => {
+    readingsByNode[nodeId] = readingsQueries[index]?.data?.items ?? [];
+  });
+  // Jendela 6 jam dihitung dari waktu fetch terakhir, bukan Date.now() saat render.
+  const readingsFetchedAt = Math.max(0, ...readingsQueries.map((query) => query.dataUpdatedAt));
+  const nodeHistoricalDataMap = buildNodeHistoricalDataMap(
+    nodes,
+    readingsByNode,
+    readingsFetchedAt,
+    i18n.language,
+  );
   const weatherForecast = useMemo(() => {
     return weather ? buildWeatherForecastViewModel(weather, t, i18n.language) : null;
   }, [weather, t, i18n.language]);

@@ -1,13 +1,14 @@
 import { formatClockTime, parseServerDate } from '@/lib/format';
 import type { Reading } from '@/types';
+import { HOUR_MS, MONITORING_WINDOW_HOURS, startOfHour } from '@/lib/timeWindows';
 
 type ReadingMetricKey = keyof Pick<
   Reading,
   'soil_moisture' | 'soil_temp' | 'air_temp' | 'air_humidity'
 >;
 
-const HOUR_MS = 60 * 60 * 1000;
-const MONITORING_CHART_HOURS = 12;
+// Batas atas sumbu Y grafik suhu tanah dan udara.
+export const TEMP_CHART_MAX_C = 50;
 
 interface HourlyMonitoringPoint {
   label: string;
@@ -17,12 +18,6 @@ interface HourlyMonitoringPoint {
 
 function readingTime(reading: Reading): number | null {
   return parseServerDate(reading.created_at)?.getTime() ?? null;
-}
-
-function startOfHour(time: number): number {
-  const date = new Date(time);
-  date.setMinutes(0, 0, 0);
-  return date.getTime();
 }
 
 function normalizeReadings(readings: Reading[]): Reading[] {
@@ -38,7 +33,7 @@ function normalizeReadings(readings: Reading[]): Reading[] {
 export function getHourlyMonitoringPoints(
   readings: Reading[],
   locale: string,
-  hours = MONITORING_CHART_HOURS,
+  hours = MONITORING_WINDOW_HOURS,
 ): HourlyMonitoringPoint[] {
   const timedReadings = normalizeReadings(readings)
     .map((reading) => ({ reading, time: readingTime(reading) }))

@@ -101,6 +101,7 @@ def init_db() -> None:
                 soil_temp REAL NOT NULL,
                 air_temp REAL NOT NULL,
                 air_humidity REAL NOT NULL,
+                rssi REAL,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (farm_id) REFERENCES farms(id),
                 FOREIGN KEY (node_id) REFERENCES nodes(id)
@@ -173,7 +174,30 @@ def init_db() -> None:
         ensure_column(connection, "nodes", "gateway_id", "TEXT")
         ensure_column(connection, "nodes", "first_seen_at", "TEXT")
         ensure_column(connection, "readings", "farm_id", "TEXT REFERENCES farms(id)")
+        ensure_column(connection, "readings", "rssi", "REAL")
+        ensure_column(connection, "farms", "lower_threshold", "REAL")
+        ensure_column(connection, "farms", "upper_threshold", "REAL")
+        ensure_column(connection, "nodes", "last_seen_at", "TEXT")
+        ensure_column(connection, "nodes", "battery_updated_at", "TEXT")
+        ensure_column(connection, "decision_logs", "decision_type", "TEXT")
+        ensure_column(
+            connection,
+            "farms",
+            "irrigation_mode",
+            "TEXT NOT NULL DEFAULT 'auto' CHECK (irrigation_mode IN ('auto', 'manual'))",
+        )
+        ensure_column(
+            connection,
+            "nodes",
+            "valve_command",
+            "TEXT CHECK (valve_command IN ('open', 'closed'))",
+        )
+        ensure_column(connection, "nodes", "valve_command_at", "TEXT")
+        ensure_column(connection, "nodes", "valve_command_sent_at", "TEXT")
         backfill_reading_farm_ids(connection)
+        backfill_farm_thresholds(connection)
+        backfill_node_last_seen(connection)
+        backfill_decision_types(connection)
 
         seed_wilayah(connection)
 
@@ -195,6 +219,55 @@ def backfill_reading_farm_ids(connection: sqlite3.Connection) -> None:
               WHERE nodes.id = readings.node_id
                 AND nodes.farm_id IS NOT NULL
           )
+        """
+    )
+
+
+def backfill_farm_thresholds(connection: sqlite3.Connection) -> None:
+    """Isi threshold kebun lama dari jenis tanamannya. Tanaman yang tidak dikenal tetap NULL."""
+    # Import di sini supaya database.py tidak bergantung ke modul domain saat di-import.
+    from .crops import find_crop_thresholds
+
+    rows = connection.execute(
+        "SELECT id, crop_type FROM farms WHERE lower_threshold IS NULL OR upper_threshold IS NULL"
+    ).fetchall()
+    for row in rows:
+        thresholds = find_crop_thresholds(row["crop_type"])
+        if thresholds is None:
+            continue
+        connection.execute(
+            "UPDATE farms SET lower_threshold = ?, upper_threshold = ? WHERE id = ?",
+            (thresholds.lower, thresholds.upper, row["id"]),
+        )
+
+
+def backfill_node_last_seen(connection: sqlite3.Connection) -> None:
+    """Isi last_seen_at node lama dari reading terakhirnya, atau waktu terakhir diubah."""
+    connection.execute(
+        """
+        UPDATE nodes
+        SET last_seen_at = COALESCE(
+            (SELECT MAX(readings.created_at) FROM readings WHERE readings.node_id = nodes.id),
+            first_seen_at,
+            updated_at
+        )
+        WHERE last_seen_at IS NULL
+        """
+    )
+
+
+def backfill_decision_types(connection: sqlite3.Connection) -> None:
+    """Isi decision_type log lama dari teks keputusan yang dulu ditulis irrigation.py."""
+    connection.execute(
+        """
+        UPDATE decision_logs
+        SET decision_type = CASE decision
+            WHEN 'Irigasi aktif' THEN 'open'
+            WHEN 'Irigasi ditunda' THEN 'delayed'
+            WHEN 'Irigasi berhenti' THEN 'closed'
+            WHEN 'Standby' THEN 'standby'
+        END
+        WHERE decision_type IS NULL
         """
     )
 

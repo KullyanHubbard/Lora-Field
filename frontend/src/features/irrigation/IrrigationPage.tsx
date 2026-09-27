@@ -8,7 +8,10 @@ import { IrrigationLoadingState } from '@/features/irrigation/components/Irrigat
 import { IrrigationNodeGridCard } from '@/features/irrigation/components/IrrigationNodeGridCard';
 import { IrrigationRecommendationCard } from '@/features/irrigation/components/IrrigationRecommendationCard';
 import { IrrigationStatsGrid } from '@/features/irrigation/components/IrrigationStatsGrid';
-import { buildIrrigationStats } from '@/features/irrigation/irrigationHelpers';
+import {
+  buildIrrigationStats,
+  getIrrigationActivity,
+} from '@/features/irrigation/irrigationHelpers';
 import { useIrrigationSummary } from '@/features/irrigation/queries';
 
 export default function IrrigationPage() {
@@ -41,7 +44,7 @@ export default function IrrigationPage() {
       <IrrigationHeaderCard
         gatewayStatus={summary.gateway_status}
         lastSync={lastSync}
-        openValves={stats.openValves}
+        activity={getIrrigationActivity(irrigationNodes)}
       />
 
       <IrrigationStatsGrid stats={stats} />

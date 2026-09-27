@@ -13,8 +13,8 @@ from ..auth import create_access_token, get_current_user, hash_password, verify_
 from ..config import settings
 from ..database import get_connection, row_to_dict
 from ..deps import client_ip
-from ..language_preferences import ensure_user_language, set_user_language
-from ..mailer import build_reset_email_html, send_email_via_resend
+from ..language_preferences import ensure_user_language, resolve_language, set_user_language
+from ..mailer import build_reset_email_html, reset_email_subject, send_email_via_resend
 from ..schemas import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
@@ -234,7 +234,7 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
     with get_connection() as connection:
         user = row_to_dict(
             connection.execute(
-                "SELECT id, email, name FROM users WHERE email = ?",
+                "SELECT id, email, name, language FROM users WHERE email = ?",
                 (email,),
             ).fetchone()
         )
@@ -259,13 +259,19 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
             (user["id"], reset_token, expires_at),
         )
 
-    frontend_base = settings.frontend_url.rstrip("/")
-    reset_link = f"{frontend_base}/reset-password"
-    email_html = build_reset_email_html(reset_token, reset_link, RESET_TOKEN_EXPIRE_MINUTES)
+    # Link hanya dari FRONTEND_URL. Header Host request bisa dipalsukan, jadi tidak dipakai
+    # untuk membangun link (mencegah reset link diarahkan ke situs lain).
+    reset_link = (
+        f"{settings.frontend_url.rstrip('/')}/reset-password" if settings.frontend_url else None
+    )
+    language = resolve_language(user.get("language"))
+    email_html = build_reset_email_html(
+        reset_token, reset_link, RESET_TOKEN_EXPIRE_MINUTES, language
+    )
 
     email_sent = False
     try:
-        email_sent = send_email_via_resend(user["email"], "Reset Password LoraField", email_html)
+        email_sent = send_email_via_resend(user["email"], reset_email_subject(language), email_html)
     except Exception:
         email_sent = False
 

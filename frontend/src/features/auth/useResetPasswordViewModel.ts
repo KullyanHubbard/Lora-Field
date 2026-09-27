@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForgotPassword, useResetPassword, useVerifyResetCode } from './queries';
-import { isPasswordTooShort, isValidEmail } from '@/features/auth/validation';
+import {
+  isPasswordTooShort,
+  isValidOtp,
+  MIN_PASSWORD_LENGTH,
+  OTP_LENGTH,
+  isValidEmail,
+} from '@/features/auth/validation';
 
 type ResetPasswordStep = 'email' | 'otp' | 'password';
 
@@ -54,8 +60,8 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
 
   const submitOtp = () => {
     const tokenTrim = otp.trim();
-    if (!/^\d{6}$/.test(tokenTrim)) {
-      setError(t('auth.resetPassword.errorOtpInvalid'));
+    if (!isValidOtp(tokenTrim)) {
+      setError(t('auth.resetPassword.errorOtpInvalid', { digits: OTP_LENGTH }));
       return;
     }
 
@@ -70,7 +76,7 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
 
   const submitPassword = () => {
     if (isPasswordTooShort(password)) {
-      setError(t('auth.resetPassword.errorPasswordTooShort'));
+      setError(t('auth.resetPassword.errorPasswordTooShort', { min: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (password !== confirm) {
@@ -96,9 +102,9 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
 
   const description =
     step === 'email'
-      ? t('auth.resetPassword.descEmail')
+      ? t('auth.resetPassword.descEmail', { digits: OTP_LENGTH })
       : step === 'otp'
-        ? t('auth.resetPassword.descOtp', { email })
+        ? t('auth.resetPassword.descOtp', { email, digits: OTP_LENGTH })
         : t('auth.resetPassword.descPassword');
 
   return {

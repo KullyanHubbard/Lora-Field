@@ -24,6 +24,7 @@ import { getHourlyMonitoringPoints, latestValue } from '@/features/monitoring/ch
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 import { CHART_COLORS } from '@/lib/chartColors';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
 
 // Konsisten dengan tema: cyan = garis utama, hijau = zona ideal,
 // merah = batas, biru = zona basah.
@@ -75,7 +76,7 @@ export default function SoilMoistureZoneChart({
     >
       <MonitoringChartHeader
         title={t('monitoring.chartSoilMoisture')}
-        icon={<Droplets className="size-4 text-cyan-500 dark:text-cyan-400" aria-hidden="true" />}
+        icon={<Droplets className={cn('size-4', ACCENT_TEXT.cyan)} aria-hidden="true" />}
         value={latest != null ? `${latest.toFixed(0)}%` : null}
         status={status ? { tone: status.tone, label: t(status.labelKey) } : undefined}
         sideLabel={t('dashboard.soilTargetCaption', { lower, upper })}

@@ -12,3 +12,11 @@ export const CHART_COLORS = {
   sky: 'var(--chart-sky)',
   dotRing: 'var(--chart-dot-ring)',
 } as const;
+
+// Garis grafik kartu metrik per sensor. Punya nilai terpisah di .dark.
+export const METRIC_CHART_COLORS = {
+  soil_moisture: 'var(--chart-metric-soil-moisture)',
+  soil_temp: 'var(--chart-metric-soil-temp)',
+  air_temp: 'var(--chart-metric-air-temp)',
+  air_humidity: 'var(--chart-metric-air-humidity)',
+} as const;

@@ -9,6 +9,7 @@ import {
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { GatewayLog } from '@/types';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
 
 export function ActivityLogCard({
   farmId,
@@ -29,7 +30,7 @@ export function ActivityLogCard({
     <Card className={cn('flex h-full flex-col', className)}>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Activity className="size-4 shrink-0 text-violet-500 dark:text-violet-400" />
+          <Activity className={cn('size-4 shrink-0', ACCENT_TEXT.violet)} />
           {t('dashboard.activityLogCard')}
         </CardTitle>
       </CardHeader>

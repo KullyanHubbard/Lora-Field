@@ -7,16 +7,20 @@ import {
   buildLogsCsv,
   classifyLog,
   formatLogTime,
+  LOG_TYPE_LABEL,
   type LogCsvRow,
   type LogFilterKey,
   type LogType,
 } from '@/features/logs/logHelpers';
 import { EMPTY_VALUE, formatLocalDateTime, parseServerDate } from '@/lib/format';
+import { getIrrigationReasonKey } from '@/lib/status';
 import type { IrrigationLog } from '@/types';
 
 export interface ScopedLog extends IrrigationLog {
   time: string;
   type: LogType;
+  decisionLabel: string;
+  reasonLabel: string;
   nodeName: string;
   nodeLocation: string;
   valveLabel: string;
@@ -42,7 +46,7 @@ export function useLogsViewModel() {
   const summaryQuery = useFarmSummary(farmId);
   const summary = summaryQuery.data;
   const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
-  const logsQuery = useLogs(summary ? farmId : undefined, 100);
+  const logsQuery = useLogs(summary ? farmId : undefined);
 
   const [activeFilter, setActiveFilter] = useState<LogFilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,10 +76,14 @@ export function useLogsViewModel() {
         .filter((log) => nodeLookup.has(log.node_id))
         .map((log) => {
           const node = nodeLookup.get(log.node_id);
+          const type = classifyLog(log);
+          const reasonKey = getIrrigationReasonKey(log.decision_type);
           return {
             ...log,
             time: formatLogTime(log.created_at, i18n.language),
-            type: classifyLog(log),
+            type,
+            decisionLabel: t(LOG_TYPE_LABEL[type]),
+            reasonLabel: reasonKey ? t(reasonKey) : log.reason,
             nodeName: node?.name || log.node_id,
             nodeLocation: node?.location || EMPTY_VALUE,
             valveLabel: log.valve_state === 'open' ? t('logs.valveOpen') : t('logs.valveClosed'),
@@ -95,9 +103,7 @@ export function useLogsViewModel() {
         !q ||
         log.nodeName.toLowerCase().includes(q) ||
         log.nodeLocation.toLowerCase().includes(q) ||
-        String(log.decision || '')
-          .toLowerCase()
-          .includes(q);
+        log.decisionLabel.toLowerCase().includes(q);
       const logMs = parseServerDate(log.created_at)?.getTime() ?? null;
       const matchesFrom = fromMs == null || (logMs != null && logMs >= fromMs);
       const matchesTo = toMs == null || (logMs != null && logMs <= toMs);
@@ -121,9 +127,9 @@ export function useLogsViewModel() {
         nodeLocation: log.nodeLocation,
         soilMoisture: log.soil_moisture,
         weather: log.weather,
-        decision: log.decision,
+        decision: log.decisionLabel,
         valveLabel: log.valveLabel,
-        reason: log.reason,
+        reason: log.reasonLabel,
       };
     });
     const csv = buildLogsCsv(rows, threshold, t);

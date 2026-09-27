@@ -1,5 +1,6 @@
 import type { FarmSummary, NodeSummary } from '@/types';
 import { EMPTY_VALUE, parseServerDate } from '@/lib/format';
+import { ACCENT_BG } from '@/lib/toneClasses';
 
 export type IrrigationStats = {
   totalNodes: number;
@@ -26,13 +27,40 @@ export function moistureCondition(value: number | null, lower: number, upper: nu
   if (value == null)
     return { labelKey: 'irrigation.waitingData', tone: 'neutral' as const, bar: 'bg-muted' };
   if (value < lower * 0.75) {
-    return { labelKey: 'irrigation.condition.critical', tone: 'red' as const, bar: 'bg-red-500' };
+    return { labelKey: 'irrigation.condition.critical', tone: 'red' as const, bar: ACCENT_BG.red };
   }
   if (value < lower)
-    return { labelKey: 'irrigation.condition.dry', tone: 'yellow' as const, bar: 'bg-amber-500' };
+    return { labelKey: 'irrigation.condition.dry', tone: 'yellow' as const, bar: ACCENT_BG.amber };
   if (value > upper)
-    return { labelKey: 'irrigation.condition.wet', tone: 'yellow' as const, bar: 'bg-sky-500' };
-  return { labelKey: 'irrigation.condition.normal', tone: 'green' as const, bar: 'bg-emerald-500' };
+    return { labelKey: 'irrigation.condition.wet', tone: 'yellow' as const, bar: ACCENT_BG.sky };
+  return {
+    labelKey: 'irrigation.condition.normal',
+    tone: 'green' as const,
+    bar: ACCENT_BG.emerald,
+  };
+}
+
+export type IrrigationActivity =
+  'active' | 'standby' | 'delayed' | 'offline' | 'initializing' | 'notConfigured';
+
+export const IRRIGATION_ACTIVITY_LABEL_KEYS: Record<IrrigationActivity, string> = {
+  active: 'irrigation.activity.active',
+  standby: 'irrigation.activity.standby',
+  delayed: 'irrigation.activity.delayed',
+  offline: 'irrigation.activity.offline',
+  initializing: 'irrigation.activity.initializing',
+  notConfigured: 'irrigation.activity.notConfigured',
+};
+
+// Kondisi pengairan kebun untuk kepala halaman Irigasi. Kalau beberapa kondisi terjadi
+// bersamaan, urutan pengecekan di bawah adalah prioritasnya.
+export function getIrrigationActivity(nodes: NodeSummary[]): IrrigationActivity {
+  if (nodes.length === 0) return 'notConfigured';
+  if (nodes.every((ns) => ns.node.status === 'offline')) return 'offline';
+  if (nodes.every((ns) => ns.latest_reading == null)) return 'initializing';
+  if (nodes.some((ns) => ns.decision?.valve_state === 'open')) return 'active';
+  if (nodes.some((ns) => ns.decision?.type === 'delayed')) return 'delayed';
+  return 'standby';
 }
 
 export function getNodeMoisture(ns: NodeSummary) {
@@ -41,7 +69,9 @@ export function getNodeMoisture(ns: NodeSummary) {
 
 export function valveKeyFromDecision(decision: NodeSummary['decision'] | null | undefined): string {
   if (!decision) return 'valve.unknown';
-  return decision.valve_state === 'open' ? 'valve.open' : 'valve.closed';
+  if (decision.valve_state === 'open') return 'valve.open';
+  if (decision.valve_state === 'closed') return 'valve.closed';
+  return 'valve.unknown';
 }
 
 export function buildIrrigationStats(summary: FarmSummary, nodes: NodeSummary[]): IrrigationStats {

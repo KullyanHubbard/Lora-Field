@@ -24,6 +24,7 @@ import { latestValue, getHourlyMonitoringPoints } from '@/features/monitoring/ch
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 import { CHART_COLORS } from '@/lib/chartColors';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
 
 const PALETTE = {
   main: CHART_COLORS.violet,
@@ -76,9 +77,7 @@ export default function AirHumidityZoneLineChart({
     >
       <MonitoringChartHeader
         title={t('monitoring.chartAirHumidity')}
-        icon={
-          <Droplets className="size-4 text-violet-500 dark:text-violet-400" aria-hidden="true" />
-        }
+        icon={<Droplets className={cn('size-4', ACCENT_TEXT.violet)} aria-hidden="true" />}
         value={latestHumidity != null ? `${latestHumidity.toFixed(0)}%` : null}
         status={
           latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined

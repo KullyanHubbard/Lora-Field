@@ -35,12 +35,18 @@ JWT_ALGORITHM=HS256
 JWT_EXPIRE_MINUTES=120
 
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxx
-RESEND_FROM_EMAIL=onboarding@resend.dev
+RESEND_FROM_EMAIL=noreply@domain-anda.id  # wajib kalau email aktif; domain harus terverifikasi di Resend
 
-FRONTEND_URL=http://localhost:8000  # dipakai untuk link di email reset password
+FRONTEND_URL=https://app.domain-anda.id  # opsional; kosong = email reset tanpa tombol link
 ALLOWED_ORIGINS=                    # opsional, origin CORS tambahan, pisah koma
 EXPOSE_DEV_TOKENS=false             # true hanya untuk tes lokal
+NODE_OFFLINE_AFTER_MINUTES=15       # node dianggap offline kalau tidak kirim data selama ini
+MANUAL_IRRIGATION_MAX_MINUTES=30    # valve yang dibuka manual ditutup otomatis setelah ini
 ```
+
+`RESEND_FROM_EMAIL` sengaja tanpa default. Pengirim uji Resend (`onboarding@resend.dev`)
+hanya bisa mengirim ke email pemilik akun Resend, jadi email reset ke user lain tidak
+akan sampai. Kalau kosong, email tidak dikirim dan server mencatat peringatan saat startup.
 
 Kalau `RESEND_API_KEY` kosong dan `EXPOSE_DEV_TOKENS=true`, forgot-password ikut
 mengembalikan kode reset di response supaya bisa dites tanpa email. Jangan aktifkan
@@ -56,7 +62,8 @@ Ringkasan kontrak API untuk frontend ada di section "Backend Endpoints" di `CLAU
 1. User mengisi email di panel "Lupa Password" (halaman login) atau `/reset-password`,
    lalu frontend memanggil `POST /api/auth/forgot-password`.
 2. Backend menyimpan OTP 6 digit di tabel `password_resets` (kedaluwarsa 30 menit)
-   dan mengirim email berisi tautan ke `${FRONTEND_URL}/reset-password` + kode reset.
+   dan mengirim email (dalam bahasa akun user) berisi tautan ke `${FRONTEND_URL}/reset-password`
+   + kode reset. Kalau `FRONTEND_URL` kosong, email hanya berisi kode (tanpa tombol link).
 3. User memasukkan kode, diverifikasi lewat `POST /api/auth/reset-password/verify`.
 4. Kalau valid, user mengisi password baru, disimpan lewat `POST /api/auth/reset-password`.
 5. Setelah berhasil, user login ulang di `/login`.
@@ -76,9 +83,13 @@ Payload `POST /api/nodes/{node_id}/readings?adm4=...` (untuk node baru, sertakan
   "soil_moisture": 38,
   "soil_temp": 27.5,
   "air_temp": 30.2,
-  "air_humidity": 78
+  "air_humidity": 78,
+  "rssi": -92
 }
 ```
+
+`battery` (0–100) dan `rssi` (dBm, -150 sampai 0) opsional. `rssi` diisi gateway dari
+kuat sinyal paket yang diterimanya, bukan diukur node.
 
 ## Database
 

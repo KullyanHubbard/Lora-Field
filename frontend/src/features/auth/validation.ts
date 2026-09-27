@@ -1,5 +1,12 @@
-// Aturan input akun, disamakan dengan schema backend (password min_length=6).
-const MIN_PASSWORD_LENGTH = 6;
+// Aturan input akun, disamakan dengan schema backend (password min_length, token OTP 6 digit).
+export const MIN_PASSWORD_LENGTH = 6;
+export const OTP_LENGTH = 6;
+
+const OTP_PATTERN = new RegExp(`^\\d{${OTP_LENGTH}}$`);
+
+export function isValidOtp(code: string): boolean {
+  return OTP_PATTERN.test(code);
+}
 
 export function isValidEmail(email: string): boolean {
   return email.includes('@');

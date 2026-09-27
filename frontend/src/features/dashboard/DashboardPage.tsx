@@ -35,6 +35,8 @@ export default function DashboardPage() {
       <DashboardSummaryGrid
         farmId={farmId}
         gateway={gateway}
+        gatewayStatus={summary.gateway_status}
+        irrigationMode={summary.farm.irrigation_mode}
         nodes={nodes}
         activityLogs={activityLogs}
         activityLogsLoading={activityLogsLoading}

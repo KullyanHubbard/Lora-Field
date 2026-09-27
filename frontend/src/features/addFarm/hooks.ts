@@ -75,7 +75,8 @@ export function useAddFarm(): AddFarmViewModel {
     if (!trimmedGatewayDeviceId) missing.push(t('farms.addForm.fieldGateway'));
     if (!trimmedLocation) missing.push(t('farms.addForm.fieldLocation'));
     if (!trimmedCrop) missing.push(t('farms.addForm.fieldCrop'));
-    if (!trimmedGatewayDeviceId) {
+    // Gateway dan tanaman wajib: tanpa tanaman, threshold irigasi kebun tidak bisa ditentukan.
+    if (!trimmedGatewayDeviceId || !trimmedCrop) {
       setMissingFields(missing);
       return;
     }

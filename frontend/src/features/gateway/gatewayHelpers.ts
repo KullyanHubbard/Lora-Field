@@ -1,10 +1,11 @@
 import { getGatewayStatusBadge } from '@/lib/status';
 import type { StatusTone } from '@/lib/status';
-import { EMPTY_VALUE, parseServerDate } from '@/lib/format';
-import type { FarmGateway, GatewayLog } from '@/types';
+import { EMPTY_VALUE } from '@/lib/format';
+import type { FarmGateway, FarmSummary, GatewayLog } from '@/types';
+import { ACCENT_BG } from '@/lib/toneClasses';
 
 const GATEWAY_LOGS_PER_PAGE = 10;
-const GATEWAY_ONLINE_WINDOW_MS = 10 * 60 * 1000;
+export const GATEWAY_LOGS_FETCH_LIMIT = 20;
 
 export const GATEWAY_EVENT_FILTERS = [
   'all',
@@ -35,14 +36,12 @@ export type GatewayInfoViewModel = {
   lastSeen: string | null;
 };
 
-function isFarmGatewayOnline(gateway: FarmGateway | null | undefined) {
-  const lastSeen = parseServerDate(gateway?.last_seen_at);
-  return lastSeen != null && Date.now() - lastSeen.getTime() <= GATEWAY_ONLINE_WINDOW_MS;
-}
-
-export function buildGatewayInfo(gateway?: FarmGateway | null): GatewayInfoViewModel {
-  const gatewayStatus = gateway ? (isFarmGatewayOnline(gateway) ? 'online' : 'offline') : 'offline';
-  const status = getGatewayStatusBadge(gatewayStatus);
+// Status dari summary.gateway_status backend (satu sumber dengan kartu lain), tidak dihitung ulang di sini.
+export function buildGatewayInfo(
+  gateway: FarmGateway | null | undefined,
+  gatewayStatus: FarmSummary['gateway_status'],
+): GatewayInfoViewModel {
+  const status = getGatewayStatusBadge(gateway ? gatewayStatus : 'offline');
 
   return {
     gatewayId: gateway?.device_id ?? EMPTY_VALUE,
@@ -91,6 +90,15 @@ export function getGatewayEventLabelKey(event: string): string {
   );
 }
 
+// Detail heartbeat dikirim gateway sebagai "<terdengar>/<total> node" (lihat simulator/lorafield_sim.py).
+// Format lain menghasilkan null supaya teks aslinya tetap tampil.
+export function parseHeartbeatNodeCount(log: GatewayLog) {
+  if (log.event !== 'heartbeat') return null;
+  const match = /^(\d+)\/(\d+) node$/.exec(log.detail.trim());
+  if (!match) return null;
+  return { heard: Number(match[1]), total: Number(match[2]) };
+}
+
 export function getGatewayEventTone(event: string) {
   if (event === 'connected' || event === 'heartbeat' || event === 'data_sync') return 'green';
   if (event === 'disconnected') return 'red';
@@ -99,10 +107,10 @@ export function getGatewayEventTone(event: string) {
 
 export function getGatewayEventDotClass(event: string) {
   const map: Record<string, string> = {
-    connected: 'bg-emerald-500',
-    disconnected: 'bg-red-500',
-    heartbeat: 'bg-blue-500',
-    data_sync: 'bg-violet-500',
+    connected: ACCENT_BG.emerald,
+    disconnected: ACCENT_BG.red,
+    heartbeat: ACCENT_BG.blue,
+    data_sync: ACCENT_BG.violet,
   };
 
   return map[event] ?? 'bg-muted-foreground';

@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { LIVE_DATA_INTERVAL_MS } from '@/lib/queryTiming';
+import { READINGS_FETCH_HOURS } from '@/lib/timeWindows';
 
-export function useReadings(nodeId: string, limit = 100) {
+export function useReadings(nodeId: string) {
   return useQuery({
-    queryKey: ['readings', nodeId, limit],
-    queryFn: () => api.getReadings(nodeId, limit),
+    queryKey: ['readings', nodeId, READINGS_FETCH_HOURS],
+    queryFn: () => api.getReadings(nodeId, READINGS_FETCH_HOURS),
     enabled: !!nodeId,
-    refetchInterval: 30_000,
+    refetchInterval: LIVE_DATA_INTERVAL_MS,
   });
 }

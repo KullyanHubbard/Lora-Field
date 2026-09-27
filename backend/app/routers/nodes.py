@@ -5,14 +5,18 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..auth import get_current_user
-from ..bmkg import fetch_weather_with_cache
+from ..bmkg import get_weather_for_decision
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned, get_node_owned
-from ..irrigation import calculate_decision
-from ..node_service import insert_node, record_reading
+from ..irrigation import calculate_decision, farm_thresholds, manual_decision
+from ..node_service import insert_node, present_node, record_reading
 from ..schemas import NodeLocationUpdate, SensorReadingIn
+from ..valve_control import expire_manual_valves
 
 router = APIRouter()
+
+# Batas rentang jam untuk GET readings?hours=, supaya satu request tidak menarik riwayat tanpa ujung.
+READINGS_MAX_HOURS = 72
 
 
 @router.get("/api/nodes")
@@ -43,7 +47,7 @@ def list_nodes(
                     (current_user["id"],),
                 ).fetchall()
             ]
-    return {"items": nodes, "total": len(nodes)}
+    return {"items": [present_node(node) for node in nodes], "total": len(nodes)}
 
 
 @router.patch("/api/nodes/{node_id}/location")
@@ -75,7 +79,7 @@ def update_node_location(
         node = row_to_dict(
             connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
         )
-    return {"node": node}
+    return {"node": present_node(node)}
 
 
 @router.get("/api/nodes/{node_id}/readings")
@@ -83,18 +87,37 @@ def list_readings(
     node_id: str,
     current_user: Annotated[dict, Depends(get_current_user)],
     limit: int = Query(default=20, ge=1, le=100),
+    hours: int | None = Query(
+        default=None,
+        ge=1,
+        le=READINGS_MAX_HOURS,
+        description="Semua reading dalam N jam sebelum reading terbaru node. Kalau diisi, limit diabaikan.",
+    ),
 ) -> dict:
     with get_connection() as connection:
         get_node_owned(connection, node_id, current_user["id"])
-        rows = connection.execute(
-            """
-            SELECT * FROM readings
-            WHERE node_id = ?
-            ORDER BY created_at DESC, id DESC
-            LIMIT ?
-            """,
-            (node_id, limit),
-        ).fetchall()
+        if hours is not None:
+            rows = connection.execute(
+                """
+                SELECT * FROM readings
+                WHERE node_id = ?
+                  AND datetime(created_at) >= datetime(
+                      (SELECT MAX(created_at) FROM readings WHERE node_id = ?), ?
+                  )
+                ORDER BY created_at DESC, id DESC
+                """,
+                (node_id, node_id, f"-{hours} hours"),
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                """
+                SELECT * FROM readings
+                WHERE node_id = ?
+                ORDER BY created_at DESC, id DESC
+                LIMIT ?
+                """,
+                (node_id, limit),
+            ).fetchall()
     return {"items": [dict(row) for row in rows]}
 
 
@@ -108,6 +131,11 @@ def create_reading(
     # Node yang belum terdaftar dibuat di sini, dipakai firmware yang langsung kirim
     # reading tanpa registrasi lewat gateway.
     node_created = False
+
+    # Diambil sebelum transaksi dibuka: cache miss menulis weather_cache lewat koneksi
+    # lain, dan itu terkunci kalau transaksi ini sudah menulis node baru.
+    # weather bisa None kalau BMKG gangguan dan tidak ada cache cadangan yang layak pakai.
+    weather = get_weather_for_decision(adm4)
 
     with get_connection() as connection:
         node_exists = connection.execute(
@@ -123,14 +151,24 @@ def create_reading(
                     detail="farm_id wajib diisi untuk registrasi node pertama kali"
                 )
 
-            get_farm_owned(connection, farm_id, current_user["id"])
+            farm = get_farm_owned(connection, farm_id, current_user["id"])
             insert_node(connection, node_id, farm_id, f"Node {node_id[:8]}")
             node_created = True
         else:
             farm_id = get_node_owned(connection, node_id, current_user["id"])["farm_id"]
+            farm = get_farm_owned(connection, farm_id, current_user["id"])
 
-        weather = fetch_weather_with_cache(adm4)
-        decision = calculate_decision(payload.soil_moisture, weather["rain_next_3h"])
+        if farm.get("irrigation_mode") == "manual":
+            expire_manual_valves(connection, farm_id)
+            node = row_to_dict(
+                connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
+            )
+            decision = manual_decision(node)
+        else:
+            rain_next_3h = weather["rain_next_3h"] if weather else False
+            decision = calculate_decision(
+                payload.soil_moisture, rain_next_3h, farm_thresholds(farm)
+            )
         reading_id = record_reading(connection, node_id, farm_id, payload, weather, decision)
 
     reading = payload.model_dump()

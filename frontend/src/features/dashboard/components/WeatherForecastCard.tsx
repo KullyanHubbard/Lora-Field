@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { WeatherForecastViewModel } from '@/features/dashboard/dashboardHelpers';
 import { weatherIconMap } from '@/features/weather/weatherIconMap';
 import { cn } from '@/lib/utils';
+import { ACCENT_TEXT, NOTICE_CLASSES } from '@/lib/toneClasses';
 
 export function WeatherForecastCard({
   forecast,
@@ -23,7 +24,7 @@ export function WeatherForecastCard({
       <Card className={cn('flex h-full flex-col', className)}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <UnavailableIcon className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
+            <UnavailableIcon className={cn('size-4 shrink-0', ACCENT_TEXT.amber)} />
             {t('dashboard.weatherForecastTitle')}
           </CardTitle>
         </CardHeader>
@@ -40,16 +41,16 @@ export function WeatherForecastCard({
     <Card className={cn('flex h-full flex-col', className)}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CurrentIcon className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
+          <CurrentIcon className={cn('size-4 shrink-0', ACCENT_TEXT.amber)} />
           {t('dashboard.weatherForecastTitle')}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-4">
         <div className="summary-subcard-interactive flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-medium text-foreground">
           {forecast.rainNext3h ? (
-            <TriangleAlert className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
+            <TriangleAlert className={cn('size-4 shrink-0', ACCENT_TEXT.amber)} />
           ) : (
-            <Check className="size-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
+            <Check className={cn('size-4 shrink-0', ACCENT_TEXT.emerald)} />
           )}
           <span>
             {forecast.rainNext3h
@@ -79,13 +80,13 @@ export function WeatherForecastCard({
                   key={slot.key}
                   className={cn(
                     'summary-subcard-interactive flex items-center gap-3 rounded-md border border-transparent px-2 py-1.5 text-sm',
-                    slot.isRain && 'bg-blue-500/10',
+                    slot.isRain && NOTICE_CLASSES.rainHighlight,
                   )}
                 >
                   <span className="w-12 shrink-0 tabular-nums text-muted-foreground">
                     {slot.time}
                   </span>
-                  <SlotIcon className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
+                  <SlotIcon className={cn('size-4 shrink-0', ACCENT_TEXT.amber)} />
                   <span className="w-10 shrink-0 font-medium tabular-nums text-foreground">
                     {slot.temp}
                   </span>

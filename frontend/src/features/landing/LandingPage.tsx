@@ -50,12 +50,12 @@ const item = {
 
 // Ikon statis, digabung ke teks i18n saat render.
 const FEATURE_ICONS = [
-  <Activity className="size-5" key="activity" />,
-  <Droplets className="size-5" key="droplets" />,
-  <CloudSun className="size-5" key="cloudsun" />,
-  <Sprout className="size-5" key="sprout" />,
-  <MapPin className="size-5" key="mappin" />,
-  <History className="size-5" key="history" />,
+  <Activity className="size-6" key="activity" />,
+  <Droplets className="size-6" key="droplets" />,
+  <CloudSun className="size-6" key="cloudsun" />,
+  <Sprout className="size-6" key="sprout" />,
+  <MapPin className="size-6" key="mappin" />,
+  <History className="size-6" key="history" />,
 ];
 
 function BrandMark() {
@@ -279,9 +279,7 @@ export default function LandingPage() {
                 <motion.div key={feature.title} variants={item}>
                   <Card className="h-full overflow-hidden border border-border/40 bg-gradient-to-b from-background to-muted/10 py-0 backdrop-blur transition-all hover:shadow-md">
                     <CardContent className="flex h-full flex-col p-6">
-                      <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        {FEATURE_ICONS[idx]}
-                      </div>
+                      <div className="mb-4 text-primary">{FEATURE_ICONS[idx]}</div>
                       <h3 className="mb-2 text-xl font-bold">{feature.title}</h3>
                       <p className="text-muted-foreground">{feature.description}</p>
                     </CardContent>
@@ -318,8 +316,6 @@ export default function LandingPage() {
             </motion.div>
 
             <div className="relative grid gap-8 md:grid-cols-3 md:gap-12">
-              <div className="absolute top-1/2 right-0 left-0 z-0 hidden h-0.5 -translate-y-1/2 bg-gradient-to-r from-transparent via-border to-transparent md:block"></div>
-
               {stepsItems.map((s, i) => (
                 <motion.div
                   key={s.step}
@@ -329,10 +325,9 @@ export default function LandingPage() {
                   transition={{ duration: 0.5, delay: i * 0.1 }}
                   className="relative z-10 flex flex-col items-center space-y-4 text-center"
                 >
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-xl font-bold text-primary-foreground shadow-lg">
-                    {s.step}
-                  </div>
-                  <h3 className="text-xl font-bold">{s.title}</h3>
+                  <h3 className="inline-flex items-center rounded-lg bg-primary px-5 py-2 text-lg font-semibold text-primary-foreground shadow-sm">
+                    {s.title}
+                  </h3>
                   <p className="text-muted-foreground">{s.description}</p>
                 </motion.div>
               ))}

@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NOTICE_CLASSES } from '@/lib/toneClasses';
+import { cn } from '@/lib/utils';
+import { FARM_FIELD_MAX_LENGTH } from '@/lib/fieldLimits';
 
 export default function AddFarmPage() {
   const { t } = useTranslation();
@@ -61,7 +64,7 @@ export default function AddFarmPage() {
               <Label htmlFor="farm-name">{t('farms.addForm.nameLabel')}</Label>
               <Input
                 id="farm-name"
-                maxLength={100}
+                maxLength={FARM_FIELD_MAX_LENGTH.name}
                 placeholder={t('farms.addForm.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -71,7 +74,7 @@ export default function AddFarmPage() {
               <Label htmlFor="farm-owner">{t('farms.addForm.ownerLabel')}</Label>
               <Input
                 id="farm-owner"
-                maxLength={100}
+                maxLength={FARM_FIELD_MAX_LENGTH.owner}
                 placeholder={t('farms.addForm.ownerPlaceholder')}
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
@@ -84,7 +87,7 @@ export default function AddFarmPage() {
               <Label htmlFor="farm-location">{t('farms.addForm.locationLabel')}</Label>
               <Input
                 id="farm-location"
-                maxLength={200}
+                maxLength={FARM_FIELD_MAX_LENGTH.location}
                 placeholder={t('farms.addForm.locationPlaceholder')}
                 value={location}
                 onChange={(e) => {
@@ -123,7 +126,7 @@ export default function AddFarmPage() {
               <Label htmlFor="farm-gateway">{t('farms.addForm.gatewayIdLabel')}</Label>
               <Input
                 id="farm-gateway"
-                maxLength={64}
+                maxLength={FARM_FIELD_MAX_LENGTH.gatewayDeviceId}
                 placeholder={t('farms.addForm.gatewayIdPlaceholder')}
                 value={gatewayDeviceId}
                 onChange={(e) => setGatewayDeviceId(e.target.value)}
@@ -136,7 +139,7 @@ export default function AddFarmPage() {
               </Label>
               <Input
                 id="farm-gateway-name"
-                maxLength={100}
+                maxLength={FARM_FIELD_MAX_LENGTH.gatewayDisplayName}
                 placeholder={t('farms.addForm.gatewayDisplayNamePlaceholder')}
                 value={gatewayDisplayName}
                 onChange={(e) => setGatewayDisplayName(e.target.value)}
@@ -166,7 +169,13 @@ export default function AddFarmPage() {
           </p>
 
           {missingFields.length > 0 && (
-            <div className="flex items-start gap-2 rounded-md border border-amber-500/50 p-3 text-sm text-amber-600 dark:text-amber-400">
+            <div
+              className={cn(
+                'flex items-start gap-2 rounded-md border p-3 text-sm',
+                NOTICE_CLASSES.warningBorder,
+                NOTICE_CLASSES.warningText,
+              )}
+            >
               <Info className="mt-0.5 size-4 shrink-0" />
               <div>
                 <strong>{t('farms.addForm.missingTitle')}</strong> {missingFields.join(', ')}{' '}

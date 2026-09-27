@@ -8,7 +8,7 @@
 // pemetaan tone -> kelas/token tema dilakukan di lapisan UI (komponen Badge),
 // bukan di sini. Perilaku keputusan (status -> warna) dipertahankan apa adanya.
 
-import type { SemanticTone } from '@/types';
+import type { DecisionType, SemanticTone } from '@/types';
 
 export type StatusTone = Exclude<SemanticTone, 'neutral'>;
 
@@ -28,8 +28,6 @@ export function getGatewayStatusBadge(status: string): StatusBadge {
 export function getNodeStatusBadge(status: string): StatusBadge {
   const map: Record<string, StatusBadge> = {
     online: { labelKey: 'status.online', tone: 'green' },
-    pending: { labelKey: 'status.pending', tone: 'yellow' },
-    standby: { labelKey: 'status.standby', tone: 'yellow' },
     offline: { labelKey: 'status.offline', tone: 'red' },
   };
   return map[status] ?? map.offline;
@@ -44,29 +42,32 @@ export function getValveStatusBadge(valveKey: string): StatusBadge {
   return map[valveKey] ?? map['valve.unknown'];
 }
 
-// decision = raw backend string (e.g. "Irigasi dijalankan", "Irigasi ditunda").
-// We classify by tone and return a stable labelKey for i18n display.
-export function getIrrigationStatusBadge(decision: string): StatusBadge {
-  const d = String(decision || '').toLowerCase();
-  if (d.includes('dijalankan') || d.includes('aktif') || d === 'open') {
-    return { labelKey: 'irrigationStatus.active', tone: 'green' };
-  }
-  if (d.includes('ditunda') || d.includes('delay')) {
-    return { labelKey: 'irrigationStatus.delayed', tone: 'yellow' };
-  }
-  if (d.includes('berhenti') || d.includes('tutup') || d === 'closed') {
-    return { labelKey: 'irrigationStatus.closed', tone: 'yellow' };
-  }
-  if (d.includes('normal')) {
-    return { labelKey: 'irrigationStatus.normal', tone: 'green' };
-  }
-  return { labelKey: 'irrigationStatus.needsCheck', tone: 'yellow' };
+// Dipetakan dari decision.type backend, bukan dari teks keputusannya.
+export function getIrrigationStatusBadge(type: DecisionType): StatusBadge {
+  const map: Record<DecisionType, StatusBadge> = {
+    open: { labelKey: 'irrigationStatus.active', tone: 'green' },
+    delayed: { labelKey: 'irrigationStatus.delayed', tone: 'yellow' },
+    closed: { labelKey: 'irrigationStatus.closed', tone: 'yellow' },
+    standby: { labelKey: 'irrigationStatus.normal', tone: 'green' },
+    disconnected: { labelKey: 'irrigationStatus.disconnected', tone: 'red' },
+    // Posisi valve sudah tampil di badge valve, jadi label cukup "Manual"; tone ikut posisi valve.
+    manual_open: { labelKey: 'irrigationStatus.manual', tone: 'green' },
+    manual_closed: { labelKey: 'irrigationStatus.manual', tone: 'yellow' },
+    manual_timeout: { labelKey: 'irrigationStatus.manual', tone: 'yellow' },
+  };
+  return map[type];
 }
 
+// Alasan keputusan dalam bahasa aplikasi. Teks backend dipakai untuk log lama tanpa type.
+export function getIrrigationReasonKey(type: DecisionType | null | undefined): string | null {
+  return type ? `irrigationReason.${type}` : null;
+}
+
+// lower/upper = threshold kebun dari summary.thresholds (ikut jenis tanaman).
 export function getSoilStatusFromMoisture(
   value: number | null | undefined,
-  lower = 40,
-  upper = 70,
+  lower: number,
+  upper: number,
 ): StatusBadge {
   if (value == null || value <= 0) {
     return { labelKey: 'soilStatus.noData', tone: 'red' };
@@ -76,8 +77,12 @@ export function getSoilStatusFromMoisture(
   return { labelKey: 'soilStatus.normal', tone: 'green' };
 }
 
+// Batas baterai: di bawah LOW merah, sampai MID kuning, di atasnya hijau.
+export const BATTERY_LOW_PCT = 20;
+export const BATTERY_MID_PCT = 50;
+
 export function batteryTone(value: number): StatusTone {
-  if (value < 20) return 'red';
-  if (value <= 50) return 'yellow';
+  if (value < BATTERY_LOW_PCT) return 'red';
+  if (value <= BATTERY_MID_PCT) return 'yellow';
   return 'green';
 }
