@@ -326,6 +326,10 @@
     "lightRain": "Light Rain",
     "moderateRain": "Moderate Rain",
     "heavyRain": "Heavy Rain",
+    "thunderstorm": "Thunderstorm",
+    "lightning": "Lightning",
+    "haze": "Haze",
+    "fog": "Fog/Smoke",
     "unknown": "Unknown"
   },
   "time": {

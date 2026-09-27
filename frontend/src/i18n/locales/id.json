@@ -326,6 +326,10 @@
     "lightRain": "Hujan Ringan",
     "moderateRain": "Hujan Sedang",
     "heavyRain": "Hujan Lebat",
+    "thunderstorm": "Hujan Petir",
+    "lightning": "Petir",
+    "haze": "Udara Kabur",
+    "fog": "Kabut/Asap",
     "unknown": "Tidak Diketahui"
   },
   "time": {
