@@ -61,7 +61,13 @@ export function WeatherForecastCard({
 
         <div className="space-y-1 border-t border-border pt-4 text-sm">
           <p className="text-foreground">
-            <span className="text-muted-foreground">{t('dashboard.weatherNow')}: </span>
+            {forecast.staleSince ? (
+              <span className={ACCENT_TEXT.amber} title={t('weather.staleHint')}>
+                {t('weather.staleAsOf', { time: forecast.staleSince })}:{' '}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">{t('dashboard.weatherNow')}: </span>
+            )}
             {forecast.currentTemperature} · {t(forecast.currentLabelKey)}
           </p>
           <p className="text-muted-foreground">

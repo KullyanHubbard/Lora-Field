@@ -440,7 +440,10 @@
     "forecastTitle": "Ramalan Cuaca",
     "forecastEmpty": "Prakiraan belum tersedia untuk kebun ini.",
     "historyTitle": "Histori Suhu (Open-Meteo)",
-    "windUnit": "km/jam"
+    "windUnit": "km/jam",
+    "staleAsOf": "Per {{time}}",
+    "staleLabel": "Data lama, {{time}}",
+    "staleHint": "BMKG sedang gangguan. Menampilkan prakiraan terakhir yang tersimpan."
   },
   "settingsPage": {
     "title": "Profil Akun",

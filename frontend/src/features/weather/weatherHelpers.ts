@@ -7,7 +7,7 @@
 // pemetaan iconKey -> komponen ikon dilakukan di lapisan UI. Label/isRain/kode
 // dipertahankan apa adanya.
 import type { TFunction } from 'i18next';
-import { formatClockTime } from '@/lib/format';
+import { formatClockTime, parseServerDate } from '@/lib/format';
 import type { WeatherForecastPoint } from '@/types';
 
 export type WeatherIconKey =
@@ -95,4 +95,17 @@ export function formatForecastLabel(
   if (!Number.isNaN(date.getTime())) return formatClockTime(date, locale);
   const timePart = String(rawTime).split(/[ T]/)[1];
   return timePart ? timePart.slice(0, 5) : fallback;
+}
+
+// utc_datetime = UTC tanpa penanda zona, formatnya sama dengan waktu server, jadi
+// parseServerDate tepat dipakai di sini (beda dengan local_datetime/datetime yang sudah jam lokal).
+export function dropPastForecast(
+  points: WeatherForecastPoint[],
+  now: number = Date.now(),
+): WeatherForecastPoint[] {
+  return points.filter((point) => {
+    const parsed = parseServerDate(point.utc_datetime);
+    if (!parsed) return true;
+    return parsed.getTime() + 3 * 60 * 60 * 1000 > now;
+  });
 }

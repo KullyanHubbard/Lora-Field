@@ -4,8 +4,9 @@ import {
 } from '@/features/dashboard/dashboardHistoricalData';
 import { BATTERY_LOW_PCT, BATTERY_MID_PCT, batteryTone } from '@/lib/status';
 import type { TFunction } from 'i18next';
-import { DEG_C, EMPTY_VALUE } from '@/lib/format';
+import { DEG_C, EMPTY_VALUE, formatClockTime, parseServerDate } from '@/lib/format';
 import {
+  dropPastForecast,
   formatForecastLabel,
   getWeatherCodeInfo,
   pickNumber,
@@ -54,6 +55,8 @@ export type WeatherForecastViewModel = {
   currentHumidity: string;
   rainNext3h: boolean;
   slots: WeatherForecastSlot[];
+  // null kalau cuaca segar (is_stale bukan true) atau fetched_at tidak bisa dibaca.
+  staleSince: string | null;
 };
 
 function toFiniteNumber(value: number | null | undefined): number | null {
@@ -194,19 +197,23 @@ export function buildWeatherForecastViewModel(
   locale: string,
 ): WeatherForecastViewModel {
   const currentInfo = getWeatherCodeInfo(weather.code, weather.condition);
-  const slots = (weather.forecast ?? []).slice(0, FORECAST_CARD_SLOTS).map((point, index) => {
-    const info = getWeatherCodeInfo(point.weather, point.weather_desc);
-    const temp = pickNumber(point.t);
+  const fetchedAt = weather.is_stale === true ? parseServerDate(weather.fetched_at) : null;
+  const staleSince = fetchedAt ? formatClockTime(fetchedAt, locale) : null;
+  const slots = dropPastForecast(weather.forecast ?? [])
+    .slice(0, FORECAST_CARD_SLOTS)
+    .map((point, index) => {
+      const info = getWeatherCodeInfo(point.weather, point.weather_desc);
+      const temp = pickNumber(point.t);
 
-    return {
-      key: index,
-      time: formatForecastLabel(point, index, t, locale),
-      iconKey: info.iconKey,
-      labelKey: info.label,
-      temp: temp != null ? `${Math.round(temp)}${DEG_C}` : EMPTY_VALUE,
-      isRain: info.isRain,
-    };
-  });
+      return {
+        key: index,
+        time: formatForecastLabel(point, index, t, locale),
+        iconKey: info.iconKey,
+        labelKey: info.label,
+        temp: temp != null ? `${Math.round(temp)}${DEG_C}` : EMPTY_VALUE,
+        isRain: info.isRain,
+      };
+    });
 
   return {
     currentIconKey: currentInfo.iconKey,
@@ -215,5 +222,6 @@ export function buildWeatherForecastViewModel(
     currentHumidity: formatPercent(weather.humidity),
     rainNext3h: weather.rain_next_3h === true,
     slots,
+    staleSince,
   };
 }

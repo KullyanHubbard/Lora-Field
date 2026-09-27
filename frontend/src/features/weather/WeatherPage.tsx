@@ -4,9 +4,14 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Droplets, Wind } from 'lucide-react';
 import { useFarmSummary } from '@/features/dashboard/queries';
 import { useWeatherHistory } from './queries';
-import { formatForecastLabel, getWeatherCodeInfo, pickNumber } from './weatherHelpers';
+import {
+  dropPastForecast,
+  formatForecastLabel,
+  getWeatherCodeInfo,
+  pickNumber,
+} from './weatherHelpers';
 import { weatherIconMap } from '@/features/weather/weatherIconMap';
-import { DEG_C, EMPTY_VALUE, formatClockTime } from '@/lib/format';
+import { DEG_C, EMPTY_VALUE, formatClockTime, parseServerDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -141,6 +146,8 @@ function WeatherMainCard({
   const { t, i18n } = useTranslation();
   const info = getWeatherCodeInfo(weather?.code, weather?.condition);
   const Icon = weatherIconMap[info.iconKey];
+  const staleFetchedAt = weather?.is_stale === true ? parseServerDate(weather.fetched_at) : null;
+  const staleTime = staleFetchedAt ? formatClockTime(staleFetchedAt, i18n.language) : null;
   const temp = pickNumber(weather?.temperature);
   const humidity = pickNumber(weather?.humidity);
   const wind = pickNumber(weather?.wind_speed);
@@ -172,6 +179,11 @@ function WeatherMainCard({
         <span className="mt-2.5 text-sm font-medium text-muted-foreground">
           {weather ? t(info.label) : t('weather.notAvailable')}
         </span>
+        {staleTime && (
+          <span className={cn('mt-1 text-xs', ACCENT_TEXT.amber)} title={t('weather.staleHint')}>
+            {t('weather.staleLabel', { time: staleTime })}
+          </span>
+        )}
 
         <div className="mt-7 grid w-full max-w-sm grid-cols-2 gap-3">
           <div className="flex items-center gap-2.5 rounded-lg border border-border px-4 py-3">
@@ -226,7 +238,7 @@ function WeatherMainCard({
 function ForecastColumn({ weather }: { weather: Weather | null }) {
   const { t, i18n } = useTranslation();
   const forecast = weather?.forecast;
-  const items = Array.isArray(forecast) && forecast.length > 0 ? forecast : [];
+  const items = dropPastForecast(Array.isArray(forecast) ? forecast : []);
 
   return (
     <Card className="flex flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">

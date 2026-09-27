@@ -137,6 +137,8 @@ export interface Weather {
   updated_at: string;
   location_profile: { altitude_m: number };
   forecast: WeatherForecastPoint[];
+  is_stale?: boolean;
+  fetched_at?: string;
 }
 
 export interface NodeSummary {

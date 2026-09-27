@@ -448,7 +448,10 @@
     "forecastTitle": "Weather Forecast",
     "forecastEmpty": "Forecast not yet available for this farm.",
     "historyTitle": "Temperature History (Open-Meteo)",
-    "windUnit": "km/h"
+    "windUnit": "km/h",
+    "staleAsOf": "As of {{time}}",
+    "staleLabel": "Old data, {{time}}",
+    "staleHint": "BMKG is unavailable. Showing the last saved forecast."
   },
   "markerColor": {
     "blue": "Blue",
