@@ -31,6 +31,9 @@ class IrrigationModeUpdate(BaseModel):
     mode: Literal["auto", "manual"]
 
 
+GroundCover = Literal["open", "mulch", "roofed"]
+
+
 class ValveCommandUpdate(BaseModel):
     open: bool
 
@@ -56,6 +59,7 @@ class FarmCreate(BaseModel):
     longitude: float | None = Field(default=None, ge=-180, le=180)
     gateway_device_id: str = Field(..., min_length=4, max_length=64)
     gateway_display_name: str = Field(default="", max_length=100)
+    ground_cover: GroundCover = "open"
 
 
 class FarmUpdate(BaseModel):
@@ -68,6 +72,7 @@ class FarmUpdate(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     status: str | None = Field(default=None, max_length=30)
+    ground_cover: GroundCover | None = None
 
 
 class UserRegister(BaseModel):

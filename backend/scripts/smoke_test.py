@@ -1132,6 +1132,111 @@ def run(report: Report, with_network: bool) -> None:
         finally:
             reset_cuaca_cadangan()
 
+        section("Penutup tanah")
+        try:
+            farm_default = client.get(f"/api/farms/{farm_id}", headers=auth).json().get("farm", {})
+            report.check(
+                "kebun tanpa ground_cover eksplisit -> default 'open'",
+                farm_default.get("ground_cover") == "open",
+                f"dapat {farm_default.get('ground_cover')}",
+            )
+
+            patch_mulch = client.patch(
+                f"/api/farms/{farm_id}", json={"ground_cover": "mulch"}, headers=auth
+            )
+            report.check(
+                "PATCH ground_cover 'mulch' tersimpan",
+                patch_mulch.status_code == 200
+                and patch_mulch.json().get("farm", {}).get("ground_cover") == "mulch",
+                f"status {patch_mulch.status_code}, body {patch_mulch.json()}",
+            )
+
+            patch_invalid = client.patch(
+                f"/api/farms/{farm_id}", json={"ground_cover": "kaca"}, headers=auth
+            )
+            report.check(
+                "PATCH ground_cover 'kaca' ditolak 422",
+                patch_invalid.status_code == 422,
+                f"status {patch_invalid.status_code}",
+            )
+
+            patch_null = client.patch(
+                f"/api/farms/{farm_id}", json={"ground_cover": None}, headers=auth
+            )
+            report.check(
+                "PATCH ground_cover null ditolak 422",
+                patch_null.status_code == 422,
+                f"status {patch_null.status_code}",
+            )
+
+            set_cached_weather(ADM4, {**FAKE_WEATHER, "rain_next_3h": True})
+
+            reading_mulch = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            reading_mulch_body = reading_mulch.json() if reading_mulch.status_code == 201 else {}
+            summary_mulch = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+            summary_mulch_decision = next(
+                (
+                    ns.get("decision", {}).get("type")
+                    for ns in summary_mulch.get("nodes", [])
+                    if ns.get("node", {}).get("id") == node_a
+                ),
+                None,
+            )
+            report.check(
+                "kebun mulsa + hujan diprediksi -> irigasi tetap jalan (reading dan summary)",
+                reading_mulch.status_code == 201
+                and reading_mulch_body.get("decision", {}).get("type") == "open"
+                and summary_mulch_decision == "open",
+                f"status {reading_mulch.status_code}, decision {reading_mulch_body.get('decision')}, "
+                f"summary {summary_mulch_decision}",
+            )
+
+            patch_roofed = client.patch(
+                f"/api/farms/{farm_id}", json={"ground_cover": "roofed"}, headers=auth
+            )
+            reading_roofed = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            reading_roofed_body = reading_roofed.json() if reading_roofed.status_code == 201 else {}
+            report.check(
+                "kebun beratap + hujan diprediksi -> irigasi tetap jalan",
+                patch_roofed.status_code == 200
+                and reading_roofed.status_code == 201
+                and reading_roofed_body.get("decision", {}).get("type") == "open",
+                f"patch status {patch_roofed.status_code}, reading status {reading_roofed.status_code}, "
+                f"decision {reading_roofed_body.get('decision')}",
+            )
+
+            patch_open = client.patch(
+                f"/api/farms/{farm_id}", json={"ground_cover": "open"}, headers=auth
+            )
+            reading_open = client.post(
+                f"/api/nodes/{node_a}/readings",
+                params={"adm4": ADM4},
+                json=kering_payload(),
+                headers=auth,
+            )
+            reading_open_body = reading_open.json() if reading_open.status_code == 201 else {}
+            report.check(
+                "kebun tanah terbuka + hujan diprediksi -> irigasi ditunda",
+                patch_open.status_code == 200
+                and reading_open.status_code == 201
+                and reading_open_body.get("decision", {}).get("type") == "delayed",
+                f"patch status {patch_open.status_code}, reading status {reading_open.status_code}, "
+                f"decision {reading_open_body.get('decision')}",
+            )
+        finally:
+            client.patch(f"/api/farms/{farm_id}", json={"ground_cover": "open"}, headers=auth)
+            set_cached_weather(ADM4, FAKE_WEATHER)
+
         section("Gateway logs")
         report.expect(
             "POST /api/farms/{id}/gateway-logs",

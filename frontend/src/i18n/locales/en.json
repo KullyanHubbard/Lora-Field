@@ -468,6 +468,13 @@
     "rose": "Rose",
     "teal": "Teal"
   },
+  "groundCover": {
+    "label": "Ground Cover",
+    "helper": "Determines whether rain forecasts are used to delay irrigation.",
+    "open": "Open soil",
+    "mulch": "Plastic mulch",
+    "roofed": "Covered (greenhouse)"
+  },
   "gateway": {
     "title": "Gateway",
     "errorLoad": "Failed to load gateway data: {{message}}",

@@ -7,9 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { NOTICE_CLASSES } from '@/lib/toneClasses';
 import { cn } from '@/lib/utils';
 import { FARM_FIELD_MAX_LENGTH } from '@/lib/fieldLimits';
+import { GROUND_COVER_OPTIONS } from '@/lib/groundCover';
+import type { GroundCover } from '@/types';
 
 export default function AddFarmPage() {
   const { t } = useTranslation();
@@ -24,6 +33,8 @@ export default function AddFarmPage() {
     setCropType,
     areaHa,
     setAreaHa,
+    groundCover,
+    setGroundCover,
     lat,
     setLat,
     lng,
@@ -114,6 +125,25 @@ export default function AddFarmPage() {
                 onChange={(e) => setAreaHa(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">{t('farms.addForm.areaHelper')}</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="farm-ground-cover">{t('groundCover.label')}</Label>
+              <Select
+                value={groundCover}
+                onValueChange={(value) => setGroundCover(value as GroundCover)}
+              >
+                <SelectTrigger id="farm-ground-cover" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GROUND_COVER_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {t(`groundCover.${option.value}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t('groundCover.helper')}</p>
             </div>
           </div>
 

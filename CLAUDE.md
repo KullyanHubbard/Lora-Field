@@ -163,7 +163,7 @@ Perintah valve hanya disimpan di server (`nodes.valve_command`). `valve_command_
 
 ```text
 users           : id, email, name, password_hash, phone, language, created_at, updated_at
-farms           : id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status, lower_threshold, upper_threshold, irrigation_mode
+farms           : id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status, lower_threshold, upper_threshold, irrigation_mode, ground_cover
 nodes           : id, farm_id, gateway_id, name, location, region, latitude, longitude, status, battery, first_seen_at, last_seen_at, battery_updated_at, valve_command, valve_command_at, valve_command_sent_at, updated_at
 readings        : id, farm_id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, rssi, created_at
 decision_logs   : id, node_id, soil_moisture, weather, decision, decision_type, valve_state, reason, created_at
@@ -173,6 +173,8 @@ weather_cache   : adm4 (PK), data (JSON), updated_at; TTL 30 menit. Cache lewat 
 wilayah         : kode (PK, format adm4 BMKG), nama, nama_norm, level (1=provinsi s/d 4=desa), parent; di-seed sekali dari app/data/wilayah.csv
 password_resets : id, user_id, token (6-digit OTP), expires_at, used, created_at
 ```
+
+Kolom `farms.ground_cover` ditambahkan via `ensure_column` (`'open'`/`'mulch'`/`'roofed'`, default `'open'`). Kebun bermulsa plastik atau beratap tidak kena hujan, jadi prediksi hujan BMKG hanya menunda irigasi untuk `'open'` (lihat `effective_rain_next_3h` di `irrigation.py`, dipakai `create_reading` dan `get_farm_summary`; `/api/decision` debug TIDAK memakainya).
 
 Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di frontend = id, name, email, phone (opsional), language; `created_at`/`updated_at` tidak ikut dikirim ke frontend. Kolom `phone` dan `language` ditambahkan via `ensure_column` (migration otomatis saat startup). `language` bernilai `'id'` atau `'en'` (CHECK constraint), dan NULL untuk baris lama sampai login, `/auth/me`, atau `/auth/profile` mem-backfill-nya. Kolom `nodes.gateway_id`, `nodes.first_seen_at`, dan `readings.farm_id` juga ditambahkan via `ensure_column`, begitu juga `farms.lower_threshold`/`upper_threshold`, `nodes.last_seen_at`/`battery_updated_at`, `readings.rssi`, dan `decision_logs.decision_type` (di-backfill saat startup).
 
@@ -193,7 +195,7 @@ Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun 
 - Threshold per kebun, diambil dari jenis tanaman (`crops.py`) saat kebun dibuat atau `crop_type` diubah. `crop_type` wajib salah satu dari daftar `GET /api/crops` (POST/PATCH farm menolak 422 kalau tidak); form Tambah Kebun hanya menyediakan pilihan, tanpa ketik bebas. Default 40–70% (`DEFAULT_THRESHOLDS` di `irrigation.py`) hanya untuk kebun lama yang tanamannya tidak dikenal. `summary.thresholds` berisi threshold kebun itu.
 - Valve dibuka jika kelembapan tanah di bawah threshold dan tidak ada prediksi hujan.
 - Valve ditutup jika kelembapan tanah sudah cukup.
-- Irigasi ditunda jika BMKG memprediksi hujan.
+- Irigasi ditunda jika BMKG memprediksi hujan, HANYA untuk kebun `ground_cover` `'open'` (tanah terbuka). Kebun `'mulch'` (mulsa plastik) dan `'roofed'` (beratap/rumah kaca) tidak kena hujan, jadi prediksi hujan diabaikan dan irigasi tetap jalan kalau kelembapan rendah.
 - Mode per kebun: `auto` (aturan di atas) atau `manual` (valve mengikuti perintah pengguna, decision `manual_open`/`manual_closed`). Valve yang dibuka manual ditutup otomatis setelah `MANUAL_IRRIGATION_MAX_MINUTES` (default 30) dan tercatat `manual_timeout`. Ganti mode 2 langkah di kartu Status Valve: pilih, lalu Terapkan.
 - Sistem menunggu data sensor terbaru jika gateway offline. Di summary, node yang offline mendapat decision `disconnected` (tampil "Terputus", valve `unknown`), bukan keputusan terakhir yang sudah basi. `disconnected` tidak pernah tercatat di decision_logs.
 - RSSI disimpan per reading (`readings.rssi`, dBm, NULL kalau gateway tidak melaporkannya). Kartu Sensor Node menampilkan RSSI dari `latest_reading` node terpilih, dan `-` kalau kosong (konstanta `EMPTY_VALUE` di `src/lib/format.ts`, penanda nilai kosong untuk seluruh UI).

@@ -15,6 +15,15 @@ def farm_thresholds(farm: dict) -> ThresholdConfig:
     return ThresholdConfig(lower=lower, upper=upper)
 
 
+def effective_rain_next_3h(farm: dict, weather: dict | None) -> bool:
+    """Hujan menunda irigasi hanya untuk kebun tanah terbuka. Mulsa/atap tidak kena hujan."""
+    if weather is None:
+        return False
+    if not weather["rain_next_3h"]:
+        return False
+    return farm.get("ground_cover", "open") == "open"
+
+
 # Dipakai summary untuk node offline: keputusan terakhir sudah basi, jadi tidak ditampilkan
 # sebagai status irigasi. Kondisi valve fisik tidak diketahui selama node terputus.
 DISCONNECTED_DECISION = {

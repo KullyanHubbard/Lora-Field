@@ -5,6 +5,10 @@ export type SemanticTone = 'green' | 'yellow' | 'red' | 'neutral';
 
 export type IrrigationMode = 'auto' | 'manual';
 
+// Kebun bermulsa/beratap tidak kena hujan, jadi prediksi hujan hanya menunda irigasi
+// untuk 'open'. Lihat irrigation.py effective_rain_next_3h.
+export type GroundCover = 'open' | 'mulch' | 'roofed';
+
 export interface Farm {
   id: string;
   name: string;
@@ -17,6 +21,7 @@ export interface Farm {
   bmkg_adm4_code: string;
   status: string;
   irrigation_mode: IrrigationMode;
+  ground_cover: GroundCover;
   updated_at: string;
   // Threshold VWC dari jenis tanaman. null = tanaman tidak dikenal, backend pakai default.
   lower_threshold?: number | null;
@@ -179,6 +184,7 @@ export interface UpdateFarmPayload {
   latitude?: number;
   longitude?: number;
   status?: string;
+  ground_cover?: GroundCover;
 }
 
 export interface CreateFarmPayload {
@@ -192,4 +198,5 @@ export interface CreateFarmPayload {
   longitude: number;
   gateway_device_id: string;
   gateway_display_name: string;
+  ground_cover: GroundCover;
 }

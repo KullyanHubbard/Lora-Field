@@ -3,6 +3,7 @@ import { filterMyFarms } from './myFarmsHelpers';
 import { useDeleteFarm, useUpdateFarm } from './queries';
 import { getFarmMarkerColor, setFarmMarkerColor, type MarkerColorId } from './farmColorStorage';
 import { useFarms } from '@/features/dashboard/queries';
+import type { MyFarmEditPayload } from './components/MyFarmEditDialog';
 import type { Farm } from '@/types';
 
 export function useMyFarmsViewModel() {
@@ -34,11 +35,11 @@ export function useMyFarmsViewModel() {
     setFarmPendingEdit(null);
   }
 
-  function handleConfirmEditFarm(newName: string) {
+  function handleConfirmEditFarm(payload: MyFarmEditPayload) {
     if (!farmPendingEdit) return;
 
     updateFarm.mutate(
-      { id: farmPendingEdit.id, payload: { name: newName } },
+      { id: farmPendingEdit.id, payload },
       {
         onSuccess: () => setFarmPendingEdit(null),
       },

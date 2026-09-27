@@ -12,7 +12,13 @@ from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned
 from ..gateway_service import claim_gateway_for_farm, ensure_gateway_unclaimed, release_gateway
 from ..crops import find_crop_thresholds
-from ..irrigation import DISCONNECTED_DECISION, calculate_decision, farm_thresholds, manual_decision
+from ..irrigation import (
+    DISCONNECTED_DECISION,
+    calculate_decision,
+    effective_rain_next_3h,
+    farm_thresholds,
+    manual_decision,
+)
 from ..node_service import is_recently_seen, present_node
 from ..schemas import FarmCreate, FarmUpdate
 from ..valve_control import expire_manual_valves
@@ -60,6 +66,8 @@ def update_farm(
 
         if updates.get("name") is None and "name" in updates:
             raise HTTPException(status_code=422, detail="Nama kebun tidak boleh kosong.")
+        if updates.get("ground_cover") is None and "ground_cover" in updates:
+            raise HTTPException(status_code=422, detail="Penutup tanah tidak boleh kosong.")
 
         for field in ("name", "owner", "location", "crop_type", "bmkg_adm4_code", "status"):
             if isinstance(updates.get(field), str):
@@ -96,6 +104,7 @@ def update_farm(
             "status",
             "lower_threshold",
             "upper_threshold",
+            "ground_cover",
         }
         assignments = [f"{column} = ?" for column in updates if column in allowed_columns]
         values = [updates[column] for column in updates if column in allowed_columns]
@@ -167,8 +176,9 @@ def create_farm(
             """
             INSERT INTO farms
                 (id, user_id, name, owner, location, crop_type, area_ha,
-                 bmkg_adm4_code, latitude, longitude, lower_threshold, upper_threshold, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+                 bmkg_adm4_code, latitude, longitude, lower_threshold, upper_threshold,
+                 ground_cover, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
             """,
             (
                 farm_id,
@@ -183,6 +193,7 @@ def create_farm(
                 payload.longitude,
                 crop_thresholds.lower,
                 crop_thresholds.upper,
+                payload.ground_cover,
             ),
         )
         gateway = claim_gateway_for_farm(
@@ -256,7 +267,7 @@ def get_farm_summary(
 
     farm = ensure_farm_bmkg_adm4(farm)
     weather = _farm_weather_or_none(farm)
-    rain_next_3h = weather["rain_next_3h"] if weather else False
+    rain_next_3h = effective_rain_next_3h(farm, weather)
     thresholds = farm_thresholds(farm)
 
     node_summaries = []

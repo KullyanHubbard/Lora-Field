@@ -194,6 +194,12 @@ def init_db() -> None:
         )
         ensure_column(connection, "nodes", "valve_command_at", "TEXT")
         ensure_column(connection, "nodes", "valve_command_sent_at", "TEXT")
+        ensure_column(
+            connection,
+            "farms",
+            "ground_cover",
+            "TEXT NOT NULL DEFAULT 'open' CHECK (ground_cover IN ('open', 'mulch', 'roofed'))",
+        )
         backfill_reading_farm_ids(connection)
         backfill_farm_thresholds(connection)
         backfill_node_last_seen(connection)

@@ -8,7 +8,7 @@ from ..auth import get_current_user
 from ..bmkg import get_weather_for_decision
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned, get_node_owned
-from ..irrigation import calculate_decision, farm_thresholds, manual_decision
+from ..irrigation import calculate_decision, effective_rain_next_3h, farm_thresholds, manual_decision
 from ..node_service import insert_node, present_node, record_reading
 from ..schemas import NodeLocationUpdate, SensorReadingIn
 from ..valve_control import expire_manual_valves
@@ -165,7 +165,7 @@ def create_reading(
             )
             decision = manual_decision(node)
         else:
-            rain_next_3h = weather["rain_next_3h"] if weather else False
+            rain_next_3h = effective_rain_next_3h(farm, weather)
             decision = calculate_decision(
                 payload.soil_moisture, rain_next_3h, farm_thresholds(farm)
             )

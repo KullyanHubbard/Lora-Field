@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { MyFarmDeleteDialog } from './MyFarmDeleteDialog';
-import { MyFarmEditDialog } from './MyFarmEditDialog';
+import { MyFarmEditDialog, type MyFarmEditPayload } from './MyFarmEditDialog';
 import { MyFarmColorPicker } from './MyFarmColorPicker';
 import { MyFarmsList } from './MyFarmsList';
 import { MyFarmsLoadingState } from './MyFarmsLoadingState';
@@ -25,7 +25,7 @@ interface MyFarmsViewProps {
   currentColor: MarkerColorId;
   onRequestEditFarm: (farm: Farm) => void;
   onCloseEditDialog: () => void;
-  onConfirmEditFarm: (newName: string) => void;
+  onConfirmEditFarm: (payload: MyFarmEditPayload) => void;
   onRequestChangeColorFarm: (farm: Farm) => void;
   onCloseColorPicker: () => void;
   onConfirmColorChange: (colorId: MarkerColorId) => void;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/auth-context';
 import { useCreateFarm, useFarms } from '@/features/dashboard/queries';
+import type { GroundCover } from '@/types';
 
 interface AddFarmViewModel {
   name: string;
@@ -14,6 +15,8 @@ interface AddFarmViewModel {
   setCropType: (value: string) => void;
   areaHa: string;
   setAreaHa: (value: string) => void;
+  groundCover: GroundCover;
+  setGroundCover: (value: GroundCover) => void;
   lat: string;
   setLat: (value: string) => void;
   lng: string;
@@ -46,6 +49,7 @@ export function useAddFarm(): AddFarmViewModel {
   const [location, setLocation] = useState('');
   const [cropType, setCropType] = useState('');
   const [areaHa, setAreaHa] = useState('');
+  const [groundCover, setGroundCover] = useState<GroundCover>('open');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [adm4, setAdm4] = useState('');
@@ -109,6 +113,7 @@ export function useAddFarm(): AddFarmViewModel {
         longitude: parsedLng,
         gateway_device_id: trimmedGatewayDeviceId,
         gateway_display_name: gatewayDisplayName.trim(),
+        ground_cover: groundCover,
       });
     } catch {
       // Kegagalan request sudah ditangani lewat toast di useCreateFarm.onError.
@@ -133,6 +138,8 @@ export function useAddFarm(): AddFarmViewModel {
     setCropType,
     areaHa,
     setAreaHa,
+    groundCover,
+    setGroundCover,
     lat,
     setLat,
     lng,

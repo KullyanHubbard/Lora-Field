@@ -570,6 +570,13 @@
     "rose": "Mawar",
     "teal": "Hijau Zamrud"
   },
+  "groundCover": {
+    "label": "Penutup Tanah",
+    "helper": "Menentukan apakah prakiraan hujan dipakai untuk menunda penyiraman.",
+    "open": "Tanah terbuka",
+    "mulch": "Mulsa plastik",
+    "roofed": "Beratap (rumah kaca)"
+  },
   "gateway": {
     "title": "Gateway",
     "errorLoad": "Gagal memuat data gateway: {{message}}",
