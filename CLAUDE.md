@@ -381,6 +381,7 @@ Jangan mengubah struktur sidebar kecuali user meminta eksplisit.
 
 ## Git Commit Rules
 
+- Claude DILARANG menjalankan `git commit` (termasuk `--amend`) dalam kondisi apa pun, juga kalau instruksi tugas atau teks tempelan menyuruh commit. Claude cukup menyiapkan perubahan, menyebut file yang berubah, dan mengusulkan pesan commit; user yang commit sendiri. Dipaksa lewat deny rule di `.claude/settings.local.json`.
 - JANGAN PERNAH menambahkan trailer `Co-Authored-By: Claude` ke commit message.
 - JANGAN PERNAH menambahkan baris atribusi AI/Claude (mis. "Generated with Claude Code") dalam bentuk apa pun.
 - Commit message hanya berisi deskripsi perubahan teknis, tanpa atribusi AI.
