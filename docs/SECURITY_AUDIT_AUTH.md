@@ -2,8 +2,9 @@
 
 **Date:** 2026-06-30  
 **Scope:** Frontend + Backend Auth endpoints  
-**Status:** 🔴 **CRITICAL VULNERABILITIES FOUND**  
-**Updated:** 2026-09-24. Code references now point to `backend/app/routers/auth.py` (the backend was split into routers). All findings below are still open. The Cloudflare rate limiting rule that was the only mitigation has been removed.
+**Status:** Findings 1, 2, and 4 fixed on 2026-09-27. Finding 3 and new finding 5 are still open.  
+**Updated:** 2026-09-24. Code references now point to `backend/app/routers/auth.py` (the backend was split into routers). All findings below are still open. The Cloudflare rate limiting rule that was the only mitigation has been removed.  
+**Updated:** 2026-09-27. Fixes for findings 1, 2, and 4 are described in each section. Code snippets below show the code as it was before the fix.
 
 ## Executive Summary
 
@@ -40,9 +41,11 @@ def verify_reset_code(payload: ResetCodeVerifyRequest) -> dict:
     return {"message": "Kode reset valid."}
 ```
 
-**Impact:** Attacker gains access to any account if they know the email.
+**Impact (corrected 2026-09-27):** The earlier text said the attacker needs to know the email. That was wrong: the OTP was not tied to an email at all. `get_active_reset_row` matched the token across every user, so an attacker could try 000000–999999 without knowing any email and reset the password of whichever account had an active code.
 
-**Fix Required:**
+**Status: FIXED (2026-09-27).** Verify and reset-password now require `email` + `token`, and only the latest active code of that user is checked (`check_reset_code`). Every wrong code increments `password_resets.attempts`; the 5th wrong try burns the code (`used = 1`). The check runs inside `BEGIN IMMEDIATE`, so parallel guesses queue up and cannot slip past the count. Together with the forgot-password cap (5 per day, finding 4), an attacker gets at most 25 guesses per account per day.
+
+**Fix Required (original recommendation):**
 - Implement rate limiting: max 5 attempts per 15 minutes per email
 - Return 429 after limit exceeded
 - Consider: exponential backoff, IP-based tracking, CAPTCHA after 3 failed
@@ -74,7 +77,9 @@ def login(payload: UserLogin, request: Request) -> dict:
 
 **Impact:** Attacker brute-forces any account's password.
 
-**Fix Required:**
+**Status: FIXED (2026-09-27).** 5 login attempts that fail within 15 minutes lock that account: further attempts return 429, even with the correct password. The attempt slot is taken under a lock before the password is checked, so parallel attempts are counted too. A successful login clears the count.
+
+**Fix Required (original recommendation):**
 - Rate limit: max 5 failed attempts per 15 minutes per email + IP
 - Lock account temporarily after 5–10 failed attempts
 - Return 429 with retry-after header
@@ -106,6 +111,8 @@ expose_dev_tokens: bool = False
 
 **Impact:** If mistakenly set to True in production, all password reset codes visible to client and network.
 
+**Status: STILL OPEN (2026-09-27).** The default is False, and it MUST stay False in production. No startup check exists yet.
+
 **Fix Required:**
 - Add startup validation: raise error if `expose_dev_tokens=True` and not localhost
 - Never return reset_token in production response
@@ -122,7 +129,14 @@ expose_dev_tokens: bool = False
 
 **Status:** Expected missing feature (documented), but should be implemented before production.
 
-**Fix Required:**
+**Status: FIXED (2026-09-27), without a new library.** `routers/auth.py` keeps an in-memory limiter: login 5 failures per 15 minutes, forgot-password 5 requests per day, both per account. It lives per process and resets when the server restarts; it must move to a DB table if the backend ever runs with more than one worker.
+
+**Design notes:**
+- The limiter is keyed by user id, not by IP: `client_ip` reads `X-Forwarded-For`, which a client can forge.
+- Unknown emails are never recorded, so flooding with random emails cannot grow the limiter's memory.
+- Trade-off: anyone who knows an email can lock that account out of login for 15 minutes, or use up its 5 reset requests for the day.
+
+**Fix Required (original recommendation):**
 - Add `slowapi` library
 - Implement rate limiting middleware for all /api/auth endpoints
 - Configure per-endpoint limits:
@@ -130,6 +144,14 @@ expose_dev_tokens: bool = False
   - POST /auth/forgot-password: 3 requests / 15 min per email
   - POST /auth/reset-password/verify: 5 attempts / 15 min per token
   - POST /auth/reset-password: 5 attempts / 15 min per token
+
+### 5. Registered Email Disclosure (MODERATE, OPEN, found 2026-09-27)
+
+**Location:** `POST /api/auth/register`, plus the 429 responses of login and forgot-password
+
+**Problem:**
+- Register returns 409 "Email sudah terdaftar." for an existing email, so anyone can check whether an email has an account.
+- The new 429 responses only appear for registered emails, which is the same leak.
 
 ## Frontend Security Status
 
@@ -185,6 +207,8 @@ Detection: None (logs exist but not monitored)
 ```
 
 ## Recommendations (Priority Order)
+
+Update 2026-09-27: the OTP brute force, login brute force, and rate limit rows are done, without `slowapi` (see findings 1, 2, and 4).
 
 | Priority | Issue | Fix | Effort | Impact |
 |----------|-------|-----|--------|--------|

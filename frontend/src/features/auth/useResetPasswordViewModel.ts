@@ -66,12 +66,15 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
     }
 
     setError('');
-    verify.mutate(tokenTrim, {
-      onSuccess: () => {
-        setVerifiedToken(tokenTrim);
-        setStep('password');
+    verify.mutate(
+      { email: email.trim(), token: tokenTrim },
+      {
+        onSuccess: () => {
+          setVerifiedToken(tokenTrim);
+          setStep('password');
+        },
       },
-    });
+    );
   };
 
   const submitPassword = () => {
@@ -85,7 +88,7 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
     }
 
     setError('');
-    reset.mutate({ token: verifiedToken, newPassword: password });
+    reset.mutate({ email: email.trim(), token: verifiedToken, newPassword: password });
   };
 
   const changeEmail = () => {

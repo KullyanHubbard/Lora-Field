@@ -27,6 +27,8 @@ import json
 import shutil
 import sys
 import tempfile
+import threading
+import time
 import types
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -280,20 +282,20 @@ def run(report: Report, with_network: bool) -> None:
         if report.check("OTP terbit (expose_dev_tokens)", bool(otp), "reset_token tidak ada di response"):
             report.expect(
                 "POST /api/auth/reset-password/verify",
-                client.post("/api/auth/reset-password/verify", json={"token": otp}),
+                client.post("/api/auth/reset-password/verify", json={"email": email, "token": otp}),
                 200,
             )
             report.expect(
                 "POST /api/auth/reset-password",
                 client.post(
                     "/api/auth/reset-password",
-                    json={"token": otp, "new_password": password},
+                    json={"email": email, "token": otp, "new_password": password},
                 ),
                 200,
             )
             report.check(
                 "OTP tidak bisa dipakai dua kali",
-                client.post("/api/auth/reset-password/verify", json={"token": otp}).status_code == 400,
+                client.post("/api/auth/reset-password/verify", json={"email": email, "token": otp}).status_code == 400,
             )
             relogin = report.expect(
                 "login dengan password hasil reset",
@@ -309,6 +311,201 @@ def run(report: Report, with_network: bool) -> None:
                 json={"email": "entah-siapa@lorafield-smoke.com"},
             ).status_code == 200,
         )
+
+        section("Keamanan auth")
+        sec_email = f"smoke-sec-{suffix}@lorafield-smoke.com"
+        ghost = f"tidak-ada-{suffix}@lorafield-smoke.com"
+
+        def reset_limits() -> None:
+            auth_router._login_failures.clear()
+            auth_router._reset_requests.clear()
+
+        def minta_kode(target: str) -> str:
+            return client.post("/api/auth/forgot-password", json={"email": target}).json().get("reset_token", "")
+
+        def kode_salah(kode: str, geser: int = 1) -> str:
+            return f"{(int(kode) + geser) % 1_000_000:06d}"
+
+        def cek_kode(target: str, kode: str) -> int:
+            return client.post(
+                "/api/auth/reset-password/verify", json={"email": target, "token": kode}
+            ).status_code
+
+        def status_login(target: str, pw: str) -> int:
+            return client.post("/api/auth/login", json={"email": target, "password": pw}).status_code
+
+        def baris_reset(target: str) -> dict:
+            with database.get_connection() as connection:
+                row = connection.execute(
+                    """
+                    SELECT pr.attempts, pr.used
+                    FROM password_resets pr JOIN users u ON u.id = pr.user_id
+                    WHERE u.email = ?
+                    ORDER BY pr.id DESC
+                    LIMIT 1
+                    """,
+                    (target,),
+                ).fetchone()
+            return dict(row) if row else {}
+
+        try:
+            reset_limits()
+            client.post(
+                "/api/auth/register",
+                json={"name": "Smoke Sec", "email": sec_email, "password": password},
+            )
+
+            status = client.post("/api/auth/reset-password/verify", json={"token": "123456"}).status_code
+            report.check("A1 verify tanpa email ditolak (422)", status == 422, f"status {status}")
+            kode_user1 = minta_kode(email)
+            status = cek_kode(sec_email, kode_user1)
+            report.check("A2 OTP user lain ditolak untuk email berbeda", status == 400, f"status {status}")
+            status = cek_kode(email, kode_user1)
+            report.check("A3 OTP diterima dengan email pemiliknya", status == 200, f"status {status}")
+
+            kode_sec = minta_kode(sec_email)
+            status = cek_kode(sec_email, kode_salah(kode_sec))
+            row = baris_reset(sec_email)
+            report.check(
+                "A4 kode salah ditolak dan tercatat",
+                status == 400 and row == {"attempts": 1, "used": 0},
+                f"status {status}, baris {row}",
+            )
+            statuses = [cek_kode(sec_email, kode_salah(kode_sec)) for _ in range(3)]
+            statuses.append(cek_kode(sec_email, kode_sec))
+            report.check(
+                "A5 setelah 4 kali salah, kode benar masih berlaku",
+                statuses == [400, 400, 400, 200],
+                f"status {statuses}",
+            )
+            statuses = [cek_kode(sec_email, kode_salah(kode_sec)), cek_kode(sec_email, kode_sec)]
+            row = baris_reset(sec_email)
+            report.check(
+                "A6 salah ke-5 menghanguskan kode",
+                statuses == [400, 400] and row == {"attempts": 5, "used": 1},
+                f"status {statuses}, baris {row}",
+            )
+            status = client.post(
+                "/api/auth/reset-password",
+                json={"email": sec_email, "token": kode_sec, "new_password": password},
+            ).status_code
+            report.check("A7 reset-password dengan kode hangus ditolak", status == 400, f"status {status}")
+
+            reset_limits()
+            statuses = [status_login(sec_email, "password-salah") for _ in range(5)]
+            statuses.append(status_login(sec_email, password))
+            report.check(
+                "L1 5 kali gagal login mengunci akun, password benar pun 429",
+                statuses == [401] * 5 + [429],
+                f"status {statuses}",
+            )
+
+            reset_limits()
+            statuses = [status_login(sec_email, "password-salah") for _ in range(4)]
+            statuses.append(status_login(sec_email, password))
+            statuses += [status_login(sec_email, "password-salah") for _ in range(4)]
+            report.check(
+                "L2 login berhasil mereset hitungan gagal",
+                statuses == [401] * 4 + [200] + [401] * 4,
+                f"status {statuses}",
+            )
+
+            reset_limits()
+            statuses = [status_login(ghost, password) for _ in range(6)]
+            report.check(
+                "L3 login email tak terdaftar tidak dicatat",
+                statuses == [401] * 6 and len(auth_router._login_failures) == 0,
+                f"status {statuses}, catatan {len(auth_router._login_failures)}",
+            )
+
+            reset_limits()
+            statuses = [
+                client.post("/api/auth/forgot-password", json={"email": sec_email}).status_code
+                for _ in range(6)
+            ]
+            report.check(
+                "F1 forgot-password dibatasi 5 per hari",
+                statuses == [200] * 5 + [429],
+                f"status {statuses}",
+            )
+            statuses = [
+                client.post("/api/auth/forgot-password", json={"email": ghost}).status_code
+                for _ in range(6)
+            ]
+            report.check(
+                "F2 forgot-password email tak terdaftar selalu 200",
+                statuses == [200] * 6,
+                f"status {statuses}",
+            )
+
+            reset_limits()
+            for i in range(300):
+                acak = f"acak{i}-{suffix}@lorafield-smoke.com"
+                client.post("/api/auth/login", json={"email": acak, "password": password})
+                client.post("/api/auth/forgot-password", json={"email": acak})
+            report.check(
+                "M1 banjir email acak tidak mengisi memori pembatas",
+                len(auth_router._login_failures) == 0 and len(auth_router._reset_requests) == 0,
+                f"login {len(auth_router._login_failures)}, reset {len(auth_router._reset_requests)}",
+            )
+
+            reset_limits()
+            kode_sec = minta_kode(sec_email)
+            compare_calls: list[int] = []
+            original_compare = auth_router.secrets.compare_digest
+
+            def hitung_compare(a, b):
+                compare_calls.append(1)
+                return original_compare(a, b)
+
+            auth_router.secrets.compare_digest = hitung_compare
+            try:
+                threads = [
+                    threading.Thread(target=cek_kode, args=(sec_email, kode_salah(kode_sec, geser)))
+                    for geser in range(1, 31)
+                ]
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join()
+            finally:
+                auth_router.secrets.compare_digest = original_compare
+            row = baris_reset(sec_email)
+            report.check(
+                "P1 30 tebakan OTP paralel hanya 5 yang dicocokkan",
+                len(compare_calls) == 5 and row == {"attempts": 5, "used": 1},
+                f"dicocokkan {len(compare_calls)}, baris {row}",
+            )
+
+            reset_limits()
+            original_verify = auth_router.verify_password
+
+            def verify_lambat(plain, hashed):
+                time.sleep(0.2)
+                return original_verify(plain, hashed)
+
+            login_statuses: list[int] = []
+            auth_router.verify_password = verify_lambat
+            try:
+                threads = [
+                    threading.Thread(
+                        target=lambda: login_statuses.append(status_login(sec_email, "password-salah"))
+                    )
+                    for _ in range(20)
+                ]
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join()
+            finally:
+                auth_router.verify_password = original_verify
+            report.check(
+                "P2 20 login paralel: tepat 5 dicek, sisanya 429",
+                sorted(login_statuses) == [401] * 5 + [429] * 15,
+                f"status {sorted(login_statuses)}",
+            )
+        finally:
+            reset_limits()
 
         section("Farms & gateway")
         created = report.expect(

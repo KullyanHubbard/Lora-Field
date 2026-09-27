@@ -107,10 +107,12 @@ class ForgotPasswordRequest(BaseModel):
 
 
 class ResetCodeVerifyRequest(BaseModel):
+    email: EmailStr
     token: str = Field(..., pattern=r"^\d{6}$")
 
 
 class ResetPasswordRequest(BaseModel):
+    email: EmailStr
     token: str = Field(..., pattern=r"^\d{6}$")
     new_password: str = Field(..., min_length=6, max_length=128)
 

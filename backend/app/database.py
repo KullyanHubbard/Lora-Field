@@ -203,6 +203,7 @@ def init_db() -> None:
         ensure_column(connection, "nodes", "auto_pulse_count", "INTEGER NOT NULL DEFAULT 0")
         ensure_column(connection, "nodes", "auto_pulse_started_at", "TEXT")
         ensure_column(connection, "nodes", "auto_limit_at", "TEXT")
+        ensure_column(connection, "password_resets", "attempts", "INTEGER NOT NULL DEFAULT 0")
         backfill_reading_farm_ids(connection)
         backfill_farm_thresholds(connection)
         backfill_node_last_seen(connection)

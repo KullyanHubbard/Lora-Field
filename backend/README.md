@@ -64,8 +64,11 @@ Ringkasan kontrak API untuk frontend ada di section "Backend Endpoints" di `CLAU
 2. Backend menyimpan OTP 6 digit di tabel `password_resets` (kedaluwarsa 30 menit)
    dan mengirim email (dalam bahasa akun user) berisi tautan ke `${FRONTEND_URL}/reset-password`
    + kode reset. Kalau `FRONTEND_URL` kosong, email hanya berisi kode (tanpa tombol link).
-3. User memasukkan kode, diverifikasi lewat `POST /api/auth/reset-password/verify`.
-4. Kalau valid, user mengisi password baru, disimpan lewat `POST /api/auth/reset-password`.
+3. User memasukkan kode, lalu frontend mengirim email + kode ke
+   `POST /api/auth/reset-password/verify`. Kode hangus setelah 5 kali salah, dan user harus
+   meminta kode baru. Forgot-password dibatasi 5 permintaan per hari per akun.
+4. Kalau valid, user mengisi password baru, lalu frontend mengirim email + kode + password baru
+   ke `POST /api/auth/reset-password`.
 5. Setelah berhasil, user login ulang di `/login`.
 
 ## Contoh

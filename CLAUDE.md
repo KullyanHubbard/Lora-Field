@@ -95,10 +95,10 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | Endpoint | Method | Auth | Keterangan |
 |----------|--------|------|-----------|
 | `/api/auth/register` | POST | Publik | Daftar akun baru |
-| `/api/auth/login` | POST | Publik | Login, return JWT |
-| `/api/auth/forgot-password` | POST | Publik | Kirim OTP ke email |
-| `/api/auth/reset-password/verify` | POST | Publik | Verifikasi OTP 6 digit |
-| `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password) |
+| `/api/auth/login` | POST | Publik | Login, return JWT. 429 setelah 5 kali gagal dalam 15 menit (hanya email terdaftar, password benar pun ditolak selama terkunci) |
+| `/api/auth/forgot-password` | POST | Publik | Kirim OTP ke email. 429 setelah 5 permintaan per hari (hanya email terdaftar) |
+| `/api/auth/reset-password/verify` | POST | Publik | Verifikasi OTP 6 digit. Body wajib `{ email, token }`; kode hangus setelah 5 kali salah |
+| `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password). Body wajib `{ email, token, new_password }` |
 | `/api/auth/change-password` | POST | JWT | Ganti password (sudah login) |
 | `/api/auth/profile` | PATCH | JWT | Update phone number. Query opsional `browser_language` (`id`/`en`, default `en`) dipakai untuk backfill kolom `language` akun lama. |
 | `/api/auth/me` | GET | JWT | Fetch profil user (return UserPublic). Query opsional `browser_language` (`id`/`en`, default `en`). Sumber: routers/auth.py:142. |
@@ -171,7 +171,7 @@ gateways        : id, device_id (UNIQUE), farm_id (UNIQUE, NULL kalau belum dikl
 gateway_logs    : id, farm_id, event, detail, created_at; log koneksi gateway (kosong sampai hardware lapor)
 weather_cache   : adm4 (PK), data (JSON), updated_at; TTL 30 menit. Cache lewat TTL tetap dipakai sebagai cadangan (dihitung ulang dari isi "forecast") kalau BMKG gagal, sampai umurnya WEATHER_STALE_MAX_HOURS (default 12 jam). BMKG yang gagal untuk suatu adm4 tidak dicoba lagi selama 5 menit (jeda percobaan ulang, in-memory per proses)
 wilayah         : kode (PK, format adm4 BMKG), nama, nama_norm, level (1=provinsi s/d 4=desa), parent; di-seed sekali dari app/data/wilayah.csv
-password_resets : id, user_id, token (6-digit OTP), expires_at, used, created_at
+password_resets : id, user_id, token (6-digit OTP), expires_at, used, created_at, attempts (jumlah kode salah, kode hangus di 5)
 ```
 
 Kolom `farms.ground_cover` ditambahkan via `ensure_column` (`'open'`/`'mulch'`/`'roofed'`, default `'open'`). Kebun bermulsa plastik atau beratap tidak kena hujan, jadi prediksi hujan BMKG hanya menunda irigasi untuk `'open'` (lihat `effective_rain_next_3h` di `irrigation.py`, dipakai `create_reading` dan `get_farm_summary`; `/api/decision` debug TIDAK memakainya).
@@ -186,7 +186,7 @@ Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun 
 
 ## Endpoint Belum Ada (jangan panggil/karang)
 
-- Rate limit brute-force untuk endpoint auth sensitif belum ada.
+> Catatan (2026-09-27): pembatas percobaan login dan forgot-password SUDAH ADA (lihat tabel Auth), tapi in-memory per proses (`routers/auth.py`): hitungannya hilang saat server restart dan tidak dibagi antar-worker. Pindahkan ke tabel DB kalau backend dijalankan dengan lebih dari satu worker.
 
 > Catatan (2026-06-24): `PATCH /api/farms/{farm_id}` SUDAH ADA di backend (routers/farms.py:43), sebelumnya tertulis belum ada. Frontend memanggilnya lewat `api.updateFarm` (`src/lib/api.ts`) untuk edit nama kebun di Kebun Saya.
 

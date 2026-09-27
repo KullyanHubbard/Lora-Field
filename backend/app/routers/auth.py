@@ -3,6 +3,7 @@
 import logging
 import secrets
 import sqlite3
+import threading
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
@@ -35,6 +36,36 @@ logger = logging.getLogger("lorafield")
 router = APIRouter()
 
 RESET_TOKEN_EXPIRE_MINUTES = 30
+RESET_MAX_ATTEMPTS = 5
+RESET_REQUESTS_PER_DAY = 5
+LOGIN_MAX_FAILURES = 5
+LOGIN_LOCK_MINUTES = 15
+
+# Kunci = id user, jadi hanya email terdaftar yang dicatat: jumlah catatan tidak bisa
+# melebihi jumlah user walau dibanjiri email acak. (Email terdaftar memang sudah
+# terlihat dari 409 register.)
+# ponytail: in-memory per proses, reset saat server restart. Pindah ke tabel DB kalau
+# backend dijalankan dengan lebih dari satu worker.
+_login_failures: dict[str, list[datetime]] = {}
+_reset_requests: dict[str, list[datetime]] = {}
+_limits_lock = threading.Lock()
+
+
+def _recent(events: dict[str, list[datetime]], key: str, window: timedelta) -> list[datetime]:
+    cutoff = datetime.now(timezone.utc) - window
+    recent = [moment for moment in events.get(key, []) if moment > cutoff]
+    events[key] = recent
+    return recent
+
+
+def _take_slot(events: dict[str, list[datetime]], key: str, window: timedelta, limit: int) -> bool:
+    """Jatah diambil SEBELUM password dicek, supaya permintaan paralel tidak bisa lolos bersamaan."""
+    with _limits_lock:
+        recent = _recent(events, key, window)
+        if len(recent) >= limit:
+            return False
+        recent.append(datetime.now(timezone.utc))
+        return True
 
 
 def generate_reset_code(connection) -> str:
@@ -50,24 +81,45 @@ def generate_reset_code(connection) -> str:
     raise HTTPException(status_code=500, detail="Gagal membuat token reset. Silakan coba lagi.")
 
 
-def get_active_reset_row(connection, token: str) -> dict:
+def check_reset_code(email: str, token: str) -> dict:
+    email = email.lower().strip()
     now_iso = datetime.now(timezone.utc).isoformat()
-    reset_row = row_to_dict(
-        connection.execute(
-            """
-            SELECT id, user_id, token, expires_at, used
-            FROM password_resets
-            WHERE token = ?
-            """,
-            (token,),
-        ).fetchone()
-    )
-    if reset_row is None:
-        raise HTTPException(status_code=400, detail="Kode reset tidak valid.")
-    if int(reset_row["used"]) == 1:
-        raise HTTPException(status_code=400, detail="Kode reset sudah digunakan.")
-    if str(reset_row["expires_at"]) <= now_iso:
-        raise HTTPException(status_code=400, detail="Kode reset sudah kedaluwarsa.")
+    error = ""
+    reset_row = None
+    # Jangan raise di dalam blok with: get_connection() me-rollback saat exception, jadi
+    # hitungan attempts tidak akan tersimpan. Error disimpan dulu, raise setelah commit.
+    with get_connection() as connection:
+        # Kunci tulis sejak awal supaya cek kode paralel antre dan hitungan salah tidak terlewati.
+        connection.execute("BEGIN IMMEDIATE")
+        user = connection.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        if user is not None:
+            reset_row = row_to_dict(
+                connection.execute(
+                    """
+                    SELECT id, user_id, token, expires_at, attempts
+                    FROM password_resets
+                    WHERE user_id = ? AND used = 0
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """,
+                    (user["id"],),
+                ).fetchone()
+            )
+        if reset_row is None:
+            error = "Kode reset tidak valid."
+        # Bandingkan bytes: digit Unicode (mis. angka lebar penuh) lolos pola \d dan bikin compare_digest(str) error.
+        elif not secrets.compare_digest(str(reset_row["token"]).encode(), token.encode()):
+            attempts = int(reset_row["attempts"]) + 1
+            exhausted = attempts >= RESET_MAX_ATTEMPTS
+            connection.execute(
+                "UPDATE password_resets SET attempts = ?, used = ? WHERE id = ?",
+                (attempts, 1 if exhausted else 0, reset_row["id"]),
+            )
+            error = "Kode reset salah terlalu banyak. Minta kode baru." if exhausted else "Kode reset tidak valid."
+        elif str(reset_row["expires_at"]) <= now_iso:
+            error = "Kode reset sudah kedaluwarsa."
+    if error:
+        raise HTTPException(status_code=400, detail=error)
     return reset_row
 
 
@@ -112,9 +164,21 @@ def login(payload: UserLogin, request: Request) -> dict:
         ).fetchone()
 
     user = row_to_dict(row)
-    if not user or not verify_password(payload.password, user["password_hash"]):
+    if not user:
         logger.warning("login | failed | ip=%s email=%s", ip, email)
         raise HTTPException(status_code=401, detail="Email atau password salah.")
+    # Dicek sebelum password: selama terkunci, password benar pun ditolak.
+    if not _take_slot(_login_failures, user["id"], timedelta(minutes=LOGIN_LOCK_MINUTES), LOGIN_MAX_FAILURES):
+        logger.warning("login | locked | ip=%s user_id=%s", ip, user["id"])
+        raise HTTPException(
+            status_code=429,
+            detail=f"Terlalu banyak percobaan login. Coba lagi dalam {LOGIN_LOCK_MINUTES} menit.",
+        )
+    if not verify_password(payload.password, user["password_hash"]):
+        logger.warning("login | failed | ip=%s email=%s", ip, email)
+        raise HTTPException(status_code=401, detail="Email atau password salah.")
+    with _limits_lock:
+        _login_failures.pop(user["id"], None)
 
     with get_connection() as connection:
         language = ensure_user_language(
@@ -244,6 +308,11 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
             logger.info("forgot-password | unknown-email | ip=%s email=%s", ip, email)
             return {"message": "Jika email terdaftar, tautan reset password akan dikirim."}
 
+        # Raise di sini aman walau di dalam blok with: belum ada tulisan DB yang ikut ter-rollback.
+        if not _take_slot(_reset_requests, user["id"], timedelta(days=1), RESET_REQUESTS_PER_DAY):
+            logger.warning("forgot-password | limited | ip=%s user_id=%s", ip, user["id"])
+            raise HTTPException(status_code=429, detail="Terlalu sering meminta kode reset. Coba lagi besok.")
+
         # Hanya boleh ada satu OTP aktif per user, jadi token lama dimatikan dulu.
         connection.execute(
             "UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0",
@@ -286,8 +355,8 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
 def reset_password(payload: ResetPasswordRequest, request: Request) -> dict:
     token = payload.token.strip()
     ip = client_ip(request)
+    reset_row = check_reset_code(payload.email, token)
     with get_connection() as connection:
-        reset_row = get_active_reset_row(connection, token)
         connection.execute(
             "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
             (hash_password(payload.new_password), reset_row["user_id"]),
@@ -303,7 +372,5 @@ def reset_password(payload: ResetPasswordRequest, request: Request) -> dict:
 
 @router.post("/api/auth/reset-password/verify")
 def verify_reset_code(payload: ResetCodeVerifyRequest) -> dict:
-    token = payload.token.strip()
-    with get_connection() as connection:
-        get_active_reset_row(connection, token)
+    check_reset_code(payload.email, payload.token.strip())
     return {"message": "Kode reset valid."}

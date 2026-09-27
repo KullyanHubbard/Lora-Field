@@ -46,7 +46,8 @@ export function useForgotPassword() {
 
 export function useVerifyResetCode() {
   return useMutation({
-    mutationFn: (token: string) => api.verifyResetCode(token),
+    mutationFn: (vars: { email: string; token: string }) =>
+      api.verifyResetCode(vars.email, vars.token),
     onError: (error: Error) => {
       toast.error(error.message || i18n.t('auth.toast.verifyResetCodeError'));
     },
@@ -56,8 +57,8 @@ export function useVerifyResetCode() {
 export function useResetPassword() {
   const navigate = useNavigate();
   return useMutation({
-    mutationFn: (vars: { token: string; newPassword: string }) =>
-      api.resetPassword(vars.token, vars.newPassword),
+    mutationFn: (vars: { email: string; token: string; newPassword: string }) =>
+      api.resetPassword(vars.email, vars.token, vars.newPassword),
     onSuccess: () => {
       toast.success(i18n.t('auth.toast.resetPasswordSuccess'));
       navigate('/login', { replace: true });

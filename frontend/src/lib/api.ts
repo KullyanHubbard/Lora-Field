@@ -97,16 +97,16 @@ export const api = {
     }),
 
   // Tahap 1 lupa password: verifikasi OTP sebelum form password baru dibuka.
-  verifyResetCode: (token: string) =>
+  verifyResetCode: (email: string, token: string) =>
     apiFetch<{ message: string }>('/auth/reset-password/verify', {
       method: 'POST',
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ email, token }),
     }),
 
-  resetPassword: (token: string, newPassword: string) =>
+  resetPassword: (email: string, token: string, newPassword: string) =>
     apiFetch<{ message: string }>('/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ token, new_password: newPassword }),
+      body: JSON.stringify({ email, token, new_password: newPassword }),
     }),
 
   changePassword: (currentPassword: string, newPassword: string) =>
