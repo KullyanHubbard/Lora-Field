@@ -1201,6 +1201,10 @@ def run(report: Report, with_network: bool) -> None:
                 },
             )
             age_cache(13)
+            # Riwayat hanya ditulis saat keputusan berubah, jadi kosongkan riwayat node_a
+            # supaya reading ini pasti menulis baris baru yang bisa dicek.
+            with database.get_connection() as connection:
+                connection.execute("DELETE FROM decision_logs WHERE node_id = ?", (node_a,))
             resp = client.post(
                 f"/api/nodes/{node_a}/readings",
                 params={"adm4": ADM4},
@@ -1746,6 +1750,67 @@ def run(report: Report, with_network: bool) -> None:
                 set_cached_weather(ADM4, FAKE_WEATHER)
                 bmkg_module._bmkg_failed_at.clear()
                 reset_siklus_node_a()
+
+        section("Riwayat saat berubah")
+        set_cached_weather(ADM4, FAKE_WEATHER)
+        reset_siklus_node_a()
+        node_d = f"node-{suffix}-riwayat"
+
+        def post_d(m: float):
+            return client.post(
+                f"/api/nodes/{node_d}/readings",
+                json={**kering_payload(), "soil_moisture": m, "farm_id": farm_id},
+                headers=auth,
+            )
+
+        respons_d = [
+            post_d(70.0),
+            post_d(70.0),
+            client.post(
+                f"/api/nodes/{node_a}/readings", json=kering_payload(), headers=auth
+            ),
+            post_d(70.0),
+            post_d(85.0),
+            post_d(85.0),
+            post_d(70.0),
+        ]
+        assert all(r.status_code == 201 for r in respons_d), [r.status_code for r in respons_d]
+        with database.get_connection() as connection:
+            tipe_d = [
+                row["decision_type"]
+                for row in connection.execute(
+                    """
+                    SELECT decision_type FROM decision_logs
+                    WHERE node_id = ?
+                    ORDER BY created_at ASC, id ASC
+                    """,
+                    (node_d,),
+                ).fetchall()
+            ]
+            jumlah_readings_d = connection.execute(
+                "SELECT COUNT(*) AS n FROM readings WHERE node_id = ?", (node_d,)
+            ).fetchone()["n"]
+        report.check(
+            "riwayat saat berubah: decision_type hanya ditulis kalau berbeda dari sebelumnya",
+            tipe_d == ["standby", "closed", "standby"],
+            f"decision_type node_d {tipe_d}",
+        )
+        report.check(
+            "riwayat saat berubah: bacaan sensor tetap tersimpan tiap reading",
+            jumlah_readings_d == 6,
+            f"jumlah readings node_d {jumlah_readings_d}",
+        )
+        logs_d = [
+            item["decision_type"]
+            for item in client.get("/api/logs", headers=auth).json()["items"]
+            if item["node_id"] == node_d
+        ]
+        report.check(
+            "riwayat saat berubah: GET /api/logs cocok dengan decision_logs node_d",
+            logs_d == ["standby", "closed", "standby"],
+            f"decision_type GET /api/logs untuk node_d {logs_d}",
+        )
+        reset_siklus_node_a()
 
         section("Gateway logs")
         report.expect(

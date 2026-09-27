@@ -136,6 +136,9 @@ def init_db() -> None:
 
             CREATE INDEX IF NOT EXISTS idx_gateway_logs_farm ON gateway_logs(farm_id);
 
+            CREATE INDEX IF NOT EXISTS idx_decision_logs_node_time
+                ON decision_logs(node_id, created_at, id);
+
             CREATE TABLE IF NOT EXISTS gateways (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 device_id TEXT UNIQUE NOT NULL,

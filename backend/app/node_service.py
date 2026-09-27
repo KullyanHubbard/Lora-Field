@@ -113,20 +113,31 @@ def record_reading(
             """,
             (round(payload.battery), node_id),
         )
-    connection.execute(
+    # Riwayat hanya ditulis saat keputusan berubah; bacaan sensor tetap tersimpan tiap kali di tabel readings.
+    last_row = connection.execute(
         """
-        INSERT INTO decision_logs
-            (node_id, soil_moisture, weather, decision, decision_type, valve_state, reason)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        SELECT decision_type FROM decision_logs
+        WHERE node_id = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
         """,
-        (
-            node_id,
-            payload.soil_moisture,
-            (weather or {}).get("condition") or "",
-            decision["decision"],
-            decision["type"],
-            decision["valve_state"],
-            decision["reason"],
-        ),
-    )
+        (node_id,),
+    ).fetchone()
+    if last_row is None or last_row["decision_type"] != decision["type"]:
+        connection.execute(
+            """
+            INSERT INTO decision_logs
+                (node_id, soil_moisture, weather, decision, decision_type, valve_state, reason)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                node_id,
+                payload.soil_moisture,
+                (weather or {}).get("condition") or "",
+                decision["decision"],
+                decision["type"],
+                decision["valve_state"],
+                decision["reason"],
+            ),
+        )
     return reading_id
