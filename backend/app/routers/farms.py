@@ -1,6 +1,7 @@
 """Route /api/farms: CRUD kebun plus ringkasan dan cuaca per kebun."""
 
 import uuid
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,7 +15,7 @@ from ..gateway_service import claim_gateway_for_farm, ensure_gateway_unclaimed, 
 from ..crops import find_crop_thresholds
 from ..irrigation import (
     DISCONNECTED_DECISION,
-    calculate_decision,
+    auto_decision,
     effective_rain_next_3h,
     farm_thresholds,
     manual_decision,
@@ -278,7 +279,10 @@ def get_farm_summary(
         elif farm.get("irrigation_mode") == "manual":
             decision = manual_decision(node)
         elif reading:
-            decision = calculate_decision(reading["soil_moisture"], rain_next_3h, thresholds)
+            # Hanya dibaca: state siklus diabaikan, karena state hanya berubah saat reading masuk.
+            decision, _ = auto_decision(
+                reading["soil_moisture"], rain_next_3h, thresholds, node, datetime.now(timezone.utc)
+            )
         else:
             decision = None
         node_summaries.append({"node": node, "latest_reading": reading, "decision": decision})

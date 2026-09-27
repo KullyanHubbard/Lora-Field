@@ -23,7 +23,7 @@
     "initial_moisture_min_pct": 50,
     "initial_moisture_max_pct": 72,
     "drying_pct_per_hour": 0.8,
-    "irrigation_gain_pct_per_hour": 14,
+    "irrigation_gain_pct_per_hour": 50,
     "rain_gain_pct_per_hour": 6,
     "min_moisture_pct": 8,
     "max_moisture_pct": 95,

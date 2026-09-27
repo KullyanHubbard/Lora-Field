@@ -58,7 +58,9 @@ export function getIrrigationActivity(nodes: NodeSummary[]): IrrigationActivity 
   if (nodes.length === 0) return 'notConfigured';
   if (nodes.every((ns) => ns.node.status === 'offline')) return 'offline';
   if (nodes.every((ns) => ns.latest_reading == null)) return 'initializing';
-  if (nodes.some((ns) => ns.decision?.valve_state === 'open')) return 'active';
+  if (nodes.some((ns) => ns.decision?.valve_state === 'open' || ns.decision?.type === 'soaking')) {
+    return 'active';
+  }
   if (nodes.some((ns) => ns.decision?.type === 'delayed')) return 'delayed';
   return 'standby';
 }

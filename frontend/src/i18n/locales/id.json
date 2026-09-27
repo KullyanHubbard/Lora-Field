@@ -352,17 +352,21 @@
     "closed": "Berhenti",
     "normal": "Normal",
     "disconnected": "Terputus",
-    "manual": "Manual"
+    "manual": "Manual",
+    "soaking": "Meresap",
+    "pulseLimit": "Batas pulsa"
   },
   "irrigationReason": {
-    "open": "Kelembapan tanah berada di bawah threshold bawah dan tidak ada prediksi hujan.",
+    "open": "Tanah perlu disiram. Valve dibuka bertahap sampai kelembapan cukup.",
     "delayed": "Kelembapan rendah, tetapi BMKG memprediksi hujan dalam 3 jam ke depan.",
     "closed": "Kelembapan tanah sudah melewati threshold atas.",
     "standby": "Kelembapan tanah berada pada rentang aman.",
     "disconnected": "Tidak ada data dari node melewati batas waktu. Sistem menunggu data sensor terbaru.",
     "manual_open": "Valve terbuka, dikendalikan manual oleh pengguna.",
     "manual_closed": "Valve tertutup, dikendalikan manual oleh pengguna.",
-    "manual_timeout": "Valve ditutup otomatis setelah batas waktu pengairan manual."
+    "manual_timeout": "Valve ditutup otomatis setelah batas waktu pengairan manual.",
+    "soaking": "Valve ditutup sebentar supaya air meresap sebelum kelembapan dicek lagi.",
+    "pulse_limit": "Tanah belum cukup basah setelah batas pulsa. Cek debit air, pipa, atau sensor."
   },
   "myFarms": {
     "colorPickerTitle": "Pilih Warna Marker",

@@ -1,5 +1,9 @@
 """Keputusan irigasi: threshold VWC dan aturan buka/tutup valve."""
 
+from datetime import datetime, timedelta
+
+from .config import settings
+from .node_service import _parse_db_time
 from .schemas import ThresholdConfig
 
 
@@ -98,3 +102,72 @@ def calculate_decision(
         "valve_state": "closed",
         "reason": "Kelembapan tanah berada pada rentang aman.",
     }
+
+
+# Siram bertahap mode otomatis. Tiap pulsa memakai keputusan "open" calculate_decision.
+OPEN_DECISION = calculate_decision(float("-inf"), False)
+
+AUTO_DECISIONS = {
+    "soaking": {
+        "type": "soaking",
+        "decision": "Menunggu air meresap",
+        "valve_state": "closed",
+        "reason": "Valve ditutup sebentar supaya air meresap sebelum kelembapan dicek lagi.",
+    },
+    "pulse_limit": {
+        "type": "pulse_limit",
+        "decision": "Batas pulsa tercapai",
+        "valve_state": "closed",
+        "reason": "Tanah belum cukup basah setelah batas pulsa. Cek debit air, pipa, atau sensor.",
+    },
+}
+
+
+def auto_decision(
+    soil_moisture: float,
+    rain_next_3h: bool,
+    thresholds: ThresholdConfig,
+    node: dict,
+    now: datetime,
+) -> tuple[dict, dict]:
+    """Keputusan mode otomatis dengan ingatan siklus siram di kolom node.
+
+    Kembalikan (decision, state). state = kolom node yang harus diubah, kosong kalau tidak ada.
+    """
+    now_text = now.strftime("%Y-%m-%d %H:%M:%S")
+    reset = {"auto_pulse_count": 0, "auto_pulse_started_at": None}
+    target = thresholds.upper - settings.auto_target_margin
+    emergency = thresholds.lower - settings.rain_emergency_margin
+    rain_blocks = rain_next_3h and soil_moisture >= emergency
+    pulse_count = node["auto_pulse_count"]
+
+    if pulse_count > 0:
+        if soil_moisture >= target:
+            return calculate_decision(soil_moisture, False, thresholds), reset
+        if rain_blocks:
+            return calculate_decision(soil_moisture, True, thresholds), reset
+        # Waktu mulai kosong atau rusak dianggap sekarang, supaya reading dan summary tidak error.
+        pulse_end = (_parse_db_time(node["auto_pulse_started_at"]) or now) + timedelta(
+            minutes=settings.auto_pulse_minutes
+        )
+        if now < pulse_end:
+            return dict(OPEN_DECISION), {}
+        if now < pulse_end + timedelta(minutes=settings.auto_soak_minutes):
+            return dict(AUTO_DECISIONS["soaking"]), {}
+        if pulse_count >= settings.auto_max_pulses:
+            return dict(AUTO_DECISIONS["pulse_limit"]), {**reset, "auto_limit_at": now_text}
+        return dict(OPEN_DECISION), {
+            "auto_pulse_count": pulse_count + 1,
+            "auto_pulse_started_at": now_text,
+        }
+
+    if soil_moisture >= thresholds.lower:
+        return calculate_decision(soil_moisture, False, thresholds), {}
+    # Jeda setelah batas pulsa sengaja menang atas kondisi darurat, supaya sensor rusak
+    # yang terbaca sangat kering tidak membuat valve menyiram terus.
+    limit_at = _parse_db_time(node["auto_limit_at"])
+    if limit_at and now < limit_at + timedelta(hours=settings.auto_limit_cooldown_hours):
+        return dict(AUTO_DECISIONS["pulse_limit"]), {}
+    if rain_blocks:
+        return calculate_decision(soil_moisture, True, thresholds), {}
+    return dict(OPEN_DECISION), {"auto_pulse_count": 1, "auto_pulse_started_at": now_text}

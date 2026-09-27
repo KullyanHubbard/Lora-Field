@@ -40,7 +40,10 @@ def update_irrigation_mode(
                 UPDATE nodes
                 SET valve_command = ?,
                     valve_command_at = CASE WHEN ? IS NULL THEN NULL ELSE CURRENT_TIMESTAMP END,
-                    valve_command_sent_at = NULL
+                    valve_command_sent_at = NULL,
+                    auto_pulse_count = 0,
+                    auto_pulse_started_at = NULL,
+                    auto_limit_at = NULL
                 WHERE farm_id = ?
                 """,
                 (command, command, farm_id),

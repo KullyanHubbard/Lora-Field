@@ -36,6 +36,17 @@ class Settings(BaseSettings):
     # Cache cuaca lama masih dipakai sebagai cadangan selama umurnya <= ini, kalau BMKG gangguan.
     weather_stale_max_hours: int = 12
 
+    # Siram bertahap mode otomatis: valve buka satu pulsa, lalu tutup menunggu air meresap.
+    auto_pulse_minutes: int = 10
+    auto_soak_minutes: int = 30
+    # Batas pulsa per siklus. Kalau tanah belum juga cukup basah, siklus baru ditunda selama jeda.
+    auto_max_pulses: int = 4
+    auto_limit_cooldown_hours: int = 3
+    # Siklus berhenti di batas atas dikurangi ini, supaya air sisa resapan tidak membuat tanah kelewat basah.
+    auto_target_margin: float = 5
+    # Di bawah batas bawah dikurangi ini, tanah dianggap darurat dan prediksi hujan diabaikan.
+    rain_emergency_margin: float = 15
+
     # Origins yang diizinkan untuk CORS. Pisah dengan koma di .env:
     #   ALLOWED_ORIGINS=https://app.lorafield.com,https://www.lorafield.com
     allowed_origins: str = ""

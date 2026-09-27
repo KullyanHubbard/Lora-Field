@@ -61,6 +61,7 @@ export interface Node {
 // Jenis keputusan irigasi dari backend (irrigation.py calculate_decision).
 // disconnected hanya dari summary untuk node offline, tidak pernah tercatat di decision_logs.
 // manual_* untuk kebun mode manual; manual_timeout hanya tercatat di decision_logs.
+// soaking dan pulse_limit dari siram bertahap mode otomatis (irrigation.py auto_decision).
 export type DecisionType =
   | 'open'
   | 'delayed'
@@ -69,7 +70,9 @@ export type DecisionType =
   | 'disconnected'
   | 'manual_open'
   | 'manual_closed'
-  | 'manual_timeout';
+  | 'manual_timeout'
+  | 'soaking'
+  | 'pulse_limit';
 
 interface IrrigationDecision {
   type: DecisionType;

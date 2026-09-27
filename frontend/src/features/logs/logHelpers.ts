@@ -30,8 +30,10 @@ export function classifyLog(log: Pick<IrrigationLog, 'decision_type'>): LogType 
   switch (log.decision_type) {
     case 'open':
     case 'manual_open':
+    case 'soaking':
       return 'open';
     case 'delayed':
+    case 'pulse_limit':
       return 'delayed';
     case 'closed':
     case 'manual_closed':

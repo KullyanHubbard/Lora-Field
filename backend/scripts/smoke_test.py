@@ -48,8 +48,10 @@ settings.expose_dev_tokens = True  # supaya OTP bisa dibaca dari response
 from fastapi.testclient import TestClient  # noqa: E402
 import app.bmkg as bmkg_module  # noqa: E402
 from app.bmkg import set_cached_weather  # noqa: E402
+from app.irrigation import auto_decision  # noqa: E402
 from app.main import app  # noqa: E402
 from app.routers import auth as auth_router  # noqa: E402
+from app.schemas import ThresholdConfig  # noqa: E402
 
 
 ADM4 = "34.04.01.2001"
@@ -909,7 +911,7 @@ def run(report: Report, with_network: bool) -> None:
 
         def kering_payload() -> dict:
             return {
-                "soil_moisture": 30.0,
+                "soil_moisture": 50.0,
                 "soil_temp": 26.0,
                 "air_temp": 30.0,
                 "air_humidity": 70.0,
@@ -1315,6 +1317,114 @@ def run(report: Report, with_network: bool) -> None:
                 connection.execute(
                     "UPDATE farms SET bmkg_adm4_code = ? WHERE id = ?", (ADM4, farm_id)
                 )
+
+        section("Siram bertahap")
+        padi = ThresholdConfig(lower=60, upper=80)
+        now = datetime.now(timezone.utc)
+
+        def ago(minutes: int) -> str:
+            return (now - timedelta(minutes=minutes)).strftime("%Y-%m-%d %H:%M:%S")
+
+        # (nama, kelembapan, hujan, pulsa, mulai pulsa, batas pulsa) -> (tipe, pulsa di state).
+        # "-" = auto_pulse_count tidak ada di state hasil. Hanya S6 yang mengisi auto_limit_at.
+        kasus = [
+            ("S1", 50, False, 0, None, None, "open", 1),
+            ("S2", 55, False, 1, ago(5), None, "open", "-"),
+            ("S3", 65, False, 1, ago(15), None, "soaking", "-"),
+            ("S4", 65, False, 1, ago(45), None, "open", 2),
+            ("S5", 76, False, 2, ago(45), None, "standby", 0),
+            ("S6", 65, False, 4, ago(45), None, "pulse_limit", 0),
+            ("S7", 50, False, 0, None, ago(60), "pulse_limit", "-"),
+            ("S8", 50, False, 0, None, ago(240), "open", 1),
+            ("S9", 50, True, 0, None, None, "delayed", "-"),
+            ("S10", 30, True, 0, None, None, "open", 1),
+            ("S11", 30, False, 0, None, ago(60), "pulse_limit", "-"),
+            ("S12", 50, True, 2, ago(5), None, "delayed", 0),
+            ("S13", 70, False, 0, None, None, "standby", "-"),
+            ("S14", 85, False, 0, None, None, "closed", "-"),
+        ]
+        for nama, moisture, rain, count, started, limit, tipe, count_baru in kasus:
+            decision, state = auto_decision(
+                moisture,
+                rain,
+                padi,
+                {"auto_pulse_count": count, "auto_pulse_started_at": started, "auto_limit_at": limit},
+                now,
+            )
+            report.check(
+                f"{nama} {moisture}% {'hujan' if rain else 'tanpa hujan'}, pulsa {count} -> {tipe}",
+                decision["type"] == tipe
+                and state.get("auto_pulse_count", "-") == count_baru
+                and ("auto_limit_at" in state) == (nama == "S6"),
+                f"dapat {decision['type']}, state {state}",
+            )
+
+        def pulsa_node_a() -> int:
+            with database.get_connection() as connection:
+                return connection.execute(
+                    "SELECT auto_pulse_count FROM nodes WHERE id = ?", (node_a,)
+                ).fetchone()["auto_pulse_count"]
+
+        def ubah_node_a(assignments: str) -> None:
+            with database.get_connection() as connection:
+                connection.execute(f"UPDATE nodes SET {assignments} WHERE id = ?", (node_a,))
+
+        def kirim_node_a(payload: dict) -> dict:
+            resp = client.post(f"/api/nodes/{node_a}/readings", json=payload, headers=auth)
+            return (resp.json() if resp.status_code == 201 else {}).get("decision", {})
+
+        try:
+            ubah_node_a("auto_pulse_count = 0, auto_pulse_started_at = NULL, auto_limit_at = NULL")
+            decision = kirim_node_a(kering_payload())
+            report.check(
+                "reading kering -> pulsa pertama, valve dibuka",
+                decision.get("type") == "open" and pulsa_node_a() == 1,
+                f"decision {decision}, pulsa {pulsa_node_a()}",
+            )
+
+            ubah_node_a("auto_pulse_started_at = datetime('now', '-15 minutes')")
+            decision = kirim_node_a({**kering_payload(), "soil_moisture": 65.0})
+            report.check(
+                "pulsa selesai -> valve ditutup menunggu air meresap",
+                decision.get("type") == "soaking" and decision.get("valve_state") == "closed",
+                f"decision {decision}",
+            )
+
+            summary_soak = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+            soak_type = next(
+                (
+                    (ns.get("decision") or {}).get("type")
+                    for ns in summary_soak.get("nodes", [])
+                    if ns["node"]["id"] == node_a
+                ),
+                None,
+            )
+            report.check("summary ikut menampilkan soaking", soak_type == "soaking", f"dapat {soak_type}")
+
+            ke_manual = client.patch(
+                f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "manual"}, headers=auth
+            )
+            ke_auto = client.patch(
+                f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "auto"}, headers=auth
+            )
+            report.check(
+                "ganti mode mereset siklus siram",
+                ke_manual.status_code == 200 and ke_auto.status_code == 200 and pulsa_node_a() == 0,
+                f"status {ke_manual.status_code}/{ke_auto.status_code}, pulsa {pulsa_node_a()}",
+            )
+
+            ubah_node_a(
+                "auto_pulse_count = 3, auto_pulse_started_at = datetime('now', '-1 day'), "
+                "auto_limit_at = NULL, last_seen_at = datetime('now', '-1 day')"
+            )
+            decision = kirim_node_a(kering_payload())
+            report.check(
+                "node sempat offline -> siklus baru, bukan pulsa ke-4",
+                decision.get("type") == "open" and pulsa_node_a() == 1,
+                f"decision {decision}, pulsa {pulsa_node_a()}",
+            )
+        finally:
+            client.patch(f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "auto"}, headers=auth)
 
         section("Gateway logs")
         report.expect(

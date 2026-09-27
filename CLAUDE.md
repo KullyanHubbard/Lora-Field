@@ -144,7 +144,7 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | `POST /api/nodes/{id}/readings` | Insert reading + hitung decision (threshold kebun) + tulis decision_log. Cuaca memakai kode BMKG kebun; `?adm4=` opsional, hanya cadangan kalau kebun belum punya kode. Body boleh menyertakan `battery` (0–100) dari perangkat dan `rssi` (dBm, -150 sampai 0) yang diukur gateway saat menerima paket. Kalau node belum ada, node dibuat otomatis (self-registration) dan body WAJIB menyertakan `farm_id`, kalau tidak 400. Reading tidak pernah gagal karena BMKG gangguan: kalau cuaca tidak tersedia, keputusan otomatis pakai rain_next_3h=false. Return `{ reading, decision, node_created, node_status }`. routers/nodes.py:101 |
 | `GET /api/weather?adm4=X` | Cuaca BMKG mentah by adm4 (debug, butuh auth, bypass cache jadi selalu memanggil BMKG). routers/utils.py:42 |
 | `GET /api/decision?soil_moisture=X&rain_next_3h=bool` | Simulator keputusan irigasi (stateless, butuh auth). routers/utils.py:50 |
-| `GET /api/logs` | Decision logs milik user (`limit` 1–100, default 20; filter client-side per farm). Tiap item membawa `decision_type` (`open`/`delayed`/`closed`/`standby`, null untuk log lama tak dikenal); frontend membaca ini, bukan teks `decision` |
+| `GET /api/logs` | Decision logs milik user (`limit` 1–100, default 20; filter client-side per farm). Tiap item membawa `decision_type` (`open`/`delayed`/`closed`/`standby`/`soaking`/`pulse_limit`, null untuk log lama tak dikenal); frontend membaca ini, bukan teks `decision` |
 | `GET /api/farms/{id}/gateway-logs` | Log koneksi gateway kebun (`limit` 1–100, default 20). Verifikasi kepemilikan. Return `{ items, total }`. Kosong sampai hardware gateway lapor. routers/gateways.py:26 |
 | `POST /api/farms/{id}/gateway-logs` | Insert log koneksi gateway (scaffolding hardware). Body `GatewayLogIn` (`event`, `detail`). Return `{ log }`, status 201. routers/gateways.py:47 |
 
@@ -164,7 +164,7 @@ Perintah valve hanya disimpan di server (`nodes.valve_command`). `valve_command_
 ```text
 users           : id, email, name, password_hash, phone, language, created_at, updated_at
 farms           : id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status, lower_threshold, upper_threshold, irrigation_mode, ground_cover
-nodes           : id, farm_id, gateway_id, name, location, region, latitude, longitude, status, battery, first_seen_at, last_seen_at, battery_updated_at, valve_command, valve_command_at, valve_command_sent_at, updated_at
+nodes           : id, farm_id, gateway_id, name, location, region, latitude, longitude, status, battery, first_seen_at, last_seen_at, battery_updated_at, valve_command, valve_command_at, valve_command_sent_at, auto_pulse_count, auto_pulse_started_at, auto_limit_at, updated_at
 readings        : id, farm_id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, rssi, created_at
 decision_logs   : id, node_id, soil_moisture, weather, decision, decision_type, valve_state, reason, created_at
 gateways        : id, device_id (UNIQUE), farm_id (UNIQUE, NULL kalau belum diklaim), display_name, first_seen_at, last_seen_at, claimed_at
@@ -193,8 +193,10 @@ Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun 
 ## Logika Irigasi
 
 - Threshold per kebun, diambil dari jenis tanaman (`crops.py`) saat kebun dibuat atau `crop_type` diubah. `crop_type` wajib salah satu dari daftar `GET /api/crops` (POST/PATCH farm menolak 422 kalau tidak); form Tambah Kebun hanya menyediakan pilihan, tanpa ketik bebas. Default 40–70% (`DEFAULT_THRESHOLDS` di `irrigation.py`) hanya untuk kebun lama yang tanamannya tidak dikenal. `summary.thresholds` berisi threshold kebun itu.
-- Valve dibuka jika kelembapan tanah di bawah threshold dan tidak ada prediksi hujan.
-- Valve ditutup jika kelembapan tanah sudah cukup.
+- Mode otomatis menyiram bertahap (`auto_decision` di `irrigation.py`, ingatan siklus di kolom `nodes.auto_pulse_*` dan `auto_limit_at`). Siklus mulai saat kelembapan di bawah batas bawah: valve buka satu pulsa `AUTO_PULSE_MINUTES` (default 10), lalu tutup `AUTO_SOAK_MINUTES` (default 30) menunggu air meresap (`soaking`), lalu pulsa berikutnya. Siklus selesai saat kelembapan mencapai target = batas atas dikurangi `AUTO_TARGET_MARGIN` (default 5).
+- Kalau target belum tercapai setelah `AUTO_MAX_PULSES` pulsa (default 4), keputusan `pulse_limit` dan siklus baru ditahan `AUTO_LIMIT_COOLDOWN_HOURS` (default 3). Jeda ini menang atas kondisi darurat, supaya sensor rusak yang terbaca sangat kering tidak membuat valve menyiram terus.
+- Batas darurat hujan: di bawah batas bawah dikurangi `RAIN_EMERGENCY_MARGIN` (default 15), prediksi hujan diabaikan dan tanah tetap disiram.
+- Siklus dimulai ulang dari pulsa pertama kalau node sempat offline, dan ganti mode otomatis/manual mereset semua state siklus. State hanya berubah saat reading masuk; summary cuma membacanya.
 - Irigasi ditunda jika BMKG memprediksi hujan, HANYA untuk kebun `ground_cover` `'open'` (tanah terbuka). Kebun `'mulch'` (mulsa plastik) dan `'roofed'` (beratap/rumah kaca) tidak kena hujan, jadi prediksi hujan diabaikan dan irigasi tetap jalan kalau kelembapan rendah.
 - Mode per kebun: `auto` (aturan di atas) atau `manual` (valve mengikuti perintah pengguna, decision `manual_open`/`manual_closed`). Valve yang dibuka manual ditutup otomatis setelah `MANUAL_IRRIGATION_MAX_MINUTES` (default 30) dan tercatat `manual_timeout`. Ganti mode 2 langkah di kartu Status Valve: pilih, lalu Terapkan.
 - Sistem menunggu data sensor terbaru jika gateway offline. Di summary, node yang offline mendapat decision `disconnected` (tampil "Terputus", valve `unknown`), bukan keputusan terakhir yang sudah basi. `disconnected` tidak pernah tercatat di decision_logs.
