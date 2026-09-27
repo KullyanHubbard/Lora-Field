@@ -1237,6 +1237,85 @@ def run(report: Report, with_network: bool) -> None:
             client.patch(f"/api/farms/{farm_id}", json={"ground_cover": "open"}, headers=auth)
             set_cached_weather(ADM4, FAKE_WEATHER)
 
+        section("Kode wilayah dari kebun")
+        # BMKG selalu gagal, jadi hanya kode ADM4 (cache hujan) yang menghasilkan "delayed".
+        calls, gagal = bmkg_gagal_dengan(lambda: _HTTPException(status_code=502, detail="gangguan"))
+        bmkg_module.fetch_bmkg_weather = gagal
+        try:
+            set_cached_weather(ADM4, {**FAKE_WEATHER, "rain_next_3h": True})
+
+            def kirim_reading(target_node: str, params: dict | None = None, extra: dict | None = None):
+                resp = client.post(
+                    f"/api/nodes/{target_node}/readings",
+                    params=params,
+                    json={**kering_payload(), **(extra or {})},
+                    headers=auth,
+                )
+                body = resp.json() if resp.status_code == 201 else {}
+                return resp.status_code, body.get("decision", {}).get("type"), body
+
+            status, decision_type, _ = kirim_reading(node_a, {"adm4": "99.99.99.9999"})
+            report.check(
+                "kode wilayah kebun menang atas kode dari alat",
+                status == 201 and decision_type == "delayed" and calls["count"] == 0,
+                f"status {status}, decision {decision_type}, panggilan BMKG = {calls['count']}",
+            )
+
+            status, decision_type, _ = kirim_reading(node_a)
+            report.check(
+                "reading tanpa query adm4 memakai kode kebun",
+                status == 201 and decision_type == "delayed",
+                f"status {status}, decision {decision_type}",
+            )
+
+            status, decision_type, body = kirim_reading(
+                f"node-{suffix}-wilayah", {"adm4": "99.99.99.9999"}, {"farm_id": farm_id}
+            )
+            report.check(
+                "node baru (self-registration) memakai kode kebun",
+                status == 201 and body.get("node_created") is True and decision_type == "delayed",
+                f"status {status}, node_created {body.get('node_created')}, decision {decision_type}",
+            )
+
+            with database.get_connection() as connection:
+                connection.execute("UPDATE farms SET bmkg_adm4_code = '' WHERE id = ?", (farm_id,))
+
+            status, decision_type, _ = kirim_reading(node_a, {"adm4": ADM4})
+            report.check(
+                "kebun tanpa kode -> kode dari alat dipakai sebagai cadangan",
+                status == 201 and decision_type == "delayed",
+                f"status {status}, decision {decision_type}",
+            )
+
+            status, decision_type, _ = kirim_reading(node_a, {"adm4": f" {ADM4} "})
+            report.check(
+                "kode dari alat berspasi tetap terbaca",
+                status == 201 and decision_type == "delayed",
+                f"status {status}, decision {decision_type}",
+            )
+
+            status, decision_type, _ = kirim_reading(node_a, {"adm4": ""})
+            report.check(
+                "adm4 kosong tidak ditolak, tanpa cuaca",
+                status == 201 and decision_type == "open",
+                f"status {status}, decision {decision_type}",
+            )
+
+            status, decision_type, _ = kirim_reading(node_a)
+            report.check(
+                "tanpa kode wilayah sama sekali -> tanpa cuaca",
+                status == 201 and decision_type == "open",
+                f"status {status}, decision {decision_type}",
+            )
+        finally:
+            bmkg_module.fetch_bmkg_weather = original_fetch_bmkg
+            set_cached_weather(ADM4, FAKE_WEATHER)
+            bmkg_module._bmkg_failed_at.clear()
+            with database.get_connection() as connection:
+                connection.execute(
+                    "UPDATE farms SET bmkg_adm4_code = ? WHERE id = ?", (ADM4, farm_id)
+                )
+
         section("Gateway logs")
         report.expect(
             "POST /api/farms/{id}/gateway-logs",

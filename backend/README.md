@@ -76,7 +76,7 @@ Ambil cuaca BMKG (butuh bearer token):
 curl -H "Authorization: Bearer <token>" "http://127.0.0.1:8000/api/weather?adm4=31.71.01.1001"
 ```
 
-Payload `POST /api/nodes/{node_id}/readings?adm4=...` (untuk node baru, sertakan `farm_id`):
+Payload `POST /api/nodes/{node_id}/readings?adm4=...` (untuk node baru, sertakan `farm_id`). `?adm4=` opsional dan hanya dipakai kalau kebun belum punya kode BMKG:
 
 ```json
 {

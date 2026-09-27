@@ -126,16 +126,30 @@ def create_reading(
     node_id: str,
     payload: SensorReadingIn,
     current_user: Annotated[dict, Depends(get_current_user)],
-    adm4: str = Query(..., min_length=2, description="Kode wilayah adm4 BMKG"),
+    adm4: str | None = Query(
+        default=None, description="Cadangan, hanya dipakai kalau kebun belum punya kode BMKG"
+    ),
 ) -> dict:
     # Node yang belum terdaftar dibuat di sini, dipakai firmware yang langsung kirim
     # reading tanpa registrasi lewat gateway.
     node_created = False
 
+    # Kode BMKG kebun menang atas ?adm4= dari alat, supaya salah kirim firmware tidak
+    # memakai cuaca desa lain. Tanpa cek kepemilikan: nilainya tidak dikirim ke client.
+    with get_connection() as connection:
+        node_row = connection.execute(
+            "SELECT farm_id FROM nodes WHERE id = ?", (node_id,)
+        ).fetchone()
+        weather_farm_id = node_row["farm_id"] if node_row else payload.farm_id
+        farm_row = connection.execute(
+            "SELECT bmkg_adm4_code FROM farms WHERE id = ?", (weather_farm_id,)
+        ).fetchone()
+    region_code = (farm_row["bmkg_adm4_code"] if farm_row else None) or (adm4 or "").strip()
+
     # Diambil sebelum transaksi dibuka: cache miss menulis weather_cache lewat koneksi
     # lain, dan itu terkunci kalau transaksi ini sudah menulis node baru.
     # weather bisa None kalau BMKG gangguan dan tidak ada cache cadangan yang layak pakai.
-    weather = get_weather_for_decision(adm4)
+    weather = get_weather_for_decision(region_code) if region_code else None
 
     with get_connection() as connection:
         node_exists = connection.execute(
