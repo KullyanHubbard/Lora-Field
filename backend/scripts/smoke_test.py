@@ -1812,6 +1812,157 @@ def run(report: Report, with_network: bool) -> None:
         )
         reset_siklus_node_a()
 
+        section("Filter riwayat")
+        resp_farm2 = client.post(
+            "/api/farms",
+            json={
+                "name": "Kebun Filter",
+                "crop_type": "Padi",
+                "bmkg_adm4_code": ADM4,
+                "latitude": -7.79,
+                "longitude": 110.31,
+                "gateway_device_id": f"GW-LOGS-{suffix}",
+            },
+            headers=auth,
+        )
+        assert resp_farm2.status_code == 201, resp_farm2.text
+        farm2 = resp_farm2.json()["farm"]["id"]
+        try:
+            node_f = f"node-{suffix}-kebun2"
+            resp_read_f = client.post(
+                f"/api/nodes/{node_f}/readings",
+                json={**kering_payload(), "soil_moisture": 70.0, "farm_id": farm2},
+                headers=auth,
+            )
+            assert resp_read_f.status_code == 201, resp_read_f.text
+
+            baris_g = [
+                "2026-01-10 16:59:59",
+                "2026-01-10 17:00:00",
+                "2026-01-11 16:59:59",
+                "2026-01-11 17:00:00",
+            ]
+            with database.get_connection() as connection:
+                connection.execute("DELETE FROM decision_logs WHERE node_id = ?", (node_f,))
+                for created_at in baris_g:
+                    connection.execute(
+                        """
+                        INSERT INTO decision_logs
+                            (node_id, soil_moisture, weather, decision, decision_type, valve_state, reason, created_at)
+                        VALUES (?, ?, '', 'Standby', 'standby', 'closed', 'uji', ?)
+                        """,
+                        (node_f, 60.0, created_at),
+                    )
+
+            r_g1a = client.get("/api/logs", params={"limit": 1000}, headers=auth)
+            r_g1b = client.get("/api/logs", params={"limit": 1001}, headers=auth)
+            report.check(
+                "G1 batas limit: 1000 diterima, 1001 ditolak",
+                r_g1a.status_code == 200 and r_g1b.status_code == 422,
+                f"status {r_g1a.status_code}, {r_g1b.status_code}",
+            )
+
+            items_main = (
+                client.get("/api/logs", params={"farm_id": farm_id, "limit": 1000}, headers=auth)
+                .json()
+                .get("items", [])
+            )
+            items_farm2 = (
+                client.get("/api/logs", params={"farm_id": farm2, "limit": 1000}, headers=auth)
+                .json()
+                .get("items", [])
+            )
+            report.check(
+                "G2 farm_id menyaring log per kebun",
+                len(items_main) > 0
+                and all(item["node_id"] != node_f for item in items_main)
+                and len(items_farm2) > 0
+                and all(item["node_id"] == node_f for item in items_farm2),
+                f"main={len(items_main)}, farm2={len(items_farm2)}",
+            )
+
+            r_g3 = client.get("/api/logs", params={"farm_id": "farm-tidak-ada"}, headers=auth)
+            report.check(
+                "G3 farm_id yang tidak ada -> 404",
+                r_g3.status_code == 404,
+                f"status {r_g3.status_code}",
+            )
+
+            expect_g4 = ["2026-01-11 16:59:59", "2026-01-10 17:00:00"]
+
+            r_g4 = client.get(
+                "/api/logs",
+                params={
+                    "farm_id": farm2,
+                    "start": "2026-01-11T00:00:00+07:00",
+                    "end": "2026-01-11T23:59:59.999+07:00",
+                    "limit": 1000,
+                },
+                headers=auth,
+            )
+            items_g4 = (
+                [i["created_at"] for i in r_g4.json().get("items", [])]
+                if r_g4.status_code == 200
+                else []
+            )
+            report.check(
+                "G4 filter tanggal zona WIB: batas inklusif tepat",
+                r_g4.status_code == 200 and items_g4 == expect_g4,
+                f"status {r_g4.status_code}, items {items_g4}",
+            )
+
+            r_g4b = client.get(
+                "/api/logs",
+                params={
+                    "farm_id": farm2,
+                    "start": "2026-01-10T17:00:00.000Z",
+                    "end": "2026-01-11T16:59:59.999Z",
+                    "limit": 1000,
+                },
+                headers=auth,
+            )
+            items_g4b = (
+                [i["created_at"] for i in r_g4b.json().get("items", [])]
+                if r_g4b.status_code == 200
+                else []
+            )
+            report.check(
+                "G4b format web (Z) hasil sama persis dengan G4",
+                r_g4b.status_code == 200 and items_g4b == expect_g4,
+                f"status {r_g4b.status_code}, items {items_g4b}",
+            )
+
+            r_g5 = client.get(
+                "/api/logs",
+                params={
+                    "farm_id": farm2,
+                    "start": "2026-01-10T17:00:00",
+                    "end": "2026-01-11T16:59:59",
+                    "limit": 1000,
+                },
+                headers=auth,
+            )
+            items_g5 = (
+                [i["created_at"] for i in r_g5.json().get("items", [])]
+                if r_g5.status_code == 200
+                else []
+            )
+            report.check(
+                "G5 waktu tanpa zona dianggap UTC: hasil sama persis dengan G4",
+                r_g5.status_code == 200 and items_g5 == expect_g4,
+                f"status {r_g5.status_code}, items {items_g5}",
+            )
+
+            r_g6 = client.get("/api/logs", headers=auth)
+            items_g6 = r_g6.json().get("items", []) if r_g6.status_code == 200 else []
+            report.check(
+                "G6 tanpa parameter apa pun: 200 dan maksimal 20 item",
+                r_g6.status_code == 200 and len(items_g6) <= 20,
+                f"status {r_g6.status_code}, jumlah {len(items_g6)}",
+            )
+        finally:
+            client.delete(f"/api/farms/{farm2}", headers=auth)
+
         section("Gateway logs")
         report.expect(
             "POST /api/farms/{id}/gateway-logs",

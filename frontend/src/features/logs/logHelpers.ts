@@ -64,6 +64,14 @@ export function formatLogTime(iso: string | null | undefined, locale: string): s
   return d ? formatClockTime(d, locale, true) : String(iso);
 }
 
+// Tanggal input (jam lokal) jadi batas waktu ISO UTC untuk GET /api/logs, inklusif sehari penuh.
+export function toLogsRange(dateFrom: string, dateTo: string): { start?: string; end?: string } {
+  return {
+    start: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : undefined,
+    end: dateTo ? new Date(`${dateTo}T23:59:59.999`).toISOString() : undefined,
+  };
+}
+
 // -----------------------------------------------------------
 // CSV export (bagian murni saja, pembentukan string. Side effect download
 // Blob/anchor TIDAK diekstrak, tetap di komponen LogsPage.)

@@ -13,12 +13,23 @@ import { getDecisionTone, LOG_TYPE_LABEL } from '@/features/logs/logHelpers';
 import type { ScopedLog } from '@/features/logs/useLogsViewModel';
 import { EMPTY_VALUE } from '@/lib/format';
 
-export function LogsTableCard({ logs }: { logs: ScopedLog[] }) {
+export function LogsTableCard({
+  logs,
+  truncatedAt,
+}: {
+  logs: ScopedLog[];
+  truncatedAt: number | null;
+}) {
   const { t } = useTranslation();
 
   return (
     <Card>
       <CardContent>
+        {truncatedAt != null ? (
+          <p className="mb-3 text-xs text-muted-foreground">
+            {t('logs.truncated', { count: truncatedAt })}
+          </p>
+        ) : null}
         <Table>
           <TableHeader>
             <TableRow>

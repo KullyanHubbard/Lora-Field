@@ -443,7 +443,8 @@
     "colReason": "Reason",
     "empty": "No logs match the current filter.",
     "filterLabel": "Log filter",
-    "colThreshold": "Threshold"
+    "colThreshold": "Threshold",
+    "truncated": "Showing the latest {{count}} rows. Use or narrow the date filter to see older ones."
   },
   "weather": {
     "errorLoad": "Failed to load weather data: {{message}}",

@@ -198,5 +198,20 @@ export const api = {
   getFarmGateway: (farmId: string) =>
     apiFetch<{ gateway: FarmGateway | null }>(`/farms/${farmId}/gateway`),
 
-  getLogs: (limit: number) => apiFetch<{ items: IrrigationLog[] }>(`/logs?limit=${limit}`),
+  getLogs: ({
+    farmId,
+    limit,
+    start,
+    end,
+  }: {
+    farmId: string;
+    limit: number;
+    start?: string;
+    end?: string;
+  }) => {
+    const query = new URLSearchParams({ farm_id: farmId, limit: String(limit) });
+    if (start) query.set('start', start);
+    if (end) query.set('end', end);
+    return apiFetch<{ items: IrrigationLog[] }>(`/logs?${query.toString()}`);
+  },
 };

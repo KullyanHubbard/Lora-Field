@@ -19,6 +19,7 @@ export default function LogsPage() {
     setDateTo,
     clearDateFilter,
     filteredLogs,
+    truncatedAt,
     exportCsv,
   } = useLogsViewModel();
 
@@ -40,6 +41,7 @@ export default function LogsPage() {
       setDateTo={setDateTo}
       clearDateFilter={clearDateFilter}
       filteredLogs={filteredLogs}
+      truncatedAt={truncatedAt}
       exportCsv={exportCsv}
     />
   );

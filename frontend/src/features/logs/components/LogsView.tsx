@@ -14,6 +14,7 @@ export function LogsView({
   setDateTo,
   clearDateFilter,
   filteredLogs,
+  truncatedAt,
   exportCsv,
 }: {
   activeFilter: LogFilterKey;
@@ -26,6 +27,7 @@ export function LogsView({
   setDateTo: (value: string) => void;
   clearDateFilter: () => void;
   filteredLogs: ScopedLog[];
+  truncatedAt: number | null;
   exportCsv: () => void;
 }) {
   return (
@@ -44,7 +46,7 @@ export function LogsView({
         exportDisabled={!filteredLogs.length}
       />
 
-      <LogsTableCard logs={filteredLogs} />
+      <LogsTableCard logs={filteredLogs} truncatedAt={truncatedAt} />
     </div>
   );
 }

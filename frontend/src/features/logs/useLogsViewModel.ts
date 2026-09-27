@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useFarmSummary } from '@/features/dashboard/queries';
-import { useLogs } from '@/features/logs/queries';
+import { logsLimit, useLogs } from '@/features/logs/queries';
 import {
   buildLogsCsv,
   classifyLog,
   formatLogTime,
   LOG_TYPE_LABEL,
+  toLogsRange,
   type LogCsvRow,
   type LogFilterKey,
   type LogType,
@@ -46,12 +47,14 @@ export function useLogsViewModel() {
   const summaryQuery = useFarmSummary(farmId);
   const summary = summaryQuery.data;
   const nodes = useMemo(() => summary?.nodes ?? [], [summary?.nodes]);
-  const logsQuery = useLogs(summary ? farmId : undefined);
 
   const [activeFilter, setActiveFilter] = useState<LogFilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  const range = useMemo(() => toLogsRange(dateFrom, dateTo), [dateFrom, dateTo]);
+  const logsQuery = useLogs(summary ? farmId : undefined, range);
 
   const logs = useMemo(() => logsQuery.data?.items ?? [], [logsQuery.data?.items]);
 
@@ -94,8 +97,6 @@ export function useLogsViewModel() {
 
   const filteredLogs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
-    const toMs = dateTo ? new Date(`${dateTo}T23:59:59.999`).getTime() : null;
 
     return scopedLogs.filter((log) => {
       const matchesFilter = activeFilter === 'all' || log.type === activeFilter;
@@ -104,12 +105,11 @@ export function useLogsViewModel() {
         log.nodeName.toLowerCase().includes(q) ||
         log.nodeLocation.toLowerCase().includes(q) ||
         log.decisionLabel.toLowerCase().includes(q);
-      const logMs = parseServerDate(log.created_at)?.getTime() ?? null;
-      const matchesFrom = fromMs == null || (logMs != null && logMs >= fromMs);
-      const matchesTo = toMs == null || (logMs != null && logMs <= toMs);
-      return matchesFilter && matchesSearch && matchesFrom && matchesTo;
+      return matchesFilter && matchesSearch;
     });
-  }, [activeFilter, dateFrom, dateTo, scopedLogs, searchQuery]);
+  }, [activeFilter, scopedLogs, searchQuery]);
+
+  const truncatedAt = logs.length >= logsLimit(range) ? logsLimit(range) : null;
 
   const clearDateFilter = () => {
     setDateFrom('');
@@ -161,6 +161,7 @@ export function useLogsViewModel() {
     clearDateFilter,
     logs,
     filteredLogs,
+    truncatedAt,
     threshold,
     exportCsv,
   };

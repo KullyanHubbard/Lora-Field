@@ -435,7 +435,8 @@
     "colReason": "Keterangan",
     "empty": "Tidak ada log yang cocok dengan filter.",
     "filterLabel": "Filter log",
-    "colThreshold": "Threshold"
+    "colThreshold": "Threshold",
+    "truncated": "Menampilkan {{count}} baris terbaru. Pakai atau persempit filter tanggal untuk melihat yang lebih lama."
   },
   "weather": {
     "errorLoad": "Gagal memuat data cuaca: {{message}}",
