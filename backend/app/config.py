@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     auto_target_margin: float = 5
     # Di bawah batas bawah dikurangi ini, tanah dianggap darurat dan prediksi hujan diabaikan.
     rain_emergency_margin: float = 15
+    # Total prakiraan hujan (mm, jumlah tp di jendela cek hujan) minimal untuk menunda siram.
+    rain_delay_min_mm: float = 5
 
     # Origins yang diizinkan untuk CORS. Pisah dengan koma di .env:
     #   ALLOWED_ORIGINS=https://app.lorafield.com,https://www.lorafield.com

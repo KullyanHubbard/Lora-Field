@@ -50,6 +50,18 @@ def number_or_none(value) -> float | None:
         return None
 
 
+def rain_outlook(slots: list[dict]) -> tuple[bool, float | None]:
+    """(tunda siram, total tp mm) untuk slot di jendela cek hujan.
+
+    Kalau ada slot tanpa angka tp, kembali ke kata kunci teks dan total None.
+    """
+    amounts = [number_or_none(slot.get("tp")) for slot in slots]
+    if slots and all(amount is not None for amount in amounts):
+        total = round(sum(amounts), 1)
+        return total >= settings.rain_delay_min_mm, total
+    return any(is_rainy_forecast(slot) for slot in slots), None
+
+
 def build_bmkg_location_profile(location: dict, fallback_adm4: str) -> dict:
     return {
         "adm1": location.get("adm1"),
@@ -95,7 +107,7 @@ def fetch_bmkg_weather(adm4: str) -> dict:
         raise HTTPException(status_code=404, detail="Prakiraan BMKG tidak tersedia")
 
     current = forecasts[0]
-    next_3h_slots = forecasts[:RAIN_CHECK_SLOTS]
+    rain_next_3h, rain_next_3h_mm = rain_outlook(forecasts[:RAIN_CHECK_SLOTS])
     location = data.get("lokasi", {})
     location_profile = build_bmkg_location_profile(location, adm4)
 
@@ -117,7 +129,8 @@ def fetch_bmkg_weather(adm4: str) -> dict:
         "wind_speed": current.get("ws"),
         "wind_direction": current.get("wd"),
         "visibility": current.get("vs_text"),
-        "rain_next_3h": any(is_rainy_forecast(f) for f in next_3h_slots),
+        "rain_next_3h": rain_next_3h,
+        "rain_next_3h_mm": rain_next_3h_mm,
         "forecast_time": current.get("local_datetime") or current.get("datetime"),
         "updated_at": current.get("analysis_date"),
         "forecast": forecasts[:FORECAST_SLOTS],
@@ -182,7 +195,7 @@ def _recompute_stale_weather(data: dict, updated_at: str) -> dict | None:
         return None
 
     next_slots = slots[current_index : current_index + RAIN_CHECK_SLOTS]
-    rain_next_3h = any(is_rainy_forecast(slot) for _, slot in next_slots)
+    rain_next_3h, rain_next_3h_mm = rain_outlook([slot for _, slot in next_slots])
 
     stale = dict(data)
     stale["condition"] = current_slot.get("weather_desc")
@@ -190,6 +203,7 @@ def _recompute_stale_weather(data: dict, updated_at: str) -> dict | None:
     stale["temperature"] = current_slot.get("t")
     stale["humidity"] = current_slot.get("hu")
     stale["rain_next_3h"] = rain_next_3h
+    stale["rain_next_3h_mm"] = rain_next_3h_mm
     stale["from_cache"] = True
     stale["is_stale"] = True
     stale["fetched_at"] = updated_at

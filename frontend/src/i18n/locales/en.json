@@ -182,6 +182,7 @@
     "weatherForecastTitle": "Weather Forecast",
     "weatherVerdictSafe": "No Rain Expected",
     "weatherVerdictDelay": "Rain Expected",
+    "weatherVerdictLight": "Light Rain",
     "weatherNow": "Now",
     "weatherNoForecast": "No forecast data yet",
     "airHumidity": "Air Humidity",
@@ -366,7 +367,7 @@
   },
   "irrigationReason": {
     "open": "Soil needs water. The valve opens in pulses until moisture is sufficient.",
-    "delayed": "Soil moisture is low, but BMKG forecasts rain within the next 3 hours.",
+    "delayed": "Moisture is low, but BMKG forecasts enough rain in the next few hours.",
     "closed": "Soil moisture is above the upper threshold.",
     "standby": "Soil moisture is within the safe range.",
     "disconnected": "No data from this node within the time limit. Waiting for the latest sensor data.",

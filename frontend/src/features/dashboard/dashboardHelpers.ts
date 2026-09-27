@@ -12,6 +12,7 @@ import {
   pickNumber,
   type WeatherIconKey,
 } from '@/features/weather/weatherHelpers';
+import { RAIN_LIGHT_MIN_MM } from '@/features/weather/constants';
 import type { NodeSummary, Reading, SemanticTone, Weather } from '@/types';
 import { ACCENT_BG } from '@/lib/toneClasses';
 
@@ -54,6 +55,7 @@ export type WeatherForecastViewModel = {
   currentTemperature: string;
   currentHumidity: string;
   rainNext3h: boolean;
+  rainLight: boolean;
   slots: WeatherForecastSlot[];
   // null kalau cuaca segar (is_stale bukan true) atau fetched_at tidak bisa dibaca.
   staleSince: string | null;
@@ -221,6 +223,7 @@ export function buildWeatherForecastViewModel(
     currentTemperature: formatRounded(weather.temperature, DEG_C),
     currentHumidity: formatPercent(weather.humidity),
     rainNext3h: weather.rain_next_3h === true,
+    rainLight: weather.rain_next_3h !== true && (weather.rain_next_3h_mm ?? 0) >= RAIN_LIGHT_MIN_MM,
     slots,
     staleSince,
   };

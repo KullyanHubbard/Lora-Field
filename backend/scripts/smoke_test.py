@@ -23,9 +23,11 @@ Exit code 0 kalau semua cek lolos, 1 kalau ada yang gagal.
 
 from __future__ import annotations
 
+import json
 import shutil
 import sys
 import tempfile
+import types
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -1425,6 +1427,128 @@ def run(report: Report, with_network: bool) -> None:
             )
         finally:
             client.patch(f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "auto"}, headers=auth)
+
+        section("Curah hujan")
+        from app.bmkg import rain_outlook  # noqa: E402
+
+        def tp_slot(tp: float | None, desc: str) -> dict:
+            return {"weather_desc": desc} if tp is None else {"weather_desc": desc, "tp": tp}
+
+        kasus_hujan = [
+            ("R1", [(2.2, "Hujan Ringan"), (2.0, "Hujan Ringan")], (False, 4.2)),
+            ("R2", [(1.0, "Hujan Ringan"), (4.0, "Hujan Ringan")], (True, 5.0)),
+            ("R3", [(6.4, "Hujan Sedang"), (0, "Berawan")], (True, 6.4)),
+            ("R4", [(1.5, "Hujan Petir"), (0, "Cerah")], (False, 1.5)),
+            ("R5", [(None, "Hujan Ringan"), (0, "Cerah")], (True, None)),
+            ("R6", [(None, "Cerah")], (False, None)),
+            ("R7", [], (False, None)),
+        ]
+        for nama, isi, harapan in kasus_hujan:
+            hasil = rain_outlook([tp_slot(tp, desc) for tp, desc in isi])
+            report.check(f"{nama} {isi} -> {harapan}", hasil == harapan, f"dapat {hasil}")
+
+        def reset_siklus_node_a() -> None:
+            ubah_node_a("auto_pulse_count = 0, auto_pulse_started_at = NULL, auto_limit_at = NULL")
+
+        def cache_tp(tp1: float, tp2: float) -> dict:
+            return {
+                **FAKE_WEATHER,
+                "forecast": [
+                    {**slot(-1, "Hujan Ringan"), "tp": tp1},
+                    {**slot(2, "Hujan Ringan"), "tp": tp2},
+                ],
+            }
+
+        # H1-H2: jalur cache lama, total tp dihitung ulang dari forecast.
+        for nama, tp1, tp2, tipe in [("H1", 2.0, 2.0, "open"), ("H2", 3.0, 3.0, "delayed")]:
+            _, gagal = bmkg_gagal_dengan(lambda: _HTTPException(status_code=502, detail="gangguan"))
+            bmkg_module.fetch_bmkg_weather = gagal
+            try:
+                reset_siklus_node_a()
+                set_cached_weather(ADM4, cache_tp(tp1, tp2))
+                age_cache(2)
+                decision = kirim_node_a(kering_payload())
+                weather = (
+                    client.get(f"/api/farms/{farm_id}/summary", headers=auth).json().get("weather")
+                    or {}
+                )
+                total = round(tp1 + tp2, 1)
+                report.check(
+                    f"{nama} cache lama tp {tp1}+{tp2} mm -> {tipe}",
+                    decision.get("type") == tipe
+                    and weather.get("rain_next_3h") is (tipe == "delayed")
+                    and weather.get("rain_next_3h_mm") == total,
+                    f"decision {decision.get('type')}, weather rain {weather.get('rain_next_3h')}/"
+                    f"{weather.get('rain_next_3h_mm')}",
+                )
+            finally:
+                bmkg_module.fetch_bmkg_weather = original_fetch_bmkg
+                set_cached_weather(ADM4, FAKE_WEATHER)
+                bmkg_module._bmkg_failed_at.clear()
+                reset_siklus_node_a()
+
+        # H3-H4: jalur data BMKG baru. Ganti httpx milik bmkg saja, TestClient juga memakai httpx.
+        original_httpx = bmkg_module.httpx
+
+        def bmkg_palsu(tps: list[float]):
+            cuaca = []
+            for i, tp in enumerate(tps):
+                s = slot(3 * i, "Hujan Ringan")
+                cuaca.append({**s, "local_datetime": s["utc_datetime"], "weather": 61, "tp": tp})
+
+            class Response:
+                def raise_for_status(self) -> None:
+                    pass
+
+                def json(self) -> dict:
+                    return {"lokasi": {}, "data": [{"cuaca": [cuaca]}]}
+
+            class Client:
+                def __init__(self, **kwargs) -> None:
+                    pass
+
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, *args) -> None:
+                    pass
+
+                def get(self, *args, **kwargs) -> Response:
+                    return Response()
+
+            return types.SimpleNamespace(
+                Client=Client,
+                HTTPStatusError=original_httpx.HTTPStatusError,
+                HTTPError=original_httpx.HTTPError,
+            )
+
+        for nama, tps, tipe in [("H3", [2.2, 2.0, 0], "open"), ("H4", [6.5, 0, 0], "delayed")]:
+            bmkg_module.fetch_bmkg_weather = original_fetch_bmkg
+            bmkg_module.httpx = bmkg_palsu(tps)
+            try:
+                reset_siklus_node_a()
+                age_cache(2)
+                decision = kirim_node_a(kering_payload())
+                with database.get_connection() as connection:
+                    row = connection.execute(
+                        "SELECT data FROM weather_cache WHERE adm4 = ?", (ADM4,)
+                    ).fetchone()
+                cache = json.loads(row["data"]) if row else {}
+                total = round(tps[0] + tps[1], 1)
+                report.check(
+                    f"{nama} BMKG baru tp {tps} -> {tipe}",
+                    decision.get("type") == tipe
+                    and cache.get("rain_next_3h") is (tipe == "delayed")
+                    and cache.get("rain_next_3h_mm") == total,
+                    f"decision {decision.get('type')}, cache rain {cache.get('rain_next_3h')}/"
+                    f"{cache.get('rain_next_3h_mm')}",
+                )
+            finally:
+                bmkg_module.httpx = original_httpx
+                bmkg_module.fetch_bmkg_weather = original_fetch_bmkg
+                set_cached_weather(ADM4, FAKE_WEATHER)
+                bmkg_module._bmkg_failed_at.clear()
+                reset_siklus_node_a()
 
         section("Gateway logs")
         report.expect(

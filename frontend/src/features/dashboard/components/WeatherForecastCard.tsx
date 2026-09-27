@@ -55,7 +55,9 @@ export function WeatherForecastCard({
           <span>
             {forecast.rainNext3h
               ? t('dashboard.weatherVerdictDelay')
-              : t('dashboard.weatherVerdictSafe')}
+              : forecast.rainLight
+                ? t('dashboard.weatherVerdictLight')
+                : t('dashboard.weatherVerdictSafe')}
           </span>
         </div>
 

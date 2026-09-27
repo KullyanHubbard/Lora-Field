@@ -136,6 +136,8 @@ export interface Weather {
   wind_direction: string;
   // boolean dari backend (bmkg.py: hasil any(...))
   rain_next_3h: boolean;
+  // Total tp (mm) di jendela cek hujan; null kalau BMKG tidak mengirim angka tp.
+  rain_next_3h_mm?: number | null;
   forecast_time: string;
   updated_at: string;
   location_profile: { altitude_m: number };
