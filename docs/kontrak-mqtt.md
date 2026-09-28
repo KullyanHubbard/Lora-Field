@@ -125,7 +125,7 @@ dari data sensor, bukan dari daftar ini.
 - Kalau sisa waktu sudah habis atau negatif, perlakukan sebagai `closed`.
 - Pesan ini retain: gateway menerima perintah terakhir tiap kali subscribe ulang. Karena `until`
   berupa jam mutlak, perintah yang diterima ulang tidak memperpanjang waktu siram.
-- Isi kosong berarti tidak ada perintah: valve tutup.
+- Isi kosong berarti tidak ada perintah: valve tutup. Server mengirimnya (retain) untuk tiap node saat kebun dihapus atau gateway dilepas dari kebun.
 - Gateway meneruskan perintah ke node pada kesempatan terima berikutnya (mis. tepat setelah node
   mengirim data). Node melaporkan posisi barunya lewat field `valve` di reading berikutnya. Web
   menampilkan perintah "terkirim ke alat" setelah posisi yang dilaporkan sama dengan perintah.

@@ -271,6 +271,33 @@ def publish_valve(gateway_id: str, node_id: str, command: dict) -> None:
         logger.warning("Perintah valve node %s gagal dikirim (rc=%s).", node_id, result.rc)
 
 
+def farm_valve_nodes(connection, farm_id: str) -> tuple[str | None, list[str]]:
+    """Gateway dan node kebun, diambil sebelum kebun dihapus atau gateway dilepas."""
+    gateway = connection.execute(
+        "SELECT device_id FROM gateways WHERE farm_id = ?", (farm_id,)
+    ).fetchone()
+    node_ids = [
+        row["id"] for row in connection.execute("SELECT id FROM nodes WHERE farm_id = ?", (farm_id,))
+    ]
+    return (gateway["device_id"] if gateway else None), node_ids
+
+
+def clear_valves(gateway_id: str | None, node_ids: list[str]) -> None:
+    """Hapus perintah valve retain di broker. Isi kosong = tidak ada perintah, gateway menutup valve."""
+    for node_id in node_ids:
+        _last_published.pop(node_id, None)
+    if _client is None or gateway_id is None or not _DEVICE_ID.fullmatch(gateway_id):
+        return
+    for node_id in node_ids:
+        if not _DEVICE_ID.fullmatch(node_id):
+            continue
+        result = _client.publish(
+            f"{TOPIC_ROOT}/{gateway_id}/node/{node_id}/valve/set", b"", qos=1, retain=True
+        )
+        if result.rc != mqtt.MQTT_ERR_SUCCESS:
+            logger.warning("Perintah valve node %s gagal dihapus (rc=%s).", node_id, result.rc)
+
+
 def publish_farm_valves(farm_id: str) -> None:
     """Kirim perintah manual semua node kebun. Dipanggil route valve setelah transaksinya selesai."""
     if _client is None:

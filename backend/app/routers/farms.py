@@ -6,6 +6,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from .. import mqtt_bridge
 from ..adm4 import ensure_farm_bmkg_adm4, resolve_bmkg_adm4
 from ..auth import get_current_user
 from ..bmkg import get_weather_for_decision
@@ -129,6 +130,7 @@ def delete_farm(
 ) -> dict:
     with get_connection() as connection:
         get_farm_owned(connection, farm_id, current_user["id"])
+        gateway_id, node_ids = mqtt_bridge.farm_valve_nodes(connection, farm_id)
         release_gateway(connection, farm_id)
         # Tabel anak tidak punya ON DELETE CASCADE sementara PRAGMA foreign_keys aktif.
         connection.execute(
@@ -146,6 +148,8 @@ def delete_farm(
         connection.execute("DELETE FROM nodes WHERE farm_id = ?", (farm_id,))
         connection.execute("DELETE FROM gateway_logs WHERE farm_id = ?", (farm_id,))
         connection.execute("DELETE FROM farms WHERE id = ?", (farm_id,))
+    # Setelah transaksi: gateway tidak boleh menjalankan perintah valve kebun yang sudah tidak ada.
+    mqtt_bridge.clear_valves(gateway_id, node_ids)
     return {"message": "Kebun berhasil dihapus."}
 
 

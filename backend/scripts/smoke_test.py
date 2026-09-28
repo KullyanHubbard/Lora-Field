@@ -2259,7 +2259,8 @@ def run(report: Report, with_network: bool) -> None:
                 self.terkirim: list[tuple[str, dict]] = []
 
             def publish(self, topic, body, qos, retain):
-                self.terkirim.append((topic, json.loads(body)))
+                # Isi kosong = penghapusan perintah retain, dicatat sebagai None.
+                self.terkirim.append((topic, json.loads(body) if body else None))
                 return types.SimpleNamespace(rc=0)
 
         gw_mqtt = f"SIM-GW-{suffix}"
@@ -2457,6 +2458,45 @@ def run(report: Report, with_network: bool) -> None:
                 "MQTT: mode diganti saat menunggu BMKG, reading memakai mode baru",
                 riwayat == "manual_closed" and perintah_node[-1] == {"state": "closed"},
                 f"riwayat {riwayat}, perintah terakhir {perintah_node[-1]}",
+            )
+
+            with database.get_connection() as connection:
+                topik_node = {
+                    f"{topik}/node/{row['id']}/valve/set"
+                    for row in connection.execute("SELECT id FROM nodes WHERE farm_id = ?", (farm_mqtt,))
+                }
+
+            def dihapus_sejak(awal: int) -> set:
+                return {t for t, isi in klien.terkirim[awal:] if isi is None}
+
+            awal = len(klien.terkirim)
+            report.expect(
+                "MQTT: lepas gateway dari kebun",
+                client.post(f"/api/farms/{farm_mqtt}/gateway/unclaim", headers=auth),
+                200,
+            )
+            report.check(
+                "MQTT: lepas gateway menghapus perintah valve retain semua node kebun",
+                dihapus_sejak(awal) == topik_node and node_mqtt not in mqtt_bridge._last_published,
+                f"dihapus {dihapus_sejak(awal)}, harusnya {topik_node}",
+            )
+            client.post(
+                f"/api/farms/{farm_mqtt}/gateway/claim",
+                json={"device_id": gw_mqtt, "display_name": ""},
+                headers=auth,
+            )
+            reading_mqtt(30.0, "closed")
+            report.check(
+                "MQTT: setelah gateway diklaim ulang, perintah valve dikirim lagi",
+                klien.terkirim[-1] == (topik_valve, {"state": "closed"}),
+                f"terakhir {klien.terkirim[-1]}",
+            )
+            awal = len(klien.terkirim)
+            report.expect("MQTT: hapus kebun", client.delete(f"/api/farms/{farm_mqtt}", headers=auth), 200)
+            report.check(
+                "MQTT: hapus kebun menghapus perintah valve retain semua node kebun",
+                dihapus_sejak(awal) == topik_node and node_mqtt not in mqtt_bridge._last_published,
+                f"dihapus {dihapus_sejak(awal)}, harusnya {topik_node}",
             )
         finally:
             mqtt_bridge._client = None

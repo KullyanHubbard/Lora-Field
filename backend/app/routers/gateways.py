@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from .. import mqtt_bridge
 from ..auth import get_current_user
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_for_gateway_action, get_farm_owned
@@ -117,6 +118,7 @@ def unclaim_farm_gateway(
         if gateway is None:
             raise HTTPException(status_code=404, detail="Kebun ini belum punya gateway")
 
+        _, node_ids = mqtt_bridge.farm_valve_nodes(connection, farm_id)
         release_gateway(connection, farm_id)
         unclaimed_gateway = row_to_dict(
             connection.execute(
@@ -124,6 +126,8 @@ def unclaim_farm_gateway(
                 (gateway["device_id"],),
             ).fetchone()
         )
+    # Setelah transaksi: gateway yang dilepas tidak boleh menjalankan perintah valve lama kebun ini.
+    mqtt_bridge.clear_valves(gateway["device_id"], node_ids)
     return {"gateway": unclaimed_gateway}
 
 

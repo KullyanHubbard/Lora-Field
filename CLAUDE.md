@@ -120,7 +120,7 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | `/api/farms/{farm_id}` | GET | Detail kebun. Return `{ farm }` |
 | `/api/farms` | POST | Buat kebun baru. Body WAJIB berisi `gateway_device_id` (schema `FarmCreate`), dan gateway itu langsung diklaim ke kebun baru. Auto-resolve `bmkg_adm4_code` dari koordinat. Return `{ farm, gateway }`. routers/farms.py:128 |
 | `/api/farms/{farm_id}` | PATCH | Update kebun (partial, `exclude_unset`); re-resolve `bmkg_adm4_code` kalau koordinat berubah. Return `{ farm }`. Schema body: `FarmUpdate` (routers/farms.py:43) |
-| `/api/farms/{farm_id}` | DELETE | Hapus kebun (verifikasi kepemilikan). Menghapus juga decision_logs, readings, nodes, dan gateway_logs milik kebun itu, lalu melepas gateway-nya (baris `gateways` tetap ada). routers/farms.py:101 |
+| `/api/farms/{farm_id}` | DELETE | Hapus kebun (verifikasi kepemilikan). Menghapus juga decision_logs, readings, nodes, dan gateway_logs milik kebun itu, lalu melepas gateway-nya (baris `gateways` tetap ada). routers/farms.py:101. Setelah itu perintah valve retain tiap node di broker dihapus (isi kosong = valve tutup) |
 
 ### Gateway
 
@@ -128,7 +128,7 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 |----------|--------|-----------|
 | `/api/farms/{farm_id}/gateway` | GET | Gateway yang terpasang di kebun. Return `{ gateway }`, isinya `null` kalau kebun belum punya gateway. routers/gateways.py:67 |
 | `/api/farms/{farm_id}/gateway/claim` | POST | Klaim gateway ke kebun. Body `GatewayClaimPayload` (`device_id`, `display_name`). 409 kalau gateway sudah dipakai kebun lain atau kebun sudah punya gateway. Return `{ gateway }`. routers/gateways.py:83 |
-| `/api/farms/{farm_id}/gateway/unclaim` | POST | Lepas gateway dari kebun. Baris `gateways` tidak dihapus, hanya `farm_id`, `display_name`, dan `claimed_at` yang dikosongkan supaya device bisa dipakai kebun lain. Return `{ gateway }`. routers/gateways.py:104 |
+| `/api/farms/{farm_id}/gateway/unclaim` | POST | Lepas gateway dari kebun. Baris `gateways` tidak dihapus, hanya `farm_id`, `display_name`, dan `claimed_at` yang dikosongkan supaya device bisa dipakai kebun lain. Setelah itu perintah valve retain tiap node di broker dihapus (isi kosong = valve tutup). Return `{ gateway }`. routers/gateways.py:104 |
 | `/api/gateways/{gateway_id}/register` | POST | Batch register node dari firmware gateway. `gateway_id` di path = `device_id`, bukan kolom `id`. Body `GatewayRegisterPayload` (`farm_id`, `nodes[]`). Node yang belum ada dibuat otomatis. Response menyebut status `pending` untuk node baru dan `active` untuk node lama, tapi di DB keduanya tersimpan `online` (baterai awal 100, belum dari perangkat). Idempoten. Return `GatewayRegisterResponse`. routers/gateways.py:130 |
 
 ### Utils
