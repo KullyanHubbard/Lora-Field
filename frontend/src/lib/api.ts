@@ -31,6 +31,16 @@ export class ApiError extends Error {
   }
 }
 
+// detail dari FastAPI: string untuk HTTPException, array {msg} untuk error validasi 422.
+function detailMessage(detail: unknown): string | undefined {
+  if (typeof detail === 'string') return detail;
+  if (!Array.isArray(detail)) return undefined;
+  const messages = detail
+    .map((item: { msg?: unknown } | null) => item?.msg)
+    .filter((msg): msg is string => typeof msg === 'string');
+  return messages.length ? messages.join(' ') : undefined;
+}
+
 interface FetchBehavior {
   // Di endpoint yang cek kredensial lewat body, 401 berarti input salah, bukan sesi mati.
   ignoreUnauthorized?: boolean;
@@ -58,7 +68,7 @@ async function apiFetch<T>(
     let message = res.statusText;
     try {
       const body = await res.json();
-      message = body.detail ?? body.message ?? message;
+      message = detailMessage(body.detail) ?? body.message ?? message;
     } catch {
       // body bukan JSON, pakai statusText aja
     }
