@@ -83,10 +83,25 @@ export const api = {
       { signal: AbortSignal.timeout(SESSION_REQUEST_TIMEOUT_MS) },
     ),
 
+  // Respons sama untuk email baru dan email terdaftar, supaya tidak membocorkan akun.
+  // verification_token dan note hanya terisi saat dev mode.
   register: (name: string, email: string, password: string, browserLanguage: AppLanguage) =>
-    apiFetch<User>('/auth/register', {
+    apiFetch<{ message: string; verification_token?: string; note?: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password, language: browserLanguage }),
+    }),
+
+  // Tahap 2 daftar: nama dan password dikirim lagi karena baru disimpan setelah kode benar.
+  verifyRegistration: (
+    name: string,
+    email: string,
+    password: string,
+    token: string,
+    browserLanguage: AppLanguage,
+  ) =>
+    apiFetch<{ message: string }>('/auth/register/verify', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password, language: browserLanguage, token }),
     }),
 
   forgotPassword: (email: string) =>

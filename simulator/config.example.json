@@ -1,17 +1,61 @@
 {
-  "api_base_url": "http://127.0.0.1:8000",
-  "http_timeout_seconds": 20,
+  "mqtt": {
+    "host": "127.0.0.1",
+    "port": 1883,
+    "keepalive_seconds": 60
+  },
+  "firmware_version": "sim-1.0",
   "interval_seconds": 60,
+  "send_jitter_seconds": 5,
+  "gateway_heartbeat_minutes": 5,
+  "weather_refresh_minutes": 30,
+  "bmkg_timeout_seconds": 20,
   "packet_loss_rate": 0.03,
-  "gateway_heartbeat_minutes": 10,
+  "downlink_loss_rate": 0.03,
   "max_step_hours": 2,
   "outage": {
     "chance_per_reading": 0.0005,
     "minutes_min": 8,
     "minutes_max": 30
   },
-  "rain_keywords": ["hujan", "rain", "shower", "thunderstorm"],
-  "cloud_keywords": ["berawan", "hujan", "kabut", "asap", "cloud", "rain", "fog"],
+  "gateway_wifi_outage": {
+    "chance_per_day": 0.5,
+    "minutes_min": 2,
+    "minutes_max": 20
+  },
+  "sensor_faults": {
+    "chance_per_day": 0.01,
+    "hours_min": 6,
+    "hours_max": 48
+  },
+  "rain_keywords": [
+    "hujan",
+    "rain",
+    "shower",
+    "thunderstorm"
+  ],
+  "cloud_keywords": [
+    "berawan",
+    "hujan",
+    "kabut",
+    "asap",
+    "cloud",
+    "rain",
+    "fog"
+  ],
+  "daylight": {
+    "start_hour": 6,
+    "end_hour": 18
+  },
+  "rain": {
+    "pct_per_mm": 1.5,
+    "keyword_mm_per_hour": 1.0,
+    "exposure": {
+      "open": 1.0,
+      "mulch": 0.2,
+      "roofed": 0.0
+    }
+  },
   "fallback_climate": {
     "temp_min_c": 23,
     "temp_max_c": 32,
@@ -22,9 +66,14 @@
   "soil": {
     "initial_moisture_min_pct": 50,
     "initial_moisture_max_pct": 72,
-    "drying_pct_per_hour": 0.8,
+    "drying_peak_pct_per_hour": 1.6,
+    "night_drying_factor": 0.05,
+    "cloud_drying_reduction": 0.5,
+    "drying_slows_below_pct": 45,
     "irrigation_gain_pct_per_hour": 50,
-    "rain_gain_pct_per_hour": 6,
+    "infiltration_minutes": 20,
+    "field_capacity_pct": 85,
+    "drainage_hours": 8,
     "min_moisture_pct": 8,
     "max_moisture_pct": 95,
     "temp_offset_c": 2.0,
@@ -36,16 +85,17 @@
     "node_offset_temp_max_c": 0.8,
     "node_offset_humidity_max_pct": 3,
     "sensor_noise_temp_c": 0.2,
-    "sensor_noise_humidity_pct": 1.0
+    "sensor_noise_humidity_pct": 1.0,
+    "dht22_fail_rate": 0.01
   },
   "battery": {
     "initial_min_pct": 70,
     "initial_max_pct": 100,
-    "drain_pct_per_reading": 0.01,
-    "solar_charge_pct_per_hour": 2.5,
-    "daylight_start_hour": 6,
-    "daylight_end_hour": 18,
-    "cloudy_charge_factor": 0.4,
+    "capacity_mah": 3000,
+    "idle_current_ma": 60,
+    "valve_current_ma": 70,
+    "solar_peak_ma": 350,
+    "cloud_charge_reduction": 0.75,
     "shutdown_pct": 3,
     "wake_pct": 8
   },
@@ -60,14 +110,14 @@
     {
       "key": "demo-1",
       "name": "Kebun Cabai Balecatur",
-      "owner": "",
-      "crop_type": "Cabai",
       "location": "Balecatur, Gamping, Sleman",
-      "latitude": -7.7934,
-      "longitude": 110.312,
-      "area_ha": 0.8,
       "bmkg_adm4_code": "34.04.01.2001",
-      "nodes": ["Blok Utara", "Blok Tengah", "Blok Selatan"]
+      "ground_cover": "open",
+      "nodes": [
+        "Blok Utara",
+        "Blok Tengah",
+        "Blok Selatan"
+      ]
     }
   ]
 }

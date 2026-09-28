@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-30  
 **Scope:** Frontend + Backend Auth endpoints  
-**Status:** Findings 1, 2, and 4 fixed on 2026-09-27. Finding 3 and new finding 5 are still open.  
+**Status:** Findings 1, 2, and 4 fixed on 2026-09-27. Finding 5 partly fixed on 2026-09-28 (register). Finding 3 is still open.  
 **Updated:** 2026-09-24. Code references now point to `backend/app/routers/auth.py` (the backend was split into routers). All findings below are still open. The Cloudflare rate limiting rule that was the only mitigation has been removed.  
 **Updated:** 2026-09-27. Fixes for findings 1, 2, and 4 are described in each section. Code snippets below show the code as it was before the fix.
 
@@ -152,6 +152,14 @@ expose_dev_tokens: bool = False
 **Problem:**
 - Register returns 409 "Email sudah terdaftar." for an existing email, so anyone can check whether an email has an account.
 - The new 429 responses only appear for registered emails, which is the same leak.
+
+**Status: PARTLY FIXED (2026-09-28).** Register now answers 202 with the same message for every email and proves ownership with a 6-digit code (`POST /api/auth/register/verify`). A new email gets an unverified account and a code; an unverified email gets a new code (same 5 per day cap as forgot-password, never 429); a verified email gets nothing and its account is untouched. The password is hashed on every path and the email is sent in the background, so response time does not reveal the difference. Name and password are saved at the verify step, so whoever registers an email first cannot pre-set the password of someone else's account. Unverified accounts cannot log in (403, checked after the password). Accounts that existed before were marked verified once, when the column was added.
+
+Still open:
+- The 429 responses of login and forgot-password only appear for registered emails.
+- Small timing differences remain (a new email writes rows, a verified one does not).
+- Register can send a code email to any address, and unverified accounts are never removed. Rate limit registration at the reverse proxy before going public.
+- Anyone who knows an unverified email can use up its 5 codes per day.
 
 ## Frontend Security Status
 

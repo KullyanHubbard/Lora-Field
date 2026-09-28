@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import sqlite3
 import sys
 import tempfile
 import threading
@@ -48,11 +49,13 @@ database.DB_PATH = TMP_DIR / "smoke.db"
 settings.jwt_secret_key = settings.jwt_secret_key or "smoke-test-secret-not-for-production"
 settings.resend_api_key = ""       # jangan sampai kirim email sungguhan
 settings.expose_dev_tokens = True  # supaya OTP bisa dibaca dari response
+settings.mqtt_host = ""            # jangan sambung ke broker sungguhan; bagian MQTT memakai klien palsu
 
 from fastapi.testclient import TestClient  # noqa: E402
 import app.bmkg as bmkg_module  # noqa: E402
 from app.bmkg import set_cached_weather  # noqa: E402
 from app.irrigation import auto_decision  # noqa: E402
+from app import mqtt_bridge  # noqa: E402
 from app.main import app  # noqa: E402
 from app.routers import auth as auth_router  # noqa: E402
 from app.schemas import ThresholdConfig  # noqa: E402
@@ -166,14 +169,42 @@ def run(report: Report, with_network: bool) -> None:
         )
 
         section("Auth")
-        report.expect(
+
+        def daftar_akun(target: str, pw: str, name: str) -> None:
+            """Daftar lalu verifikasi email, untuk akun yang hanya jadi bahan tes lain."""
+            kode = client.post(
+                "/api/auth/register", json={"name": name, "email": target, "password": pw}
+            ).json().get("verification_token", "")
+            client.post(
+                "/api/auth/register/verify",
+                json={"name": name, "email": target, "password": pw, "token": kode},
+            )
+
+        daftar = report.expect(
             "POST /api/auth/register",
             client.post(
                 "/api/auth/register",
                 json={"name": "Smoke Test", "email": email, "password": password, "language": "id"},
             ),
-            201,
-            ("id", "email", "name", "language"),
+            202,
+            ("message", "verification_token"),
+        )
+        status = client.post("/api/auth/login", json={"email": email, "password": password}).status_code
+        report.check("login sebelum verifikasi email ditolak 403", status == 403, f"status {status}")
+        report.expect(
+            "POST /api/auth/register/verify",
+            client.post(
+                "/api/auth/register/verify",
+                json={
+                    "name": "Smoke Test",
+                    "email": email,
+                    "password": password,
+                    "language": "id",
+                    "token": daftar.get("verification_token", ""),
+                },
+            ),
+            200,
+            ("message",),
         )
         login = report.expect(
             "POST /api/auth/login",
@@ -356,10 +387,7 @@ def run(report: Report, with_network: bool) -> None:
 
         try:
             reset_limits()
-            client.post(
-                "/api/auth/register",
-                json={"name": "Smoke Sec", "email": sec_email, "password": password},
-            )
+            daftar_akun(sec_email, password, "Smoke Sec")
 
             status = client.post("/api/auth/reset-password/verify", json={"token": "123456"}).status_code
             report.check("A1 verify tanpa email ditolak (422)", status == 422, f"status {status}")
@@ -512,6 +540,206 @@ def run(report: Report, with_network: bool) -> None:
             )
         finally:
             reset_limits()
+
+        section("Verifikasi email")
+        pw_baru = "verif-pass-123"
+
+        def daftar_mentah(target: str, pw: str, name: str = "Petani Uji"):
+            return client.post("/api/auth/register", json={"name": name, "email": target, "password": pw})
+
+        def verifikasi(target: str, kode: str, pw: str, name: str = "Petani Uji") -> int:
+            return client.post(
+                "/api/auth/register/verify",
+                json={"name": name, "email": target, "password": pw, "token": kode},
+            ).status_code
+
+        def baris_user(target: str) -> dict:
+            with database.get_connection() as connection:
+                row = connection.execute(
+                    "SELECT name, email_verified_at, created_at FROM users WHERE email = ?", (target,)
+                ).fetchone()
+            return dict(row) if row else {}
+
+        terkirim: list[tuple[str, str, str]] = []
+        original_send = auth_router.send_email_via_resend
+        auth_router.send_email_via_resend = lambda to, subject, html: terkirim.append((to, subject, html)) or False
+        try:
+            reset_limits()
+            baru_email = f"verif-{suffix}@lorafield-smoke.com"
+            baru = daftar_mentah(baru_email, pw_baru, name="Klik http://spam.example")
+            lama = daftar_mentah(email, pw_baru)
+            baru_body, lama_body = baru.json(), lama.json()
+            report.check(
+                "V1 respons daftar sama untuk email baru dan email yang sudah terdaftar",
+                baru.status_code == lama.status_code == 202
+                and baru_body.get("message") == lama_body.get("message")
+                and "id" not in baru_body
+                and "verification_token" not in lama_body,
+                f"baru {baru.status_code} {baru_body}, lama {lama.status_code} {lama_body}",
+            )
+            kode_baru = baru_body.get("verification_token", "")
+            report.check(
+                "V2 email verifikasi hanya ke email baru, tanpa isi dari pengguna",
+                len(terkirim) == 1
+                and terkirim[0][0] == baru_email
+                and kode_baru in terkirim[0][2]
+                and "spam.example" not in terkirim[0][1] + terkirim[0][2]
+                and "href" not in terkirim[0][2],
+                f"terkirim {[(t[0], t[1]) for t in terkirim]}",
+            )
+            report.check(
+                "V3 daftar email baru tidak mengisi memori pembatas",
+                len(auth_router._reset_requests) == 0,
+                f"catatan {len(auth_router._reset_requests)}",
+            )
+            statuses = [status_login(email, password), status_login(email, pw_baru)]
+            report.check(
+                "V4 daftar ulang email terdaftar tidak mengubah password",
+                statuses == [200, 401],
+                f"status {statuses}",
+            )
+            statuses = [status_login(baru_email, pw_baru), status_login(baru_email, "password-salah")]
+            report.check(
+                "V5 akun belum verifikasi tidak bisa login (403), password salah tetap 401",
+                statuses == [403, 401],
+                f"status {statuses}",
+            )
+            statuses = [verifikasi(baru_email, kode_salah(kode_baru), pw_baru), verifikasi(baru_email, kode_baru, pw_baru)]
+            statuses.append(status_login(baru_email, pw_baru))
+            report.check(
+                "V6 kode salah ditolak, kode benar memverifikasi lalu login berhasil",
+                statuses == [400, 200, 200] and baris_user(baru_email).get("name") == "Petani Uji",
+                f"status {statuses}, baris {baris_user(baru_email)}",
+            )
+            status = verifikasi(baru_email, kode_baru, pw_baru)
+            report.check("V7 kode verifikasi tidak bisa dipakai dua kali", status == 400, f"status {status}")
+
+            reset_limits()
+            korban = f"korban-{suffix}@lorafield-smoke.com"
+            daftar_mentah(korban, "pw-penyerang", name="Penyerang")
+            daftar_mentah(korban, "pw-korban", name="Korban Asli")
+            # Penyerang daftar ulang: kode baru tetap hanya terkirim ke kotak masuk korban.
+            kode_terakhir = daftar_mentah(korban, "pw-penyerang", name="Penyerang").json().get(
+                "verification_token", ""
+            )
+            verifikasi(korban, kode_terakhir, "pw-korban", name="Korban Asli")
+            statuses = [status_login(korban, "pw-penyerang"), status_login(korban, "pw-korban")]
+            report.check(
+                "V8 pendaftar lebih dulu tidak bisa membajak akun, password dari pemegang kode",
+                statuses == [401, 200] and baris_user(korban).get("name") == "Korban Asli",
+                f"status {statuses}, baris {baris_user(korban)}",
+            )
+
+            reset_limits()
+            ulang = f"ulang-{suffix}@lorafield-smoke.com"
+            respons = [daftar_mentah(ulang, pw_baru) for _ in range(8)]
+            kode_terbit = sum(1 for r in respons if r.json().get("verification_token"))
+            report.check(
+                "V9 daftar ulang dibatasi 1 + 5 kode per hari, tanpa 429",
+                [r.status_code for r in respons] == [202] * 8 and kode_terbit == 6,
+                f"status {[r.status_code for r in respons]}, kode {kode_terbit}",
+            )
+
+            def kirim_gagal(to, subject, html):
+                raise RuntimeError("Resend mati")
+
+            auth_router.send_email_via_resend = kirim_gagal
+            # Klien ketat: error yang lolos dari background task ikut dilempar ke sini.
+            try:
+                status = TestClient(app).post(
+                    "/api/auth/register",
+                    json={"name": "Petani Uji", "email": f"resend-mati-{suffix}@lorafield-smoke.com", "password": pw_baru},
+                ).status_code
+            except Exception as exc:  # noqa: BLE001 - justru yang dicari
+                status = f"error lolos: {exc!r}"
+            report.check("V10 email gagal terkirim tidak menggagalkan daftar", status == 202, f"status {status}")
+        finally:
+            auth_router.send_email_via_resend = original_send
+            reset_limits()
+
+        hash_calls: list[int] = []
+        original_hash = auth_router.hash_password
+        auth_router.hash_password = lambda plain: hash_calls.append(1) or original_hash(plain)
+        try:
+            daftar_mentah(email, pw_baru)
+        finally:
+            auth_router.hash_password = original_hash
+        report.check(
+            "V11 password tetap di-hash untuk email terdaftar (lama respons tidak membedakan)",
+            len(hash_calls) == 1,
+            f"hash dipanggil {len(hash_calls)}x",
+        )
+
+        try:
+            reset_limits()
+            lupa = f"lupa-verif-{suffix}@lorafield-smoke.com"
+            daftar_mentah(lupa, pw_baru)
+            kode = minta_kode(lupa)
+            client.post("/api/auth/reset-password", json={"email": lupa, "token": kode, "new_password": pw_baru})
+            status = status_login(lupa, pw_baru)
+            report.check("V12 reset password ikut memverifikasi akun", status == 200, f"status {status}")
+
+            restart = f"restart-{suffix}@lorafield-smoke.com"
+            daftar_mentah(restart, pw_baru)
+            database.init_db()
+            status = status_login(restart, pw_baru)
+            report.check("V13 restart server tidak memverifikasi akun baru", status == 403, f"status {status}")
+
+            # Akun dengan email sama dibuat permintaan lain tepat di antara cek email dan INSERT.
+            bersamaan = f"bersamaan-{suffix}@lorafield-smoke.com"
+            uuid_asli = auth_router.uuid
+
+            def sisip_dulu():
+                with database.get_connection() as connection:
+                    connection.execute(
+                        "INSERT INTO users (id, email, name, password_hash) VALUES (?, ?, 'Duluan', 'x')",
+                        (f"user-duluan-{suffix}", bersamaan),
+                    )
+                return uuid_asli.uuid4()
+
+            auth_router.uuid = types.SimpleNamespace(uuid4=sisip_dulu)
+            try:
+                respons = daftar_mentah(bersamaan, pw_baru)
+            finally:
+                auth_router.uuid = uuid_asli
+            with database.get_connection() as connection:
+                jumlah = connection.execute("SELECT COUNT(*) FROM users WHERE email = ?", (bersamaan,)).fetchone()[0]
+            report.check(
+                "V14 email sama didaftarkan bersamaan: 202 tanpa error, satu akun",
+                respons.status_code == 202 and "verification_token" not in respons.json() and jumlah == 1,
+                f"status {respons.status_code}, body {respons.text[:120]}, akun {jumlah}",
+            )
+        finally:
+            reset_limits()
+
+        # Migrasi: database lama tanpa kolom email_verified_at. Akun lamanya harus dianggap terverifikasi.
+        db_asli = database.DB_PATH
+        database.DB_PATH = TMP_DIR / "migrasi.db"
+        try:
+            lama_conn = sqlite3.connect(database.DB_PATH)
+            lama_conn.executescript(
+                """
+                CREATE TABLE users (
+                    id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                INSERT INTO users (id, email, name, password_hash, created_at)
+                VALUES ('user-lama', 'lama@lorafield-smoke.com', 'Akun Lama', 'x', '2026-01-02 03:04:05');
+                """
+            )
+            lama_conn.commit()
+            lama_conn.close()
+            database.init_db()
+            baris = baris_user("lama@lorafield-smoke.com")
+        finally:
+            database.DB_PATH = db_asli
+        report.check(
+            "V15 migrasi: akun lama dianggap terverifikasi sejak dibuat",
+            baris.get("email_verified_at") == "2026-01-02 03:04:05",
+            f"baris {baris}",
+        )
 
         section("Farms & gateway")
         created = report.expect(
@@ -2020,12 +2248,211 @@ def run(report: Report, with_network: bool) -> None:
         still = client.get(f"/api/farms/{farm_id}/gateway", headers=auth).json().get("gateway") or {}
         report.check("gateway lama tetap terpasang", still.get("device_id") == device_id)
 
+        section("Jembatan MQTT")
+        set_cached_weather(ADM4, FAKE_WEATHER)
+
+        class KlienMqttPalsu:
+            """Pengganti paho: catat publish, tanpa broker."""
+
+            def __init__(self) -> None:
+                self.terkirim: list[tuple[str, dict]] = []
+
+            def publish(self, topic, body, qos, retain):
+                self.terkirim.append((topic, json.loads(body)))
+                return types.SimpleNamespace(rc=0)
+
+        gw_mqtt = f"SIM-GW-{suffix}"
+        node_mqtt = f"SIM-{suffix}-N1"
+        topik = f"lorafield/gw/{gw_mqtt}"
+        topik_valve = f"{topik}/node/{node_mqtt}/valve/set"
+        klien = KlienMqttPalsu()
+        mqtt_bridge._client = klien
+        mqtt_bridge._last_published.clear()
+
+        def kirim(sub: str, data, retained: bool = False) -> None:
+            body = data if isinstance(data, bytes) else json.dumps(data).encode()
+            mqtt_bridge.handle_message(f"{topik}/{sub}", body, retained)
+
+        def reading_mqtt(soil: float, valve: str) -> None:
+            kirim(
+                f"node/{node_mqtt}/reading",
+                {"soil_moisture": soil, "soil_temp": 26.0, "air_temp": 30.0,
+                 "air_humidity": 70.0, "battery": 90.0, "rssi": -95, "valve": valve},
+            )
+
+        def jumlah_reading() -> int:
+            with database.get_connection() as connection:
+                return connection.execute(
+                    "SELECT COUNT(*) FROM readings WHERE node_id = ?", (node_mqtt,)
+                ).fetchone()[0]
+
+        def node_db() -> dict:
+            with database.get_connection() as connection:
+                row = connection.execute("SELECT * FROM nodes WHERE id = ?", (node_mqtt,)).fetchone()
+            return dict(row) if row else {}
+
+        reading_mqtt(10.0, "closed")
+        report.check("MQTT: gateway belum diklaim, reading diabaikan", jumlah_reading() == 0 and not node_db())
+
+        resp_mqtt = client.post(
+            "/api/farms",
+            json={"name": "Kebun MQTT", "crop_type": "Padi", "bmkg_adm4_code": ADM4,
+                  "latitude": -7.79, "longitude": 110.31, "gateway_device_id": gw_mqtt},
+            headers=auth,
+        )
+        assert resp_mqtt.status_code == 201, resp_mqtt.text
+        farm_mqtt = resp_mqtt.json()["farm"]["id"]
+        try:
+            kirim("nodes", {"nodes": [{"node_id": node_mqtt, "name": "Blok Utara"}]})
+            baru = node_db()
+            report.check(
+                "MQTT nodes: node terdaftar dengan nama, belum online",
+                baru.get("name") == "Blok Utara" and baru.get("last_seen_at") is None,
+                f"node {baru}",
+            )
+
+            reading_mqtt(10.0, "closed")
+            report.check("MQTT reading tersimpan", jumlah_reading() == 1, f"{jumlah_reading()} reading")
+            buka = klien.terkirim[-1] if klien.terkirim else ("", {})
+            sisa = buka[1].get("until", 0) - time.time()
+            report.check(
+                "MQTT: tanah kering, valve/set buka dengan until = pulsa otomatis",
+                buka[0] == topik_valve and buka[1].get("state") == "open" and 590 < sisa <= 600,
+                f"terkirim {klien.terkirim}",
+            )
+            jumlah_kirim = len(klien.terkirim)
+            reading_mqtt(10.5, "open")
+            report.check(
+                "MQTT: perintah sama tidak dikirim ulang",
+                len(klien.terkirim) == jumlah_kirim,
+                f"terkirim {klien.terkirim}",
+            )
+
+            kirim(f"node/{node_mqtt}/reading", {"soil_moisture": 150, "soil_temp": 26, "air_temp": 30,
+                                                "air_humidity": 70, "valve": "open"})
+            kirim(f"node/{node_mqtt}/reading", b"bukan json")
+            kirim(f"node/{node_mqtt}/reading", {"soil_moisture": 20, "soil_temp": 26, "air_temp": 30,
+                                                "air_humidity": 70})
+            report.check("MQTT: reading tidak valid diabaikan", jumlah_reading() == 2, f"{jumlah_reading()} reading")
+
+            report.expect(
+                "MQTT: ganti ke mode manual",
+                client.patch(f"/api/farms/{farm_mqtt}/irrigation-mode", json={"mode": "manual"}, headers=auth),
+                200,
+            )
+            report.check(
+                "MQTT: mode manual mengirim valve/set tutup",
+                klien.terkirim[-1] == (topik_valve, {"state": "closed"}),
+                f"terakhir {klien.terkirim[-1]}",
+            )
+            report.check("MQTT: perintah tutup belum terkonfirmasi", node_db().get("valve_command_sent_at") is None)
+            reading_mqtt(20.0, "closed")
+            report.check(
+                "MQTT: alat lapor valve tutup, perintah terkonfirmasi",
+                node_db().get("valve_command_sent_at") is not None,
+            )
+
+            report.expect(
+                "MQTT: buka valve manual lewat web",
+                client.patch(f"/api/nodes/{node_mqtt}/valve", json={"open": True}, headers=auth),
+                200,
+            )
+            buka_manual = klien.terkirim[-1][1]
+            sisa = buka_manual.get("until", 0) - time.time()
+            report.check(
+                "MQTT: valve/set buka manual dengan until = batas manual",
+                buka_manual.get("state") == "open" and 1790 < sisa <= 1800,
+                f"terakhir {buka_manual}",
+            )
+            reading_mqtt(21.0, "closed")
+            report.check(
+                "MQTT: posisi valve belum sama, perintah belum terkonfirmasi",
+                node_db().get("valve_command_sent_at") is None,
+            )
+            reading_mqtt(22.0, "open")
+            report.check(
+                "MQTT: posisi valve sama, perintah terkonfirmasi",
+                node_db().get("valve_command_sent_at") is not None,
+            )
+            reading_mqtt(23.0, "closed")  # node sempat mati: valve tertutup padahal perintah masih buka
+            report.check(
+                "MQTT: alat lapor beda setelah terkonfirmasi, tanda terkirim dihapus",
+                node_db().get("valve_command_sent_at") is None,
+            )
+            reading_mqtt(24.0, "open")
+
+            kirim("status", {"state": "online", "fw": "sim-1"}, retained=True)
+            kirim("status", {"state": "online", "fw": "sim-1"})
+            kirim("heartbeat", {"uptime_s": 60, "nodes_heard": 1})
+            events = [
+                item["event"]
+                for item in client.get(f"/api/farms/{farm_mqtt}/gateway-logs", headers=auth).json()["items"]
+            ]
+            report.check(
+                "MQTT: status (tanpa retain) dan heartbeat tercatat di log gateway",
+                sorted(events) == ["connected", "heartbeat"],
+                f"events {events}",
+            )
+            summary_mqtt = client.get(f"/api/farms/{farm_mqtt}/summary", headers=auth).json()
+            report.check(
+                "MQTT: gateway dan node online di summary",
+                summary_mqtt.get("gateway_status") == "online" and summary_mqtt.get("nodes_online") == 1,
+                f"gateway {summary_mqtt.get('gateway_status')}, online {summary_mqtt.get('nodes_online')}",
+            )
+
+            # MAC ESP32 satu pabrikan: awalan ID sama, nama bawaan tetap harus beda.
+            node_kembar = ["ND-246F28A1B2C3", "ND-246F28D4E5F6"]
+            data_valid = {"soil_moisture": 70, "soil_temp": 26, "air_temp": 30, "air_humidity": 70, "valve": "closed"}
+            for node_id in node_kembar:
+                kirim(f"node/{node_id}/reading", data_valid)
+            kirim("node/ND-X1\n/reading", data_valid)
+            with database.get_connection() as connection:
+                nama = {
+                    row["id"]: row["name"]
+                    for row in connection.execute("SELECT id, name FROM nodes WHERE farm_id = ?", (farm_mqtt,))
+                }
+            report.check(
+                "MQTT: nama bawaan node beda walau awalan ID sama",
+                nama.get(node_kembar[0]) is not None and nama.get(node_kembar[0]) != nama.get(node_kembar[1]),
+                f"nama {nama}",
+            )
+            report.check("MQTT: ID node berakhiran baris baru ditolak", not any("\n" in n for n in nama), f"node {list(nama)}")
+
+            report.expect(
+                "MQTT: kembali ke mode otomatis",
+                client.patch(f"/api/farms/{farm_mqtt}/irrigation-mode", json={"mode": "auto"}, headers=auth),
+                200,
+            )
+            cuaca_asli = mqtt_bridge.get_weather_for_decision
+
+            def cuaca_lalu_ganti_mode(kode):
+                # Pengguna mengganti mode tepat saat server menunggu BMKG.
+                client.patch(f"/api/farms/{farm_mqtt}/irrigation-mode", json={"mode": "manual"}, headers=auth)
+                return cuaca_asli(kode)
+
+            mqtt_bridge.get_weather_for_decision = cuaca_lalu_ganti_mode
+            try:
+                reading_mqtt(10.0, "closed")  # tanah kering: dengan mode lama (otomatis) valve akan dibuka
+            finally:
+                mqtt_bridge.get_weather_for_decision = cuaca_asli
+            perintah_node = [isi for topik, isi in klien.terkirim if topik == topik_valve]
+            with database.get_connection() as connection:
+                riwayat = connection.execute(
+                    "SELECT decision_type FROM decision_logs WHERE node_id = ? ORDER BY id DESC LIMIT 1", (node_mqtt,)
+                ).fetchone()[0]
+            report.check(
+                "MQTT: mode diganti saat menunggu BMKG, reading memakai mode baru",
+                riwayat == "manual_closed" and perintah_node[-1] == {"state": "closed"},
+                f"riwayat {riwayat}, perintah terakhir {perintah_node[-1]}",
+            )
+        finally:
+            mqtt_bridge._client = None
+            mqtt_bridge._last_published.clear()
+            client.delete(f"/api/farms/{farm_mqtt}", headers=auth)
+
         section("Isolasi antar user")
         other_email = f"smoke-other-{suffix}@lorafield-smoke.com"
-        client.post(
-            "/api/auth/register",
-            json={"name": "Orang Lain", "email": other_email, "password": password},
-        )
+        daftar_akun(other_email, password, "Orang Lain")
         other_login = client.post(
             "/api/auth/login",
             json={"email": other_email, "password": password},

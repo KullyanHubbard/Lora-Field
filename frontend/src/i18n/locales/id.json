@@ -15,6 +15,8 @@
     "toast": {
       "registerSuccess": "Akun berhasil dibuat. Silakan masuk.",
       "registerError": "Gagal membuat akun.",
+      "verifyRegistrationError": "Kode verifikasi tidak valid.",
+      "registerCodeResent": "Kalau email bisa dipakai, kode baru sudah dikirim.",
       "forgotPasswordError": "Gagal mengirim kode reset.",
       "verifyResetCodeError": "Kode reset tidak valid.",
       "resetPasswordSuccess": "Password berhasil diperbarui. Silakan masuk.",
@@ -65,7 +67,14 @@
       "errorNameRequired": "Nama lengkap wajib diisi.",
       "errorEmailInvalid": "Email belum valid.",
       "errorPasswordTooShort": "Password minimal {{min}} karakter.",
-      "errorPasswordMismatch": "Ulangi password belum sama."
+      "errorPasswordMismatch": "Ulangi password belum sama.",
+      "descCode": "Masukkan kode {{digits}} digit yang dikirim ke {{email}}. Kalau email ini sudah punya akun, kode tidak dikirim: silakan masuk atau pakai Lupa Password.",
+      "codeLabel": "Kode Verifikasi ({{digits}} Digit)",
+      "codePlaceholder": "Contoh: 123456",
+      "verifyCode": "Verifikasi Email",
+      "resendCode": "Kirim ulang kode",
+      "editData": "Ubah data pendaftaran",
+      "errorCodeInvalid": "Kode verifikasi harus {{digits}} digit angka."
     },
     "resetPassword": {
       "backToHome": "Kembali ke beranda LoraField",

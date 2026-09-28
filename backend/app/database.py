@@ -30,13 +30,16 @@ def get_connection() -> Generator[sqlite3.Connection, None, None]:
         connection.close()
 
 
-def ensure_column(connection: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+def ensure_column(connection: sqlite3.Connection, table: str, column: str, definition: str) -> bool:
+    """Tambah kolom kalau belum ada. True kalau kolom baru saja ditambahkan."""
     columns = {
         row["name"]
         for row in connection.execute(f"PRAGMA table_info({table})").fetchall()
     }
-    if column not in columns:
-        connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+    if column in columns:
+        return False
+    connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+    return True
 
 
 def init_db() -> None:
@@ -207,6 +210,10 @@ def init_db() -> None:
         ensure_column(connection, "nodes", "auto_pulse_started_at", "TEXT")
         ensure_column(connection, "nodes", "auto_limit_at", "TEXT")
         ensure_column(connection, "password_resets", "attempts", "INTEGER NOT NULL DEFAULT 0")
+        # Akun yang sudah ada sebelum verifikasi email berlaku dianggap terverifikasi. Hanya
+        # saat kolom baru dibuat: akun baru yang belum verifikasi wajib tetap NULL.
+        if ensure_column(connection, "users", "email_verified_at", "TEXT"):
+            connection.execute("UPDATE users SET email_verified_at = created_at")
         backfill_reading_farm_ids(connection)
         backfill_farm_thresholds(connection)
         backfill_node_last_seen(connection)

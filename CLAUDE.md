@@ -40,6 +40,8 @@ Modul di `backend/app/` (hasil Fase 1 sampai Fase 4 rapikan backend, 2026-09-23)
 | `deps.py` | Helper bersama antar-router: `client_ip` dan verifikasi kepemilikan farm/node |
 | `gateway_service.py` | `ensure_gateway_unclaimed` + `claim_gateway_for_farm` (dipakai `create_farm` dan `claim_farm_gateway`), `release_gateway` (dipakai `delete_farm` dan `unclaim_farm_gateway`) |
 | `node_service.py` | `insert_node` (dipakai registrasi batch gateway dan self-registration) dan `record_reading` (simpan reading + decision_log) |
+| `reading_service.py` | `apply_reading`: keputusan irigasi + simpan reading, dipakai route HTTP readings dan jembatan MQTT |
+| `mqtt_bridge.py` | Jembatan MQTT sesuai `docs/kontrak-mqtt.md`: terima status/heartbeat/nodes/reading gateway, kirim `valve/set` (retain, dengan `until`). Nonaktif kalau `MQTT_HOST` kosong. Route valve memanggil `publish_farm_valves` setelah transaksi |
 | `irrigation.py` | `THRESHOLDS` + `calculate_decision`, aturan buka/tutup valve |
 | `bmkg.py` | Fetch prakiraan BMKG, normalisasi response, cache per adm4 |
 | `adm4.py` | Resolusi kode adm4 dari koordinat (Nominatim + tabel wilayah; fallback alamat ketikan, termasuk format "Desa, Kecamatan, Kabupaten") |
@@ -47,12 +49,15 @@ Modul di `backend/app/` (hasil Fase 1 sampai Fase 4 rapikan backend, 2026-09-23)
 | `mailer.py` | Kirim email lewat Resend, plus template HTML email reset password |
 | `auth.py`, `config.py`, `database.py`, `schemas.py`, `wilayah_resolver.py`, `language_preferences.py` | Sudah ada sebelumnya |
 
-- **Simulator perangkat: `simulator/`**. Script Python yang berperan sebagai gateway dan node sensor selama firmware belum ada. Mengirim data lewat endpoint yang sama dengan firmware (register node, POST readings, gateway-logs); nilai sensor dihitung dari cuaca BMKG kebun dan model fisik di `config.example.json`. Selalu membuat kebun demo sendiri (hapus dengan `cleanup`), dan ID alat diawali `SIM-` sebagai penanda mock. Cara pakai di `simulator/README.md`.
+- **Simulator perangkat: `simulator/`**. Script Python yang berperan sebagai gateway dan node sensor selama firmware belum ada. Bicara ke server hanya lewat MQTT sesuai `docs/kontrak-mqtt.md` (tanpa akun, tanpa HTTP), jadi bisa diganti gateway asli tanpa mengubah server. Nilai sensor dihitung dari BMKG (diambil langsung dari BMKG, bagian "dunia" simulasi) dan model fisik di `config.example.json`. Tidak membuat kebun: pengguna mendaftarkan kebun di web dengan ID gateway yang dicetak `run`; `reset` melupakan ID dan menghapus retain di broker. Model tanah: air merembes dengan jeda, kapasitas lapang 85%, penguapan ikut matahari, hujan dari `tp` BMKG sesuai `ground_cover` kebun di config (harus sama dengan kebun di web). Baterai dari arus sesuai firmware (ESP32 dan radio selalu menyala). Gangguan acak: WiFi gateway putus (Last Will), sensor rusak; `run --fault soil-dry|dht22-dead` memaksa node pertama rusak. ID alat diawali `SIM-` sebagai penanda mock. Cek logika simulator: `python simulator/test_sim.py`.
+- **Firmware: `firmware/`**. Proyek PlatformIO untuk LilyGO LoRa32 (ESP32): env `gateway`, `node`, dan `native` (tes logika di PC). Gateway mengikuti `docs/kontrak-mqtt.md` sama seperti simulator. Logika bersama tanpa Arduino di `lib/lorafield/`; pin dan kalibrasi hanya di `include/config.h` (belum diverifikasi dengan alat). Verifikasi: `pio test -e native` dan `pio run -e gateway -e node` dari folder `firmware/` (pio ada di `%USERPROFILE%\.platformio\penv\Scripts\pio.exe`). Belum pernah dicoba di alat asli. Cara pakai di `simulator/README.md`.
 
 Entrypoint tetap `app.main:app`. Aturan urutan route: catch-all SPA `/{full_path:path}` di `main.py` WAJIB tetap terdaftar paling akhir, setelah semua `include_router`. Kalau digeser ke atas, semua route API akan ketelan. Startup pakai `lifespan` (bukan `on_event` yang sudah deprecated).
 - **Panduan rebuild lama** (`frontend/docs/Panduan-Rebuild-Frontend-LoraField.md`) sudah dihapus. Acuan sekarang CLAUDE.md ini; jangan menambah teknologi atau library di luar section Stack.
 
 Label UI: Bahasa Indonesia. Istilah teknis dipertahankan: LoRa, VWC, MQTT, Gateway, Node, BMKG, RSSI.
+
+MQTT: broker Mosquitto terpasang sebagai service Windows (otomatis jalan, hanya localhost, tanpa password). Backend menyambung kalau `MQTT_HOST` diisi di `backend/.env`. Format pesan gateway: `docs/kontrak-mqtt.md`. Smoke test mematikan MQTT dan memakai klien palsu.
 
 Dev server: `cd frontend && npm run dev` (port 5173, proxy `/api` ke port 8000). Backend: `uvicorn backend.app.main:app --host 0.0.0.0 --port 8000`.
 
@@ -94,11 +99,12 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 
 | Endpoint | Method | Auth | Keterangan |
 |----------|--------|------|-----------|
-| `/api/auth/register` | POST | Publik | Daftar akun baru |
-| `/api/auth/login` | POST | Publik | Login, return JWT. 429 setelah 5 kali gagal dalam 15 menit (hanya email terdaftar, password benar pun ditolak selama terkunci) |
+| `/api/auth/register` | POST | Publik | Daftar akun, tahap 1. Selalu 202 `{ message }` untuk email apa pun, supaya tidak membocorkan email terdaftar. Email baru atau yang belum verifikasi dikirimi kode 6 digit (tabel `password_resets`, 30 menit; kirim ulang ikut batas 5 per hari forgot-password, tanpa 429). Email yang sudah terverifikasi tidak dikirimi apa pun dan akunnya tidak berubah |
+| `/api/auth/register/verify` | POST | OTP | Daftar akun, tahap 2. Body `{ name, email, password, language, token }`. Kode benar = nama, password, dan bahasa dari body ini disimpan dan email terverifikasi. Kode hangus setelah 5 kali salah |
+| `/api/auth/login` | POST | Publik | Login, return JWT. 429 setelah 5 kali gagal dalam 15 menit (hanya email terdaftar, password benar pun ditolak selama terkunci). 403 kalau email belum diverifikasi (dicek setelah password benar) |
 | `/api/auth/forgot-password` | POST | Publik | Kirim OTP ke email. 429 setelah 5 permintaan per hari (hanya email terdaftar) |
 | `/api/auth/reset-password/verify` | POST | Publik | Verifikasi OTP 6 digit. Body wajib `{ email, token }`; kode hangus setelah 5 kali salah |
-| `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password). Body wajib `{ email, token, new_password }` |
+| `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password). Body wajib `{ email, token, new_password }`. Ikut memverifikasi email akun yang belum verifikasi |
 | `/api/auth/change-password` | POST | JWT | Ganti password (sudah login) |
 | `/api/auth/profile` | PATCH | JWT | Update phone number. Query opsional `browser_language` (`id`/`en`, default `en`) dipakai untuk backfill kolom `language` akun lama. |
 | `/api/auth/me` | GET | JWT | Fetch profil user (return UserPublic). Query opsional `browser_language` (`id`/`en`, default `en`). Sumber: routers/auth.py:142. |
@@ -157,12 +163,12 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | `/api/farms/{farm_id}/irrigation/stop` | POST | Mode manual saja. Tutup semua valve terbuka, termasuk node offline. Return `{ nodes }` |
 | `/api/nodes/{node_id}/valve` | PATCH | Mode manual saja. Body `{ open }`. Membuka butuh node online dan sudah punya reading (409 kalau tidak). Return `{ node }` |
 
-Perintah valve hanya disimpan di server (`nodes.valve_command`). `valve_command_sent_at` tetap NULL sampai ada jalur MQTT ke gateway, dan UI wajib menyebut perintah "belum terkirim ke alat" selama NULL.
+Perintah valve disimpan di server (`nodes.valve_command`) lalu dikirim ke gateway lewat MQTT (`valve/set`). `valve_command_sent_at` diisi saat reading MQTT melaporkan field `valve` sama dengan perintah, dan dikosongkan lagi kalau laporan berikutnya berbeda (mis. node sempat mati); reading lewat HTTP tidak pernah mengisinya. UI wajib menyebut perintah "belum terkirim ke alat" selama NULL.
 
 ## Database Schema (SQLite)
 
 ```text
-users           : id, email, name, password_hash, phone, language, created_at, updated_at
+users           : id, email, name, password_hash, phone, language, email_verified_at, created_at, updated_at
 farms           : id, user_id, name, owner, location, crop_type, area_ha, bmkg_adm4_code, latitude, longitude, status, lower_threshold, upper_threshold, irrigation_mode, ground_cover
 nodes           : id, farm_id, gateway_id, name, location, region, latitude, longitude, status, battery, first_seen_at, last_seen_at, battery_updated_at, valve_command, valve_command_at, valve_command_sent_at, auto_pulse_count, auto_pulse_started_at, auto_limit_at, updated_at
 readings        : id, farm_id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, rssi, created_at
@@ -176,7 +182,7 @@ password_resets : id, user_id, token (6-digit OTP), expires_at, used, created_at
 
 Kolom `farms.ground_cover` ditambahkan via `ensure_column` (`'open'`/`'mulch'`/`'roofed'`, default `'open'`). Kebun bermulsa plastik atau beratap tidak kena hujan, jadi prediksi hujan BMKG hanya menunda irigasi untuk `'open'` (lihat `effective_rain_next_3h` di `irrigation.py`, dipakai `create_reading` dan `get_farm_summary`; `/api/decision` debug TIDAK memakainya).
 
-Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di frontend = id, name, email, phone (opsional), language; `created_at`/`updated_at` tidak ikut dikirim ke frontend. Kolom `phone` dan `language` ditambahkan via `ensure_column` (migration otomatis saat startup). `language` bernilai `'id'` atau `'en'` (CHECK constraint), dan NULL untuk baris lama sampai login, `/auth/me`, atau `/auth/profile` mem-backfill-nya. Kolom `nodes.gateway_id`, `nodes.first_seen_at`, dan `readings.farm_id` juga ditambahkan via `ensure_column`, begitu juga `farms.lower_threshold`/`upper_threshold`, `nodes.last_seen_at`/`battery_updated_at`, `readings.rssi`, dan `decision_logs.decision_type` (di-backfill saat startup).
+Catatan: `password_hash` tidak pernah dikirim ke frontend. Type `User` di frontend = id, name, email, phone (opsional), language; `created_at`/`updated_at` tidak ikut dikirim ke frontend. Kolom `phone` dan `language` ditambahkan via `ensure_column` (migration otomatis saat startup). `language` bernilai `'id'` atau `'en'` (CHECK constraint), dan NULL untuk baris lama sampai login, `/auth/me`, atau `/auth/profile` mem-backfill-nya. Kolom `nodes.gateway_id`, `nodes.first_seen_at`, dan `readings.farm_id` juga ditambahkan via `ensure_column`, begitu juga `farms.lower_threshold`/`upper_threshold`, `nodes.last_seen_at`/`battery_updated_at`, `readings.rssi`, dan `decision_logs.decision_type` (di-backfill saat startup). Kolom `users.email_verified_at` (NULL = belum verifikasi, tidak bisa login) juga lewat `ensure_column`; akun yang sudah ada diisi `created_at` SEKALI saja saat kolom dibuat (jangan diubah jadi backfill tiap startup).
 
 Catatan gateway: `summary.gateway_status` = `online` kalau ada node online atau gateway melapor (`gateways.last_seen_at`) dalam batas waktu yang sama. Kartu Gateway di frontend membaca nilai ini, tidak menghitung sendiri.
 
@@ -323,7 +329,7 @@ Rute aktual ada di `frontend/src/app/router.tsx`. Kolom kedua = referensi portin
 |-------|------|-----------|
 | `/` | `LandingPage.tsx` | Landing marketing PUBLIK, tanpa auth guard. Tombol Login/CTA → `/login`. Dark-only. |
 | `/login` | `LoginPage.jsx` | Login + inline forgot password 2-step |
-| `/register` | `RegisterPage.jsx` | Daftar akun baru |
+| `/register` | `RegisterPage.jsx` | Daftar akun 2 tahap: isi data, lalu kode verifikasi dari email |
 | `/reset-password` | `ResetPasswordPage.jsx` | Flow lupa password (OTP 2 tahap). Tautan di email membawa `#email=` dan langsung membuka isian kode; tombol "Sudah punya kode?" untuk yang datang tanpa tautan |
 | `/select-farms` | `DashboardPage.jsx` | Peta kebun (Leaflet), pilih kebun lewat marker. Halaman awal setelah login |
 | `/my-farms` | `FarmsPage.jsx` | Card kebun + search + edit nama, warna marker, hapus |

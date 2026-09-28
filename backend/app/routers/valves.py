@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from .. import mqtt_bridge
 from ..auth import get_current_user
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned, get_node_owned
@@ -55,6 +56,7 @@ def update_irrigation_mode(
         farm = row_to_dict(
             connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
         )
+    mqtt_bridge.publish_farm_valves(farm_id)
     return {"farm": farm}
 
 
@@ -81,6 +83,7 @@ def start_irrigation(
         for node in controllable:
             set_valve_command(connection, node, open_valve=True)
         nodes = farm_nodes(connection, farm_id)
+    mqtt_bridge.publish_farm_valves(farm_id)
     return {"nodes": nodes}
 
 
@@ -97,6 +100,7 @@ def stop_irrigation(
         for node in farm_nodes(connection, farm_id):
             set_valve_command(connection, node, open_valve=False)
         nodes = farm_nodes(connection, farm_id)
+    mqtt_bridge.publish_farm_valves(farm_id)
     return {"nodes": nodes}
 
 
@@ -114,4 +118,5 @@ def update_node_valve(
         node = next(n for n in farm_nodes(connection, farm_id) if n["id"] == node_id)
         set_valve_command(connection, node, open_valve=payload.open)
         node = next(n for n in farm_nodes(connection, farm_id) if n["id"] == node_id)
+    mqtt_bridge.publish_farm_valves(farm_id)
     return {"node": node}

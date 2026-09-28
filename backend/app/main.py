@@ -39,6 +39,7 @@ logger = logging.getLogger("lorafield")
 from .config import APP_VERSION, settings  # noqa: E402
 from .database import init_db  # noqa: E402
 from .deps import client_ip  # noqa: E402
+from . import mqtt_bridge  # noqa: E402
 from .routers import auth, farms, gateways, logs, nodes, utils, valves  # noqa: E402
 
 
@@ -69,7 +70,9 @@ async def lifespan(app: FastAPI):
         FRONTEND_DIST_DIR.exists(),
         len(_CORS_ORIGINS),
     )
+    mqtt_bridge.start()
     yield
+    mqtt_bridge.stop()
 
 
 app = FastAPI(

@@ -12,13 +12,31 @@ interface RegisterPayload {
   password: string;
 }
 
+// Daftar 2 tahap: register (kirim kode ke email) -> verify (simpan akun, lalu login).
+
 export function useRegister() {
-  const navigate = useNavigate();
   return useMutation({
     mutationFn: (payload: RegisterPayload) =>
       api.register(payload.name, payload.email, payload.password, getPreferredLanguage()),
+    onError: (error: Error) => {
+      toast.error(error.message || i18n.t('auth.toast.registerError'));
+    },
+  });
+}
+
+export function useVerifyRegistration() {
+  const navigate = useNavigate();
+  return useMutation({
+    mutationFn: (vars: RegisterPayload & { token: string }) =>
+      api.verifyRegistration(
+        vars.name,
+        vars.email,
+        vars.password,
+        vars.token,
+        getPreferredLanguage(),
+      ),
     onSuccess: (_data, variables) => {
-      // Register tidak mengembalikan token, jadi tidak ada auto-login.
+      // Verifikasi tidak mengembalikan token, jadi tidak ada auto-login.
       try {
         sessionStorage.setItem('lf_prefill_email', variables.email);
       } catch {
@@ -28,7 +46,7 @@ export function useRegister() {
       navigate('/login', { replace: true });
     },
     onError: (error: Error) => {
-      toast.error(error.message || i18n.t('auth.toast.registerError'));
+      toast.error(error.message || i18n.t('auth.toast.verifyRegistrationError'));
     },
   });
 }

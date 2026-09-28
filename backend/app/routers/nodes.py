@@ -1,6 +1,5 @@
 """Route /api/nodes: daftar node, update lokasi, dan pembacaan sensor."""
 
-from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,10 +8,9 @@ from ..auth import get_current_user
 from ..bmkg import get_weather_for_decision
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned, get_node_owned
-from ..irrigation import auto_decision, effective_rain_next_3h, farm_thresholds, manual_decision
-from ..node_service import insert_node, is_recently_seen, present_node, record_reading
+from ..node_service import default_node_name, insert_node, present_node
+from ..reading_service import apply_reading
 from ..schemas import NodeLocationUpdate, SensorReadingIn
-from ..valve_control import expire_manual_valves
 
 router = APIRouter()
 
@@ -167,44 +165,13 @@ def create_reading(
                 )
 
             farm = get_farm_owned(connection, farm_id, current_user["id"])
-            insert_node(connection, node_id, farm_id, f"Node {node_id[:8]}")
+            insert_node(connection, node_id, farm_id, default_node_name(node_id))
             node_created = True
         else:
             farm_id = get_node_owned(connection, node_id, current_user["id"])["farm_id"]
             farm = get_farm_owned(connection, farm_id, current_user["id"])
 
-        if farm.get("irrigation_mode") == "manual":
-            expire_manual_valves(connection, farm_id)
-            node = row_to_dict(
-                connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
-            )
-            decision = manual_decision(node)
-        else:
-            # Dibaca sebelum record_reading, jadi last_seen_at masih waktu reading sebelumnya.
-            node = row_to_dict(
-                connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
-            )
-            # Node sempat offline: siklus lama dianggap putus, mulai lagi dari pulsa pertama.
-            # auto_limit_at tidak di-reset supaya jeda pengaman sensor rusak tetap berlaku.
-            broken_cycle = {}
-            if node["auto_pulse_count"] > 0 and not is_recently_seen(node["last_seen_at"]):
-                broken_cycle = {"auto_pulse_count": 0, "auto_pulse_started_at": None}
-                node = {**node, **broken_cycle}
-            decision, state = auto_decision(
-                payload.soil_moisture,
-                effective_rain_next_3h(farm, weather),
-                farm_thresholds(farm),
-                node,
-                datetime.now(timezone.utc),
-            )
-            state = {**broken_cycle, **state}
-            if state:
-                # Nama kolom hanya dari auto_decision, bukan dari input pengguna.
-                assignments = ", ".join(f"{column} = ?" for column in state)
-                connection.execute(
-                    f"UPDATE nodes SET {assignments} WHERE id = ?", (*state.values(), node_id)
-                )
-        reading_id = record_reading(connection, node_id, farm_id, payload, weather, decision)
+        reading_id, decision = apply_reading(connection, node_id, farm, payload, weather)
 
     reading = payload.model_dump()
     reading["id"] = reading_id

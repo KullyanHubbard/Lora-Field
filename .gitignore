@@ -54,3 +54,7 @@ backend/logs/
 simulator/.state.json
 simulator/.state.tmp
 simulator/config.json
+
+# Firmware PlatformIO: hasil build dan kredensial WiFi/MQTT
+firmware/.pio/
+firmware/include/secrets.h

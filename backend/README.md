@@ -48,9 +48,10 @@ MANUAL_IRRIGATION_MAX_MINUTES=30    # valve yang dibuka manual ditutup otomatis 
 hanya bisa mengirim ke email pemilik akun Resend, jadi email reset ke user lain tidak
 akan sampai. Kalau kosong, email tidak dikirim dan server mencatat peringatan saat startup.
 
-Kalau `RESEND_API_KEY` kosong dan `EXPOSE_DEV_TOKENS=true`, forgot-password ikut
-mengembalikan kode reset di response supaya bisa dites tanpa email. Jangan aktifkan
-di production.
+Kalau email belum aktif (`RESEND_API_KEY` atau `RESEND_FROM_EMAIL` kosong) dan
+`EXPOSE_DEV_TOKENS=true`, forgot-password dan register ikut mengembalikan kode
+(`reset_token` / `verification_token`) di response supaya bisa dites tanpa email.
+Jangan aktifkan di production.
 
 ## Endpoint
 
@@ -74,6 +75,20 @@ Ringkasan kontrak API untuk frontend ada di section "Backend Endpoints" di `CLAU
 4. Kalau valid, user mengisi password baru, lalu frontend mengirim email + kode + password baru
    ke `POST /api/auth/reset-password`.
 5. Setelah berhasil, user login ulang di `/login`.
+
+## Alur Daftar Akun (2 Tahap)
+1. User mengisi nama, email, dan password di `/register`, lalu frontend memanggil
+   `POST /api/auth/register`. Responsnya selalu 202 dengan pesan yang sama, apa pun emailnya,
+   supaya halaman daftar tidak membocorkan email yang sudah punya akun.
+2. Email baru: akun dibuat dengan `email_verified_at` kosong, lalu kode 6 digit dikirim
+   (tabel `password_resets`, berlaku 30 menit). Email yang belum verifikasi: kode baru dikirim,
+   maksimal 5 per hari (jatah yang sama dengan forgot-password). Email yang sudah terverifikasi:
+   tidak ada email dan akun tidak berubah.
+3. User memasukkan kode, lalu frontend mengirim nama, email, password, bahasa, dan kode ke
+   `POST /api/auth/register/verify`. Data akun disimpan di langkah ini, jadi orang lain yang
+   mendaftar lebih dulu dengan email yang sama tidak bisa menentukan password akun itu.
+4. Akun yang belum verifikasi ditolak login (403). Reset password lewat kode email juga
+   memverifikasi akun. Akun yang sudah ada sebelum fitur ini dianggap terverifikasi.
 
 ## Contoh
 

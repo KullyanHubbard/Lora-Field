@@ -10,6 +10,11 @@ from .config import settings
 from .schemas import SensorReadingIn
 
 
+def default_node_name(node_id: str) -> str:
+    # ID utuh: awalan ID alat sering sama (MAC ESP32 satu pabrikan), jadi potongan awal bikin nama kembar.
+    return f"Node {node_id}"
+
+
 def insert_node(
     connection,
     node_id: str,

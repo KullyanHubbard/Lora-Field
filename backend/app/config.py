@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     #   ALLOWED_ORIGINS=https://app.lorafield.com,https://www.lorafield.com
     allowed_origins: str = ""
 
+    # Broker MQTT untuk gateway (docs/kontrak-mqtt.md). Kosong = jembatan MQTT nonaktif.
+    mqtt_host: str = ""
+    mqtt_port: int = 1883
+    mqtt_username: str = ""
+    mqtt_password: str = ""
+
     # Saat True, forgot-password mengembalikan OTP di response kalau email belum terkirim.
     # Hanya untuk pengujian lokal, jangan pernah aktif di production.
     expose_dev_tokens: bool = False

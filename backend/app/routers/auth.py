@@ -9,20 +9,28 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 
 from ..auth import create_access_token, get_current_user, hash_password, verify_password
 from ..config import settings
 from ..database import get_connection, row_to_dict
 from ..deps import client_ip
 from ..language_preferences import ensure_user_language, resolve_language, set_user_language
-from ..mailer import build_reset_email_html, reset_email_subject, send_email_via_resend
+from ..mailer import (
+    RESET_EMAIL_TEXT,
+    VERIFY_EMAIL_TEXT,
+    build_code_email_html,
+    email_enabled,
+    email_subject,
+    send_email_via_resend,
+)
 from ..schemas import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
     Language,
     LanguagePreferenceResponse,
     LanguagePreferenceUpdate,
+    RegisterVerifyRequest,
     ResetCodeVerifyRequest,
     ResetPasswordRequest,
     TokenResponse,
@@ -39,12 +47,13 @@ router = APIRouter()
 RESET_TOKEN_EXPIRE_MINUTES = 30
 RESET_MAX_ATTEMPTS = 5
 RESET_REQUESTS_PER_DAY = 5
+REGISTER_MESSAGE = "Jika email bisa dipakai, kode verifikasi dikirim ke email tersebut."
 LOGIN_MAX_FAILURES = 5
 LOGIN_LOCK_MINUTES = 15
 
 # Kunci = id user, jadi hanya email terdaftar yang dicatat: jumlah catatan tidak bisa
-# melebihi jumlah user walau dibanjiri email acak. (Email terdaftar memang sudah
-# terlihat dari 409 register.)
+# melebihi jumlah user walau dibanjiri email acak. (429 login dan forgot-password masih
+# membedakan email terdaftar, lihat temuan 5 di docs/SECURITY_AUDIT_AUTH.md.)
 # ponytail: in-memory per proses, reset saat server restart. Pindah ke tabel DB kalau
 # backend dijalankan dengan lebih dari satu worker.
 _login_failures: dict[str, list[datetime]] = {}
@@ -82,6 +91,24 @@ def generate_reset_code(connection) -> str:
     raise HTTPException(status_code=500, detail="Gagal membuat token reset. Silakan coba lagi.")
 
 
+def issue_reset_code(connection, user_id: str) -> str:
+    """Terbitkan kode 6 digit baru. Hanya satu kode aktif per user, jadi kode lama dimatikan."""
+    connection.execute(
+        "UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0",
+        (user_id,),
+    )
+    code = generate_reset_code(connection)
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)).isoformat()
+    connection.execute(
+        """
+        INSERT INTO password_resets (user_id, token, expires_at, used)
+        VALUES (?, ?, ?, 0)
+        """,
+        (user_id, code, expires_at),
+    )
+    return code
+
+
 def check_reset_code(email: str, token: str) -> dict:
     email = email.lower().strip()
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -107,7 +134,7 @@ def check_reset_code(email: str, token: str) -> dict:
                 ).fetchone()
             )
         if reset_row is None:
-            error = "Kode reset tidak valid."
+            error = "Kode tidak valid."
         # Bandingkan bytes: digit Unicode (mis. angka lebar penuh) lolos pola \d dan bikin compare_digest(str) error.
         elif not secrets.compare_digest(str(reset_row["token"]).encode(), token.encode()):
             attempts = int(reset_row["attempts"]) + 1
@@ -116,42 +143,106 @@ def check_reset_code(email: str, token: str) -> dict:
                 "UPDATE password_resets SET attempts = ?, used = ? WHERE id = ?",
                 (attempts, 1 if exhausted else 0, reset_row["id"]),
             )
-            error = "Kode reset salah terlalu banyak. Minta kode baru." if exhausted else "Kode reset tidak valid."
+            error = "Kode salah terlalu banyak. Minta kode baru." if exhausted else "Kode tidak valid."
         elif str(reset_row["expires_at"]) <= now_iso:
-            error = "Kode reset sudah kedaluwarsa."
+            error = "Kode sudah kedaluwarsa."
     if error:
         raise HTTPException(status_code=400, detail=error)
     return reset_row
 
 
-@router.post("/api/auth/register", response_model=UserPublic, status_code=201)
-def register(payload: UserRegister, request: Request) -> dict:
-    email = payload.email.lower().strip()
-    name = payload.name.strip()
+def clean_name(name: str) -> str:
+    name = name.strip()
     if len(name) < 2:
         raise HTTPException(status_code=422, detail="Nama minimal 2 karakter (tanpa spasi awal/akhir).")
+    return name
+
+
+def send_email_quietly(to_email: str, subject: str, html: str) -> None:
+    # Jalan setelah respons terkirim, jadi kegagalan kirim cukup dicatat.
+    try:
+        send_email_via_resend(to_email, subject, html)
+    except Exception:
+        logger.exception("email | failed | to=%s", to_email)
+
+
+@router.post("/api/auth/register", status_code=202)
+def register(payload: UserRegister, request: Request, background_tasks: BackgroundTasks) -> dict:
+    # Respons sama untuk email baru, belum verifikasi, dan sudah terdaftar, supaya halaman
+    # daftar tidak membocorkan email mana yang punya akun. Email dikirim di background karena
+    # lama kirim email juga bisa membedakannya.
+    email = payload.email.lower().strip()
+    name = clean_name(payload.name)
+    ip = client_ip(request)
+    # Hash dihitung di semua jalur dengan alasan yang sama: lama respons tidak boleh membedakan.
+    password_hash = hash_password(payload.password)
+    code = None
     with get_connection() as connection:
-        existing = connection.execute(
-            "SELECT id FROM users WHERE email = ?", (email,)
+        user = connection.execute(
+            "SELECT id, email_verified_at FROM users WHERE email = ?", (email,)
         ).fetchone()
-        if existing:
-            logger.info("register | email-conflict | ip=%s email=%s", client_ip(request), email)
-            raise HTTPException(status_code=409, detail="Email sudah terdaftar.")
+        if user is None:
+            user_id = f"user-{uuid.uuid4().hex[:12]}"
+            try:
+                connection.execute(
+                    """
+                    INSERT INTO users (id, email, name, password_hash, language)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (user_id, email, name, password_hash, payload.language),
+                )
+            except sqlite3.IntegrityError:
+                # Email sama didaftarkan bersamaan, akunnya sudah dibuat permintaan lain.
+                user_id = None
+        elif user["email_verified_at"] is None and _take_slot(
+            _reset_requests, user["id"], timedelta(days=1), RESET_REQUESTS_PER_DAY
+        ):
+            # Akun tidak diubah di sini: nama dan password baru disimpan saat verifikasi.
+            user_id = user["id"]
+        else:
+            user_id = None
+        if user_id:
+            code = issue_reset_code(connection, user_id)
 
-        user_id = f"user-{uuid.uuid4().hex[:12]}"
-        try:
-            connection.execute(
-                """
-                INSERT INTO users (id, email, name, password_hash, language)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                (user_id, email, name, hash_password(payload.password), payload.language),
-            )
-        except sqlite3.IntegrityError:
-            raise HTTPException(status_code=409, detail="Email sudah terdaftar.")
+    logger.info("register | %s | ip=%s email=%s", "code-sent" if code else "no-code", ip, email)
+    if code:
+        html = build_code_email_html(
+            VERIFY_EMAIL_TEXT, code, None, RESET_TOKEN_EXPIRE_MINUTES, payload.language
+        )
+        background_tasks.add_task(
+            send_email_quietly, email, email_subject(VERIFY_EMAIL_TEXT, payload.language), html
+        )
+    response = {"message": REGISTER_MESSAGE}
+    if code and settings.expose_dev_tokens and not email_enabled():
+        response["verification_token"] = code
+        response["note"] = "Email provider belum aktif. Gunakan kode verifikasi ini untuk pengujian."
+    return response
 
-    logger.info("register | success | ip=%s email=%s user_id=%s", client_ip(request), email, user_id)
-    return {"id": user_id, "email": email, "name": name, "language": payload.language}
+
+@router.post("/api/auth/register/verify")
+def verify_registration(payload: RegisterVerifyRequest, request: Request) -> dict:
+    name = clean_name(payload.name)
+    reset_row = check_reset_code(payload.email, payload.token.strip())
+    # Isi akun diambil dari langkah ini, bukan dari pendaftaran: pemegang kode di email yang
+    # menentukan password, jadi orang lain yang mendaftar lebih dulu tidak bisa membajak akunnya.
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE users
+            SET name = ?, password_hash = ?, language = ?,
+                email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (name, hash_password(payload.password), payload.language, reset_row["user_id"]),
+        )
+        connection.execute(
+            "UPDATE password_resets SET used = 1 WHERE id = ?",
+            (reset_row["id"],),
+        )
+
+    logger.info("register | verified | ip=%s user_id=%s", client_ip(request), reset_row["user_id"])
+    return {"message": "Email terverifikasi. Silakan masuk."}
 
 
 @router.post("/api/auth/login", response_model=TokenResponse)
@@ -160,7 +251,8 @@ def login(payload: UserLogin, request: Request) -> dict:
     ip = client_ip(request)
     with get_connection() as connection:
         row = connection.execute(
-            "SELECT id, email, name, phone, language, password_hash FROM users WHERE email = ?",
+            "SELECT id, email, name, phone, language, password_hash, email_verified_at"
+            " FROM users WHERE email = ?",
             (email,),
         ).fetchone()
 
@@ -180,6 +272,13 @@ def login(payload: UserLogin, request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Email atau password salah.")
     with _limits_lock:
         _login_failures.pop(user["id"], None)
+    # Dicek setelah password benar, jadi tidak membocorkan apa pun ke yang tidak tahu password.
+    if user["email_verified_at"] is None:
+        logger.warning("login | unverified | ip=%s user_id=%s", ip, user["id"])
+        raise HTTPException(
+            status_code=403,
+            detail="Email belum diverifikasi. Daftar ulang dengan email yang sama untuk menerima kode baru.",
+        )
 
     with get_connection() as connection:
         language = ensure_user_language(
@@ -314,20 +413,7 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
             logger.warning("forgot-password | limited | ip=%s user_id=%s", ip, user["id"])
             raise HTTPException(status_code=429, detail="Terlalu sering meminta kode reset. Coba lagi besok.")
 
-        # Hanya boleh ada satu OTP aktif per user, jadi token lama dimatikan dulu.
-        connection.execute(
-            "UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0",
-            (user["id"],),
-        )
-        reset_token = generate_reset_code(connection)
-        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)).isoformat()
-        connection.execute(
-            """
-            INSERT INTO password_resets (user_id, token, expires_at, used)
-            VALUES (?, ?, ?, 0)
-            """,
-            (user["id"], reset_token, expires_at),
-        )
+        reset_token = issue_reset_code(connection, user["id"])
 
     # Link hanya dari FRONTEND_URL. Header Host request bisa dipalsukan, jadi tidak dipakai
     # untuk membangun link (mencegah reset link diarahkan ke situs lain).
@@ -339,13 +425,15 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
         else None
     )
     language = resolve_language(user.get("language"))
-    email_html = build_reset_email_html(
-        reset_token, reset_link, RESET_TOKEN_EXPIRE_MINUTES, language
+    email_html = build_code_email_html(
+        RESET_EMAIL_TEXT, reset_token, reset_link, RESET_TOKEN_EXPIRE_MINUTES, language
     )
 
     email_sent = False
     try:
-        email_sent = send_email_via_resend(user["email"], reset_email_subject(language), email_html)
+        email_sent = send_email_via_resend(
+            user["email"], email_subject(RESET_EMAIL_TEXT, language), email_html
+        )
     except Exception:
         email_sent = False
 
@@ -362,8 +450,15 @@ def reset_password(payload: ResetPasswordRequest, request: Request) -> dict:
     ip = client_ip(request)
     reset_row = check_reset_code(payload.email, token)
     with get_connection() as connection:
+        # Kode dari email membuktikan pemilik email, jadi akun yang belum verifikasi ikut terverifikasi.
         connection.execute(
-            "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            """
+            UPDATE users
+            SET password_hash = ?,
+                email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
             (hash_password(payload.new_password), reset_row["user_id"]),
         )
         connection.execute(

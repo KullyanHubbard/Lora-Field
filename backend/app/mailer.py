@@ -10,8 +10,12 @@ RESEND_EMAILS_URL = "https://api.resend.com/emails"
 RESEND_TIMEOUT_SECONDS = 15
 
 
+def email_enabled() -> bool:
+    return bool(settings.resend_api_key and settings.resend_from_email)
+
+
 def send_email_via_resend(to_email: str, subject: str, html: str) -> bool:
-    if not settings.resend_api_key or not settings.resend_from_email:
+    if not email_enabled():
         return False
 
     payload = {
@@ -50,19 +54,39 @@ RESET_EMAIL_TEXT = {
 }
 
 
-def reset_email_subject(language: Language) -> str:
-    return RESET_EMAIL_TEXT[language]["subject"]
+# Tanpa tombol link, jadi tanpa teks "button". Isinya teks tetap: jangan pernah menaruh
+# input pengguna (mis. nama) di email ini, supaya pendaftaran tidak bisa dipakai kirim spam.
+VERIFY_EMAIL_TEXT = {
+    "id": {
+        "subject": "Kode Verifikasi LoraField",
+        "intro": "Gunakan kode berikut untuk menyelesaikan pendaftaran akun LoraField.",
+        "expiry": "Masa berlaku kode: <strong>{minutes} menit</strong>.",
+        "code_hint": "Masukkan kode verifikasi berikut di halaman daftar:",
+        "ignore": "Jika Anda tidak merasa mendaftar, abaikan email ini.",
+    },
+    "en": {
+        "subject": "LoraField Verification Code",
+        "intro": "Use the following code to finish creating your LoraField account.",
+        "expiry": "This code expires in <strong>{minutes} minutes</strong>.",
+        "code_hint": "Enter the following verification code on the sign up page:",
+        "ignore": "If you did not sign up, you can ignore this email.",
+    },
+}
+
+
+def email_subject(texts: dict, language: Language) -> str:
+    return texts[language]["subject"]
 
 
 # Email tidak bisa memakai token tema, klien email hanya membaca style inline.
-def build_reset_email_html(
-    reset_token: str, reset_link: str | None, expire_minutes: int, language: Language
+def build_code_email_html(
+    texts: dict, code: str, link: str | None, expire_minutes: int, language: Language
 ) -> str:
-    text = RESET_EMAIL_TEXT[language]
-    # Tanpa FRONTEND_URL tombol link dihilangkan; kode tetap bisa dimasukkan di halaman reset.
+    text = texts[language]
+    # Tanpa link (FRONTEND_URL kosong, atau email verifikasi) tombol dihilangkan; kode tetap dimasukkan manual.
     button = (
-        f"<p style='margin:0 0 14px 0'><a href=\"{reset_link}\" style='display:inline-block;padding:10px 14px;background:#10b981;color:#ffffff;text-decoration:none;border-radius:6px'>{text['button']}</a></p>"
-        if reset_link
+        f"<p style='margin:0 0 14px 0'><a href=\"{link}\" style='display:inline-block;padding:10px 14px;background:#10b981;color:#ffffff;text-decoration:none;border-radius:6px'>{text['button']}</a></p>"
+        if link
         else ""
     )
     return (
@@ -72,7 +96,7 @@ def build_reset_email_html(
         f"<p style='margin:0 0 12px 0'>{text['expiry'].format(minutes=expire_minutes)}</p>"
         f"{button}"
         f"<p style='margin:0 0 8px 0'>{text['code_hint']}</p>"
-        f"<p style='margin:0 0 12px 0;font-family:monospace;font-size:14px;background:#f3f4f6;padding:8px 10px;border-radius:6px;display:inline-block'>{reset_token}</p>"
+        f"<p style='margin:0 0 12px 0;font-family:monospace;font-size:14px;background:#f3f4f6;padding:8px 10px;border-radius:6px;display:inline-block'>{code}</p>"
         f"<p style='margin:0;color:#6b7280;font-size:13px'>{text['ignore']}</p>"
         "</div>"
     )

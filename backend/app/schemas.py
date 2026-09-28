@@ -15,6 +15,23 @@ class SensorReadingIn(BaseModel):
     farm_id: str | None = Field(default=None, description="Required for first-time node self-registration")
 
 
+# Pesan MQTT dari gateway (docs/kontrak-mqtt.md). Tidak dipakai route HTTP.
+DEVICE_ID_PATTERN = r"^[A-Za-z0-9_-]{4,32}$"
+
+
+class MqttReadingIn(SensorReadingIn):
+    valve: Literal["open", "closed"] = Field(..., description="Posisi valve sebenarnya di node")
+
+
+class MqttNodeItem(BaseModel):
+    node_id: str = Field(..., pattern=DEVICE_ID_PATTERN)
+    name: str = Field(default="", max_length=100)
+
+
+class MqttNodeList(BaseModel):
+    nodes: list[MqttNodeItem]
+
+
 class NodeLocationUpdate(BaseModel):
     location: str = Field(..., min_length=3)
     region: str = Field(default="", max_length=80)
@@ -80,6 +97,10 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6, max_length=128)
     language: Language = "en"
+
+
+class RegisterVerifyRequest(UserRegister):
+    token: str = Field(..., pattern=r"^\d{6}$")
 
 
 class UserLogin(BaseModel):

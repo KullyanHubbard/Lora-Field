@@ -1,7 +1,7 @@
 """Kendali valve mode manual: perintah per node, tutup otomatis, dan catatan di decision_logs.
 
-Perintah hanya disimpan di server. valve_command_sent_at tetap NULL sampai ada jalur
-pengiriman ke gateway (MQTT). Semua fungsi jalan di dalam transaksi pemanggil.
+Perintah disimpan di server lalu dikirim ke gateway lewat MQTT (mqtt_bridge). valve_command_sent_at
+diisi saat alat melaporkan posisi valve yang sama. Semua fungsi jalan di dalam transaksi pemanggil.
 """
 
 from fastapi import HTTPException
