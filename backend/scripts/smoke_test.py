@@ -57,6 +57,7 @@ from app.bmkg import set_cached_weather  # noqa: E402
 from app.irrigation import auto_decision  # noqa: E402
 from app import mqtt_bridge  # noqa: E402
 from app.main import app  # noqa: E402
+from app.node_service import default_node_name  # noqa: E402
 from app.routers import auth as auth_router  # noqa: E402
 from app.schemas import ThresholdConfig  # noqa: E402
 
@@ -2310,6 +2311,18 @@ def run(report: Report, with_network: bool) -> None:
                 baru.get("name") == "Blok Utara" and baru.get("last_seen_at") is None,
                 f"node {baru}",
             )
+            ganti = report.expect(
+                "PATCH /api/nodes/{id}/name",
+                client.patch(f"/api/nodes/{node_mqtt}/name", json={"name": "  Blok Timur  "}, headers=auth),
+                200,
+                ("node",),
+            )
+            kirim("nodes", {"nodes": [{"node_id": node_mqtt, "name": "Blok Utara"}]})
+            report.check(
+                "nama node dari web tidak ditimpa daftar node gateway",
+                ganti.get("node", {}).get("name") == "Blok Timur" and node_db().get("name") == "Blok Timur",
+                f"respons {ganti.get('node', {}).get('name')!r}, db {node_db().get('name')!r}",
+            )
 
             reading_mqtt(10.0, "closed")
             report.check("MQTT reading tersimpan", jumlah_reading() == 1, f"{jumlah_reading()} reading")
@@ -2450,6 +2463,25 @@ def run(report: Report, with_network: bool) -> None:
             mqtt_bridge._last_published.clear()
             client.delete(f"/api/farms/{farm_mqtt}", headers=auth)
 
+        section("Nama node")
+        contoh = {"ND-A1B2C3D4E5F6": "Node E5F6", "SIM-abc123-N1": "Node N1", "GW0011": "Node 0011"}
+        hasil = {node_id: default_node_name(node_id) for node_id in contoh}
+        report.check("nama bawaan node = 4 karakter terakhir ID (sesuai stiker)", hasil == contoh, f"dapat {hasil}")
+        for isi, label in (("", "kosong"), ("   ", "hanya spasi"), ("x" * 41, "lebih dari 40 karakter")):
+            status = client.patch(f"/api/nodes/{node_a}/name", json={"name": isi}, headers=auth).status_code
+            report.check(f"nama node {label} ditolak (422)", status == 422, f"status {status}")
+        with database.get_connection() as connection:
+            connection.execute("UPDATE nodes SET name = 'Node ' || id WHERE id = ?", (node_a,))
+            connection.execute("UPDATE nodes SET name = 'Blok Kustom' WHERE id = ?", (node_b,))
+        database.init_db()
+        with database.get_connection() as connection:
+            nama_node = dict(connection.execute("SELECT id, name FROM nodes WHERE id IN (?, ?)", (node_a, node_b)).fetchall())
+        report.check(
+            "startup mengganti nama bawaan lama jadi nama pendek, nama buatan user tetap",
+            nama_node == {node_a: default_node_name(node_a), node_b: "Blok Kustom"},
+            f"nama {nama_node}",
+        )
+
         section("Isolasi antar user")
         other_email = f"smoke-other-{suffix}@lorafield-smoke.com"
         daftar_akun(other_email, password, "Orang Lain")
@@ -2466,6 +2498,8 @@ def run(report: Report, with_network: bool) -> None:
             "user lain tidak bisa baca summary kebun orang",
             client.get(f"/api/farms/{farm_id}/summary", headers=other_auth).status_code == 404,
         )
+        status = client.patch(f"/api/nodes/{node_a}/name", json={"name": "Punya Saya"}, headers=other_auth).status_code
+        report.check("user lain tidak bisa ganti nama node orang", status == 404, f"status {status}")
         other_farms = client.get("/api/farms", headers=other_auth).json()
         report.check("daftar kebun user lain kosong", other_farms.get("total") == 0, f"total = {other_farms.get('total')}")
 

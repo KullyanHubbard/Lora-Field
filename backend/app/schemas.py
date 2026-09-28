@@ -39,6 +39,10 @@ class NodeLocationUpdate(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
 
 
+class NodeNameUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=40)
+
+
 class ThresholdConfig(BaseModel):
     lower: float = Field(default=40, ge=0, le=100)
     upper: float = Field(default=70, ge=0, le=100)

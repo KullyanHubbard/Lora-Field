@@ -131,6 +131,13 @@
     "perNodeTitle": "Detail per Node",
     "perNodeEmpty": "Belum ada node untuk kebun ini.",
     "waitingData": "Menunggu data",
+    "renameNode": "Ganti nama node",
+    "renameTitle": "Ganti Nama Node",
+    "renameDesc": "ID alat: {{id}}",
+    "renameCancel": "Batal",
+    "renameSave": "Simpan",
+    "renameSuccess": "Nama node diperbarui.",
+    "renameError": "Gagal mengganti nama node.",
     "title": "Irigasi",
     "activity": {
       "active": "Aktif",

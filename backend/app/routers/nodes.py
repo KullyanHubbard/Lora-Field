@@ -10,7 +10,7 @@ from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned, get_node_owned
 from ..node_service import default_node_name, insert_node, present_node
 from ..reading_service import apply_reading
-from ..schemas import NodeLocationUpdate, SensorReadingIn
+from ..schemas import NodeLocationUpdate, NodeNameUpdate, SensorReadingIn
 
 router = APIRouter()
 
@@ -74,6 +74,27 @@ def update_node_location(
                 payload.longitude,
                 node_id,
             ),
+        )
+        node = row_to_dict(
+            connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
+        )
+    return {"node": present_node(node)}
+
+
+@router.patch("/api/nodes/{node_id}/name")
+def update_node_name(
+    node_id: str,
+    payload: NodeNameUpdate,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Nama node tidak boleh kosong.")
+    with get_connection() as connection:
+        get_node_owned(connection, node_id, current_user["id"])
+        connection.execute(
+            "UPDATE nodes SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (name, node_id),
         )
         node = row_to_dict(
             connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()

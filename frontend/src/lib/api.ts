@@ -211,6 +211,12 @@ export const api = {
     ),
 
   // Data
+  updateNodeName: (nodeId: string, name: string) =>
+    apiFetch<{ node: Node }>(`/nodes/${nodeId}/name`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
+
   // Semua reading dalam N jam sebelum reading terbaru node, sehingga node yang sudah lama
   // diam tetap menampilkan data terakhirnya.
   getReadings: (nodeId: string, hours: number) =>

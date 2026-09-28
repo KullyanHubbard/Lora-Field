@@ -11,8 +11,9 @@ from .schemas import SensorReadingIn
 
 
 def default_node_name(node_id: str) -> str:
-    # ID utuh: awalan ID alat sering sama (MAC ESP32 satu pabrikan), jadi potongan awal bikin nama kembar.
-    return f"Node {node_id}"
+    # 4 karakter terakhir setelah "-" terakhir, sama dengan tulisan di stiker alat
+    # (ND-A1B2C3D4E5F6 -> Node E5F6). Bukan awalan: awalan MAC ESP32 satu pabrikan sering sama.
+    return f"Node {node_id.rsplit('-', 1)[-1][-4:]}"
 
 
 def insert_node(

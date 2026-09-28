@@ -1,6 +1,9 @@
-import { Timer } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil, Timer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
 import { StatusPill } from '@/components/ui/status-pill';
+import { NodeNameDialog } from '@/features/irrigation/components/NodeNameDialog';
 import { NODE_CARD_MIN_HEIGHT_CLASS } from '@/features/irrigation/irrigationLayout';
 import {
   formatSyncTime,
@@ -22,6 +25,7 @@ export function IrrigationNodeCard({
   upper: number;
 }) {
   const { t, i18n } = useTranslation();
+  const [renaming, setRenaming] = useState(false);
   const reading = ns.latest_reading;
   const moisture = reading?.soil_moisture ?? null;
   const condition = moistureCondition(moisture, lower, upper);
@@ -38,8 +42,19 @@ export function IrrigationNodeCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="truncate text-[0.95rem] font-medium text-foreground">
-            {ns.node.name || ns.node.id}
+          <div className="flex min-w-0 items-center gap-1">
+            <div className="truncate text-[0.95rem] font-medium text-foreground">
+              {ns.node.name || ns.node.id}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t('irrigation.renameNode')}
+              title={t('irrigation.renameNode')}
+              onClick={() => setRenaming(true)}
+            >
+              <Pencil />
+            </Button>
           </div>
           <div className="truncate text-xs text-muted-foreground">
             {ns.node.location || EMPTY_VALUE}
@@ -86,6 +101,8 @@ export function IrrigationNodeCard({
           {formatSyncTime(reading?.created_at ?? ns.node.updated_at, i18n.language)}
         </span>
       </div>
+
+      {renaming && <NodeNameDialog node={ns.node} onClose={() => setRenaming(false)} />}
     </div>
   );
 }

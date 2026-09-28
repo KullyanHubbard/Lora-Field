@@ -188,9 +188,9 @@ def _handle_nodes(gateway_id: str, data: dict) -> None:
             elif existing["farm_id"] != farm["id"]:
                 logger.warning("Node %s sudah terdaftar di kebun lain, diabaikan.", item.node_id)
             else:
+                # Nama dari gateway hanya dipakai saat node pertama terdaftar; setelah itu diatur di web.
                 connection.execute(
-                    "UPDATE nodes SET gateway_id = ?, name = COALESCE(NULLIF(?, ''), name) WHERE id = ?",
-                    (gateway_id, item.name, item.node_id),
+                    "UPDATE nodes SET gateway_id = ? WHERE id = ?", (gateway_id, item.node_id)
                 )
 
 

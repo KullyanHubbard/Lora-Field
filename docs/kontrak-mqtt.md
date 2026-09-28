@@ -37,6 +37,7 @@ Setelah tersambung, gateway langsung: kirim `status` online, kirim `nodes`, lalu
 - Harus unik di seluruh sistem. Saran: dari MAC ESP32, mis. `GW-A1B2C3D4E5F6` dan `ND-A1B2C3D4E5F6`.
 - Awalan `SIM-` khusus simulator, jangan dipakai alat asli.
 - ID gateway yang sama diketik pengguna di web saat mendaftarkan kebun, jadi tempel labelnya di alat.
+- Stiker node memuat 4 karakter terakhir ID (mis. `E5F6`), sama dengan nama bawaan node di web.
 
 ## Daftar topik
 
@@ -81,7 +82,8 @@ Last Will.
 
 Daftar node yang dikelola gateway. Dikirim ulang tiap heartbeat, karena pengguna bisa mendaftarkan
 kebun di web setelah gateway menyala dan pesan saat tersambung sudah terlewat. `name` opsional; kalau kosong server memberi nama
-`Node <8 huruf awal ID>`. Pesan ini hanya mendaftarkan node. Status online node tetap ditentukan
+`Node <4 karakter terakhir ID>`. `name` hanya dipakai saat node pertama terdaftar; setelah itu nama diatur di web
+dan tidak ditimpa daftar ini. Pesan ini hanya mendaftarkan node. Status online node tetap ditentukan
 dari data sensor, bukan dari daftar ini.
 
 ### reading

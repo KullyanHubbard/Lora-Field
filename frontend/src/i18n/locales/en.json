@@ -131,6 +131,13 @@
     "perNodeTitle": "Per-Node Detail",
     "perNodeEmpty": "No nodes for this farm yet.",
     "waitingData": "Waiting for data",
+    "renameNode": "Rename node",
+    "renameTitle": "Rename Node",
+    "renameDesc": "Device ID: {{id}}",
+    "renameCancel": "Cancel",
+    "renameSave": "Save",
+    "renameSuccess": "Node name updated.",
+    "renameError": "Failed to rename node.",
     "title": "Irrigation",
     "activity": {
       "active": "Active",

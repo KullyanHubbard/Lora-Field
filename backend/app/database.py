@@ -218,6 +218,7 @@ def init_db() -> None:
         backfill_farm_thresholds(connection)
         backfill_node_last_seen(connection)
         backfill_decision_types(connection)
+        backfill_node_short_names(connection)
 
         seed_wilayah(connection)
 
@@ -290,6 +291,18 @@ def backfill_decision_types(connection: sqlite3.Connection) -> None:
         WHERE decision_type IS NULL
         """
     )
+
+
+def backfill_node_short_names(connection: sqlite3.Connection) -> None:
+    """Node yang masih bernama bawaan lama ("Node <ID utuh>") diganti nama pendek sesuai stiker."""
+    # Import di sini supaya database.py tidak bergantung ke modul domain saat di-import.
+    from .node_service import default_node_name
+
+    rows = connection.execute("SELECT id FROM nodes WHERE name = 'Node ' || id").fetchall()
+    for row in rows:
+        connection.execute(
+            "UPDATE nodes SET name = ? WHERE id = ?", (default_node_name(row["id"]), row["id"])
+        )
 
 
 def seed_wilayah(connection: sqlite3.Connection) -> None:
