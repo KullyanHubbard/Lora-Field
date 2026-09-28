@@ -79,6 +79,7 @@
       "emailLabel": "Account Email",
       "emailPlaceholder": "name@email.com",
       "sendCode": "Send Reset Code",
+      "haveCode": "Already have a code? Enter it",
       "otpLabel": "Reset Code ({{digits}} Digits)",
       "otpPlaceholder": "Example: 123456",
       "verifyCode": "Verify Code",

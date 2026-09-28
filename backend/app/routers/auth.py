@@ -7,6 +7,7 @@ import threading
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
@@ -330,8 +331,12 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
 
     # Link hanya dari FRONTEND_URL. Header Host request bisa dipalsukan, jadi tidak dipakai
     # untuk membangun link (mencegah reset link diarahkan ke situs lain).
+    # Email dibawa di fragmen (#) supaya halaman reset langsung membuka isian kode, tanpa
+    # meminta kode baru yang menghanguskan kode di email ini. Fragmen tidak ikut terkirim ke server.
     reset_link = (
-        f"{settings.frontend_url.rstrip('/')}/reset-password" if settings.frontend_url else None
+        f"{settings.frontend_url.rstrip('/')}/reset-password#email={quote(user['email'], safe='')}"
+        if settings.frontend_url
+        else None
     )
     language = resolve_language(user.get("language"))
     email_html = build_reset_email_html(

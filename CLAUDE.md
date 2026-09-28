@@ -324,7 +324,7 @@ Rute aktual ada di `frontend/src/app/router.tsx`. Kolom kedua = referensi portin
 | `/` | `LandingPage.tsx` | Landing marketing PUBLIK, tanpa auth guard. Tombol Login/CTA → `/login`. Dark-only. |
 | `/login` | `LoginPage.jsx` | Login + inline forgot password 2-step |
 | `/register` | `RegisterPage.jsx` | Daftar akun baru |
-| `/reset-password` | `ResetPasswordPage.jsx` | Flow lupa password (OTP 2 tahap) |
+| `/reset-password` | `ResetPasswordPage.jsx` | Flow lupa password (OTP 2 tahap). Tautan di email membawa `#email=` dan langsung membuka isian kode; tombol "Sudah punya kode?" untuk yang datang tanpa tautan |
 | `/select-farms` | `DashboardPage.jsx` | Peta kebun (Leaflet), pilih kebun lewat marker. Halaman awal setelah login |
 | `/my-farms` | `FarmsPage.jsx` | Card kebun + search + edit nama, warna marker, hapus |
 | `/addFarm` | `AddFarmPage.jsx` | Form tambah kebun baru |

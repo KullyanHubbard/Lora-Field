@@ -276,6 +276,12 @@ def run(report: Report, with_network: bool) -> None:
             and "evil.example.com" not in "".join(captured_emails),
             f"email = {captured_emails[1:]}",
         )
+        report.check(
+            "link email reset membawa email ter-encode di fragmen",
+            len(captured_emails) == 2
+            and f'/reset-password#email={email.replace("@", "%40")}"' in captured_emails[1],
+            f"email = {captured_emails[1:]}",
+        )
         # OTP lama sudah dimatikan oleh permintaan di atas; ambil OTP baru.
         forgot = client.post("/api/auth/forgot-password", json={"email": email}).json()
         otp = forgot.get("reset_token", "")

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { useForgotPassword, useResetPassword, useVerifyResetCode } from './queries';
 import {
   isPasswordTooShort,
@@ -29,8 +30,15 @@ export interface ResetPasswordViewModel {
   submitEmail: () => void;
   submitOtp: () => void;
   submitPassword: () => void;
+  enterCode: () => void;
   changeEmail: () => void;
   changeCode: () => void;
+}
+
+// Tautan di email reset membawa email di fragmen URL (#email=...), lihat forgot_password di backend.
+export function emailFromResetLink(hash: string): string {
+  const email = new URLSearchParams(hash.replace(/^#/, '')).get('email')?.trim() ?? '';
+  return isValidEmail(email) ? email : '';
 }
 
 export function useResetPasswordViewModel(): ResetPasswordViewModel {
@@ -38,9 +46,10 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
   const verify = useVerifyResetCode();
   const reset = useResetPassword();
   const { t } = useTranslation();
+  const linkEmail = emailFromResetLink(useLocation().hash);
 
-  const [step, setStep] = useState<ResetPasswordStep>('email');
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<ResetPasswordStep>(linkEmail ? 'otp' : 'email');
+  const [email, setEmail] = useState(linkEmail);
   const [otp, setOtp] = useState('');
   const [verifiedToken, setVerifiedToken] = useState('');
   const [password, setPassword] = useState('');
@@ -56,6 +65,17 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
 
     setError('');
     forgot.mutate(trimmed, { onSuccess: () => setStep('otp') });
+  };
+
+  // Kode di email masih berlaku: buka isian kode tanpa meminta kode baru yang menghanguskannya.
+  const enterCode = () => {
+    if (!isValidEmail(email.trim())) {
+      setError(t('auth.resetPassword.errorEmailInvalid'));
+      return;
+    }
+
+    setError('');
+    setStep('otp');
   };
 
   const submitOtp = () => {
@@ -128,6 +148,7 @@ export function useResetPasswordViewModel(): ResetPasswordViewModel {
     submitEmail,
     submitOtp,
     submitPassword,
+    enterCode,
     changeEmail,
     changeCode,
   };

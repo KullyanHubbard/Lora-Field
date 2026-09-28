@@ -65,6 +65,13 @@ function ResetEmailForm({ viewModel }: { viewModel: ResetPasswordViewModel }) {
       <Button type="submit" className="w-full" disabled={viewModel.isSendingCode}>
         {t('auth.resetPassword.sendCode')}
       </Button>
+      <button
+        type="button"
+        className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
+        onClick={viewModel.enterCode}
+      >
+        {t('auth.resetPassword.haveCode')}
+      </button>
     </form>
   );
 }

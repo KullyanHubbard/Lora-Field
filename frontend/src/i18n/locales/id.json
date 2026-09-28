@@ -79,6 +79,7 @@
       "emailLabel": "Email Akun",
       "emailPlaceholder": "nama@email.com",
       "sendCode": "Kirim Kode Reset",
+      "haveCode": "Sudah punya kode? Masukkan kode",
       "otpLabel": "Kode Reset ({{digits}} Digit)",
       "otpPlaceholder": "Contoh: 123456",
       "verifyCode": "Verifikasi Kode",
