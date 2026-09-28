@@ -29,6 +29,10 @@ def latest_soil_moisture(connection, node_id: str) -> float | None:
     return row["soil_moisture"] if row else None
 
 
+def is_saturated(moisture: float | None) -> bool:
+    return moisture is not None and moisture >= settings.soil_saturation_stop_pct
+
+
 def farm_nodes(connection, farm_id: str) -> list[dict]:
     return [
         present_node(dict(row))
@@ -72,8 +76,13 @@ def set_valve_command(connection, node: dict, open_valve: bool) -> None:
     if open_valve:
         if node["status"] != "online":
             raise HTTPException(status_code=409, detail="Node offline, valve tidak bisa dibuka.")
-        if latest_soil_moisture(connection, node["id"]) is None:
+        moisture = latest_soil_moisture(connection, node["id"])
+        if moisture is None:
             raise HTTPException(status_code=409, detail="Node belum mengirim data sensor.")
+        if is_saturated(moisture):
+            raise HTTPException(
+                status_code=409, detail=f"Tanah {node['name']} sudah jenuh ({moisture:.0f}%), valve tidak dibuka."
+            )
     connection.execute(
         """
         UPDATE nodes

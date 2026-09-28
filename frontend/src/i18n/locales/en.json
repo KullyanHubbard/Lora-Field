@@ -215,6 +215,10 @@
     "valveModeConfirm": "Switch to {{mode}} mode?",
     "valveModeApply": "Apply",
     "valveModeCancel": "Cancel",
+    "valveWetConfirm": "Soil is already wet ({{moisture}}%). Irrigating more may waterlog it. Start anyway?",
+    "valveWetProceed": "Start Anyway",
+    "valveWetHint": "Wet soil ({{moisture}}%)",
+    "valveSaturatedHint": "Soil saturated ({{moisture}}%), valve cannot be opened",
     "valveModeChanged": "Valve mode switched to {{mode}}.",
     "valveStart": "Start Irrigation",
     "valveStop": "Stop Irrigation",
@@ -384,7 +388,8 @@
     "disconnected": "Disconnected",
     "manual": "Manual",
     "soaking": "Soaking",
-    "pulseLimit": "Pulse limit"
+    "pulseLimit": "Pulse limit",
+    "saturated": "Saturated soil"
   },
   "irrigationReason": {
     "open": "Soil needs water. The valve opens in pulses until moisture is sufficient.",
@@ -396,7 +401,8 @@
     "manual_closed": "Valve closed, controlled manually by the user.",
     "manual_timeout": "Valve closed automatically after the manual irrigation time limit.",
     "soaking": "Valve closed briefly so water can soak in before moisture is checked again.",
-    "pulse_limit": "Soil is still not wet enough after the pulse limit. Check water flow, pipes, or the sensor."
+    "pulse_limit": "Soil is still not wet enough after the pulse limit. Check water flow, pipes, or the sensor.",
+    "manual_saturated": "Valve closed automatically because the soil is saturated (98% or more)."
   },
   "myFarms": {
     "colorPickerTitle": "Marker Color",

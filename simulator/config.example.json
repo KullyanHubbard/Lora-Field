@@ -75,7 +75,7 @@
     "field_capacity_pct": 85,
     "drainage_hours": 8,
     "min_moisture_pct": 8,
-    "max_moisture_pct": 95,
+    "max_moisture_pct": 100,
     "temp_offset_c": 2.0,
     "temp_lag_hours": 3,
     "sensor_noise_pct": 0.4,

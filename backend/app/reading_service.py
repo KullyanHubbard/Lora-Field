@@ -2,8 +2,9 @@
 
 from datetime import datetime, timezone
 
+from .config import settings
 from .database import row_to_dict
-from .irrigation import auto_decision, effective_rain_next_3h, farm_thresholds, manual_decision
+from .irrigation import MANUAL_DECISIONS, auto_decision, effective_rain_next_3h, farm_thresholds, manual_decision
 from .node_service import is_recently_seen, record_reading
 from .schemas import SensorReadingIn
 from .valve_control import expire_manual_valves
@@ -23,6 +24,20 @@ def apply_reading(
             connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
         )
         decision = manual_decision(node)
+        # Tanah jenuh menutup valve yang dibuka manual. Mode otomatis sudah berhenti jauh sebelum ini
+        # (target siram di bawah batas atas tanaman).
+        if node["valve_command"] == "open" and payload.soil_moisture >= settings.soil_saturation_stop_pct:
+            connection.execute(
+                """
+                UPDATE nodes
+                SET valve_command = 'closed',
+                    valve_command_at = CURRENT_TIMESTAMP,
+                    valve_command_sent_at = NULL
+                WHERE id = ?
+                """,
+                (node_id,),
+            )
+            decision = dict(MANUAL_DECISIONS["manual_saturated"])
     else:
         # Dibaca sebelum record_reading, jadi last_seen_at masih waktu reading sebelumnya.
         node = row_to_dict(

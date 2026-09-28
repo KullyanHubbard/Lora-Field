@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     # Cache cuaca lama masih dipakai sebagai cadangan selama umurnya <= ini, kalau BMKG gangguan.
     weather_stale_max_hours: int = 12
 
+    # Tanah jenuh: reading di atas ini menutup valve dan menolak perintah buka, di mode apa pun.
+    soil_saturation_stop_pct: float = 98
+
     # Siram bertahap mode otomatis: valve buka satu pulsa, lalu tutup menunggu air meresap.
     auto_pulse_minutes: int = 10
     auto_soak_minutes: int = 30

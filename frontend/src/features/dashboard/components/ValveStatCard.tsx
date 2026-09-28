@@ -4,13 +4,17 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { StatusPill } from '@/components/ui/status-pill';
 import { ValveControlSheet } from '@/features/dashboard/components/ValveControlSheet';
-import { VALVE_BAR_CLASSES, type ValveSummary } from '@/features/dashboard/dashboardHelpers';
+import {
+  SOIL_WET_WARNING_PCT,
+  VALVE_BAR_CLASSES,
+  type ValveSummary,
+} from '@/features/dashboard/dashboardHelpers';
 import {
   useSetIrrigationMode,
   useStartIrrigation,
   useStopIrrigation,
 } from '@/features/dashboard/queries';
-import { ACCENT_TEXT } from '@/lib/toneClasses';
+import { ACCENT_TEXT, TONE_CLASSES } from '@/lib/toneClasses';
 import { cn } from '@/lib/utils';
 import type { IrrigationMode, NodeSummary } from '@/types';
 
@@ -42,6 +46,8 @@ export function ValveStatCard({
   // Ganti mode butuh 2 langkah: pilih dulu (staged), baru dikirim ke backend lewat Terapkan.
   const [stagedMode, setStagedMode] = useState<IrrigationMode | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Kelembapan tertinggi node online, untuk peringatan sebelum pengairan manual dijalankan.
+  const [wetConfirm, setWetConfirm] = useState<number | null>(null);
   const setMode = useSetIrrigationMode(farmId);
   const startIrrigation = useStartIrrigation(farmId);
   const stopIrrigation = useStopIrrigation(farmId);
@@ -50,6 +56,18 @@ export function ValveStatCard({
   const hasOnlineNode = nodes.some((ns) => ns.node.status === 'online');
   const isRunning = openCount > 0;
   const actionPending = startIrrigation.isPending || stopIrrigation.isPending;
+
+  const wettest = Math.max(
+    ...nodes
+      .filter((ns) => ns.node.status === 'online' && ns.latest_reading)
+      .map((ns) => ns.latest_reading?.soil_moisture ?? 0),
+    0,
+  );
+
+  const startOrConfirm = () => {
+    if (wettest >= SOIL_WET_WARNING_PCT) setWetConfirm(Math.round(wettest));
+    else startIrrigation.mutate();
+  };
 
   const applyStagedMode = () => {
     if (!stagedMode) return;
@@ -170,13 +188,38 @@ export function ValveStatCard({
             </Button>
           </div>
         </div>
+      ) : wetConfirm !== null ? (
+        <div className="mt-2 space-y-2">
+          <p className={cn('text-xs', TONE_CLASSES.yellow.text)}>
+            {t('dashboard.valveWetConfirm', { moisture: wetConfirm })}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              className={TOUCH_BUTTON_CLASS}
+              disabled={actionPending}
+              onClick={() =>
+                startIrrigation.mutate(undefined, { onSettled: () => setWetConfirm(null) })
+              }
+            >
+              {t('dashboard.valveWetProceed')}
+            </Button>
+            <Button
+              variant="outline"
+              className={TOUCH_BUTTON_CLASS}
+              disabled={actionPending}
+              onClick={() => setWetConfirm(null)}
+            >
+              {t('dashboard.valveModeCancel')}
+            </Button>
+          </div>
+        </div>
       ) : (
         mode === 'manual' && (
           <Button
             variant={isRunning ? 'outline' : 'default'}
             className={cn('mt-2 w-full', TOUCH_BUTTON_CLASS)}
             disabled={actionPending || (!isRunning && !hasOnlineNode)}
-            onClick={() => (isRunning ? stopIrrigation.mutate() : startIrrigation.mutate())}
+            onClick={() => (isRunning ? stopIrrigation.mutate() : startOrConfirm())}
           >
             {isRunning ? t('dashboard.valveStop') : t('dashboard.valveStart')}
           </Button>

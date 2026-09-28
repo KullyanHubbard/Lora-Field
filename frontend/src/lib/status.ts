@@ -54,6 +54,7 @@ export function getIrrigationStatusBadge(type: DecisionType): StatusBadge {
     manual_open: { labelKey: 'irrigationStatus.manual', tone: 'green' },
     manual_closed: { labelKey: 'irrigationStatus.manual', tone: 'yellow' },
     manual_timeout: { labelKey: 'irrigationStatus.manual', tone: 'yellow' },
+    manual_saturated: { labelKey: 'irrigationStatus.saturated', tone: 'red' },
     soaking: { labelKey: 'irrigationStatus.soaking', tone: 'green' },
     pulse_limit: { labelKey: 'irrigationStatus.pulseLimit', tone: 'yellow' },
   };

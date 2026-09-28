@@ -8,9 +8,15 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
-import { getNodeLabel } from '@/features/dashboard/dashboardHelpers';
+import {
+  getNodeLabel,
+  SOIL_SATURATED_PCT,
+  SOIL_WET_WARNING_PCT,
+} from '@/features/dashboard/dashboardHelpers';
 import { useSetValve } from '@/features/dashboard/queries';
 import { formatClockTime, parseServerDate } from '@/lib/format';
+import { TONE_CLASSES } from '@/lib/toneClasses';
+import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
 
 export function ValveControlSheet({
@@ -79,14 +85,23 @@ function ValveRow({
   const hasSensorData = ns.latest_reading != null;
   const autoCloseAt = isOpen ? parseServerDate(node.valve_auto_close_at) : null;
   const switchId = `valve-${node.id}`;
+  const moisture = ns.latest_reading?.soil_moisture ?? 0;
+  const saturated = moisture >= SOIL_SATURATED_PCT;
+  const wet = moisture >= SOIL_WET_WARNING_PCT;
+  const moistureLabel = Math.round(moisture);
 
   const hint = isOffline
     ? t('status.offline')
     : !hasSensorData
       ? t('dashboard.valveNoSensorData')
-      : autoCloseAt
-        ? t('dashboard.valveAutoCloseAt', { time: formatClockTime(autoCloseAt, i18n.language) })
-        : null;
+      : saturated
+        ? t('dashboard.valveSaturatedHint', { moisture: moistureLabel })
+        : wet
+          ? t('dashboard.valveWetHint', { moisture: moistureLabel })
+          : autoCloseAt
+            ? t('dashboard.valveAutoCloseAt', { time: formatClockTime(autoCloseAt, i18n.language) })
+            : null;
+  const warnHint = !isOffline && hasSensorData && wet;
 
   return (
     <li className="flex min-h-14 items-center justify-between gap-3 py-2">
@@ -94,12 +109,22 @@ function ValveRow({
         <span className="block truncate text-sm font-medium text-foreground">
           {getNodeLabel(node)}
         </span>
-        {hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
+        {hint && (
+          <span
+            className={cn(
+              'block text-xs',
+              warnHint ? TONE_CLASSES.yellow.text : 'text-muted-foreground',
+            )}
+          >
+            {hint}
+          </span>
+        )}
       </label>
       <Switch
         id={switchId}
         checked={isOpen}
-        disabled={pending || isOffline || !hasSensorData}
+        // Tanah jenuh: valve tidak boleh dibuka (server juga menolak), tapi masih bisa ditutup.
+        disabled={pending || isOffline || !hasSensorData || (saturated && !isOpen)}
         onCheckedChange={onToggle}
       />
     </li>

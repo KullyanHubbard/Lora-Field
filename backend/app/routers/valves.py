@@ -12,6 +12,7 @@ from ..schemas import IrrigationModeUpdate, ValveCommandUpdate
 from ..valve_control import (
     expire_manual_valves,
     farm_nodes,
+    is_saturated,
     latest_soil_moisture,
     require_manual_mode,
     set_valve_command,
@@ -70,16 +71,18 @@ def start_irrigation(
         farm = get_farm_owned(connection, farm_id, current_user["id"])
         require_manual_mode(farm)
         expire_manual_valves(connection, farm_id)
-        controllable = [
-            node
-            for node in farm_nodes(connection, farm_id)
-            if node["status"] == "online"
-            and latest_soil_moisture(connection, node["id"]) is not None
-        ]
+        nodes = farm_nodes(connection, farm_id)
+        moisture = {node["id"]: latest_soil_moisture(connection, node["id"]) for node in nodes}
+        ready = [node for node in nodes if node["status"] == "online" and moisture[node["id"]] is not None]
+        # Node yang tanahnya jenuh dilewati; valve node lain tetap dibuka.
+        controllable = [node for node in ready if not is_saturated(moisture[node["id"]])]
         if not controllable:
-            raise HTTPException(
-                status_code=409, detail="Tidak ada node online yang valve-nya bisa dibuka."
+            detail = (
+                "Tanah semua node sudah jenuh, pengairan tidak dijalankan."
+                if ready
+                else "Tidak ada node online yang valve-nya bisa dibuka."
             )
+            raise HTTPException(status_code=409, detail=detail)
         for node in controllable:
             set_valve_command(connection, node, open_valve=True)
         nodes = farm_nodes(connection, farm_id)

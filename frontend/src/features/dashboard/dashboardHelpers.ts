@@ -100,6 +100,11 @@ export function calcMinMaxAvg(values: number[]): NumberStats | null {
   return { min, max, avg: sum / values.length };
 }
 
+// Peringatan tanah basah sebelum menyiram manual. Batas jenuh sama dengan
+// SOIL_SATURATION_STOP_PCT backend: di atas ini server menutup valve dan menolak perintah buka.
+export const SOIL_WET_WARNING_PCT = 92;
+export const SOIL_SATURATED_PCT = 98;
+
 export const VALVE_BAR_CLASSES = {
   open: ACCENT_BG.emerald,
   closed: ACCENT_BG.amber,

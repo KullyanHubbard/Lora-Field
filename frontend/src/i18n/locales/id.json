@@ -215,6 +215,10 @@
     "valveModeConfirm": "Ganti ke mode {{mode}}?",
     "valveModeApply": "Terapkan",
     "valveModeCancel": "Batal",
+    "valveWetConfirm": "Tanah sudah basah ({{moisture}}%). Menyiram lagi bisa membuat tanah tergenang. Tetap jalankan?",
+    "valveWetProceed": "Tetap Jalankan",
+    "valveWetHint": "Tanah basah ({{moisture}}%)",
+    "valveSaturatedHint": "Tanah jenuh ({{moisture}}%), valve tidak bisa dibuka",
     "valveModeChanged": "Mode valve diganti ke {{mode}}.",
     "valveStart": "Jalankan Pengairan",
     "valveStop": "Hentikan Pengairan",
@@ -376,7 +380,8 @@
     "disconnected": "Terputus",
     "manual": "Manual",
     "soaking": "Meresap",
-    "pulseLimit": "Batas pulsa"
+    "pulseLimit": "Batas pulsa",
+    "saturated": "Tanah jenuh"
   },
   "irrigationReason": {
     "open": "Tanah perlu disiram. Valve dibuka bertahap sampai kelembapan cukup.",
@@ -388,7 +393,8 @@
     "manual_closed": "Valve tertutup, dikendalikan manual oleh pengguna.",
     "manual_timeout": "Valve ditutup otomatis setelah batas waktu pengairan manual.",
     "soaking": "Valve ditutup sebentar supaya air meresap sebelum kelembapan dicek lagi.",
-    "pulse_limit": "Tanah belum cukup basah setelah batas pulsa. Cek debit air, pipa, atau sensor."
+    "pulse_limit": "Tanah belum cukup basah setelah batas pulsa. Cek debit air, pipa, atau sensor.",
+    "manual_saturated": "Valve ditutup otomatis karena tanah sudah jenuh air (98% atau lebih)."
   },
   "myFarms": {
     "colorPickerTitle": "Pilih Warna Marker",

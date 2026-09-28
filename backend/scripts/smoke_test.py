@@ -2636,6 +2636,69 @@ def run(report: Report, with_network: bool) -> None:
             f"nama {nama_node}",
         )
 
+        section("Tanah jenuh")
+        resp_jenuh = client.post(
+            "/api/farms",
+            json={"name": "Kebun Jenuh", "crop_type": "Padi", "bmkg_adm4_code": ADM4,
+                  "latitude": -7.79, "longitude": 110.31, "gateway_device_id": f"GW-JENUH-{suffix}"},
+            headers=auth,
+        )
+        assert resp_jenuh.status_code == 201, resp_jenuh.text
+        farm_jenuh = resp_jenuh.json()["farm"]["id"]
+        node_jenuh = f"node-{suffix}-jenuh"
+
+        def kirim_tanah(persen: float) -> dict:
+            resp = client.post(
+                f"/api/nodes/{node_jenuh}/readings",
+                json={"soil_moisture": persen, "soil_temp": 26.0, "air_temp": 30.0, "air_humidity": 70.0,
+                      "farm_id": farm_jenuh},
+                headers=auth,
+            )
+            assert resp.status_code == 201, resp.text
+            return resp.json()["decision"]
+
+        def perintah_jenuh():
+            with database.get_connection() as connection:
+                return connection.execute(
+                    "SELECT valve_command FROM nodes WHERE id = ?", (node_jenuh,)
+                ).fetchone()[0]
+
+        try:
+            kirim_tanah(90.0)
+            client.patch(f"/api/farms/{farm_jenuh}/irrigation-mode", json={"mode": "manual"}, headers=auth)
+            report.expect(
+                "tanah 90%: valve manual masih bisa dibuka",
+                client.patch(f"/api/nodes/{node_jenuh}/valve", json={"open": True}, headers=auth),
+                200,
+            )
+            keputusan = kirim_tanah(98.5)
+            report.check(
+                "tanah 98,5% saat valve manual terbuka: valve ditutup otomatis (manual_saturated)",
+                keputusan["type"] == "manual_saturated" and keputusan["valve_state"] == "closed"
+                and perintah_jenuh() == "closed",
+                f"keputusan {keputusan}, perintah {perintah_jenuh()}",
+            )
+            buka = client.patch(f"/api/nodes/{node_jenuh}/valve", json={"open": True}, headers=auth)
+            report.check(
+                "tanah jenuh: perintah buka valve ditolak 409",
+                buka.status_code == 409 and "jenuh" in buka.json().get("detail", ""),
+                f"status {buka.status_code}, {buka.text[:120]}",
+            )
+            mulai = client.post(f"/api/farms/{farm_jenuh}/irrigation/start", headers=auth)
+            report.check(
+                "tanah semua node jenuh: Jalankan Pengairan ditolak 409",
+                mulai.status_code == 409 and "jenuh" in mulai.json().get("detail", ""),
+                f"status {mulai.status_code}, {mulai.text[:120]}",
+            )
+            kirim_tanah(85.0)
+            report.expect(
+                "tanah turun ke 85%: Jalankan Pengairan bisa lagi",
+                client.post(f"/api/farms/{farm_jenuh}/irrigation/start", headers=auth),
+                200,
+            )
+        finally:
+            client.delete(f"/api/farms/{farm_jenuh}", headers=auth)
+
         section("Isolasi antar user")
         other_email = f"smoke-other-{suffix}@lorafield-smoke.com"
         daftar_akun(other_email, password, "Orang Lain")

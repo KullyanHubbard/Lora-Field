@@ -59,6 +59,12 @@ MANUAL_DECISIONS = {
         "valve_state": "closed",
         "reason": "Valve ditutup otomatis setelah batas waktu pengairan manual.",
     },
+    "manual_saturated": {
+        "type": "manual_saturated",
+        "decision": "Manual: ditutup, tanah jenuh",
+        "valve_state": "closed",
+        "reason": "Valve ditutup otomatis karena tanah sudah jenuh air.",
+    },
 }
 
 
