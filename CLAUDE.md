@@ -164,7 +164,7 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | `/api/farms/{farm_id}/irrigation/stop` | POST | Mode manual saja. Tutup semua valve terbuka, termasuk node offline. Return `{ nodes }` |
 | `/api/nodes/{node_id}/valve` | PATCH | Mode manual saja. Body `{ open }`. Membuka butuh node online dan sudah punya reading (409 kalau tidak). Return `{ node }` |
 
-Perintah valve disimpan di server (`nodes.valve_command`) lalu dikirim ke gateway lewat MQTT (`valve/set`). `valve_command_sent_at` diisi saat reading MQTT melaporkan field `valve` sama dengan perintah, dan dikosongkan lagi kalau laporan berikutnya berbeda (mis. node sempat mati); reading lewat HTTP tidak pernah mengisinya. UI wajib menyebut perintah "belum terkirim ke alat" selama NULL.
+Perintah valve disimpan di server (`nodes.valve_command`) lalu dikirim ke gateway lewat MQTT (`valve/set`). `valve_command_sent_at` diisi saat reading MQTT melaporkan field `valve` sama dengan perintah, dan dikosongkan lagi kalau laporan berikutnya berbeda (mis. node sempat mati); reading lewat HTTP tidak pernah mengisinya. UI wajib menyebut perintah "belum terkirim ke alat" selama NULL. Kalau reading MQTT masih melaporkan posisi valve lain dan perintah terakhir node sudah dikirim minimal `VALVE_RESEND_MINUTES` (default 5) menit lalu, server mengirim ulang `valve/set`.
 
 ## Database Schema (SQLite)
 

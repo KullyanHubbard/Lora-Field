@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 from datetime import datetime, timedelta, timezone
 
 import paho.mqtt.client as mqtt
@@ -30,7 +31,8 @@ _DEVICE_ID = re.compile(DEVICE_ID_PATTERN)
 _client: mqtt.Client | None = None
 # ponytail: ingatan per proses. Setelah restart, perintah terakhir tiap node terkirim ulang
 # sekali; aman karena isinya sama dan until berupa jam mutlak.
-_last_published: dict[str, str] = {}
+# Isi: node_id -> (isi pesan, waktu kirim dari time.monotonic()).
+_last_published: dict[str, tuple[str, float]] = {}
 
 
 def start() -> None:
@@ -237,7 +239,15 @@ def _handle_reading(gateway_id: str, node_id: str, data: dict) -> None:
                 (delivered, node_id),
             )
         _touch_gateway(connection, gateway_id)
-    publish_valve(gateway_id, node_id, valve_target(node, decision))
+    target = valve_target(node, decision)
+    last = _last_published.get(node_id)
+    # Alat masih melapor posisi lain lama setelah perintah dikirim (mis. retain hilang dari broker): kirim ulang.
+    resend = (
+        payload.valve != target["state"]
+        and last is not None
+        and time.monotonic() - last[1] >= settings.valve_resend_minutes * 60
+    )
+    publish_valve(gateway_id, node_id, target, resend=resend)
 
 
 def valve_target(node: dict, decision: dict) -> dict:
@@ -252,21 +262,22 @@ def valve_target(node: dict, decision: dict) -> dict:
     return {"state": "open", "until": int((start_at + timedelta(minutes=minutes)).timestamp())}
 
 
-def publish_valve(gateway_id: str, node_id: str, command: dict) -> None:
-    """Kirim valve/set (retain) hanya kalau isinya berubah dari kiriman terakhir."""
+def publish_valve(gateway_id: str, node_id: str, command: dict, *, resend: bool = False) -> None:
+    """Kirim valve/set (retain) hanya kalau isinya berubah dari kiriman terakhir, atau resend=True."""
     if _client is None:
         return
     # ID dari luar kontrak (mis. diklaim lewat web) bisa berisi karakter yang dilarang di topik.
     if not (_DEVICE_ID.fullmatch(gateway_id) and _DEVICE_ID.fullmatch(node_id)):
         return
     body = json.dumps(command, separators=(",", ":"))
-    if _last_published.get(node_id) == body:
+    last = _last_published.get(node_id)
+    if not resend and last is not None and last[0] == body:
         return
     result = _client.publish(
         f"{TOPIC_ROOT}/{gateway_id}/node/{node_id}/valve/set", body, qos=1, retain=True
     )
     if result.rc == mqtt.MQTT_ERR_SUCCESS:
-        _last_published[node_id] = body
+        _last_published[node_id] = (body, time.monotonic())
     else:
         logger.warning("Perintah valve node %s gagal dikirim (rc=%s).", node_id, result.rc)
 

@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     mqtt_port: int = 1883
     mqtt_username: str = ""
     mqtt_password: str = ""
+    # Alat masih melapor posisi valve lain selama ini sejak perintah terakhir dikirim: kirim ulang perintahnya.
+    valve_resend_minutes: int = 5
 
     # Saat True, forgot-password mengembalikan OTP di response kalau email belum terkirim.
     # Hanya untuk pengujian lokal, jangan pernah aktif di production.

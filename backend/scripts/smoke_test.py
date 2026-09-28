@@ -2349,6 +2349,34 @@ def run(report: Report, with_network: bool) -> None:
                                                 "air_humidity": 70})
             report.check("MQTT: reading tidak valid diabaikan", jumlah_reading() == 2, f"{jumlah_reading()} reading")
 
+            def mundurkan_kiriman_terakhir() -> None:
+                isi, _ = mqtt_bridge._last_published[node_mqtt]
+                mqtt_bridge._last_published[node_mqtt] = (isi, time.monotonic() - 3600)
+
+            jumlah_kirim = len(klien.terkirim)
+            reading_mqtt(10.6, "closed")  # alat belum menjalankan perintah buka yang baru dikirim
+            report.check(
+                "MQTT: posisi valve beda tapi perintah baru dikirim, belum dikirim ulang",
+                len(klien.terkirim) == jumlah_kirim,
+                f"terkirim {klien.terkirim[jumlah_kirim:]}",
+            )
+            mundurkan_kiriman_terakhir()
+            reading_mqtt(10.7, "closed")
+            report.check(
+                "MQTT: posisi valve tetap beda setelah jeda, perintah dikirim ulang",
+                len(klien.terkirim) == jumlah_kirim + 1
+                and klien.terkirim[-1][0] == topik_valve
+                and klien.terkirim[-1][1].get("state") == "open",
+                f"terkirim {klien.terkirim[jumlah_kirim:]}",
+            )
+            mundurkan_kiriman_terakhir()
+            reading_mqtt(10.8, "open")
+            report.check(
+                "MQTT: posisi valve sudah sama, tidak dikirim ulang walau lama",
+                len(klien.terkirim) == jumlah_kirim + 1,
+                f"terkirim {klien.terkirim[jumlah_kirim:]}",
+            )
+
             report.expect(
                 "MQTT: ganti ke mode manual",
                 client.patch(f"/api/farms/{farm_mqtt}/irrigation-mode", json={"mode": "manual"}, headers=auth),

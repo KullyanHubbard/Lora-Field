@@ -123,6 +123,7 @@ dari data sensor, bukan dari daftar ini.
   sendiri saat waktunya habis, walau perintah tutup tidak sampai. Ini pengaman kalau koneksi putus
   saat menyiram.
 - Kalau sisa waktu sudah habis atau negatif, perlakukan sebagai `closed`.
+- Kalau reading masih melaporkan posisi berbeda minimal 5 menit (`VALVE_RESEND_MINUTES` di server) setelah perintah terakhir dikirim, server mengirim ulang perintah yang sama. Gateway memprosesnya seperti perintah biasa.
 - Pesan ini retain: gateway menerima perintah terakhir tiap kali subscribe ulang. Karena `until`
   berupa jam mutlak, perintah yang diterima ulang tidak memperpanjang waktu siram.
 - Isi kosong berarti tidak ada perintah: valve tutup. Server mengirimnya (retain) untuk tiap node saat kebun dihapus atau gateway dilepas dari kebun.
