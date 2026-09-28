@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-30  
 **Scope:** Frontend + Backend Auth endpoints  
-**Status:** Findings 1, 2, and 4 fixed on 2026-09-27. Finding 5 partly fixed on 2026-09-28 (register). Finding 3 is still open.  
+**Status:** Findings 1, 2, and 4 fixed on 2026-09-27. Finding 5 mostly fixed on 2026-09-28 (see its section). Finding 3 is still open.  
 **Updated:** 2026-09-24. Code references now point to `backend/app/routers/auth.py` (the backend was split into routers). All findings below are still open. The Cloudflare rate limiting rule that was the only mitigation has been removed.  
 **Updated:** 2026-09-27. Fixes for findings 1, 2, and 4 are described in each section. Code snippets below show the code as it was before the fix.
 
@@ -155,11 +155,12 @@ expose_dev_tokens: bool = False
 
 **Status: PARTLY FIXED (2026-09-28).** Register now answers 202 with the same message for every email and proves ownership with a 6-digit code (`POST /api/auth/register/verify`). A new email gets an unverified account and a code; an unverified email gets a new code (same 5 per day cap as forgot-password, never 429); a verified email gets nothing and its account is untouched. The password is hashed on every path and the email is sent in the background, so response time does not reveal the difference. Name and password are saved at the verify step, so whoever registers an email first cannot pre-set the password of someone else's account. Unverified accounts cannot log in (403, checked after the password). Accounts that existed before were marked verified once, when the column was added.
 
+**Update (2026-09-28).** Login now answers 401 with the same message for an unknown email, a wrong password, and a locked account, and runs bcrypt on every path (a dummy hash for unknown emails and locked accounts). Forgot-password never answers 429: over the daily cap it returns the same 200 message without a code, and the email is sent in the background. Unverified accounts older than 7 days (without farms) are deleted when someone registers.
+
 Still open:
-- The 429 responses of login and forgot-password only appear for registered emails.
-- Small timing differences remain (a new email writes rows, a verified one does not).
-- Register can send a code email to any address, and unverified accounts are never removed. Rate limit registration at the reverse proxy before going public.
-- Anyone who knows an unverified email can use up its 5 codes per day.
+- Small timing differences remain (a new or registered email writes rows, an unknown one does not).
+- Register can send a code email to any address. Rate limit registration at the reverse proxy before going public.
+- Anyone who knows an email can lock its login for 15 minutes or use up its 5 codes per day.
 
 ## Frontend Security Status
 

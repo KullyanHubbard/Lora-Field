@@ -430,9 +430,31 @@ def run(report: Report, with_network: bool) -> None:
             statuses = [status_login(sec_email, "password-salah") for _ in range(5)]
             statuses.append(status_login(sec_email, password))
             report.check(
-                "L1 5 kali gagal login mengunci akun, password benar pun 429",
-                statuses == [401] * 5 + [429],
+                "L1 5 kali gagal login mengunci akun, password benar pun ditolak (401)",
+                statuses == [401] * 6,
                 f"status {statuses}",
+            )
+            terkunci = client.post("/api/auth/login", json={"email": sec_email, "password": password})
+            salah = client.post("/api/auth/login", json={"email": email, "password": "password-salah"})
+            asing = client.post("/api/auth/login", json={"email": ghost, "password": password})
+            balasan = {(r.status_code, r.json().get("detail")) for r in (terkunci, salah, asing)}
+            report.check(
+                "K1 login terkunci, password salah, dan email tak dikenal dibalas sama persis",
+                len(balasan) == 1 and next(iter(balasan))[0] == 401,
+                f"balasan {balasan}",
+            )
+            cek_hash: list[str] = []
+            verify_asli = auth_router.verify_password
+            auth_router.verify_password = lambda plain, hashed: cek_hash.append(hashed) or verify_asli(plain, hashed)
+            try:
+                status_login(ghost, password)
+                status_login(sec_email, password)
+            finally:
+                auth_router.verify_password = verify_asli
+            report.check(
+                "K2 bcrypt tetap jalan untuk email tak dikenal dan akun terkunci",
+                cek_hash == [auth_router._DUMMY_PASSWORD_HASH] * 2,
+                f"{len(cek_hash)} kali, dummy {[h == auth_router._DUMMY_PASSWORD_HASH for h in cek_hash]}",
             )
 
             reset_limits()
@@ -454,14 +476,13 @@ def run(report: Report, with_network: bool) -> None:
             )
 
             reset_limits()
-            statuses = [
-                client.post("/api/auth/forgot-password", json={"email": sec_email}).status_code
-                for _ in range(6)
-            ]
+            respons = [client.post("/api/auth/forgot-password", json={"email": sec_email}) for _ in range(6)]
             report.check(
-                "F1 forgot-password dibatasi 5 per hari",
-                statuses == [200] * 5 + [429],
-                f"status {statuses}",
+                "F1 forgot-password dibatasi 5 kode per hari, tanpa 429",
+                [r.status_code for r in respons] == [200] * 6
+                and [bool(r.json().get("reset_token")) for r in respons] == [True] * 5 + [False]
+                and respons[5].json().get("message") == respons[0].json().get("message"),
+                f"status {[r.status_code for r in respons]}, kode {[bool(r.json().get('reset_token')) for r in respons]}",
             )
             statuses = [
                 client.post("/api/auth/forgot-password", json={"email": ghost}).status_code
@@ -474,10 +495,16 @@ def run(report: Report, with_network: bool) -> None:
             )
 
             reset_limits()
-            for i in range(300):
-                acak = f"acak{i}-{suffix}@lorafield-smoke.com"
-                client.post("/api/auth/login", json={"email": acak, "password": password})
-                client.post("/api/auth/forgot-password", json={"email": acak})
+            # Yang diuji memori pembatas, bukan bcrypt: pengecek password diganti versi cepat.
+            verify_asli = auth_router.verify_password
+            auth_router.verify_password = lambda plain, hashed: False
+            try:
+                for i in range(300):
+                    acak = f"acak{i}-{suffix}@lorafield-smoke.com"
+                    client.post("/api/auth/login", json={"email": acak, "password": password})
+                    client.post("/api/auth/forgot-password", json={"email": acak})
+            finally:
+                auth_router.verify_password = verify_asli
             report.check(
                 "M1 banjir email acak tidak mengisi memori pembatas",
                 len(auth_router._login_failures) == 0 and len(auth_router._reset_requests) == 0,
@@ -515,7 +542,10 @@ def run(report: Report, with_network: bool) -> None:
             reset_limits()
             original_verify = auth_router.verify_password
 
+            hash_dicek: list[str] = []
+
             def verify_lambat(plain, hashed):
+                hash_dicek.append(hashed)
                 time.sleep(0.2)
                 return original_verify(plain, hashed)
 
@@ -534,10 +564,11 @@ def run(report: Report, with_network: bool) -> None:
                     thread.join()
             finally:
                 auth_router.verify_password = original_verify
+            asli = [h for h in hash_dicek if h != auth_router._DUMMY_PASSWORD_HASH]
             report.check(
-                "P2 20 login paralel: tepat 5 dicek, sisanya 429",
-                sorted(login_statuses) == [401] * 5 + [429] * 15,
-                f"status {sorted(login_statuses)}",
+                "P2 20 login paralel: tepat 5 dicek dengan password asli, semua 401",
+                sorted(login_statuses) == [401] * 20 and len(asli) == 5,
+                f"status {sorted(login_statuses)}, dicek asli {len(asli)}",
             )
         finally:
             reset_limits()
@@ -712,6 +743,61 @@ def run(report: Report, with_network: bool) -> None:
             )
         finally:
             reset_limits()
+
+        # Akun belum verifikasi yang kedaluwarsa dihapus saat ada pendaftaran berikutnya.
+        def buat_akun_lama(target: str, umur_hari: int, verified: bool, punya_kebun: bool = False) -> None:
+            user_id = f"user-lama-{target.split('@')[0]}"
+            with database.get_connection() as connection:
+                connection.execute(
+                    """
+                    INSERT INTO users (id, email, name, password_hash, created_at, email_verified_at)
+                    VALUES (?, ?, 'Lama', 'x', datetime('now', ?), CASE WHEN ? THEN CURRENT_TIMESTAMP END)
+                    """,
+                    (user_id, target, f"-{umur_hari} days", verified),
+                )
+                connection.execute(
+                    "INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, '2000-01-01')",
+                    (user_id, f"lama-{target}"),
+                )
+                if punya_kebun:
+                    connection.execute(
+                        "INSERT INTO farms (id, user_id, name, bmkg_adm4_code) VALUES (?, ?, 'Kebun Lama', '')",
+                        (f"farm-{user_id}", user_id),
+                    )
+
+        kedaluwarsa = f"kedaluwarsa-{suffix}@lorafield-smoke.com"
+        muda = f"muda-{suffix}@lorafield-smoke.com"
+        tua_verified = f"tua-verified-{suffix}@lorafield-smoke.com"
+        tua_berkebun = f"tua-kebun-{suffix}@lorafield-smoke.com"
+        buat_akun_lama(kedaluwarsa, 8, verified=False)
+        buat_akun_lama(muda, 6, verified=False)
+        buat_akun_lama(tua_verified, 30, verified=True)
+        buat_akun_lama(tua_berkebun, 30, verified=False, punya_kebun=True)
+        reset_limits()
+        daftar_mentah(f"pemicu-{suffix}@lorafield-smoke.com", pw_baru)
+        with database.get_connection() as connection:
+            sisa = {
+                row["email"]
+                for row in connection.execute(
+                    "SELECT email FROM users WHERE email IN (?, ?, ?, ?)", (kedaluwarsa, muda, tua_verified, tua_berkebun)
+                )
+            }
+            kode_yatim = connection.execute(
+                "SELECT COUNT(*) FROM password_resets WHERE user_id NOT IN (SELECT id FROM users)"
+            ).fetchone()[0]
+        report.check(
+            "K3 akun belum verifikasi > 7 hari dihapus, yang lain tetap",
+            sisa == {muda, tua_verified, tua_berkebun} and kode_yatim == 0,
+            f"sisa {sisa}, kode tanpa akun {kode_yatim}",
+        )
+        ulang = daftar_mentah(kedaluwarsa, pw_baru).json()
+        report.check(
+            "K4 email akun yang dihapus bisa daftar lagi dan dapat kode",
+            bool(ulang.get("verification_token")),
+            f"respons {ulang}",
+        )
+        with database.get_connection() as connection:
+            connection.execute("DELETE FROM farms WHERE id = ?", (f"farm-user-lama-tua-kebun-{suffix}",))
 
         # Migrasi: database lama tanpa kolom email_verified_at. Akun lamanya harus dianggap terverifikasi.
         db_asli = database.DB_PATH

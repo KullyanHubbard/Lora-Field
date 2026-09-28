@@ -50,10 +50,18 @@ RESET_REQUESTS_PER_DAY = 5
 REGISTER_MESSAGE = "Jika email bisa dipakai, kode verifikasi dikirim ke email tersebut."
 LOGIN_MAX_FAILURES = 5
 LOGIN_LOCK_MINUTES = 15
+LOGIN_FAILED_MESSAGE = (
+    f"Email atau password salah. Setelah {LOGIN_MAX_FAILURES} kali salah, "
+    f"login dikunci {LOGIN_LOCK_MINUTES} menit."
+)
+FORGOT_MESSAGE = "Jika email terdaftar, tautan reset password akan dikirim."
+UNVERIFIED_ACCOUNT_DAYS = 7
+# Password acak untuk email tak dikenal dan akun terkunci: bcrypt tetap jalan, jadi lama respons sama.
+_DUMMY_PASSWORD_HASH = hash_password(secrets.token_urlsafe(16))
 
 # Kunci = id user, jadi hanya email terdaftar yang dicatat: jumlah catatan tidak bisa
-# melebihi jumlah user walau dibanjiri email acak. (429 login dan forgot-password masih
-# membedakan email terdaftar, lihat temuan 5 di docs/SECURITY_AUDIT_AUTH.md.)
+# melebihi jumlah user walau dibanjiri email acak. Batas ini tidak pernah dibalas 429,
+# supaya tidak membedakan email terdaftar (temuan 5 di docs/SECURITY_AUDIT_AUTH.md).
 # ponytail: in-memory per proses, reset saat server restart. Pindah ke tabel DB kalau
 # backend dijalankan dengan lebih dari satu worker.
 _login_failures: dict[str, list[datetime]] = {}
@@ -151,6 +159,24 @@ def check_reset_code(email: str, token: str) -> dict:
     return reset_row
 
 
+def delete_stale_unverified(connection) -> None:
+    """Hapus akun yang tidak diverifikasi dalam UNVERIFIED_ACCOUNT_DAYS hari (tanpa kebun).
+
+    Dipanggil saat daftar, satu-satunya jalan akun belum verifikasi dibuat, jadi tabel users
+    tidak bisa terus membesar oleh pendaftaran palsu.
+    """
+    stale = """
+        SELECT id FROM users
+        WHERE email_verified_at IS NULL
+          AND created_at <= datetime('now', ?)
+          AND NOT EXISTS (SELECT 1 FROM farms WHERE farms.user_id = users.id)
+    """
+    cutoff = f"-{UNVERIFIED_ACCOUNT_DAYS} days"
+    # Tabel anak dulu: tidak ada ON DELETE CASCADE.
+    connection.execute(f"DELETE FROM password_resets WHERE user_id IN ({stale})", (cutoff,))
+    connection.execute(f"DELETE FROM users WHERE id IN ({stale})", (cutoff,))
+
+
 def clean_name(name: str) -> str:
     name = name.strip()
     if len(name) < 2:
@@ -177,6 +203,9 @@ def register(payload: UserRegister, request: Request, background_tasks: Backgrou
     # Hash dihitung di semua jalur dengan alasan yang sama: lama respons tidak boleh membedakan.
     password_hash = hash_password(payload.password)
     code = None
+    # Transaksi sendiri: kunci tulisnya tidak ikut menahan transaksi pendaftaran di bawah.
+    with get_connection() as connection:
+        delete_stale_unverified(connection)
     with get_connection() as connection:
         user = connection.execute(
             "SELECT id, email_verified_at FROM users WHERE email = ?", (email,)
@@ -257,19 +286,20 @@ def login(payload: UserLogin, request: Request) -> dict:
         ).fetchone()
 
     user = row_to_dict(row)
+    # Email tak dikenal, password salah, dan akun terkunci dibalas sama persis dan sama-sama
+    # menjalankan bcrypt, supaya status, pesan, dan lama respons tidak membocorkan email terdaftar.
     if not user:
+        verify_password(payload.password, _DUMMY_PASSWORD_HASH)
         logger.warning("login | failed | ip=%s email=%s", ip, email)
-        raise HTTPException(status_code=401, detail="Email atau password salah.")
+        raise HTTPException(status_code=401, detail=LOGIN_FAILED_MESSAGE)
     # Dicek sebelum password: selama terkunci, password benar pun ditolak.
     if not _take_slot(_login_failures, user["id"], timedelta(minutes=LOGIN_LOCK_MINUTES), LOGIN_MAX_FAILURES):
+        verify_password(payload.password, _DUMMY_PASSWORD_HASH)
         logger.warning("login | locked | ip=%s user_id=%s", ip, user["id"])
-        raise HTTPException(
-            status_code=429,
-            detail=f"Terlalu banyak percobaan login. Coba lagi dalam {LOGIN_LOCK_MINUTES} menit.",
-        )
+        raise HTTPException(status_code=401, detail=LOGIN_FAILED_MESSAGE)
     if not verify_password(payload.password, user["password_hash"]):
         logger.warning("login | failed | ip=%s email=%s", ip, email)
-        raise HTTPException(status_code=401, detail="Email atau password salah.")
+        raise HTTPException(status_code=401, detail=LOGIN_FAILED_MESSAGE)
     with _limits_lock:
         _login_failures.pop(user["id"], None)
     # Dicek setelah password benar, jadi tidak membocorkan apa pun ke yang tidak tahu password.
@@ -391,7 +421,9 @@ def update_language_preference(
 
 
 @router.post("/api/auth/forgot-password")
-def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
+def forgot_password(
+    payload: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks
+) -> dict:
     email = payload.email.lower().strip()
     ip = client_ip(request)
     logger.info("forgot-password | request | ip=%s email=%s", ip, email)
@@ -403,15 +435,13 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
             ).fetchone()
         )
 
-        # Jangan bocorkan apakah email ada/tidak.
+        # Jangan bocorkan apakah email ada/tidak: email tak dikenal dan jatah habis dibalas sama.
         if user is None:
             logger.info("forgot-password | unknown-email | ip=%s email=%s", ip, email)
-            return {"message": "Jika email terdaftar, tautan reset password akan dikirim."}
-
-        # Raise di sini aman walau di dalam blok with: belum ada tulisan DB yang ikut ter-rollback.
+            return {"message": FORGOT_MESSAGE}
         if not _take_slot(_reset_requests, user["id"], timedelta(days=1), RESET_REQUESTS_PER_DAY):
             logger.warning("forgot-password | limited | ip=%s user_id=%s", ip, user["id"])
-            raise HTTPException(status_code=429, detail="Terlalu sering meminta kode reset. Coba lagi besok.")
+            return {"message": FORGOT_MESSAGE}
 
         reset_token = issue_reset_code(connection, user["id"])
 
@@ -429,16 +459,12 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request) -> dict:
         RESET_EMAIL_TEXT, reset_token, reset_link, RESET_TOKEN_EXPIRE_MINUTES, language
     )
 
-    email_sent = False
-    try:
-        email_sent = send_email_via_resend(
-            user["email"], email_subject(RESET_EMAIL_TEXT, language), email_html
-        )
-    except Exception:
-        email_sent = False
-
-    response = {"message": "Jika email terdaftar, tautan reset password akan dikirim."}
-    if not email_sent and settings.expose_dev_tokens:
+    # Dikirim setelah respons: lama kirim email juga bisa membedakan email terdaftar.
+    background_tasks.add_task(
+        send_email_quietly, user["email"], email_subject(RESET_EMAIL_TEXT, language), email_html
+    )
+    response = {"message": FORGOT_MESSAGE}
+    if settings.expose_dev_tokens and not email_enabled():
         response["reset_token"] = reset_token
         response["note"] = "Email provider belum aktif. Gunakan kode reset ini untuk pengujian."
     return response

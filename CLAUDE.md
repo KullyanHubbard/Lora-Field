@@ -99,10 +99,10 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 
 | Endpoint | Method | Auth | Keterangan |
 |----------|--------|------|-----------|
-| `/api/auth/register` | POST | Publik | Daftar akun, tahap 1. Selalu 202 `{ message }` untuk email apa pun, supaya tidak membocorkan email terdaftar. Email baru atau yang belum verifikasi dikirimi kode 6 digit (tabel `password_resets`, 30 menit; kirim ulang ikut batas 5 per hari forgot-password, tanpa 429). Email yang sudah terverifikasi tidak dikirimi apa pun dan akunnya tidak berubah |
+| `/api/auth/register` | POST | Publik | Daftar akun, tahap 1. Selalu 202 `{ message }` untuk email apa pun, supaya tidak membocorkan email terdaftar. Email baru atau yang belum verifikasi dikirimi kode 6 digit (tabel `password_resets`, 30 menit; kirim ulang ikut batas 5 per hari forgot-password, tanpa 429). Email yang sudah terverifikasi tidak dikirimi apa pun dan akunnya tidak berubah. Akun yang tidak diverifikasi dalam 7 hari (dan tanpa kebun) dihapus saat ada pendaftaran berikutnya. |
 | `/api/auth/register/verify` | POST | OTP | Daftar akun, tahap 2. Body `{ name, email, password, language, token }`. Kode benar = nama, password, dan bahasa dari body ini disimpan dan email terverifikasi. Kode hangus setelah 5 kali salah |
-| `/api/auth/login` | POST | Publik | Login, return JWT. 429 setelah 5 kali gagal dalam 15 menit (hanya email terdaftar, password benar pun ditolak selama terkunci). 403 kalau email belum diverifikasi (dicek setelah password benar) |
-| `/api/auth/forgot-password` | POST | Publik | Kirim OTP ke email. 429 setelah 5 permintaan per hari (hanya email terdaftar) |
+| `/api/auth/login` | POST | Publik | Login, return JWT. Setelah 5 kali gagal dalam 15 menit login dikunci, password benar pun ditolak. Email tak dikenal, password salah, dan akun terkunci dibalas sama (401, pesan sama, bcrypt tetap jalan) supaya tidak membocorkan email terdaftar. 403 kalau email belum diverifikasi (dicek setelah password benar) |
+| `/api/auth/forgot-password` | POST | Publik | Kirim OTP ke email (di background). Maksimal 5 kode per hari per akun; lewat batas, balasan tetap 200 dengan pesan sama tanpa kode, supaya tidak membocorkan email terdaftar. |
 | `/api/auth/reset-password/verify` | POST | Publik | Verifikasi OTP 6 digit. Body wajib `{ email, token }`; kode hangus setelah 5 kali salah |
 | `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password). Body wajib `{ email, token, new_password }`. Ikut memverifikasi email akun yang belum verifikasi |
 | `/api/auth/change-password` | POST | JWT | Ganti password (sudah login) |
