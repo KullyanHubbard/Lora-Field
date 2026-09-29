@@ -283,9 +283,14 @@ def get_farm_summary(
         elif farm.get("irrigation_mode") == "manual":
             decision = manual_decision(node)
         elif reading:
-            # Hanya dibaca: state siklus diabaikan, karena state hanya berubah saat reading masuk.
+            # Ringkasan menunggu reading baru sebelum memulai pulsa berikutnya atau menjeda node.
             decision, _ = auto_decision(
-                reading["soil_moisture"], rain_next_3h, thresholds, node, datetime.now(timezone.utc)
+                reading["soil_moisture"],
+                rain_next_3h,
+                thresholds,
+                node,
+                datetime.now(timezone.utc),
+                advance_after_soak=False,
             )
         else:
             decision = None

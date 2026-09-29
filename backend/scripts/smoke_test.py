@@ -1921,6 +1921,22 @@ def run(report: Report, with_network: bool) -> None:
             decision["type"] == "check_irrigation" and paused.get("auto_paused_at") is not None,
             f"decision {decision}, state {paused}",
         )
+        http_decision, http_paused = auto_decision(50, False, padi, pulse_state, now)
+        report.check(
+            "bacaan HTTP juga menjeda setelah dua pulsa terkonfirmasi",
+            http_decision["type"] == "check_irrigation"
+            and http_decision["valve_state"] == "closed"
+            and http_paused.get("auto_paused_at") is not None,
+            f"decision {http_decision}, state {http_paused}",
+        )
+        summary_decision, summary_state = auto_decision(
+            50, False, padi, pulse_state, now, advance_after_soak=False
+        )
+        report.check(
+            "ringkasan menunggu bacaan baru setelah resapan",
+            summary_decision["type"] == "soaking" and not summary_state,
+            f"decision {summary_decision}, state {summary_state}",
+        )
         rising, _ = auto_decision(51, False, padi, pulse_state, now, "closed")
         report.check(
             "kelembapan naik tidak menjeda node",
@@ -2009,23 +2025,35 @@ def run(report: Report, with_network: bool) -> None:
                 f"decision {decision}, pulsa {pulsa_node_a()}",
             )
 
+            def seed_two_confirmed_pulses() -> None:
+                with database.get_connection() as connection:
+                    connection.execute(
+                        """
+                        UPDATE nodes
+                        SET auto_pulse_count = ?, auto_pulse_started_at = ?,
+                            auto_cycle_baseline = ?, auto_confirmed_pulse_count = ?,
+                            auto_paused_at = NULL, last_seen_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                        """,
+                        (
+                            settings.auto_no_rise_pulses,
+                            ago(settings.auto_pulse_minutes + settings.auto_soak_minutes + 5),
+                            50.0,
+                            settings.auto_no_rise_pulses,
+                            node_a,
+                        ),
+                    )
+
+            seed_two_confirmed_pulses()
+            pending_summary = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+            pending_node = next(ns for ns in pending_summary["nodes"] if ns["node"]["id"] == node_a)
+            report.check(
+                "summary tidak mengarang pulsa ketiga sebelum bacaan baru",
+                pending_node["decision"]["type"] == "soaking"
+                and pending_node["node"]["auto_paused_at"] is None,
+                f"node {pending_node}",
+            )
             with database.get_connection() as connection:
-                connection.execute(
-                    """
-                    UPDATE nodes
-                    SET auto_pulse_count = ?, auto_pulse_started_at = ?,
-                        auto_cycle_baseline = ?, auto_confirmed_pulse_count = ?,
-                        auto_paused_at = NULL, last_seen_at = CURRENT_TIMESTAMP
-                    WHERE id = ?
-                    """,
-                    (
-                        settings.auto_no_rise_pulses,
-                        ago(settings.auto_pulse_minutes + settings.auto_soak_minutes + 5),
-                        50.0,
-                        settings.auto_no_rise_pulses,
-                        node_a,
-                    ),
-                )
                 farm = dict(
                     connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
                 )
@@ -2084,6 +2112,15 @@ def run(report: Report, with_network: bool) -> None:
                 resumed.status_code == 200 and resumed.json()["node"]["auto_paused_at"] is None,
                 f"status {resumed.status_code}",
             )
+            seed_two_confirmed_pulses()
+            http_decision = kirim_node_a(kering_payload())
+            report.check(
+                "route HTTP menjeda node setelah dua pulsa terkonfirmasi",
+                http_decision.get("type") == "check_irrigation"
+                and http_decision.get("valve_state") == "closed",
+                f"decision {http_decision}",
+            )
+            client.post(f"/api/nodes/{node_a}/irrigation/resume", headers=auth)
         finally:
             client.patch(f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "auto"}, headers=auth)
 
@@ -2688,6 +2725,30 @@ def run(report: Report, with_network: bool) -> None:
                 client.patch(f"/api/farms/{farm_mqtt}/irrigation-mode", json={"mode": "auto"}, headers=auth),
                 200,
             )
+            with database.get_connection() as connection:
+                connection.execute(
+                    """
+                    UPDATE nodes
+                    SET auto_pulse_count = ?, auto_pulse_started_at = ?,
+                        auto_cycle_baseline = ?, auto_confirmed_pulse_count = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        settings.auto_no_rise_pulses,
+                        ago(settings.auto_pulse_minutes + settings.auto_soak_minutes + 5),
+                        10.0,
+                        settings.auto_no_rise_pulses,
+                        node_mqtt,
+                    ),
+                )
+            reading_mqtt(10.0, "closed")
+            report.check(
+                "MQTT: dua pulsa tanpa kenaikan mengirim perintah tutup",
+                node_db().get("auto_paused_at") is not None
+                and klien.terkirim[-1] == (topik_valve, {"state": "closed"}),
+                f"node {node_db()}, terakhir {klien.terkirim[-1]}",
+            )
+            client.post(f"/api/nodes/{node_mqtt}/irrigation/resume", headers=auth)
             cuaca_asli = mqtt_bridge.get_weather_for_decision
 
             def cuaca_lalu_ganti_mode(kode):

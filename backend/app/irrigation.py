@@ -142,6 +142,7 @@ def auto_decision(
     node: dict,
     now: datetime,
     reported_valve: str | None = None,
+    advance_after_soak: bool = True,
 ) -> tuple[dict, dict]:
     """Keputusan mode otomatis dengan ingatan siklus siram di kolom node.
 
@@ -179,9 +180,10 @@ def auto_decision(
             return dict(OPEN_DECISION), confirmation
         if now < pulse_end + timedelta(minutes=settings.auto_soak_minutes):
             return dict(AUTO_DECISIONS["soaking"]), confirmation
+        if not advance_after_soak:
+            return dict(AUTO_DECISIONS["soaking"]), {}
         if (
-            reported_valve is not None
-            and pulse_count == settings.auto_no_rise_pulses
+            pulse_count == settings.auto_no_rise_pulses
             and confirmed_count == pulse_count
             and node.get("auto_cycle_baseline") is not None
             and soil_moisture <= node["auto_cycle_baseline"]
