@@ -53,6 +53,7 @@ export interface Node {
   valve_command: 'open' | 'closed' | null;
   valve_command_at: string | null;
   valve_command_sent_at: string | null;
+  auto_paused_at?: string | null;
   // Waktu tutup otomatis valve yang dibuka manual (UTC, format waktu server).
   valve_auto_close_at: string | null;
   updated_at: string;
@@ -74,7 +75,8 @@ export type DecisionType =
   | 'manual_timeout'
   | 'manual_saturated'
   | 'soaking'
-  | 'pulse_limit';
+  | 'pulse_limit'
+  | 'check_irrigation';
 
 interface IrrigationDecision {
   type: DecisionType;

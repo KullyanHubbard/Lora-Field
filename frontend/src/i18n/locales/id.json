@@ -131,6 +131,11 @@
     "perNodeTitle": "Detail per Node",
     "perNodeEmpty": "Belum ada node untuk kebun ini.",
     "waitingData": "Menunggu data",
+    "checkIrrigation": "Periksa penyiraman",
+    "resumeAuto": "Aktifkan lagi",
+    "resumeAutoForNode": "Aktifkan lagi penyiraman otomatis {{name}}",
+    "resumeSuccess": "Penyiraman otomatis node diaktifkan lagi.",
+    "resumeError": "Gagal mengaktifkan penyiraman otomatis node.",
     "renameNode": "Ganti nama node",
     "renameTitle": "Ganti Nama Node",
     "renameDesc": "ID alat: {{id}}",
@@ -381,6 +386,7 @@
     "manual": "Manual",
     "soaking": "Meresap",
     "pulseLimit": "Batas pulsa",
+    "checkIrrigation": "Periksa penyiraman",
     "saturated": "Tanah jenuh"
   },
   "irrigationReason": {
@@ -394,6 +400,7 @@
     "manual_timeout": "Valve ditutup otomatis setelah batas waktu pengairan manual.",
     "soaking": "Valve ditutup sebentar supaya air meresap sebelum kelembapan dicek lagi.",
     "pulse_limit": "Tanah belum cukup basah setelah batas pulsa. Cek debit air, pipa, atau sensor.",
+    "check_irrigation": "Kelembapan belum naik setelah penyiraman.",
     "manual_saturated": "Valve ditutup otomatis karena tanah sudah jenuh air (98% atau lebih)."
   },
   "myFarms": {

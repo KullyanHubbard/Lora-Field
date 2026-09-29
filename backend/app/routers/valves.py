@@ -8,6 +8,7 @@ from .. import mqtt_bridge
 from ..auth import get_current_user
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned, get_node_owned
+from ..node_service import present_node
 from ..schemas import IrrigationModeUpdate, ValveCommandUpdate
 from ..valve_control import (
     expire_manual_valves,
@@ -45,7 +46,9 @@ def update_irrigation_mode(
                     valve_command_sent_at = NULL,
                     auto_pulse_count = 0,
                     auto_pulse_started_at = NULL,
-                    auto_limit_at = NULL
+                    auto_limit_at = NULL,
+                    auto_cycle_baseline = NULL,
+                    auto_confirmed_pulse_count = 0
                 WHERE farm_id = ?
                 """,
                 (command, command, farm_id),
@@ -123,3 +126,33 @@ def update_node_valve(
         node = next(n for n in farm_nodes(connection, farm_id) if n["id"] == node_id)
     mqtt_bridge.publish_farm_valves(farm_id)
     return {"node": node}
+
+
+@router.post("/api/nodes/{node_id}/irrigation/resume")
+def resume_auto_irrigation(
+    node_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    with get_connection() as connection:
+        node = get_node_owned(connection, node_id, current_user["id"])
+        farm = get_farm_owned(connection, node["farm_id"], current_user["id"])
+        if farm["irrigation_mode"] != "auto":
+            raise HTTPException(status_code=409, detail="Kebun sedang mode manual.")
+        if node["auto_paused_at"]:
+            connection.execute(
+                """
+                UPDATE nodes
+                SET auto_paused_at = NULL,
+                    auto_pulse_count = 0,
+                    auto_pulse_started_at = NULL,
+                    auto_cycle_baseline = NULL,
+                    auto_confirmed_pulse_count = 0,
+                    auto_limit_at = NULL
+                WHERE id = ?
+                """,
+                (node_id,),
+            )
+            node = row_to_dict(
+                connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
+            )
+    return {"node": present_node(node)}

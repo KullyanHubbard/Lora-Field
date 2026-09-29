@@ -57,6 +57,7 @@ export function getIrrigationStatusBadge(type: DecisionType): StatusBadge {
     manual_saturated: { labelKey: 'irrigationStatus.saturated', tone: 'red' },
     soaking: { labelKey: 'irrigationStatus.soaking', tone: 'green' },
     pulse_limit: { labelKey: 'irrigationStatus.pulseLimit', tone: 'yellow' },
+    check_irrigation: { labelKey: 'irrigationStatus.checkIrrigation', tone: 'red' },
   };
   return map[type];
 }

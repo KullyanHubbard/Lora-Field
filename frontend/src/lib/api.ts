@@ -197,6 +197,9 @@ export const api = {
       body: JSON.stringify({ open }),
     }),
 
+  resumeAutoIrrigation: (nodeId: string) =>
+    apiFetch<{ node: Node }>(`/nodes/${nodeId}/irrigation/resume`, { method: 'POST' }),
+
   // Utils
   getCrops: (q = '') =>
     apiFetch<{ crops: Crop[] }>(`/crops${q ? `?q=${encodeURIComponent(q)}` : ''}`),

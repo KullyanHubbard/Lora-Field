@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { getFarmLastUpdate } from '@/features/dashboard/farmStatusHelpers';
 import { IrrigationHeaderCard } from '@/features/irrigation/components/IrrigationHeaderCard';
 import { IrrigationLoadingState } from '@/features/irrigation/components/IrrigationLoadingState';
@@ -12,13 +14,16 @@ import {
   buildIrrigationStats,
   getIrrigationActivity,
 } from '@/features/irrigation/irrigationHelpers';
-import { useIrrigationSummary } from '@/features/irrigation/queries';
+import { useIrrigationSummary, useResumeAutoIrrigation } from '@/features/irrigation/queries';
+import { NOTICE_CLASSES } from '@/lib/toneClasses';
 
 export default function IrrigationPage() {
   const { id: farmId } = useParams();
   const { t } = useTranslation();
   const { data: summary, isLoading, error } = useIrrigationSummary(farmId);
+  const resumeAuto = useResumeAutoIrrigation(farmId ?? '');
   const irrigationNodes = useMemo(() => summary?.nodes ?? [], [summary]);
+  const pausedNodes = irrigationNodes.filter(({ node }) => node.auto_paused_at);
 
   const stats = useMemo(() => {
     if (!summary) return null;
@@ -41,6 +46,29 @@ export default function IrrigationPage() {
 
   return (
     <div className="flex flex-col gap-4 xl:h-[calc(100svh-5.5rem)] xl:max-h-[calc(100svh-5.5rem)] xl:overflow-hidden">
+      {pausedNodes.length > 0 && (
+        <Card size="sm" className={NOTICE_CLASSES.warningCard} role="alert">
+          <CardContent className="flex flex-wrap items-center gap-3">
+            <span className="font-medium">{t('irrigation.checkIrrigation')}</span>
+            {pausedNodes.map(({ node }) => (
+              <div key={node.id} className="flex items-center gap-2">
+                <span>{node.name || node.id}</span>
+                {summary.farm.irrigation_mode === 'auto' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={resumeAuto.isPending}
+                    aria-label={t('irrigation.resumeAutoForNode', { name: node.name || node.id })}
+                    onClick={() => resumeAuto.mutate(node.id)}
+                  >
+                    {t('irrigation.resumeAuto')}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       <IrrigationHeaderCard
         gatewayStatus={summary.gateway_status}
         lastSync={lastSync}

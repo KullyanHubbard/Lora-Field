@@ -22,3 +22,18 @@ export function useRenameNode() {
     },
   });
 }
+
+export function useResumeAutoIrrigation(farmId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (nodeId: string) => api.resumeAutoIrrigation(nodeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['farm-summary', farmId] });
+      queryClient.invalidateQueries({ queryKey: ['logs'] });
+      toast.success(i18n.t('irrigation.resumeSuccess'));
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || i18n.t('irrigation.resumeError'));
+    },
+  });
+}

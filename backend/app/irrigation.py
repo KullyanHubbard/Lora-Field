@@ -126,6 +126,12 @@ AUTO_DECISIONS = {
         "valve_state": "closed",
         "reason": "Tanah belum cukup basah setelah batas pulsa. Cek debit air, pipa, atau sensor.",
     },
+    "check_irrigation": {
+        "type": "check_irrigation",
+        "decision": "Periksa penyiraman",
+        "valve_state": "closed",
+        "reason": "Kelembapan belum naik setelah penyiraman.",
+    },
 }
 
 
@@ -135,13 +141,21 @@ def auto_decision(
     thresholds: ThresholdConfig,
     node: dict,
     now: datetime,
+    reported_valve: str | None = None,
 ) -> tuple[dict, dict]:
     """Keputusan mode otomatis dengan ingatan siklus siram di kolom node.
 
     Kembalikan (decision, state). state = kolom node yang harus diubah, kosong kalau tidak ada.
     """
     now_text = now.strftime("%Y-%m-%d %H:%M:%S")
-    reset = {"auto_pulse_count": 0, "auto_pulse_started_at": None}
+    reset = {
+        "auto_pulse_count": 0,
+        "auto_pulse_started_at": None,
+        "auto_cycle_baseline": None,
+        "auto_confirmed_pulse_count": 0,
+    }
+    if node.get("auto_paused_at"):
+        return dict(AUTO_DECISIONS["check_irrigation"]), {}
     target = thresholds.upper - settings.auto_target_margin
     emergency = thresholds.lower - settings.rain_emergency_margin
     rain_blocks = rain_next_3h and soil_moisture >= emergency
@@ -156,13 +170,27 @@ def auto_decision(
         pulse_end = (_parse_db_time(node["auto_pulse_started_at"]) or now) + timedelta(
             minutes=settings.auto_pulse_minutes
         )
+        confirmed_count = node.get("auto_confirmed_pulse_count", 0)
+        confirmation = {}
+        if reported_valve == "open" and now < pulse_end and confirmed_count == pulse_count - 1:
+            confirmed_count += 1
+            confirmation = {"auto_confirmed_pulse_count": confirmed_count}
         if now < pulse_end:
-            return dict(OPEN_DECISION), {}
+            return dict(OPEN_DECISION), confirmation
         if now < pulse_end + timedelta(minutes=settings.auto_soak_minutes):
-            return dict(AUTO_DECISIONS["soaking"]), {}
+            return dict(AUTO_DECISIONS["soaking"]), confirmation
+        if (
+            reported_valve is not None
+            and pulse_count == settings.auto_no_rise_pulses
+            and confirmed_count == pulse_count
+            and node.get("auto_cycle_baseline") is not None
+            and soil_moisture <= node["auto_cycle_baseline"]
+        ):
+            return dict(AUTO_DECISIONS["check_irrigation"]), {**reset, "auto_paused_at": now_text}
         if pulse_count >= settings.auto_max_pulses:
             return dict(AUTO_DECISIONS["pulse_limit"]), {**reset, "auto_limit_at": now_text}
         return dict(OPEN_DECISION), {
+            **confirmation,
             "auto_pulse_count": pulse_count + 1,
             "auto_pulse_started_at": now_text,
         }
@@ -176,4 +204,9 @@ def auto_decision(
         return dict(AUTO_DECISIONS["pulse_limit"]), {}
     if rain_blocks:
         return calculate_decision(soil_moisture, True, thresholds), {}
-    return dict(OPEN_DECISION), {"auto_pulse_count": 1, "auto_pulse_started_at": now_text}
+    return dict(OPEN_DECISION), {
+        "auto_pulse_count": 1,
+        "auto_pulse_started_at": now_text,
+        "auto_cycle_baseline": soil_moisture,
+        "auto_confirmed_pulse_count": 0,
+    }

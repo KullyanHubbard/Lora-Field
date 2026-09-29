@@ -55,11 +55,12 @@ from fastapi.testclient import TestClient  # noqa: E402
 import app.bmkg as bmkg_module  # noqa: E402
 from app.bmkg import set_cached_weather  # noqa: E402
 from app.irrigation import auto_decision  # noqa: E402
+from app.reading_service import apply_reading  # noqa: E402
 from app import mqtt_bridge  # noqa: E402
 from app.main import app  # noqa: E402
 from app.node_service import default_node_name  # noqa: E402
 from app.routers import auth as auth_router  # noqa: E402
-from app.schemas import ThresholdConfig  # noqa: E402
+from app.schemas import MqttReadingIn, ThresholdConfig  # noqa: E402
 
 
 ADM4 = "34.04.01.2001"
@@ -1883,6 +1884,66 @@ def run(report: Report, with_network: bool) -> None:
                 f"dapat {decision['type']}, state {state}",
             )
 
+        pulse_state = {
+            "auto_pulse_count": 1,
+            "auto_pulse_started_at": ago(5),
+            "auto_limit_at": None,
+            "auto_cycle_baseline": 50.0,
+            "auto_confirmed_pulse_count": 0,
+            "auto_paused_at": None,
+        }
+        _, confirmed = auto_decision(50, False, padi, pulse_state, now, "open")
+        report.check(
+            "laporan valve buka mengonfirmasi satu pulsa",
+            confirmed.get("auto_confirmed_pulse_count") == 1,
+            f"state {confirmed}",
+        )
+        pulse_state.update(confirmed)
+        pulse_state["auto_pulse_started_at"] = ago(
+            settings.auto_pulse_minutes + settings.auto_soak_minutes + 5
+        )
+        decision, second = auto_decision(50, False, padi, pulse_state, now, "closed")
+        report.check(
+            "pulsa kedua menunggu bacaan setelah resapan",
+            decision["type"] == "open" and second.get("auto_pulse_count") == 2,
+            f"decision {decision}, state {second}",
+        )
+        pulse_state.update(second)
+        pulse_state["auto_pulse_started_at"] = ago(5)
+        _, confirmed = auto_decision(50, False, padi, pulse_state, now, "open")
+        pulse_state.update(confirmed)
+        pulse_state["auto_pulse_started_at"] = ago(
+            settings.auto_pulse_minutes + settings.auto_soak_minutes + 5
+        )
+        decision, paused = auto_decision(50, False, padi, pulse_state, now, "closed")
+        report.check(
+            "dua pulsa terkonfirmasi tanpa kenaikan menjeda node",
+            decision["type"] == "check_irrigation" and paused.get("auto_paused_at") is not None,
+            f"decision {decision}, state {paused}",
+        )
+        rising, _ = auto_decision(51, False, padi, pulse_state, now, "closed")
+        report.check(
+            "kelembapan naik tidak menjeda node",
+            rising["type"] == "open",
+            f"decision {rising}",
+        )
+        unconfirmed, _ = auto_decision(
+            50, False, padi, {**pulse_state, "auto_confirmed_pulse_count": 1}, now, "closed"
+        )
+        report.check(
+            "pulsa tanpa laporan valve buka tidak dihitung",
+            unconfirmed["type"] == "open",
+            f"decision {unconfirmed}",
+        )
+        latched, _ = auto_decision(
+            80, False, padi, {**pulse_state, "auto_paused_at": ago(5)}, now, "closed"
+        )
+        report.check(
+            "kenaikan kelembapan tidak menghapus jeda tanpa pemeriksaan pengguna",
+            latched["type"] == "check_irrigation",
+            f"decision {latched}",
+        )
+
         def pulsa_node_a() -> int:
             with database.get_connection() as connection:
                 return connection.execute(
@@ -1946,6 +2007,82 @@ def run(report: Report, with_network: bool) -> None:
                 "node sempat offline -> siklus baru, bukan pulsa ke-4",
                 decision.get("type") == "open" and pulsa_node_a() == 1,
                 f"decision {decision}, pulsa {pulsa_node_a()}",
+            )
+
+            with database.get_connection() as connection:
+                connection.execute(
+                    """
+                    UPDATE nodes
+                    SET auto_pulse_count = ?, auto_pulse_started_at = ?,
+                        auto_cycle_baseline = ?, auto_confirmed_pulse_count = ?,
+                        auto_paused_at = NULL, last_seen_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    (
+                        settings.auto_no_rise_pulses,
+                        ago(settings.auto_pulse_minutes + settings.auto_soak_minutes + 5),
+                        50.0,
+                        settings.auto_no_rise_pulses,
+                        node_a,
+                    ),
+                )
+                farm = dict(
+                    connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
+                )
+                _, decision = apply_reading(
+                    connection,
+                    node_a,
+                    farm,
+                    MqttReadingIn.model_validate({**kering_payload(), "valve": "closed"}),
+                    FAKE_WEATHER,
+                )
+            report.check(
+                "bacaan MQTT menjeda otomatis pada node yang tidak membaik",
+                decision["type"] == "check_irrigation",
+                f"decision {decision}",
+            )
+            summary_paused = client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+            paused_node = next(ns for ns in summary_paused["nodes"] if ns["node"]["id"] == node_a)
+            report.check(
+                "summary menampilkan jeda per node",
+                paused_node["node"]["auto_paused_at"] is not None
+                and paused_node["decision"]["type"] == "check_irrigation",
+                f"node {paused_node}",
+            )
+            other_node = next(ns for ns in summary_paused["nodes"] if ns["node"]["id"] == node_b)
+            report.check(
+                "jeda hanya berlaku untuk node yang tidak membaik",
+                other_node["node"]["auto_paused_at"] is None,
+                f"node {other_node}",
+            )
+            client.patch(
+                f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "manual"}, headers=auth
+            )
+            rejected = client.post(f"/api/nodes/{node_a}/irrigation/resume", headers=auth)
+            report.check(
+                "jeda tidak bisa diaktifkan lagi saat mode manual",
+                rejected.status_code == 409,
+                f"status {rejected.status_code}",
+            )
+            client.patch(
+                f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "auto"}, headers=auth
+            )
+            report.check(
+                "ganti mode tidak menghapus jeda pengaman",
+                next(
+                    ns
+                    for ns in client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()[
+                        "nodes"
+                    ]
+                    if ns["node"]["id"] == node_a
+                )["node"]["auto_paused_at"] is not None,
+                "jeda hilang setelah ganti mode",
+            )
+            resumed = client.post(f"/api/nodes/{node_a}/irrigation/resume", headers=auth)
+            report.check(
+                "pengguna mengaktifkan lagi otomatis node",
+                resumed.status_code == 200 and resumed.json()["node"]["auto_paused_at"] is None,
+                f"status {resumed.status_code}",
             )
         finally:
             client.patch(f"/api/farms/{farm_id}/irrigation-mode", json={"mode": "auto"}, headers=auth)
@@ -2717,6 +2854,8 @@ def run(report: Report, with_network: bool) -> None:
         )
         status = client.patch(f"/api/nodes/{node_a}/name", json={"name": "Punya Saya"}, headers=other_auth).status_code
         report.check("user lain tidak bisa ganti nama node orang", status == 404, f"status {status}")
+        status = client.post(f"/api/nodes/{node_a}/irrigation/resume", headers=other_auth).status_code
+        report.check("user lain tidak bisa mengaktifkan otomatis node orang", status == 404, f"status {status}")
         other_farms = client.get("/api/farms", headers=other_auth).json()
         report.check("daftar kebun user lain kosong", other_farms.get("total") == 0, f"total = {other_farms.get('total')}")
 

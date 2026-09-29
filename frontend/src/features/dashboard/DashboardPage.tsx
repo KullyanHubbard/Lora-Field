@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { DashboardLoadingState } from '@/features/dashboard/components/DashboardLoadingState';
 import { DashboardSummaryGrid } from '@/features/dashboard/components/DashboardSummaryGrid';
@@ -5,6 +6,7 @@ import { DashboardWarningCard } from '@/features/dashboard/components/DashboardW
 import { useDashboardViewModel } from '@/features/dashboard/useDashboardViewModel';
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const {
     farmId,
     summary,
@@ -31,6 +33,9 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-1 flex-col gap-4">
       {warning && <DashboardWarningCard message={warning} />}
+      {nodes.some(({ node }) => node.auto_paused_at) && (
+        <DashboardWarningCard message={t('irrigation.checkIrrigation')} />
+      )}
 
       <DashboardSummaryGrid
         farmId={farmId}

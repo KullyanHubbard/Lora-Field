@@ -39,6 +39,7 @@ export function classifyLog(log: Pick<IrrigationLog, 'decision_type'>): LogType 
     case 'manual_closed':
     case 'manual_timeout':
     case 'manual_saturated':
+    case 'check_irrigation':
       return 'closed';
     default:
       return 'normal';

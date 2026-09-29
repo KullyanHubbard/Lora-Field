@@ -209,6 +209,9 @@ def init_db() -> None:
         ensure_column(connection, "nodes", "auto_pulse_count", "INTEGER NOT NULL DEFAULT 0")
         ensure_column(connection, "nodes", "auto_pulse_started_at", "TEXT")
         ensure_column(connection, "nodes", "auto_limit_at", "TEXT")
+        ensure_column(connection, "nodes", "auto_cycle_baseline", "REAL")
+        ensure_column(connection, "nodes", "auto_confirmed_pulse_count", "INTEGER NOT NULL DEFAULT 0")
+        ensure_column(connection, "nodes", "auto_paused_at", "TEXT")
         ensure_column(connection, "password_resets", "attempts", "INTEGER NOT NULL DEFAULT 0")
         # Akun yang sudah ada sebelum verifikasi email berlaku dianggap terverifikasi. Hanya
         # saat kolom baru dibuat: akun baru yang belum verifikasi wajib tetap NULL.
