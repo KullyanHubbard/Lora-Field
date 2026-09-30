@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     auto_max_pulses: int = 4
     auto_limit_cooldown_hours: int = 3
     auto_no_rise_pulses: int = 2
+    auto_no_rise_min_points: float = 2
     # Siklus berhenti di batas atas dikurangi ini, supaya air sisa resapan tidak membuat tanah kelewat basah.
     auto_target_margin: float = 5
     # Di bawah batas bawah dikurangi ini, tanah dianggap darurat dan prediksi hujan diabaikan.

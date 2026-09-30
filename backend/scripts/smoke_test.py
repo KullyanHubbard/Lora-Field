@@ -1937,11 +1937,50 @@ def run(report: Report, with_network: bool) -> None:
             summary_decision["type"] == "soaking" and not summary_state,
             f"decision {summary_decision}, state {summary_state}",
         )
-        rising, _ = auto_decision(51, False, padi, pulse_state, now, "closed")
+        for moisture in (49.0, 50.0, 50.5, 51.9):
+            fluctuating, paused_state = auto_decision(
+                moisture, False, padi, pulse_state, now, "closed"
+            )
+            report.check(
+                f"sensor naik turun di {moisture}% tetap menjeda setelah dua pulsa",
+                fluctuating["type"] == "check_irrigation"
+                and paused_state.get("auto_paused_at") is not None,
+                f"decision {fluctuating}, state {paused_state}",
+            )
+        for moisture in (52.0, 53.0):
+            rising, next_state = auto_decision(moisture, False, padi, pulse_state, now, "closed")
+            report.check(
+                f"kenaikan {moisture - 50.0} poin tidak menjeda node",
+                rising["type"] == "open" and next_state.get("auto_paused_at") is None,
+                f"decision {rising}, state {next_state}",
+            )
+        for pulse_count in (3, 4):
+            later_state = {
+                **pulse_state,
+                "auto_pulse_count": pulse_count,
+                "auto_confirmed_pulse_count": pulse_count,
+            }
+            decision, paused_state = auto_decision(51.9, False, padi, later_state, now, "closed")
+            report.check(
+                f"kenaikan kecil setelah pulsa ke-{pulse_count} menjeda node",
+                decision["type"] == "check_irrigation"
+                and paused_state.get("auto_paused_at") is not None,
+                f"decision {decision}, state {paused_state}",
+            )
+        third_state = {**pulse_state, "auto_pulse_count": 3, "auto_confirmed_pulse_count": 3}
+        third_rising, third_result = auto_decision(52.0, False, padi, third_state, now, "closed")
         report.check(
-            "kelembapan naik tidak menjeda node",
-            rising["type"] == "open",
-            f"decision {rising}",
+            "kenaikan tepat dua poin setelah pulsa ketiga tidak menjeda",
+            third_rising["type"] == "open" and third_result.get("auto_paused_at") is None,
+            f"decision {third_rising}, state {third_result}",
+        )
+        fourth_state = {**pulse_state, "auto_pulse_count": 4, "auto_confirmed_pulse_count": 4}
+        fourth_rising, fourth_result = auto_decision(52.0, False, padi, fourth_state, now, "closed")
+        report.check(
+            "kenaikan tepat dua poin setelah pulsa keempat tidak menjeda",
+            fourth_rising["type"] == "pulse_limit"
+            and fourth_result.get("auto_paused_at") is None,
+            f"decision {fourth_rising}, state {fourth_result}",
         )
         unconfirmed, _ = auto_decision(
             50, False, padi, {**pulse_state, "auto_confirmed_pulse_count": 1}, now, "closed"
@@ -1950,6 +1989,19 @@ def run(report: Report, with_network: bool) -> None:
             "pulsa tanpa laporan valve buka tidak dihitung",
             unconfirmed["type"] == "open",
             f"decision {unconfirmed}",
+        )
+        third_unconfirmed, _ = auto_decision(
+            51.9,
+            False,
+            padi,
+            {**third_state, "auto_confirmed_pulse_count": 2},
+            now,
+            "closed",
+        )
+        report.check(
+            "pulsa ketiga tanpa konfirmasi valve buka tidak menjeda",
+            third_unconfirmed["type"] == "open",
+            f"decision {third_unconfirmed}",
         )
         latched, _ = auto_decision(
             80, False, padi, {**pulse_state, "auto_paused_at": ago(5)}, now, "closed"

@@ -130,7 +130,7 @@ AUTO_DECISIONS = {
         "type": "check_irrigation",
         "decision": "Periksa penyiraman",
         "valve_state": "closed",
-        "reason": "Kelembapan belum naik setelah penyiraman.",
+        "reason": "Kelembapan belum naik cukup setelah penyiraman.",
     },
 }
 
@@ -183,10 +183,10 @@ def auto_decision(
         if not advance_after_soak:
             return dict(AUTO_DECISIONS["soaking"]), {}
         if (
-            pulse_count == settings.auto_no_rise_pulses
+            pulse_count >= settings.auto_no_rise_pulses
             and confirmed_count == pulse_count
             and node.get("auto_cycle_baseline") is not None
-            and soil_moisture <= node["auto_cycle_baseline"]
+            and soil_moisture - node["auto_cycle_baseline"] < settings.auto_no_rise_min_points
         ):
             return dict(AUTO_DECISIONS["check_irrigation"]), {**reset, "auto_paused_at": now_text}
         if pulse_count >= settings.auto_max_pulses:
