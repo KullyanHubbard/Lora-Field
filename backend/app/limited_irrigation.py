@@ -10,6 +10,7 @@ from fastapi import HTTPException
 
 from .config import settings
 from .crops import is_rice
+from .database import row_to_dict
 from .irrigation import farm_thresholds
 from .node_service import _parse_db_time
 from .schemas import ThresholdConfig
@@ -47,7 +48,8 @@ def is_limited_active(farm: dict, now: datetime) -> bool:
 def decision_thresholds(farm: dict, now: datetime) -> ThresholdConfig:
     """Threshold untuk keputusan mode otomatis. summary.thresholds tetap threshold tanaman."""
     thresholds = farm_thresholds(farm)
-    if not is_limited_active(farm, now):
+    # Padi tidak pernah memakai batas Terbatas, juga kalau tanamannya baru diganti ke padi saat periode jalan.
+    if is_rice(farm.get("crop_type")) or not is_limited_active(farm, now):
         return thresholds
     drop = settings.limited_irrigation_drop_points
     return ThresholdConfig(lower=max(thresholds.lower - drop, 0), upper=max(thresholds.upper - drop, 0))
@@ -55,14 +57,16 @@ def decision_thresholds(farm: dict, now: datetime) -> ThresholdConfig:
 
 def limited_until_text(until: datetime, now: datetime) -> str:
     """Validasi tanggal selesai dari pengguna lalu ubah ke teks UTC seperti kolom waktu lain di DB."""
-    until = until.astimezone(timezone.utc) if until.tzinfo else until.replace(tzinfo=timezone.utc)
     max_days = settings.limited_irrigation_max_days
+    detail = f"Tanggal selesai harus setelah hari ini dan paling lambat {max_days} hari lagi."
+    try:
+        until = until.astimezone(timezone.utc) if until.tzinfo else until.replace(tzinfo=timezone.utc)
+    except OverflowError as exc:
+        # Tanggal di ujung kalender dengan zona jauh dari UTC keluar rentang datetime saat diubah ke UTC.
+        raise HTTPException(status_code=422, detail=detail) from exc
     # +1 hari: frontend mengirim akhir hari lokal, jadi hari ke-max_days masih boleh.
     if not now < until <= now + timedelta(days=max_days + 1):
-        raise HTTPException(
-            status_code=422,
-            detail=f"Tanggal selesai harus setelah hari ini dan paling lambat {max_days} hari lagi.",
-        )
+        raise HTTPException(status_code=422, detail=detail)
     return _db_time(until)
 
 
@@ -74,7 +78,8 @@ def log_limited_event(
     reason: str | None = None,
     created_at: str | None = None,
 ) -> None:
-    # Kelembapan dan posisi valve disalin dari data terakhir node supaya baris riwayat tetap lengkap.
+    # Kelembapan dan posisi valve disalin dari data terakhir node pada waktu kejadian, bukan data terbaru,
+    # supaya catatan bertanggal mundur tidak memakai data setelahnya. Node tanpa reading saat itu dilewati.
     info = LIMITED_EVENTS[event]
     connection.execute(
         """
@@ -83,19 +88,28 @@ def log_limited_event(
              created_at, limited_until, limited_reason)
         SELECT
             n.id,
-            (SELECT r.soil_moisture FROM readings r WHERE r.node_id = n.id
+            (SELECT r.soil_moisture FROM readings r WHERE r.node_id = n.id AND r.created_at <= :at
              ORDER BY r.created_at DESC, r.id DESC LIMIT 1),
-            '', ?, ?,
+            '', :decision, :event,
             COALESCE(
-                (SELECT dl.valve_state FROM decision_logs dl WHERE dl.node_id = n.id
+                (SELECT dl.valve_state FROM decision_logs dl WHERE dl.node_id = n.id AND dl.created_at <= :at
                  ORDER BY dl.created_at DESC, dl.id DESC LIMIT 1),
                 'closed'
             ),
-            ?, COALESCE(?, CURRENT_TIMESTAMP), ?, ?
+            :reason_text, :at, :until, :reason
         FROM nodes n
-        WHERE n.farm_id = ? AND EXISTS (SELECT 1 FROM readings r WHERE r.node_id = n.id)
+        WHERE n.farm_id = :farm_id
+          AND EXISTS (SELECT 1 FROM readings r WHERE r.node_id = n.id AND r.created_at <= :at)
         """,
-        (info["decision"], event, info["reason"], created_at, until, reason, farm_id),
+        {
+            "at": created_at or _db_time(datetime.now(timezone.utc)),
+            "decision": info["decision"],
+            "event": event,
+            "reason_text": info["reason"],
+            "until": until,
+            "reason": reason,
+            "farm_id": farm_id,
+        },
     )
 
 
@@ -113,8 +127,13 @@ def expire_limited_irrigation(connection, farm: dict, now: datetime) -> dict:
         "UPDATE farms SET limited_until = NULL, limited_reason = NULL WHERE id = ? AND limited_until = ?",
         (farm["id"], until),
     ).rowcount
-    if cleared:
-        log_limited_event(connection, farm["id"], "limited_ended", created_at=until)
+    if not cleared:
+        # Proses lain sudah mengubah periode ini (mis. selesai lalu dimulai lagi): pakai keadaan terbaru.
+        latest = connection.execute("SELECT * FROM farms WHERE id = ?", (farm["id"],)).fetchone()
+        return row_to_dict(latest) or farm
+    log_limited_event(
+        connection, farm["id"], "limited_ended", until=until, reason=farm.get("limited_reason"), created_at=until
+    )
     return {**farm, "limited_until": None, "limited_reason": None}
 
 

@@ -57,9 +57,11 @@ from app.bmkg import set_cached_weather  # noqa: E402
 from app.irrigation import auto_decision  # noqa: E402
 from app.reading_service import apply_reading  # noqa: E402
 from app import mqtt_bridge  # noqa: E402
+from app import reading_service  # noqa: E402
 from app.main import app  # noqa: E402
 from app.node_service import default_node_name  # noqa: E402
 from app.routers import auth as auth_router  # noqa: E402
+from app.routers import valves  # noqa: E402
 from app.schemas import MqttReadingIn, ThresholdConfig  # noqa: E402
 
 
@@ -3069,6 +3071,11 @@ def run(report: Report, with_network: bool) -> None:
             client.patch(f"/api/farms/{farm_mangga}/irrigation-mode", json={"mode": "auto"}, headers=auth)
             lewat = (sekarang - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
             with database.get_connection() as connection:
+                # Node sudah melapor sebelum tanggal selesai; catatan selesai hanya memakai data sampai saat itu.
+                connection.execute(
+                    "UPDATE readings SET created_at = ? WHERE node_id = ?",
+                    ((sekarang - timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S"), node_mangga),
+                )
                 connection.execute("UPDATE farms SET limited_until = ? WHERE id = ?", (lewat, farm_mangga))
             summary = client.get(f"/api/farms/{farm_mangga}/summary", headers=auth).json()
             client.get(f"/api/farms/{farm_mangga}/summary", headers=auth)
@@ -3102,6 +3109,310 @@ def run(report: Report, with_network: bool) -> None:
             client.delete(f"/api/farms/{farm_padi}", headers=auth)
             client.delete(f"/api/farms/{farm_mangga}", headers=auth)
 
+        section("Irigasi Terbatas: balapan dan tepi")
+        kebun_uji: list[str] = []
+
+        def kebun_baru(tanaman: str) -> str:
+            kebun_uji.append(buat_kebun(f"Kebun Uji {tanaman}", tanaman))
+            return kebun_uji[-1]
+
+        def kirim_ke(kebun: str, node: str, persen: float) -> dict:
+            resp = client.post(
+                f"/api/nodes/{node}/readings",
+                json={"soil_moisture": persen, "soil_temp": 26.0, "air_temp": 30.0, "air_humidity": 70.0,
+                      "farm_id": kebun},
+                headers=auth,
+            )
+            assert resp.status_code == 201, resp.text
+            return resp.json()["decision"]
+
+        def sql(query: str, params: tuple = ()) -> list[dict]:
+            with database.get_connection() as connection:
+                return [dict(row) for row in connection.execute(query, params).fetchall()]
+
+        def jam_lalu(jam: float) -> str:
+            return (sekarang - timedelta(hours=jam)).strftime("%Y-%m-%d %H:%M:%S")
+
+        def mundurkan(node: str, jam: float) -> None:
+            sql("UPDATE readings SET created_at = ? WHERE node_id = ?", (jam_lalu(jam), node))
+            sql("UPDATE decision_logs SET created_at = ? WHERE node_id = ?", (jam_lalu(jam), node))
+
+        def catatan(node: str, tipe: str) -> list[dict]:
+            return sql(
+                "SELECT * FROM decision_logs WHERE node_id = ? AND decision_type = ? ORDER BY id", (node, tipe)
+            )
+
+        def url_terbatas(kebun: str) -> str:
+            return f"/api/farms/{kebun}/limited-irrigation"
+
+        try:
+            # Dua Mulai bersamaan: cek status dan ubahnya harus satu operasi.
+            kebun = kebun_baru("Mangga")
+            node = f"node-{suffix}-balap"
+            kirim_ke(kebun, node, 55.0)
+            status_mulai: list[int] = []
+            asli_tersedia = valves.require_limited_available
+
+            def tersedia_lambat(farm: dict) -> None:
+                asli_tersedia(farm)
+                time.sleep(0.4)
+
+            def mulai_dengan(alasan: str) -> None:
+                resp = client.post(
+                    url_terbatas(kebun), json={"reason": alasan, "until": batas(7)}, headers=auth
+                )
+                status_mulai.append(resp.status_code)
+
+            valves.require_limited_available = tersedia_lambat
+            try:
+                threads = [threading.Thread(target=mulai_dengan, args=(a,)) for a in ("flowering", "harvest")]
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join()
+            finally:
+                valves.require_limited_available = asli_tersedia
+            report.check(
+                "dua Mulai bersamaan: satu berhasil, satu 409, satu catatan dimulai",
+                sorted(status_mulai) == [200, 409] and len(catatan(node, "limited_started")) == 1,
+                f"status {status_mulai}, catatan {len(catatan(node, 'limited_started'))}",
+            )
+
+            # PATCH tanggal bersamaan dengan DELETE: tidak boleh aktif lagi setelah dihentikan.
+            kebun = kebun_baru("Jagung")
+            kirim_ke(kebun, f"node-{suffix}-ubah", 60.0)
+            client.post(url_terbatas(kebun), json={"reason": "harvest", "until": batas(14)}, headers=auth)
+            asli_aktif = valves.require_limited_active
+            sudah_tidur: list[int] = []
+
+            def aktif_lambat(farm: dict) -> None:
+                asli_aktif(farm)
+                if not sudah_tidur:
+                    sudah_tidur.append(1)
+                    time.sleep(0.4)
+
+            def ubah_tanggal() -> None:
+                client.patch(url_terbatas(kebun), json={"until": batas(20)}, headers=auth)
+
+            def hentikan() -> None:
+                client.delete(url_terbatas(kebun), headers=auth)
+
+            valves.require_limited_active = aktif_lambat
+            try:
+                thread_ubah = threading.Thread(target=ubah_tanggal)
+                thread_ubah.start()
+                time.sleep(0.15)
+                thread_hentikan = threading.Thread(target=hentikan)
+                thread_hentikan.start()
+                thread_ubah.join()
+                thread_hentikan.join()
+            finally:
+                valves.require_limited_active = asli_aktif
+            akhir = client.get(f"/api/farms/{kebun}", headers=auth).json()["farm"]
+            report.check(
+                "PATCH dan DELETE bersamaan: kebun akhirnya tidak aktif, bukan aktif tanpa alasan",
+                akhir["limited_until"] is None and akhir["limited_reason"] is None,
+                f"limited_until {akhir['limited_until']}, limited_reason {akhir['limited_reason']}",
+            )
+
+            # Snapshot kebun yang basi: periode lama selesai lalu periode baru dimulai proses lain.
+            kebun = kebun_baru("Kopi")
+            node = f"node-{suffix}-basi"
+            kirim_ke(kebun, node, 50.0)
+            sql(
+                "UPDATE farms SET limited_until = ?, limited_reason = 'flowering' WHERE id = ?",
+                (jam_lalu(1), kebun),
+            )
+            asli_expire = reading_service.expire_limited_irrigation
+
+            def expire_setelah_periode_baru(connection, farm: dict, waktu: datetime) -> dict:
+                sql(
+                    "UPDATE farms SET limited_until = ?, limited_reason = 'other' WHERE id = ?",
+                    (jam_lalu(-168), kebun),
+                )
+                return asli_expire(connection, farm, waktu)
+
+            reading_service.expire_limited_irrigation = expire_setelah_periode_baru
+            try:
+                keputusan = kirim_ke(kebun, node, 40.0)
+            finally:
+                reading_service.expire_limited_irrigation = asli_expire
+            report.check(
+                "periode baru tidak diabaikan saat data kebun basi: tanah 40% (batas kopi 45%) standby",
+                keputusan["type"] == "standby",
+                f"keputusan {keputusan['type']}",
+            )
+
+            # Satu kebun satu tanaman: tanaman tidak bisa diganti, nilai yang sama tetap diterima.
+            kebun = kebun_baru("Pisang")
+            node = f"node-{suffix}-padi"
+            kirim_ke(kebun, node, 70.0)
+            client.post(url_terbatas(kebun), json={"reason": "other", "until": batas(7)}, headers=auth)
+            ganti = client.patch(f"/api/farms/{kebun}", json={"crop_type": "Padi"}, headers=auth)
+            sama = client.patch(f"/api/farms/{kebun}", json={"crop_type": "pisang"}, headers=auth)
+            report.check(
+                "tanaman kebun tidak bisa diganti (422), nilai yang sama diterima tanpa perubahan",
+                ganti.status_code == 422 and sama.status_code == 200
+                and sama.json()["farm"]["crop_type"] == "Pisang",
+                f"ganti {ganti.status_code}, sama {sama.status_code}",
+            )
+            # Data lama yang terlanjur padi saat periode Terbatas masih tersimpan tetap memakai batas normal.
+            sql("UPDATE farms SET crop_type = 'Padi' WHERE id = ?", (kebun,))
+            keputusan = kirim_ke(kebun, node, 55.0)
+            report.check(
+                "padi dengan periode Terbatas tersimpan: batas normal, tanah 55% (batas 60%) disiram",
+                keputusan["type"] == "open",
+                f"keputusan {keputusan['type']}",
+            )
+
+            # Riwayat menyimpan tanggal dan alasan saat selesai otomatis maupun dihentikan.
+            kebun = kebun_baru("Teh")
+            node = f"node-{suffix}-meta"
+            kirim_ke(kebun, node, 65.0)
+            mundurkan(node, 3)
+            lewat = jam_lalu(1)
+            sql("UPDATE farms SET limited_until = ?, limited_reason = 'flowering' WHERE id = ?", (lewat, kebun))
+            client.get(f"/api/farms/{kebun}/summary", headers=auth)
+            selesai = catatan(node, "limited_ended")
+            report.check(
+                "selesai otomatis menyimpan tanggal selesai dan alasan",
+                len(selesai) == 1 and selesai[0]["limited_until"] == lewat
+                and selesai[0]["limited_reason"] == "flowering",
+                f"catatan {[(r['limited_until'], r['limited_reason']) for r in selesai]}",
+            )
+            aktif = client.post(
+                url_terbatas(kebun), json={"reason": "harvest", "until": batas(14)}, headers=auth
+            ).json()["farm"]["limited_until"]
+            client.delete(url_terbatas(kebun), headers=auth)
+            berhenti = catatan(node, "limited_stopped")
+            report.check(
+                "dihentikan menyimpan tanggal selesai dan alasan",
+                len(berhenti) == 1 and berhenti[0]["limited_until"] == aktif
+                and berhenti[0]["limited_reason"] == "harvest",
+                f"catatan {[(r['limited_until'], r['limited_reason']) for r in berhenti]}, harusnya {aktif}",
+            )
+
+            # Catatan selesai memakai data sampai waktu kejadian, bukan data sesudahnya.
+            kebun = kebun_baru("Kakao")
+            node_lama, node_baru = f"node-{suffix}-lama", f"node-{suffix}-baru"
+            kirim_ke(kebun, node_lama, 70.0)
+            kirim_ke(kebun, node_baru, 65.0)
+            mundurkan(node_lama, 3)
+            mundurkan(node_baru, 1)
+            sql(
+                "INSERT INTO readings (farm_id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, created_at) "
+                "VALUES (?, ?, 35.0, 26, 30, 70, ?)",
+                (kebun, node_lama, jam_lalu(1)),
+            )
+            sql(
+                "INSERT INTO decision_logs (node_id, soil_moisture, weather, decision, decision_type, valve_state, "
+                "reason, created_at) VALUES (?, 35.0, '', 'Manual: valve dibuka', 'manual_open', 'open', 'uji', ?)",
+                (node_lama, jam_lalu(1)),
+            )
+            sql("UPDATE farms SET limited_until = ?, limited_reason = 'harvest' WHERE id = ?", (jam_lalu(2), kebun))
+            ringkasan = client.get(f"/api/farms/{kebun}/summary", headers=auth).json()
+            selesai_lama = catatan(node_lama, "limited_ended")
+            report.check(
+                "kelembapan dan valve sesudah tanggal selesai tidak tersalin (tertutup, 70%)",
+                len(selesai_lama) == 1 and selesai_lama[0]["valve_state"] == "closed"
+                and selesai_lama[0]["soil_moisture"] == 70.0 and selesai_lama[0]["created_at"] == jam_lalu(2),
+                f"catatan {[(r['valve_state'], r['soil_moisture'], r['created_at']) for r in selesai_lama]}",
+            )
+            report.check(
+                "node yang baru mengirim data setelah tanggal selesai tidak dapat catatan selesai, periode tetap berakhir",
+                catatan(node_baru, "limited_ended") == [] and ringkasan["farm"]["limited_until"] is None,
+                f"catatan {catatan(node_baru, 'limited_ended')}, limited_until {ringkasan['farm']['limited_until']}",
+            )
+
+            # Tanggal di ujung kalender dengan zona jauh dari UTC ditolak 422, bukan 500.
+            kebun = kebun_baru("Melon")
+            ekstrem = ("0001-01-01T00:00:00+14:00", "9999-12-31T23:59:59-14:00")
+            status_post = [
+                client.post(url_terbatas(kebun), json={"reason": "other", "until": teks}, headers=auth).status_code
+                for teks in ekstrem
+            ]
+            client.post(url_terbatas(kebun), json={"reason": "other", "until": batas(5)}, headers=auth)
+            status_patch = [
+                client.patch(url_terbatas(kebun), json={"until": teks}, headers=auth).status_code
+                for teks in ekstrem
+            ]
+            report.check(
+                "tanggal ekstrem ditolak 422 di POST dan PATCH",
+                status_post == [422, 422] and status_patch == [422, 422],
+                f"POST {status_post}, PATCH {status_patch}",
+            )
+
+            # Konversi UTC: zona +07:00 dan tanpa zona disimpan sebagai UTC.
+            kebun = kebun_baru("Semangka")
+            target = sekarang + timedelta(days=5)
+            plus7 = target.astimezone(timezone(timedelta(hours=7))).isoformat()
+            ditulis = client.post(
+                url_terbatas(kebun), json={"reason": "other", "until": plus7}, headers=auth
+            ).json()["farm"]["limited_until"]
+            client.delete(url_terbatas(kebun), headers=auth)
+            tanpa_zona = client.post(
+                url_terbatas(kebun), json={"reason": "other", "until": target.replace(tzinfo=None).isoformat()},
+                headers=auth,
+            ).json()["farm"]["limited_until"]
+            harusnya = target.strftime("%Y-%m-%d %H:%M:%S")
+            report.check(
+                "zona +07:00 dan tanpa zona disimpan sebagai UTC",
+                ditulis == harusnya and tanpa_zona == harusnya,
+                f"+07:00 {ditulis}, tanpa zona {tanpa_zona}, harusnya {harusnya}",
+            )
+
+            # Kebun tanpa node: mulai, ubah, dan selesai sendiri tanpa error.
+            kebun = kebun_baru("Wortel")
+            status_kosong = [
+                client.post(url_terbatas(kebun), json={"reason": "other", "until": batas(5)}, headers=auth).status_code,
+                client.patch(url_terbatas(kebun), json={"until": batas(6)}, headers=auth).status_code,
+            ]
+            sql("UPDATE farms SET limited_until = ? WHERE id = ?", (jam_lalu(1), kebun))
+            ringkasan = client.get(f"/api/farms/{kebun}/summary", headers=auth)
+            report.check(
+                "kebun tanpa node: mulai, ubah, dan selesai sendiri tanpa error",
+                status_kosong == [200, 200] and ringkasan.status_code == 200
+                and ringkasan.json()["farm"]["limited_until"] is None,
+                f"status {status_kosong}, summary {ringkasan.status_code}",
+            )
+
+            # Node tanpa data tidak dicatat, node yang sudah melapor dicatat sekali.
+            kebun = kebun_baru("Tembakau")
+            node_data, node_kosong = f"node-{suffix}-data", f"node-{suffix}-kosong"
+            kirim_ke(kebun, node_data, 55.0)
+            client.post(
+                f"/api/gateways/GW-TEMBAKAU-{suffix}/register",
+                json={"farm_id": kebun, "nodes": [{"node_id": node_kosong, "name": "Tanpa Data"}]},
+                headers=auth,
+            )
+            client.post(url_terbatas(kebun), json={"reason": "other", "until": batas(5)}, headers=auth)
+            report.check(
+                "node tanpa data tidak dicatat, node yang sudah melapor dicatat sekali",
+                catatan(node_kosong, "limited_started") == [] and len(catatan(node_data, "limited_started")) == 1,
+                f"kosong {len(catatan(node_kosong, 'limited_started'))}, data {len(catatan(node_data, 'limited_started'))}",
+            )
+
+            # Pengaman pulsa tetap menjeda node saat Irigasi Terbatas aktif.
+            kebun = kebun_baru("Kentang")
+            node = f"node-{suffix}-pulsa"
+            kirim_ke(kebun, node, 75.0)
+            client.post(url_terbatas(kebun), json={"reason": "other", "until": batas(5)}, headers=auth)
+            sql(
+                "UPDATE nodes SET auto_pulse_count = 2, auto_pulse_started_at = ?, auto_cycle_baseline = 50.0, "
+                "auto_confirmed_pulse_count = 2, auto_paused_at = NULL, last_seen_at = CURRENT_TIMESTAMP "
+                "WHERE id = ?",
+                ((sekarang - timedelta(minutes=45)).strftime("%Y-%m-%d %H:%M:%S"), node),
+            )
+            keputusan = kirim_ke(kebun, node, 50.0)
+            report.check(
+                "pengaman pulsa tetap menjeda node saat Irigasi Terbatas aktif",
+                keputusan["type"] == "check_irrigation",
+                f"keputusan {keputusan['type']}",
+            )
+        finally:
+            for kebun in kebun_uji:
+                client.delete(f"/api/farms/{kebun}", headers=auth)
+
         section("Isolasi antar user")
         other_email = f"smoke-other-{suffix}@lorafield-smoke.com"
         daftar_akun(other_email, password, "Orang Lain")
@@ -3128,6 +3439,14 @@ def run(report: Report, with_network: bool) -> None:
             headers=other_auth,
         ).status_code
         report.check("user lain tidak bisa memulai Irigasi Terbatas kebun orang", status == 404, f"status {status}")
+        status = client.patch(
+            f"/api/farms/{farm_id}/limited-irrigation",
+            json={"until": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()},
+            headers=other_auth,
+        ).status_code
+        report.check("user lain tidak bisa mengubah Irigasi Terbatas kebun orang", status == 404, f"status {status}")
+        status = client.delete(f"/api/farms/{farm_id}/limited-irrigation", headers=other_auth).status_code
+        report.check("user lain tidak bisa menghentikan Irigasi Terbatas kebun orang", status == 404, f"status {status}")
         other_farms = client.get("/api/farms", headers=other_auth).json()
         report.check("daftar kebun user lain kosong", other_farms.get("total") == 0, f"total = {other_farms.get('total')}")
 

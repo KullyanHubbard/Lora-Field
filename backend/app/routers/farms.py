@@ -29,6 +29,7 @@ from ..valve_control import expire_manual_valves
 router = APIRouter()
 
 UNKNOWN_CROP_DETAIL = "Jenis tanaman wajib dipilih dari daftar tanaman."
+CROP_LOCKED_DETAIL = "Jenis tanaman kebun tidak bisa diganti. Buat kebun baru untuk tanaman lain."
 
 
 @router.get("/api/farms")
@@ -79,6 +80,10 @@ def update_farm(
                 updates[field] = "" if field != "status" else (current_farm.get("status") or "active")
         if updates.get("name") == "":
             raise HTTPException(status_code=422, detail="Nama kebun tidak boleh kosong.")
+        # Satu kebun satu tanaman: jenis tanaman hanya diisi saat kebun dibuat. Nilai yang sama diterima.
+        if "crop_type" in updates:
+            if updates.pop("crop_type").lower() != (current_farm.get("crop_type") or "").strip().lower():
+                raise HTTPException(status_code=422, detail=CROP_LOCKED_DETAIL)
 
         lat = updates.get("latitude", current_farm.get("latitude"))
         lng = updates.get("longitude", current_farm.get("longitude"))
@@ -88,25 +93,15 @@ def update_farm(
             location_hint = updates.get("location") or current_farm.get("location") or ""
             updates["bmkg_adm4_code"] = resolve_bmkg_adm4(lat, lng, location_hint)
 
-        if "crop_type" in updates:
-            crop_thresholds = find_crop_thresholds(updates["crop_type"])
-            if crop_thresholds is None:
-                raise HTTPException(status_code=422, detail=UNKNOWN_CROP_DETAIL)
-            updates["lower_threshold"] = crop_thresholds.lower
-            updates["upper_threshold"] = crop_thresholds.upper
-
         allowed_columns = {
             "name",
             "owner",
             "location",
-            "crop_type",
             "area_ha",
             "bmkg_adm4_code",
             "latitude",
             "longitude",
             "status",
-            "lower_threshold",
-            "upper_threshold",
             "ground_cover",
         }
         assignments = [f"{column} = ?" for column in updates if column in allowed_columns]

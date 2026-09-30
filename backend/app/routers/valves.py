@@ -184,6 +184,8 @@ def start_limited_irrigation(
 ) -> dict:
     now = datetime.now(timezone.utc)
     with get_connection() as connection:
+        # Kunci tulis sejak awal: cek status dan ubahnya satu operasi, permintaan bersamaan antre.
+        connection.execute("BEGIN IMMEDIATE")
         farm = expire_limited_irrigation(
             connection, get_farm_owned(connection, farm_id, current_user["id"]), now
         )
@@ -207,6 +209,8 @@ def update_limited_irrigation(
     """Ubah tanggal selesai. Boleh di mode apa pun, karena Irigasi Terbatas tetap berjalan saat manual."""
     now = datetime.now(timezone.utc)
     with get_connection() as connection:
+        # Kunci tulis sejak awal: cek status dan ubahnya satu operasi, permintaan bersamaan antre.
+        connection.execute("BEGIN IMMEDIATE")
         farm = expire_limited_irrigation(
             connection, get_farm_owned(connection, farm_id, current_user["id"]), now
         )
@@ -231,6 +235,8 @@ def stop_limited_irrigation(
 ) -> dict:
     now = datetime.now(timezone.utc)
     with get_connection() as connection:
+        # Kunci tulis sejak awal: cek status dan ubahnya satu operasi, permintaan bersamaan antre.
+        connection.execute("BEGIN IMMEDIATE")
         farm = expire_limited_irrigation(
             connection, get_farm_owned(connection, farm_id, current_user["id"]), now
         )
@@ -243,6 +249,8 @@ def stop_limited_irrigation(
             """,
             (farm_id,),
         )
-        log_limited_event(connection, farm_id, "limited_stopped", reason=farm["limited_reason"])
+        log_limited_event(
+            connection, farm_id, "limited_stopped", until=farm["limited_until"], reason=farm["limited_reason"]
+        )
         farm = _read_farm(connection, farm_id)
     return {"farm": farm}
