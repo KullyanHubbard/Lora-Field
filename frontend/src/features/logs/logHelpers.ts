@@ -63,14 +63,16 @@ export function getDecisionTone(type: LogType): StatusTone {
 export function formatLogTime(iso: string | null | undefined, locale: string): string {
   if (!iso) return EMPTY_VALUE;
   const d = parseServerDate(iso);
-  return d ? formatClockTime(d, locale, true) : String(iso);
+  return d ? `${d.toLocaleDateString(locale)} ${formatClockTime(d, locale, true)}` : String(iso);
 }
 
 // Tanggal input (jam lokal) jadi batas waktu ISO UTC untuk GET /api/logs, inklusif sehari penuh.
 export function toLogsRange(dateFrom: string, dateTo: string): { start?: string; end?: string } {
+  const startDate = dateFrom ? new Date(`${dateFrom}T00:00:00`) : null;
+  const endDate = dateTo ? new Date(`${dateTo}T23:59:59.999`) : null;
   return {
-    start: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : undefined,
-    end: dateTo ? new Date(`${dateTo}T23:59:59.999`).toISOString() : undefined,
+    start: startDate && Number.isFinite(startDate.getTime()) ? startDate.toISOString() : undefined,
+    end: endDate && Number.isFinite(endDate.getTime()) ? endDate.toISOString() : undefined,
   };
 }
 
