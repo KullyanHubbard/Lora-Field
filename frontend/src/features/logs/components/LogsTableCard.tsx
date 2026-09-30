@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getDecisionTone, LOG_TYPE_LABEL } from '@/features/logs/logHelpers';
+import { getDecisionTone } from '@/features/logs/logHelpers';
 import type { ScopedLog } from '@/features/logs/useLogsViewModel';
 import { EMPTY_VALUE } from '@/lib/format';
 
@@ -61,10 +61,7 @@ export function LogsTableCard({
                     {log.weather || EMPTY_VALUE}
                   </TableCell>
                   <TableCell>
-                    <StatusPill
-                      tone={getDecisionTone(log.type)}
-                      label={t(LOG_TYPE_LABEL[log.type])}
-                    />
+                    <StatusPill tone={getDecisionTone(log.type)} label={log.decisionLabel} />
                   </TableCell>
                   <TableCell>{log.valveLabel}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">

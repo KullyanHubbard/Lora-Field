@@ -1,12 +1,14 @@
+import { CalendarClock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FarmSummaryError } from '@/components/FarmSummaryError';
 import { DashboardLoadingState } from '@/features/dashboard/components/DashboardLoadingState';
 import { DashboardSummaryGrid } from '@/features/dashboard/components/DashboardSummaryGrid';
 import { DashboardWarningCard } from '@/features/dashboard/components/DashboardWarningCard';
 import { useDashboardViewModel } from '@/features/dashboard/useDashboardViewModel';
+import { formatLimitedUntil } from '@/features/irrigation/limitedIrrigation';
 
 export default function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     farmId,
     summary,
@@ -35,6 +37,20 @@ export default function DashboardPage() {
       {warning && <DashboardWarningCard message={warning} />}
       {nodes.some(({ node }) => node.auto_paused_at) && (
         <DashboardWarningCard message={t('irrigation.checkIrrigation')} />
+      )}
+      {summary.farm.limited_until && (
+        <DashboardWarningCard
+          icon={CalendarClock}
+          message={[
+            t('limitedIrrigation.activeUntil', {
+              date: formatLimitedUntil(summary.farm.limited_until, i18n.language),
+            }),
+            summary.farm.limited_reason &&
+              t(`limitedIrrigation.reason.${summary.farm.limited_reason}`),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        />
       )}
 
       <DashboardSummaryGrid

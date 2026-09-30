@@ -11,6 +11,7 @@ import type {
   Reading,
   IrrigationLog,
   IrrigationMode,
+  LimitedIrrigationReason,
   Node,
   User,
 } from '@/types';
@@ -199,6 +200,22 @@ export const api = {
 
   resumeAutoIrrigation: (nodeId: string) =>
     apiFetch<{ node: Node }>(`/nodes/${nodeId}/irrigation/resume`, { method: 'POST' }),
+
+  // Irigasi Terbatas. until = ISO date-time (akhir hari lokal yang dipilih).
+  startLimitedIrrigation: (farmId: string, reason: LimitedIrrigationReason, until: string) =>
+    apiFetch<{ farm: Farm }>(`/farms/${farmId}/limited-irrigation`, {
+      method: 'POST',
+      body: JSON.stringify({ reason, until }),
+    }),
+
+  updateLimitedIrrigation: (farmId: string, until: string) =>
+    apiFetch<{ farm: Farm }>(`/farms/${farmId}/limited-irrigation`, {
+      method: 'PATCH',
+      body: JSON.stringify({ until }),
+    }),
+
+  stopLimitedIrrigation: (farmId: string) =>
+    apiFetch<{ farm: Farm }>(`/farms/${farmId}/limited-irrigation`, { method: 'DELETE' }),
 
   // Utils
   getCrops: (q = '') =>

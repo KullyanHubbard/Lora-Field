@@ -26,7 +26,16 @@ export interface Farm {
   // Threshold VWC dari jenis tanaman. null = tanaman tidak dikenal, backend pakai default.
   lower_threshold?: number | null;
   upper_threshold?: number | null;
+  // Irigasi Terbatas (limited_irrigation.py). null = tidak aktif. limited_until = UTC, format waktu server.
+  limited_until?: string | null;
+  limited_reason?: LimitedIrrigationReason | null;
 }
+
+export type LimitedIrrigationReason = 'flowering' | 'harvest' | 'other';
+
+// Baris riwayat Irigasi Terbatas, hanya di decision_logs (bukan decision.type di summary).
+export type LimitedIrrigationEvent =
+  'limited_started' | 'limited_changed' | 'limited_stopped' | 'limited_ended';
 
 export interface Reading {
   id: string;
@@ -93,10 +102,13 @@ export interface IrrigationLog {
   weather: string;
   decision: string;
   // null untuk log lama yang teks keputusannya tidak dikenali saat migrasi.
-  decision_type: DecisionType | null;
+  decision_type: DecisionType | LimitedIrrigationEvent | null;
   valve_state: string;
   reason: string;
   created_at: string;
+  // Hanya terisi di baris Irigasi Terbatas.
+  limited_until?: string | null;
+  limited_reason?: LimitedIrrigationReason | null;
 }
 
 // GET /api/farms/{id}/gateway-logs → { items: GatewayLog[], total }

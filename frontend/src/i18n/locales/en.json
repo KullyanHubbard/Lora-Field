@@ -169,6 +169,59 @@
       "normal": "Normal"
     }
   },
+  "limitedIrrigation": {
+    "title": "Limited Irrigation",
+    "helpLabel": "What is Limited Irrigation?",
+    "inactiveDesc": "Temporarily reduce automatic watering, then return to normal on its own.",
+    "autoOnly": "Can only be started in Automatic mode.",
+    "riceNote": "Rice is better suited to Manual mode, because the sensor measures soil moisture, not standing water depth.",
+    "activeUntil": "Limited Irrigation until {{date}}",
+    "manualNote": "No effect while in Manual mode.",
+    "start": "Start",
+    "editDate": "Change date",
+    "stop": "Stop",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "startTitle": "Start Limited Irrigation",
+    "editTitle": "Change End Date",
+    "reasonQuestion": "Why use Limited Irrigation?",
+    "weeks_one": "{{count}} week",
+    "weeks_other": "{{count}} weeks",
+    "endDate": "End date",
+    "confirmDesc": "The soil is kept drier than usual, but still watered if it gets too dry. Afterwards, watering returns to normal on its own.",
+    "dateInvalid": "Choose a date from tomorrow up to {{days}} days from now.",
+    "stopTitle": "Stop Limited Irrigation?",
+    "stopDesc": "Automatic watering limits return to normal right away.",
+    "startSuccess": "Limited Irrigation started.",
+    "updateSuccess": "End date changed.",
+    "stopSuccess": "Limited Irrigation stopped.",
+    "error": "Failed to update Limited Irrigation.",
+    "reason": {
+      "flowering": "To make plants flower",
+      "harvest": "Before harvest",
+      "other": "Other"
+    },
+    "reasonHint": {
+      "flowering": "For example mango, coffee",
+      "harvest": "For example onion, potato",
+      "other": "Choose 1–4 weeks yourself"
+    },
+    "help": {
+      "whatTitle": "What is it?",
+      "what": "Automatic watering is reduced for a while. The soil is kept drier than usual, but still watered if it gets too dry. After the end date, watering returns to normal on its own.",
+      "whenTitle": "When to use it?",
+      "when": "To make plants flower, for example mango and coffee. Or before harvest, for example onion and potato.",
+      "notForTitle": "Less suitable for",
+      "notFor": "Leafy vegetables (spinach, water spinach, mustard greens) and plants that are bearing fruit (cucumber, watermelon, melon)."
+    },
+    "log": {
+      "limited_started": "Limited Irrigation started",
+      "limited_changed": "Limited Irrigation changed",
+      "limited_stopped": "Limited Irrigation stopped",
+      "limited_ended": "Limited Irrigation ended"
+    }
+  },
   "monitoring": {
     "errorLoadFarm": "Failed to load farm data: {{message}}",
     "noData": "Data not available.",
@@ -408,8 +461,12 @@
     "manual_timeout": "Valve closed automatically after the manual irrigation time limit.",
     "soaking": "Valve closed briefly so water can soak in before moisture is checked again.",
     "pulse_limit": "Soil is still not wet enough after the pulse limit. Check water flow, pipes, or the sensor.",
-    "check_irrigation": "Moisture has not risen after watering.",
-    "manual_saturated": "Valve closed automatically because the soil is saturated (98% or more)."
+    "check_irrigation": "Moisture has not risen enough after watering.",
+    "manual_saturated": "Valve closed automatically because the soil is saturated (98% or more).",
+    "limited_started": "{{reason}}. Watering limits lowered until {{date}}.",
+    "limited_changed": "End date changed to {{date}}.",
+    "limited_stopped": "Stopped by the user. Watering limits back to normal.",
+    "limited_ended": "End date reached. Watering limits back to normal."
   },
   "myFarms": {
     "colorPickerTitle": "Marker Color",

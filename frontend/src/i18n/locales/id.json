@@ -169,6 +169,58 @@
       "normal": "Normal"
     }
   },
+  "limitedIrrigation": {
+    "title": "Irigasi Terbatas",
+    "helpLabel": "Apa itu Irigasi Terbatas?",
+    "inactiveDesc": "Kurangi siram otomatis sementara, lalu kembali normal sendiri.",
+    "autoOnly": "Hanya bisa dimulai di mode Otomatis.",
+    "riceNote": "Padi lebih cocok memakai mode Manual, karena sensor mengukur kelembapan tanah, bukan tinggi genangan air.",
+    "activeUntil": "Irigasi Terbatas sampai {{date}}",
+    "manualNote": "Tidak berpengaruh selama mode Manual.",
+    "start": "Mulai",
+    "editDate": "Ubah tanggal",
+    "stop": "Hentikan",
+    "cancel": "Batal",
+    "save": "Simpan",
+    "close": "Tutup",
+    "startTitle": "Mulai Irigasi Terbatas",
+    "editTitle": "Ubah Tanggal Selesai",
+    "reasonQuestion": "Kenapa ingin Irigasi Terbatas?",
+    "weeks": "{{count}} minggu",
+    "endDate": "Tanggal selesai",
+    "confirmDesc": "Tanah dibiarkan lebih kering dari biasa, tapi tetap disiram kalau terlalu kering. Setelah itu siram kembali normal sendiri.",
+    "dateInvalid": "Pilih tanggal mulai besok sampai {{days}} hari lagi.",
+    "stopTitle": "Hentikan Irigasi Terbatas?",
+    "stopDesc": "Batas siram otomatis langsung kembali normal.",
+    "startSuccess": "Irigasi Terbatas dimulai.",
+    "updateSuccess": "Tanggal selesai diubah.",
+    "stopSuccess": "Irigasi Terbatas dihentikan.",
+    "error": "Gagal memperbarui Irigasi Terbatas.",
+    "reason": {
+      "flowering": "Supaya tanaman berbunga",
+      "harvest": "Menjelang panen",
+      "other": "Lainnya"
+    },
+    "reasonHint": {
+      "flowering": "Misalnya mangga, kopi",
+      "harvest": "Misalnya bawang, kentang",
+      "other": "Pilih sendiri 1–4 minggu"
+    },
+    "help": {
+      "whatTitle": "Apa ini?",
+      "what": "Siram otomatis dikurangi sementara. Tanah dibiarkan lebih kering dari biasa, tapi tetap disiram kalau terlalu kering. Setelah tanggal selesai, siram kembali normal sendiri.",
+      "whenTitle": "Kapan dipakai?",
+      "when": "Supaya tanaman berbunga, misalnya mangga dan kopi. Atau menjelang panen, misalnya bawang dan kentang.",
+      "notForTitle": "Kurang cocok untuk",
+      "notFor": "Sayuran daun (bayam, kangkung, sawi) dan tanaman yang sedang berbuah (timun, semangka, melon)."
+    },
+    "log": {
+      "limited_started": "Irigasi Terbatas dimulai",
+      "limited_changed": "Irigasi Terbatas diubah",
+      "limited_stopped": "Irigasi Terbatas dihentikan",
+      "limited_ended": "Irigasi Terbatas selesai"
+    }
+  },
   "monitoring": {
     "errorLoadFarm": "Gagal memuat data kebun: {{message}}",
     "noData": "Data tidak tersedia.",
@@ -400,8 +452,12 @@
     "manual_timeout": "Valve ditutup otomatis setelah batas waktu pengairan manual.",
     "soaking": "Valve ditutup sebentar supaya air meresap sebelum kelembapan dicek lagi.",
     "pulse_limit": "Tanah belum cukup basah setelah batas pulsa. Cek debit air, pipa, atau sensor.",
-    "check_irrigation": "Kelembapan belum naik setelah penyiraman.",
-    "manual_saturated": "Valve ditutup otomatis karena tanah sudah jenuh air (98% atau lebih)."
+    "check_irrigation": "Kelembapan belum naik cukup setelah penyiraman.",
+    "manual_saturated": "Valve ditutup otomatis karena tanah sudah jenuh air (98% atau lebih).",
+    "limited_started": "{{reason}}. Batas siram diturunkan sampai {{date}}.",
+    "limited_changed": "Tanggal selesai diubah ke {{date}}.",
+    "limited_stopped": "Dihentikan pengguna. Batas siram kembali normal.",
+    "limited_ended": "Tanggal selesai tercapai. Batas siram kembali normal."
   },
   "myFarms": {
     "colorPickerTitle": "Pilih Warna Marker",

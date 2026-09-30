@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useFarmSummary } from '@/features/dashboard/queries';
+import { formatLimitedUntil } from '@/features/irrigation/limitedIrrigation';
 import { logsLimit, useLogs } from '@/features/logs/queries';
 import {
   buildLogsCsv,
   classifyLog,
   formatLogTime,
+  limitedEventLabelKey,
   LOG_TYPE_LABEL,
   toLogsRange,
   type LogCsvRow,
@@ -81,12 +83,21 @@ export function useLogsViewModel() {
           const node = nodeLookup.get(log.node_id);
           const type = classifyLog(log);
           const reasonKey = getIrrigationReasonKey(log.decision_type);
+          const limitedKey = limitedEventLabelKey(log.decision_type);
           return {
             ...log,
             time: formatLogTime(log.created_at, i18n.language),
             type,
-            decisionLabel: t(LOG_TYPE_LABEL[type]),
-            reasonLabel: reasonKey ? t(reasonKey) : log.reason,
+            decisionLabel: t(limitedKey ?? LOG_TYPE_LABEL[type]),
+            // date dan reason hanya dipakai teks alasan baris Irigasi Terbatas.
+            reasonLabel: reasonKey
+              ? t(reasonKey, {
+                  date: formatLimitedUntil(log.limited_until, i18n.language),
+                  reason: log.limited_reason
+                    ? t(`limitedIrrigation.reason.${log.limited_reason}`)
+                    : '',
+                })
+              : log.reason,
             nodeName: node?.name || log.node_id,
             nodeLocation: node?.location || EMPTY_VALUE,
             valveLabel: log.valve_state === 'open' ? t('logs.valveOpen') : t('logs.valveClosed'),

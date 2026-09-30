@@ -8,7 +8,7 @@
 // pemetaan tone -> kelas/token tema dilakukan di lapisan UI (komponen Badge),
 // bukan di sini. Perilaku keputusan (status -> warna) dipertahankan apa adanya.
 
-import type { DecisionType, SemanticTone } from '@/types';
+import type { DecisionType, LimitedIrrigationEvent, SemanticTone } from '@/types';
 
 export type StatusTone = Exclude<SemanticTone, 'neutral'>;
 
@@ -63,7 +63,9 @@ export function getIrrigationStatusBadge(type: DecisionType): StatusBadge {
 }
 
 // Alasan keputusan dalam bahasa aplikasi. Teks backend dipakai untuk log lama tanpa type.
-export function getIrrigationReasonKey(type: DecisionType | null | undefined): string | null {
+export function getIrrigationReasonKey(
+  type: DecisionType | LimitedIrrigationEvent | null | undefined,
+): string | null {
   return type ? `irrigationReason.${type}` : null;
 }
 

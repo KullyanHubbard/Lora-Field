@@ -46,6 +46,11 @@ export function classifyLog(log: Pick<IrrigationLog, 'decision_type'>): LogType 
   }
 }
 
+// Baris Irigasi Terbatas punya label sendiri; kelompok filternya tetap 'normal'.
+export function limitedEventLabelKey(decisionType: IrrigationLog['decision_type']): string | null {
+  return decisionType?.startsWith('limited_') ? `limitedIrrigation.log.${decisionType}` : null;
+}
+
 // Versi lama: getDecisionBadgeClass -> 'badge-green' dst. Sekarang return tone.
 export function getDecisionTone(type: LogType): StatusTone {
   switch (type) {
