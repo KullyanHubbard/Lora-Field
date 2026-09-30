@@ -212,7 +212,15 @@
       "whenTitle": "Kapan dipakai?",
       "when": "Supaya tanaman berbunga, misalnya mangga dan kopi. Atau menjelang panen, misalnya bawang dan kentang.",
       "notForTitle": "Kurang cocok untuk",
-      "notFor": "Sayuran daun (bayam, kangkung, sawi) dan tanaman yang sedang berbuah (timun, semangka, melon)."
+      "notFor": "Sayuran daun (bayam, kangkung, sawi) dan tanaman yang sedang berbuah (timun, semangka, melon).",
+      "detailsTitle": "Cara kerja",
+      "details": {
+        "scope": "Berlaku untuk semua node di satu kebun. Setiap kebun diatur sendiri-sendiri.",
+        "manual": "Hanya bisa dimulai di mode Otomatis. Pindah ke mode Manual tidak membatalkannya, dan tanggal selesai tidak bergeser.",
+        "date": "Tanggal selesai paling lambat {{days}} hari lagi. Bisa diubah atau dihentikan kapan saja di halaman Irigasi.",
+        "history": "Mulai, perubahan tanggal, dihentikan, dan selesai tercatat di halaman Riwayat.",
+        "rice": "Tidak tersedia untuk padi, karena sensor mengukur kelembapan tanah, bukan tinggi genangan air."
+      }
     },
     "log": {
       "limited_started": "Irigasi Terbatas dimulai",
@@ -704,6 +712,9 @@
       "email": "Email",
       "whatsapp": "WhatsApp",
       "chatButton": "Chat via WhatsApp"
+    },
+    "guide": {
+      "title": "Panduan Fitur"
     }
   },
   "selectFarms": {

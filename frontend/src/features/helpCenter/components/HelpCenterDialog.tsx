@@ -1,9 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { Mail, MessageCircle, X } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { contactInfo } from '@/features/helpCenter/constants';
+import { LimitedIrrigationHelp } from '@/features/irrigation/components/LimitedIrrigationHelp';
 
 interface HelpCenterDialogProps {
   isOpen: boolean;
@@ -15,7 +22,7 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="max-w-md">
+      <AlertDialogContent className="max-h-[90svh] max-w-md overflow-y-auto">
         {/* Close button */}
         <Button
           variant="ghost"
@@ -72,6 +79,18 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
             </Button>
           </div>
         )}
+
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">{t('helpCenter.guide.title')}</h3>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="limited-irrigation">
+              <AccordionTrigger>{t('limitedIrrigation.title')}</AccordionTrigger>
+              <AccordionContent>
+                <LimitedIrrigationHelp withDetails />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );

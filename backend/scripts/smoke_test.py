@@ -2509,6 +2509,13 @@ def run(report: Report, with_network: bool) -> None:
                 r_g6.status_code == 200 and len(items_g6) <= 20,
                 f"status {r_g6.status_code}, jumlah {len(items_g6)}",
             )
+
+            for label, params in (
+                ("start tahun 1 zona +05:00", {"start": "0001-01-01T00:00:00+05:00"}),
+                ("end tahun 9999 zona -05:00", {"end": "9999-12-31T23:59:59-05:00"}),
+            ):
+                status = client.get("/api/logs", params=params, headers=auth).status_code
+                report.check(f"G7 filter tanggal ekstrem ({label}) ditolak 422", status == 422, f"status {status}")
         finally:
             client.delete(f"/api/farms/{farm2}", headers=auth)
 

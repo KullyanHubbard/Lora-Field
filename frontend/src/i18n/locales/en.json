@@ -213,7 +213,15 @@
       "whenTitle": "When to use it?",
       "when": "To make plants flower, for example mango and coffee. Or before harvest, for example onion and potato.",
       "notForTitle": "Less suitable for",
-      "notFor": "Leafy vegetables (spinach, water spinach, mustard greens) and plants that are bearing fruit (cucumber, watermelon, melon)."
+      "notFor": "Leafy vegetables (spinach, water spinach, mustard greens) and plants that are bearing fruit (cucumber, watermelon, melon).",
+      "detailsTitle": "How it works",
+      "details": {
+        "scope": "Applies to all nodes in one farm. Each farm is set separately.",
+        "manual": "Can only be started in Automatic mode. Switching to Manual mode does not cancel it, and the end date does not shift.",
+        "date": "The end date is at most {{days}} days away. It can be changed or stopped at any time on the Irrigation page.",
+        "history": "Start, date changes, stop, and end are recorded on the History page.",
+        "rice": "Not available for rice, because the sensor measures soil moisture, not standing water depth."
+      }
     },
     "log": {
       "limited_started": "Limited Irrigation started",
@@ -713,6 +721,9 @@
       "email": "Email",
       "whatsapp": "WhatsApp",
       "chatButton": "Chat via WhatsApp"
+    },
+    "guide": {
+      "title": "Feature Guide"
     }
   },
   "selectFarms": {

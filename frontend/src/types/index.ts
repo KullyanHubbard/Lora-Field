@@ -197,11 +197,11 @@ export interface Crop {
 
 // Payload POST /api/farms (field dari addFarm/)
 // PATCH /api/farms/{id}: semua field opsional, sama dengan schema FarmUpdate backend.
+// Tanpa crop_type: jenis tanaman kebun tidak bisa diganti (backend menolak 422 kalau berbeda).
 export interface UpdateFarmPayload {
   name?: string;
   owner?: string;
   location?: string;
-  crop_type?: string;
   area_ha?: number | null;
   bmkg_adm4_code?: string;
   latitude?: number;

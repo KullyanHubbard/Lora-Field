@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LimitedIrrigationDateDialog } from '@/features/irrigation/components/LimitedIrrigationDateDialog';
+import { LimitedIrrigationHelp } from '@/features/irrigation/components/LimitedIrrigationHelp';
 import {
   formatLimitedUntil,
   isRiceCrop,
@@ -104,14 +105,7 @@ export function LimitedIrrigationCard({ farm }: { farm: Farm }) {
             <AlertDialogHeader>
               <AlertDialogTitle>{t('limitedIrrigation.title')}</AlertDialogTitle>
             </AlertDialogHeader>
-            <div className="space-y-3 text-sm">
-              {(['what', 'when', 'notFor'] as const).map((part) => (
-                <div key={part}>
-                  <p className="font-medium">{t(`limitedIrrigation.help.${part}Title`)}</p>
-                  <p className="text-muted-foreground">{t(`limitedIrrigation.help.${part}`)}</p>
-                </div>
-              ))}
-            </div>
+            <LimitedIrrigationHelp />
             <AlertDialogFooter>
               <AlertDialogCancel>{t('limitedIrrigation.close')}</AlertDialogCancel>
             </AlertDialogFooter>

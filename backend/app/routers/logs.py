@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..auth import get_current_user
 from ..database import get_connection
@@ -17,7 +17,11 @@ LOGS_MAX_LIMIT = 1000
 def _utc_text(value: datetime) -> str:
     """Format datetime jadi teks UTC sama seperti created_at di DB. Tanpa zona dianggap UTC."""
     if value.tzinfo is not None:
-        value = value.astimezone(timezone.utc)
+        try:
+            value = value.astimezone(timezone.utc)
+        except OverflowError as exc:
+            # Tanggal di ujung kalender dengan zona jauh dari UTC keluar rentang datetime saat diubah ke UTC.
+            raise HTTPException(status_code=422, detail="Filter tanggal di luar rentang yang didukung.") from exc
     return value.strftime("%Y-%m-%d %H:%M:%S")
 
 
