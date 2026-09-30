@@ -21,6 +21,7 @@ from ..irrigation import (
     farm_thresholds,
     manual_decision,
 )
+from ..limited_irrigation import decision_thresholds, expire_limited_irrigation
 from ..node_service import is_recently_seen, present_node
 from ..schemas import FarmCreate, FarmUpdate
 from ..valve_control import expire_manual_valves
@@ -238,8 +239,11 @@ def get_farm_summary(
     farm_id: str,
     current_user: Annotated[dict, Depends(get_current_user)],
 ) -> dict:
+    now = datetime.now(timezone.utc)
     with get_connection() as connection:
-        farm = get_farm_owned(connection, farm_id, current_user["id"])
+        farm = expire_limited_irrigation(
+            connection, get_farm_owned(connection, farm_id, current_user["id"]), now
+        )
         expire_manual_valves(connection, farm_id)
         nodes = [
             present_node(dict(row))
@@ -274,6 +278,7 @@ def get_farm_summary(
     weather = _farm_weather_or_none(farm)
     rain_next_3h = effective_rain_next_3h(farm, weather)
     thresholds = farm_thresholds(farm)
+    auto_thresholds = decision_thresholds(farm, now)
 
     node_summaries = []
     for node in nodes:
@@ -287,9 +292,9 @@ def get_farm_summary(
             decision, _ = auto_decision(
                 reading["soil_moisture"],
                 rain_next_3h,
-                thresholds,
+                auto_thresholds,
                 node,
-                datetime.now(timezone.utc),
+                now,
                 advance_after_soak=False,
             )
         else:

@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 
 from .config import settings
 from .database import row_to_dict
-from .irrigation import MANUAL_DECISIONS, auto_decision, effective_rain_next_3h, farm_thresholds, manual_decision
+from .irrigation import MANUAL_DECISIONS, auto_decision, effective_rain_next_3h, manual_decision
+from .limited_irrigation import decision_thresholds, expire_limited_irrigation
 from .node_service import is_recently_seen, record_reading
 from .schemas import MqttReadingIn, SensorReadingIn
 from .valve_control import expire_manual_valves
@@ -18,6 +19,8 @@ def apply_reading(
     Node dan kebun sudah dipastikan pemanggil. Jalan di dalam transaksi pemanggil.
     """
     farm_id = farm["id"]
+    now = datetime.now(timezone.utc)
+    farm = expire_limited_irrigation(connection, farm, now)
     if farm.get("irrigation_mode") == "manual":
         expire_manual_valves(connection, farm_id)
         node = row_to_dict(
@@ -57,9 +60,9 @@ def apply_reading(
         decision, state = auto_decision(
             payload.soil_moisture,
             effective_rain_next_3h(farm, weather),
-            farm_thresholds(farm),
+            decision_thresholds(farm, now),
             node,
-            datetime.now(timezone.utc),
+            now,
             payload.valve if isinstance(payload, MqttReadingIn) else None,
         )
         state = {**broken_cycle, **state}

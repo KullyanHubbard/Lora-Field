@@ -1,5 +1,7 @@
-"""Route kendali valve: ganti mode otomatis/manual, jalankan/hentikan pengairan, dan valve per node."""
+"""Route kendali valve: ganti mode otomatis/manual, jalankan/hentikan pengairan, valve per node, dan
+Irigasi Terbatas."""
 
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,8 +10,20 @@ from .. import mqtt_bridge
 from ..auth import get_current_user
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned, get_node_owned
+from ..limited_irrigation import (
+    expire_limited_irrigation,
+    limited_until_text,
+    log_limited_event,
+    require_limited_active,
+    require_limited_available,
+)
 from ..node_service import present_node
-from ..schemas import IrrigationModeUpdate, ValveCommandUpdate
+from ..schemas import (
+    IrrigationModeUpdate,
+    LimitedIrrigationStart,
+    LimitedIrrigationUpdate,
+    ValveCommandUpdate,
+)
 from ..valve_control import (
     expire_manual_valves,
     farm_nodes,
@@ -156,3 +170,79 @@ def resume_auto_irrigation(
                 connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
             )
     return {"node": present_node(node)}
+
+
+def _read_farm(connection, farm_id: str) -> dict:
+    return row_to_dict(connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone())
+
+
+@router.post("/api/farms/{farm_id}/limited-irrigation")
+def start_limited_irrigation(
+    farm_id: str,
+    payload: LimitedIrrigationStart,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    now = datetime.now(timezone.utc)
+    with get_connection() as connection:
+        farm = expire_limited_irrigation(
+            connection, get_farm_owned(connection, farm_id, current_user["id"]), now
+        )
+        require_limited_available(farm)
+        until = limited_until_text(payload.until, now)
+        connection.execute(
+            "UPDATE farms SET limited_until = ?, limited_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (until, payload.reason, farm_id),
+        )
+        log_limited_event(connection, farm_id, "limited_started", until=until, reason=payload.reason)
+        farm = _read_farm(connection, farm_id)
+    return {"farm": farm}
+
+
+@router.patch("/api/farms/{farm_id}/limited-irrigation")
+def update_limited_irrigation(
+    farm_id: str,
+    payload: LimitedIrrigationUpdate,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    """Ubah tanggal selesai. Boleh di mode apa pun, karena Irigasi Terbatas tetap berjalan saat manual."""
+    now = datetime.now(timezone.utc)
+    with get_connection() as connection:
+        farm = expire_limited_irrigation(
+            connection, get_farm_owned(connection, farm_id, current_user["id"]), now
+        )
+        require_limited_active(farm)
+        until = limited_until_text(payload.until, now)
+        if until != farm["limited_until"]:
+            connection.execute(
+                "UPDATE farms SET limited_until = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (until, farm_id),
+            )
+            log_limited_event(
+                connection, farm_id, "limited_changed", until=until, reason=farm["limited_reason"]
+            )
+        farm = _read_farm(connection, farm_id)
+    return {"farm": farm}
+
+
+@router.delete("/api/farms/{farm_id}/limited-irrigation")
+def stop_limited_irrigation(
+    farm_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    now = datetime.now(timezone.utc)
+    with get_connection() as connection:
+        farm = expire_limited_irrigation(
+            connection, get_farm_owned(connection, farm_id, current_user["id"]), now
+        )
+        require_limited_active(farm)
+        connection.execute(
+            """
+            UPDATE farms
+            SET limited_until = NULL, limited_reason = NULL, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (farm_id,),
+        )
+        log_limited_event(connection, farm_id, "limited_stopped", reason=farm["limited_reason"])
+        farm = _read_farm(connection, farm_id)
+    return {"farm": farm}

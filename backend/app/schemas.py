@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
@@ -57,6 +58,15 @@ GroundCover = Literal["open", "mulch", "roofed"]
 
 class ValveCommandUpdate(BaseModel):
     open: bool
+
+
+class LimitedIrrigationStart(BaseModel):
+    reason: Literal["flowering", "harvest", "other"]
+    until: datetime = Field(..., description="Batas selesai; tanpa zona dianggap UTC")
+
+
+class LimitedIrrigationUpdate(BaseModel):
+    until: datetime = Field(..., description="Batas selesai baru; tanpa zona dianggap UTC")
 
 
 class GatewayLogIn(BaseModel):

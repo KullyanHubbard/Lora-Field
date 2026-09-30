@@ -37,6 +37,11 @@ CROP_THRESHOLDS: list[dict] = [
 ]
 
 
+def is_rice(crop_type: str | None) -> bool:
+    """Padi butuh genangan air yang tidak terukur sensor kelembapan tanah."""
+    return (crop_type or "").strip().lower() == "padi"
+
+
 def find_crop_thresholds(crop_type: str | None) -> ThresholdConfig | None:
     """Threshold VWC untuk nama tanaman (tidak peka huruf besar), None kalau tidak dikenal."""
     key = (crop_type or "").strip().lower()

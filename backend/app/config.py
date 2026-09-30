@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     rain_emergency_margin: float = 15
     # Total prakiraan hujan (mm, jumlah tp di jendela cek hujan) minimal untuk menunda siram.
     rain_delay_min_mm: float = 5
+    # Irigasi Terbatas: selama aktif, batas bawah dan atas siram otomatis turun sekian poin.
+    limited_irrigation_drop_points: float = 10
+    # Tanggal selesai Irigasi Terbatas paling lambat sekian hari dari hari ini.
+    limited_irrigation_max_days: int = 28
 
     # Origins yang diizinkan untuk CORS. Pisah dengan koma di .env:
     #   ALLOWED_ORIGINS=https://app.lorafield.com,https://www.lorafield.com

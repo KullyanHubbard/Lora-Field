@@ -2949,6 +2949,159 @@ def run(report: Report, with_network: bool) -> None:
         finally:
             client.delete(f"/api/farms/{farm_jenuh}", headers=auth)
 
+        section("Irigasi Terbatas")
+        sekarang = datetime.now(timezone.utc)
+
+        def buat_kebun(nama: str, tanaman: str) -> str:
+            resp = client.post(
+                "/api/farms",
+                json={"name": nama, "crop_type": tanaman, "bmkg_adm4_code": ADM4, "latitude": -7.79,
+                      "longitude": 110.31, "gateway_device_id": f"GW-{tanaman.upper()}-{suffix}"},
+                headers=auth,
+            )
+            assert resp.status_code == 201, resp.text
+            return resp.json()["farm"]["id"]
+
+        def batas(hari: float) -> str:
+            return (sekarang + timedelta(days=hari)).isoformat()
+
+        farm_padi = buat_kebun("Kebun Padi Terbatas", "Padi")
+        farm_mangga = buat_kebun("Kebun Mangga Terbatas", "Mangga")
+        node_mangga = f"node-{suffix}-mangga"
+
+        def kirim_mangga(persen: float) -> dict:
+            resp = client.post(
+                f"/api/nodes/{node_mangga}/readings",
+                json={"soil_moisture": persen, "soil_temp": 26.0, "air_temp": 30.0, "air_humidity": 70.0,
+                      "farm_id": farm_mangga},
+                headers=auth,
+            )
+            assert resp.status_code == 201, resp.text
+            return resp.json()["decision"]
+
+        def log_terbatas() -> list[dict]:
+            items = client.get(f"/api/logs?farm_id={farm_mangga}&limit=100", headers=auth).json()["items"]
+            return [log for log in items if (log.get("decision_type") or "").startswith("limited_")]
+
+        url_mangga = f"/api/farms/{farm_mangga}/limited-irrigation"
+        try:
+            mulai_padi = client.post(
+                f"/api/farms/{farm_padi}/limited-irrigation", json={"reason": "flowering", "until": batas(7)},
+                headers=auth,
+            )
+            report.check(
+                "Irigasi Terbatas ditolak untuk padi (409)",
+                mulai_padi.status_code == 409 and "padi" in mulai_padi.json().get("detail", ""),
+                f"status {mulai_padi.status_code}, {mulai_padi.text[:120]}",
+            )
+            kirim_mangga(55.0)
+            for hari, label in ((-0.5, "sudah lewat"), (40, "lebih dari 28 hari")):
+                status = client.post(url_mangga, json={"reason": "other", "until": batas(hari)}, headers=auth).status_code
+                report.check(f"tanggal selesai {label} ditolak (422)", status == 422, f"status {status}")
+            status = client.post(url_mangga, json={"reason": "entah", "until": batas(7)}, headers=auth).status_code
+            report.check("alasan di luar daftar ditolak (422)", status == 422, f"status {status}")
+            mulai = report.expect(
+                "POST limited-irrigation memulai Irigasi Terbatas",
+                client.post(url_mangga, json={"reason": "flowering", "until": batas(21)}, headers=auth),
+                200,
+                ("farm",),
+            )
+            report.check(
+                "farm menyimpan tanggal selesai dan alasan",
+                bool(mulai.get("farm", {}).get("limited_until"))
+                and mulai.get("farm", {}).get("limited_reason") == "flowering",
+                f"farm {mulai.get('farm')}",
+            )
+            status = client.post(url_mangga, json={"reason": "harvest", "until": batas(7)}, headers=auth).status_code
+            report.check("memulai lagi saat masih aktif ditolak (409)", status == 409, f"status {status}")
+            keputusan = kirim_mangga(45.0)
+            report.check(
+                "Irigasi Terbatas: tanah 45% (batas mangga 50%) belum disiram",
+                keputusan["type"] == "standby",
+                f"keputusan {keputusan['type']}",
+            )
+            keputusan = kirim_mangga(38.0)
+            report.check(
+                "Irigasi Terbatas: tanah 38% (di bawah 50 - 10) tetap disiram",
+                keputusan["type"] == "open",
+                f"keputusan {keputusan['type']}",
+            )
+            summary = client.get(f"/api/farms/{farm_mangga}/summary", headers=auth).json()
+            report.check(
+                "summary.thresholds tetap batas tanaman, farm membawa limited_until",
+                summary["thresholds"] == {"lower": 50.0, "upper": 70.0} and summary["farm"]["limited_until"],
+                f"thresholds {summary['thresholds']}, limited_until {summary['farm'].get('limited_until')}",
+            )
+            dimulai = log_terbatas()
+            report.check(
+                "Riwayat mencatat Irigasi Terbatas dimulai beserta alasan dan tanggal selesai",
+                len(dimulai) == 1 and dimulai[0]["decision_type"] == "limited_started"
+                and dimulai[0]["limited_reason"] == "flowering"
+                and dimulai[0]["limited_until"] == mulai["farm"]["limited_until"],
+                f"log {dimulai}",
+            )
+            ubah = report.expect(
+                "PATCH limited-irrigation mengubah tanggal selesai",
+                client.patch(url_mangga, json={"until": batas(25)}, headers=auth),
+                200,
+                ("farm",),
+            )
+            report.check(
+                "Riwayat mencatat Irigasi Terbatas diubah dengan tanggal baru",
+                log_terbatas()[0]["decision_type"] == "limited_changed"
+                and log_terbatas()[0]["limited_until"] == ubah.get("farm", {}).get("limited_until"),
+                f"log {log_terbatas()[:1]}",
+            )
+            status = client.patch(url_mangga, json={"until": batas(40)}, headers=auth).status_code
+            report.check("ubah tanggal lebih dari 28 hari ditolak (422)", status == 422, f"status {status}")
+            client.patch(f"/api/farms/{farm_mangga}/irrigation-mode", json={"mode": "manual"}, headers=auth)
+            farm_manual = client.get(f"/api/farms/{farm_mangga}", headers=auth).json()["farm"]
+            report.check(
+                "pindah ke mode manual tidak membatalkan Irigasi Terbatas",
+                farm_manual["limited_until"] == ubah.get("farm", {}).get("limited_until"),
+                f"limited_until {farm_manual.get('limited_until')}",
+            )
+            report.expect(
+                "tanggal selesai tetap bisa diubah di mode manual",
+                client.patch(url_mangga, json={"until": batas(20)}, headers=auth),
+                200,
+            )
+            client.patch(f"/api/farms/{farm_mangga}/irrigation-mode", json={"mode": "auto"}, headers=auth)
+            lewat = (sekarang - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+            with database.get_connection() as connection:
+                connection.execute("UPDATE farms SET limited_until = ? WHERE id = ?", (lewat, farm_mangga))
+            summary = client.get(f"/api/farms/{farm_mangga}/summary", headers=auth).json()
+            client.get(f"/api/farms/{farm_mangga}/summary", headers=auth)
+            selesai = [log for log in log_terbatas() if log["decision_type"] == "limited_ended"]
+            report.check(
+                "tanggal lewat: Irigasi Terbatas selesai sendiri, tercatat sekali di waktu selesainya",
+                summary["farm"]["limited_until"] is None and len(selesai) == 1
+                and selesai[0]["created_at"] == lewat,
+                f"limited_until {summary['farm'].get('limited_until')}, log selesai {selesai}",
+            )
+            keputusan = kirim_mangga(45.0)
+            report.check(
+                "setelah selesai, tanah 45% kembali disiram (batas normal)",
+                keputusan["type"] == "open",
+                f"keputusan {keputusan['type']}",
+            )
+            status = client.delete(url_mangga, headers=auth).status_code
+            report.check("menghentikan saat tidak aktif ditolak (409)", status == 409, f"status {status}")
+            client.post(url_mangga, json={"reason": "harvest", "until": batas(14)}, headers=auth)
+            berhenti = report.expect("DELETE limited-irrigation menghentikan", client.delete(url_mangga, headers=auth), 200)
+            report.check(
+                "dihentikan: farm kosong lagi dan Riwayat mencatat dihentikan",
+                berhenti.get("farm", {}).get("limited_until") is None
+                and log_terbatas()[0]["decision_type"] == "limited_stopped",
+                f"farm {berhenti.get('farm')}, log {log_terbatas()[:1]}",
+            )
+            client.patch(f"/api/farms/{farm_mangga}/irrigation-mode", json={"mode": "manual"}, headers=auth)
+            status = client.post(url_mangga, json={"reason": "other", "until": batas(7)}, headers=auth).status_code
+            report.check("memulai di mode manual ditolak (409)", status == 409, f"status {status}")
+        finally:
+            client.delete(f"/api/farms/{farm_padi}", headers=auth)
+            client.delete(f"/api/farms/{farm_mangga}", headers=auth)
+
         section("Isolasi antar user")
         other_email = f"smoke-other-{suffix}@lorafield-smoke.com"
         daftar_akun(other_email, password, "Orang Lain")
@@ -2969,6 +3122,12 @@ def run(report: Report, with_network: bool) -> None:
         report.check("user lain tidak bisa ganti nama node orang", status == 404, f"status {status}")
         status = client.post(f"/api/nodes/{node_a}/irrigation/resume", headers=other_auth).status_code
         report.check("user lain tidak bisa mengaktifkan otomatis node orang", status == 404, f"status {status}")
+        status = client.post(
+            f"/api/farms/{farm_id}/limited-irrigation",
+            json={"reason": "other", "until": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()},
+            headers=other_auth,
+        ).status_code
+        report.check("user lain tidak bisa memulai Irigasi Terbatas kebun orang", status == 404, f"status {status}")
         other_farms = client.get("/api/farms", headers=other_auth).json()
         report.check("daftar kebun user lain kosong", other_farms.get("total") == 0, f"total = {other_farms.get('total')}")
 
