@@ -295,3 +295,105 @@ Item baru:
 - Pemeriksa izin otomatis beberapa kali gangguan (Edit, Bash, pencarian web). Perubahan diterapkan lewat skrip dan pencarian diulang setelah pulih.
 - Config simulator dari user sempat berisi nilai yang tidak dikenali (`ground_cover` "Closed") dan key kebun yang sudah dipakai kebun demo. Ditangkap sebelum simulator dijalankan.
 - Firmware hanya dibuktikan sampai compile dan tes logika di PC. Belum pernah dicoba di alat asli.
+
+## Sesi 4 (2026-09-29 s/d 2026-10-01)
+
+### Cakupan commit
+
+- Commit dalam cakupan sesi ini: `61f0abe` s/d `4ce3212` (9 commit). Tidak semuanya dibuat di sesi ini, lihat catatan di bawah.
+- Titik awal sebelum sesi: `e7bf0dc` "new part 3" (akhir Sesi 3). Sesi ini dimulai dari serah terima pada 2026-09-29 dengan HEAD `d2f214f` dan 16 file pengaman tanah basah yang belum di-commit; user meng-commit-nya menjadi `e7bf0dc` sebelum pekerjaan sesi ini dimulai.
+- Pola kerja berubah di tengah sesi. Awalnya sesi ini menjadi perancang: memeriksa klaim dan hasil kerja ke repo, lalu menulis prompt untuk Codex (user pindah ke Codex untuk eksekusi). Sejak Irigasi Terbatas, user meminta sesi ini menulis kode langsung (tanpa commit), sedangkan Codex dipakai untuk review dan tugas kecil. Satu sesi Claude Code lain memperbaiki temuan review Codex.
+- Semua commit setelah `4ce3212` (mulai `59f36f8` "docs: rangkuman sesi 1" dan `cddc46c` "docs: rangkuman sesi 3") bukan dari sesi ini. Rangkuman sesi berikutnya dimulai dari `59f36f8`.
+- Cek cepat: `git log --oneline e7bf0dc..4ce3212`
+
+### Catatan soal asal commit
+
+- `61f0abe` "commit codex,gemini,claude": aturan kerja agen lain (`AGENTS.md`, `GEMINI.md`, `scripts/guard_diff.py`). Dibuat di luar sesi ini. Sesi ini hanya membaca `AGENTS.md` dan memakai `guard_diff.py` untuk verifikasi.
+- `76cae63` dan `26d2d50` (keduanya "fix"): pengaman "Periksa penyiraman" versi pertama, dikerjakan Codex di luar sesi ini. Sesi ini memeriksanya dan menemukan kelemahan yang diperbaiki di `2369808`.
+- `445b0dc` "fix": perbaikan Riwayat, dikerjakan Codex dari dua cacat yang ditemukan sesi ini. Diperiksa sesi ini sebelum di-commit.
+- `2369808`: dikerjakan Codex dari prompt sesi ini, lalu diverifikasi ulang di repo.
+- `0d25d05`, `340c80d`, `4ce3212`: dibuat di sesi ini.
+- `99d31d2`: dikerjakan sesi Claude Code lain dari hasil review Codex atas `0d25d05`. Sesi ini hanya memeriksa hasilnya (smoke test, dan memastikan web tidak pernah mengirim perubahan tanaman).
+
+### Perubahan kode per fase
+
+| Fase | Commit | Isi perubahan | Smoke test |
+|------|--------|---------------|------------|
+| lain | `61f0abe` | Aturan kerja untuk Codex dan Gemini: larangan commit, PRA-CEK sebelum edit, zona sensitif, daftar file terlarang, dan pemeriksa diff `guard_diff.py` (cek commit, file terkunci, warna hex, em dash, dan lainnya) | 256 (backend tidak berubah) |
+| Periksa 1 | `76cae63` | Pengaman "Periksa penyiraman" (`check_irrigation`): siram otomatis node dijeda kalau kelembapan tidak naik setelah 2 pulsa yang terkonfirmasi lewat laporan valve MQTT. Kolom baru `auto_cycle_baseline`, `auto_confirmed_pulse_count`, `auto_paused_at`; pengaturan `AUTO_NO_RISE_PULSES`; endpoint `POST /api/nodes/{id}/irrigation/resume`; tombol "Aktifkan lagi" di halaman Irigasi dan peringatan di Dashboard di atas Ringkasan Kebun | 256 ke 269 |
+| Periksa 1b | `26d2d50` | Summary tidak lagi memajukan pulsa atau menjeda node (`advance_after_soak=False`), dan cek jeda tidak lagi mensyaratkan laporan valve di reading terakhir | 274 |
+| Riwayat | `445b0dc` | Kolom Waktu Riwayat menampilkan tanggal, dan tahun 5 digit di filter tanggal tidak lagi membuat halaman error | 274 (frontend saja) |
+| Periksa 2 | `2369808` | Jeda dicek di setiap akhir masa resap mulai pulsa ke-2, dengan syarat kenaikan kurang dari `AUTO_NO_RISE_MIN_POINTS` (default 2 poin), bukan "tidak naik sama sekali". Sensor lepas dalam simulasi 1000 kali tertangkap 1000, sebelumnya sekitar 52%. CLAUDE.md mencatat endpoint, kolom, dan aturan jeda yang tetap berlaku walau mode diganti | 274 ke 284 |
+| Terbatas A | `0d25d05` | Irigasi Terbatas di backend (`limited_irrigation.py`): per kebun, batas bawah dan atas siram otomatis turun `LIMITED_IRRIGATION_DROP_POINTS` (default 10) sampai tanggal selesai (maksimal `LIMITED_IRRIGATION_MAX_DAYS`, default 28), selesai sendiri saat tanggal lewat, hanya bisa dimulai di mode otomatis dan bukan padi, tetap berjalan saat mode manual. Kolom baru `farms.limited_until`, `farms.limited_reason`, `decision_logs.limited_until`, `decision_logs.limited_reason`. Endpoint `POST`, `PATCH`, `DELETE /api/farms/{id}/limited-irrigation`. Mulai, ubah tanggal, dihentikan, dan selesai tercatat di Riwayat per node. `summary.thresholds` tetap batas tanaman | 284 ke 307 |
+| Terbatas B | `340c80d` | Tampilan Irigasi Terbatas: kartu di halaman Irigasi (Mulai dengan pilihan alasan berbunga 3 minggu, menjelang panen 2 minggu, lainnya 1–4 minggu, tanggal selesai, konfirmasi, Ubah tanggal, Hentikan, tanda tanya yang bisa ditekan), catatan padi, tanda "Irigasi Terbatas sampai ..." di Dashboard di atas Ringkasan Kebun, dan label baris Irigasi Terbatas di Riwayat. Teks alasan "Periksa penyiraman" diganti "belum naik cukup" | 307 (frontend saja) |
+| Terbatas fix | `99d31d2` | Enam temuan review Codex: permintaan bersamaan antre (`BEGIN IMMEDIATE`), bacaan sensor memakai periode Irigasi Terbatas terbaru, padi selalu memakai batas normal, Riwayat "selesai" dan "dihentikan" membawa tanggal dan alasan, catatan memakai data sampai waktu kejadian, tanggal ekstrem ditolak 422. Aturan baru: jenis tanaman kebun tidak bisa diganti lewat `PATCH /api/farms/{id}` (422 kalau berbeda) | 307 ke 323 |
+| Riwayat 422 dan Bantuan | `4ce3212` | Filter tanggal ekstrem di `GET /api/logs` ditolak 422, bukan error server. `crop_type` dihapus dari `UpdateFarmPayload` web. Pusat Bantuan mendapat bagian "Panduan Fitur" berisi penjelasan lengkap Irigasi Terbatas (komponen bersama `LimitedIrrigationHelp`, dipakai juga tanda tanya), dan dialognya bisa digulir | 323 ke 325 |
+
+### File per fase
+
+- lain: `AGENTS.md` (baru), `GEMINI.md`, `scripts/guard_diff.py` (baru).
+- Periksa 1: `config.py`, `database.py`, `irrigation.py`, `reading_service.py`, `routers/valves.py`, `smoke_test.py`, `dashboard/DashboardPage.tsx`, `irrigation/IrrigationPage.tsx`, `irrigation/queries.ts`, `logs/logHelpers.ts`, `lib/api.ts`, `lib/status.ts`, `types/index.ts`, `id.json`, `en.json`.
+- Periksa 1b: `irrigation.py`, `routers/farms.py`, `smoke_test.py`.
+- Riwayat: `logs/logHelpers.ts`.
+- Periksa 2: `config.py`, `irrigation.py`, `smoke_test.py`, `CLAUDE.md`.
+- Terbatas A: `config.py`, `crops.py`, `database.py`, `limited_irrigation.py` (baru), `reading_service.py`, `routers/farms.py`, `routers/valves.py`, `schemas.py`, `smoke_test.py`, `CLAUDE.md`.
+- Terbatas B: `dashboard/DashboardPage.tsx`, `dashboard/components/DashboardWarningCard.tsx`, `irrigation/IrrigationPage.tsx`, `irrigation/components/LimitedIrrigationCard.tsx` (baru), `irrigation/components/LimitedIrrigationDateDialog.tsx` (baru), `irrigation/limitedIrrigation.ts` (baru), `irrigation/queries.ts`, `logs/components/LogsTableCard.tsx`, `logs/logHelpers.ts`, `logs/useLogsViewModel.ts`, `lib/api.ts`, `lib/status.ts`, `types/index.ts`, `id.json`, `en.json`.
+- Terbatas fix: `limited_irrigation.py`, `routers/farms.py`, `routers/valves.py`, `smoke_test.py`, `CLAUDE.md`.
+- Riwayat 422 dan Bantuan: `routers/logs.py`, `smoke_test.py`, `helpCenter/components/HelpCenterDialog.tsx`, `irrigation/components/LimitedIrrigationCard.tsx`, `irrigation/components/LimitedIrrigationHelp.tsx` (baru), `types/index.ts`, `id.json`, `en.json`.
+
+### Perubahan di luar repo
+
+- Database dev: tiga kebun uji lama ("Kebun Fase 3 Test", "Kebun Fase 3b 936", "Kebun Test Auto-Resolve 310", milik akun uji, tanpa gateway, node, bacaan, atau riwayat) dihapus langsung di database pada 2026-09-29 dengan urutan yang sama seperti `delete_farm`, setelah cadangan `backend/data/lorafield-backup-2026-09-29.db` dibuat. Cadangan itu kemudian dihapus user. Belakangan user menghapus "Kebun Gejawan Kulon" dan "Kebun Ngaglik", jadi database dev kini hanya berisi "Kebun Sawit Faiz 1".
+- User mencoba Irigasi Terbatas di "Kebun Sawit Faiz 1" pada 2026-10-01 (alasan "Lainnya", sampai 22 Oktober). Saat sesi ini selesai, periode itu masih aktif.
+- Backend di-restart dan web di-build ulang user setelah Irigasi Terbatas di-commit.
+- Server uji terpisah (port 8011, database baru di folder scratchpad, tanpa MQTT, akun uji buatan sesi) dipakai untuk mengecek tampilan Irigasi Terbatas dan Pusat Bantuan di layar komputer, HP, mode gelap, dan mode terang. Dimatikan setelah uji. Backend, simulator, dan database user tidak disentuh.
+- Riset jurnal lewat pencarian web (FAO-56, *regulated deficit irrigation*, mangga, kopi, bawang menjelang panen, padi basah-kering bergantian, kalibrasi sensor per jenis tanah). Sumbernya dicatat di percakapan, tidak di repo.
+- Memory Claude: `todo-lorafield.md` (ditulis ulang, termasuk keputusan Irigasi Terbatas), `pola-prompt-ketat.md` (pelajaran baru), dan entrinya di `MEMORY.md`.
+- Prototipe backend Irigasi Terbatas, skrip simulasi sensor lepas, skrip uji versi salah, skrip teks i18n, dan skrip uji tanggal ekstrem disimpan di folder scratchpad sesi (sementara, bukan bagian repo).
+
+### Keputusan yang diambil
+
+- Pengaman sensor tidak menyebut "sensor rusak", karena penyebabnya bisa juga valve, pipa, atau air. Labelnya "Periksa penyiraman". Jeda tetap berlaku walau mode diganti, sampai tombol "Aktifkan lagi" ditekan.
+- Peringatan khusus padi, mangga, dan kopi dibatalkan, diganti fitur umum Irigasi Terbatas. Dasarnya praktik *regulated deficit irrigation* yang didukung penelitian (misalnya Fereres dan Soriano 2007, mangga di Australia, kopi, bawang), dengan catatan bahwa angka per tanaman perlu dicek ahli setempat.
+- Irigasi Terbatas: nama "Irigasi Terbatas" (Inggris *Limited Irrigation*), bukan mode ketiga melainkan pilihan sementara di mode otomatis. Petani memilih alasan, bukan angka. Batas turun 10 poin untuk semua kebun dan tidak ditampilkan ke petani. Berlaku per kebun untuk semua node sekaligus. Pindah ke manual tidak membatalkan dan tanggal selesai tidak bergeser. Tanggal selesai bisa diubah selama aktif (paling cepat besok, paling lambat 28 hari). Tombol disembunyikan untuk padi, diganti catatan "Padi lebih cocok memakai mode Manual, karena sensor mengukur kelembapan tanah, bukan tinggi genangan air." (tanpa kata "sawah"). Tanda di Dashboard di atas Ringkasan Kebun disetujui user, tombol Hentikan hanya di halaman Irigasi. Tanda tanya harus bisa ditekan, karena petani banyak memakai HP.
+- Satu kebun satu tanaman: jenis tanaman tidak bisa diganti setelah kebun dibuat (diputuskan di sesi lain, `99d31d2`).
+- Untuk prototipe yang sudah lolos uji, Claude langsung menerapkannya ke repo tanpa commit, bukan lewat prompt untuk sesi lain (permintaan user).
+- Tabel Riwayat akan dibagi per halaman, 20 baris per halaman. Ekspor CSV tetap berisi semua baris.
+
+### Belum dikerjakan saat Sesi 4 selesai
+
+Item dari daftar Sesi 3:
+
+- Pengaman sensor rusak: selesai (`76cae63`, `26d2d50`, `2369808`), dengan nama "Periksa penyiraman".
+- Nama koneksi MQTT backend bisa diatur: belum.
+- (opsional) Siram otomatis tidak melewati batas atas: belum.
+- Rapikan dokumen (nomor baris CLAUDE.md, bagian lama `docs/SECURITY_AUDIT_AUTH.md`): belum.
+- `FRONTEND_URL` di `backend/.env`: belum.
+- Kirim `docs/kontrak-mqtt.md` ke tim IoT, tambah aturan "gateway mengulang perintah" (butuh persetujuan user), beri tahu isi stiker node: belum.
+- (opsional) Hapus kebun uji lama: selesai (dihapus di database pada 2026-09-29).
+- Restart backend dan simulator setelah `e7bf0dc`: dilakukan user pada 2026-09-29.
+- Peringatan tanaman khusus: dibatalkan, diganti Irigasi Terbatas (selesai di `0d25d05`, `340c80d`, `99d31d2`, `4ce3212`).
+- Filter tanggal Riwayat (dari daftar Sesi 1): kodenya diperiksa, dua cacat tampilan diperbaiki di `445b0dc`, dan tanggal ekstrem di server diperbaiki di `4ce3212`.
+- Tim IoT (pin, kalibrasi, jenis valve, daya pancar, uji alat asli, ukur arus), firmware gateway yang melewatkan paket saat sibuk, keamanan LoRa, jam baca dari alat, persiapan sebelum publik dan sebelum dijual, kalibrasi dan uji lapangan, fitur AI, mode hemat daya, cek "Hujan Ringan" di browser: belum.
+
+Item baru:
+
+- Tabel Riwayat dibagi per halaman (20 baris): prompt untuk Claude Code sudah dibuat, belum dikerjakan.
+- Catatan "Manual: ditutup otomatis" (`manual_timeout`) mungkin memakai kelembapan dari waktu sesudah kejadian, mirip temuan 5 di `99d31d2`: belum diuji.
+- Review ulang `99d31d2` oleh Codex: belum.
+- Uji lapangan: setel angka "Periksa penyiraman" (2 poin) dan penurunan Irigasi Terbatas (10 poin).
+- Logika pertanian lanjutan: jenis tanah dan kalibrasi per kebun (menurut penelitian paling berpengaruh), tanggal tanam supaya batas mengikuti fase tumbuh, sensor tinggi air untuk padi.
+- Web saat ini selalu mode gelap (`index.html` memakai class `dark`, tidak ada tombol ganti tema), padahal CLAUDE.md meminta dukungan dua mode. Fitur baru tetap dicek di kedua mode.
+
+### Pelajaran dan kesalahan
+
+- Klaim dari sesi lain selalu dicek ulang: "9 perbaikan bug" ditelusuri sampai transkrip sesi simulator lalu dicocokkan dengan kode, dan "tes firmware 10/10" dijalankan ulang.
+- "Periksa penyiraman" versi pertama lolos smoke test, tapi hanya menangkap sensor lepas sekitar 52% (cek hanya tepat di pulsa ke-2, dan syarat "tidak naik sama sekali" kalah oleh getaran angka sensor). Ketahuan lewat simulasi 1000 kali memakai `auto_decision` asli.
+- Prototipe Irigasi Terbatas lolos 9 uji versi salah, tapi review Codex tetap menemukan 6 masalah nyata (permintaan bersamaan, periode basi, padi setelah tanaman diganti, Riwayat tanpa tanggal, data sesudah kejadian, tanggal ekstrem membuat error server). Pemeriksa kedua dari agen lain terbukti berguna.
+- Satu uji versi salah (catatan "selesai" dobel saat dua proses bersamaan) tidak bisa ditangkap tes yang berjalan berurutan, jadi tidak dimasukkan. Belakangan masalah serupa memang ditemukan review Codex.
+- Prompt Fase A menulis `--allow` di `guard_diff.py` dua kali. Opsi itu memakai `nargs='*'`, jadi izin pertama hilang. Yang benar satu opsi berisi semua path.
+- Salinan backend lewat `tar` di Git Bash berakhiran baris CRLF, padahal repo memakai LF. Dinormalkan ke LF sebelum dibandingkan dan disalin.
+- User mempertanyakan pola "salinan lalu prompt" untuk pekerjaan yang sudah siap. Sejak itu prototipe yang sudah lolos langsung diterapkan ke repo tanpa commit.
+- Validator email menolak domain `.test` (sudah tercatat di Sesi 2) dan terulang saat membuat akun uji.
+- Tangkapan layar browser sering gagal karena jendela tertutup jendela lain. Pengecekan dilanjutkan lewat teks halaman, lalu tangkapan layar diulang.
+- Tiga kebun uji dihapus langsung di database karena endpoint hapus butuh login pemilik. Cadangan dibuat lebih dulu, dan data anak diperiksa kosong sebelum menghapus.
