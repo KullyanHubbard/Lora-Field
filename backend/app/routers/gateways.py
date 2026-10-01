@@ -8,7 +8,12 @@ from .. import mqtt_bridge
 from ..auth import get_current_user
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_for_gateway_action, get_farm_owned
-from ..gateway_service import claim_gateway_for_farm, ensure_gateway_unclaimed, release_gateway
+from ..gateway_service import (
+    claim_gateway_for_farm,
+    ensure_gateway_unclaimed,
+    gateway_link_state,
+    release_gateway,
+)
 from ..node_service import insert_node
 from ..schemas import (
     GatewayClaimPayload,
@@ -129,6 +134,33 @@ def unclaim_farm_gateway(
     # Setelah transaksi: gateway yang dilepas tidak boleh menjalankan perintah valve lama kebun ini.
     mqtt_bridge.clear_valves(gateway["device_id"], node_ids)
     return {"gateway": unclaimed_gateway}
+
+
+@router.post("/api/farms/{farm_id}/gateway/wifi-portal")
+def request_gateway_wifi_portal(
+    farm_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    """Tombol "Ganti WiFi" di web: gateway membuka portal WiFi (docs/kontrak-mqtt.md, topik cmd).
+    WiFi lama tetap tersimpan sebagai cadangan kalau tidak ada WiFi baru yang disimpan."""
+    with get_connection() as connection:
+        get_farm_for_gateway_action(connection, farm_id, current_user["id"])
+        gateway = row_to_dict(
+            connection.execute("SELECT * FROM gateways WHERE farm_id = ?", (farm_id,)).fetchone()
+        )
+        if gateway is None:
+            raise HTTPException(status_code=404, detail="Kebun ini belum punya gateway")
+        seen, cut = gateway_link_state(connection, farm_id)
+        if not seen or cut:
+            raise HTTPException(status_code=409, detail="Gateway sedang offline, perintah tidak bisa dikirim")
+    if not mqtt_bridge.publish_gateway_command(gateway["device_id"], "wifi_portal"):
+        raise HTTPException(status_code=503, detail="Perintah gagal dikirim ke gateway, coba lagi sebentar lagi")
+    with get_connection() as connection:
+        connection.execute(
+            "INSERT INTO gateway_logs (farm_id, event, detail) VALUES (?, ?, ?)",
+            (farm_id, "wifi_portal", "Ganti WiFi diminta dari web"),
+        )
+    return {"gateway": gateway}
 
 
 @router.post("/api/gateways/{gateway_id}/register", status_code=200)

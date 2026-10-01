@@ -24,6 +24,7 @@ const GATEWAY_EVENT_LABEL_KEYS: Record<string, string> = {
   disconnected: 'gateway.filterDisconnected',
   heartbeat: 'gateway.filterHeartbeat',
   data_sync: 'gateway.filterDataSync',
+  wifi_portal: 'gateway.eventWifiPortal',
 };
 
 export type GatewayInfoViewModel = {
@@ -34,6 +35,9 @@ export type GatewayInfoViewModel = {
   signalValueKey: string;
   internetValueKey: string;
   lastSeen: string | null;
+  isOnline: boolean;
+  // Hotspot portal WiFi gateway: "LoraField-" + 4 karakter terakhir ID (sama dengan firmware dan stiker).
+  portalSsid: string | null;
 };
 
 // Status dari summary.gateway_status backend (satu sumber dengan kartu lain), tidak dihitung ulang di sini.
@@ -51,6 +55,8 @@ export function buildGatewayInfo(
     signalValueKey: 'gateway.signalNone',
     internetValueKey: 'gateway.internetNotMonitored',
     lastSeen: gateway?.last_seen_at ?? null,
+    isOnline: !!gateway && gatewayStatus === 'online',
+    portalSsid: gateway ? `LoraField-${gateway.device_id.slice(-4)}` : null,
   };
 }
 
@@ -111,6 +117,7 @@ export function getGatewayEventDotClass(event: string) {
     disconnected: ACCENT_BG.red,
     heartbeat: ACCENT_BG.blue,
     data_sync: ACCENT_BG.violet,
+    wifi_portal: ACCENT_BG.amber,
   };
 
   return map[event] ?? 'bg-muted-foreground';

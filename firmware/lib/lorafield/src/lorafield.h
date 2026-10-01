@@ -5,6 +5,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <string>
+#include <vector>
+
 namespace lorafield {
 
 // Batas aman lama valve terbuka per perintah, walau server minta lebih lama.
@@ -69,6 +72,47 @@ class ValveTimer {
   bool open_ = false;
   uint32_t opened_at_ms_ = 0;
   uint32_t duration_ms_ = 0;
+};
+
+// Pengaturan gateway yang disimpan di memori alat, diisi lewat Serial saat produksi: "set <kunci> <nilai>".
+enum class SettingKey { MqttHost, MqttPort, MqttPass, ApPass };
+const char* settingName(SettingKey key);
+// Baca "set <kunci> <nilai>". Nilai yang tidak sah ditolak, alasannya lewat `error`.
+bool parseSetCommand(const char* line, SettingKey& key, char* value, size_t value_len, const char*& error);
+// Nama hotspot portal WiFi dari ID gateway: "GW-F024F9925898" -> "LoraField-5898" (sama dengan stiker).
+void portalName(const char* device_id, char* out, size_t len);
+
+// Hasil pindai WiFi untuk daftar di portal: satu baris per nama WiFi (sinyal terkuat), terkuat di atas,
+// nama kosong (jaringan tersembunyi) dilewati, maksimal `limit` baris.
+struct ScannedNetwork {
+  std::string ssid;
+  int rssi;
+  bool secure;
+};
+std::vector<ScannedNetwork> rankNetworks(const std::vector<ScannedNetwork>& scanned, size_t limit);
+
+// Perintah server ke gateway, topik lorafield/gw/{gw}/cmd (docs/kontrak-mqtt.md).
+enum class GatewayCommand { Unknown, WifiPortal };
+GatewayCommand parseGatewayCommand(const uint8_t* payload, size_t len);
+
+// Jadwal pemulihan WiFi saat gateway sudah berjalan: begitu putus, coba sambung ulang tiap
+// retry_every_ms selama window_ms; kalau tetap gagal, radio WiFi istirahat rest_ms (hemat daya), lalu
+// coba lagi, bergantian, sampai tersambung. update() dipanggil tiap putaran loop.
+class WifiRecovery {
+ public:
+  enum class Action { None, Lost, Reconnect, RadioOff, RadioOn };
+  WifiRecovery(uint32_t window_ms, uint32_t retry_every_ms, uint32_t rest_ms)
+      : window_ms_(window_ms), retry_every_ms_(retry_every_ms), rest_ms_(rest_ms) {}
+  Action update(bool connected, uint32_t now_ms);
+
+ private:
+  enum class State { Connected, Trying, Resting };
+  uint32_t window_ms_;
+  uint32_t retry_every_ms_;
+  uint32_t rest_ms_;
+  State state_ = State::Connected;
+  uint32_t phase_start_ms_ = 0;
+  uint32_t last_retry_ms_ = 0;
 };
 
 }  // namespace lorafield

@@ -10,6 +10,36 @@ import sqlite3
 from fastapi import HTTPException
 
 from .database import row_to_dict
+from .node_service import is_recently_seen
+
+
+def gateway_link_state(connection, farm_id: str) -> tuple[bool, bool]:
+    """Sambungan gateway kebun: (melapor dalam batas waktu, terputus menurut laporan koneksi terakhir).
+
+    Laporan terputus (status offline atau Last Will dari broker) mengalahkan batas waktu sampai ada kabar
+    baru dari gateway (status online, heartbeat, daftar node, atau reading).
+    """
+    gateway = row_to_dict(
+        connection.execute("SELECT last_seen_at FROM gateways WHERE farm_id = ?", (farm_id,)).fetchone()
+    )
+    last_event = row_to_dict(
+        connection.execute(
+            """
+            SELECT event, created_at FROM gateway_logs
+            WHERE farm_id = ? AND event IN ('connected', 'disconnected')
+            ORDER BY id DESC LIMIT 1
+            """,
+            (farm_id,),
+        ).fetchone()
+    )
+    last_seen = (gateway or {}).get("last_seen_at")
+    seen = gateway is not None and is_recently_seen(last_seen)
+    cut = (
+        last_event is not None
+        and last_event["event"] == "disconnected"
+        and (last_seen or "") < last_event["created_at"]
+    )
+    return seen, cut
 
 
 def ensure_gateway_unclaimed(connection, device_id: str) -> dict:

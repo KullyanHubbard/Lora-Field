@@ -133,12 +133,14 @@ def _gateway_log(connection, farm_id: str, event: str, detail: str) -> None:
 
 
 def _handle_status(gateway_id: str, data: dict, retained: bool) -> None:
-    # Status retain dikirim ulang broker tiap backend menyambung: itu keadaan lama, bukan kejadian baru.
-    if retained:
-        return
     state = data.get("state")
     if state not in ("online", "offline"):
         logger.warning("Status gateway %s tidak dikenal: %r", gateway_id, state)
+        return
+    # Status retain dikirim ulang broker tiap backend menyambung: bukan kejadian baru, jadi tidak dicatat
+    # di log. Retain "online" tetap dihitung sebagai kabar, karena broker menggantinya dengan Last Will
+    # saat gateway putus; gateway yang tersambung selagi backend putus langsung online lagi.
+    if retained and state == "offline":
         return
     with get_connection() as connection:
         farm = _claimed_farm(connection, gateway_id)
@@ -146,6 +148,8 @@ def _handle_status(gateway_id: str, data: dict, retained: bool) -> None:
             return
         if state == "online":
             _touch_gateway(connection, gateway_id)
+        if retained:
+            return
         detail = f"firmware {data['fw']}" if data.get("fw") else ""
         _gateway_log(connection, farm["id"], "connected" if state == "online" else "disconnected", detail)
 
@@ -280,6 +284,19 @@ def publish_valve(gateway_id: str, node_id: str, command: dict, *, resend: bool 
         _last_published[node_id] = (body, time.monotonic())
     else:
         logger.warning("Perintah valve node %s gagal dikirim (rc=%s).", node_id, result.rc)
+
+
+def publish_gateway_command(gateway_id: str, action: str) -> bool:
+    """Kirim perintah server ke gateway (topik cmd). QoS 1 tanpa retain: perintah yang tersimpan di broker
+    akan dijalankan lagi setiap gateway menyambung. False kalau jembatan nonaktif atau kiriman gagal."""
+    if _client is None or not _DEVICE_ID.fullmatch(gateway_id):
+        return False
+    body = json.dumps({"action": action}, separators=(",", ":"))
+    result = _client.publish(f"{TOPIC_ROOT}/{gateway_id}/cmd", body, qos=1, retain=False)
+    if result.rc != mqtt.MQTT_ERR_SUCCESS:
+        logger.warning("Perintah %s ke gateway %s gagal dikirim (rc=%s).", action, gateway_id, result.rc)
+        return False
+    return True
 
 
 def farm_valve_nodes(connection, farm_id: str) -> tuple[str | None, list[str]]:

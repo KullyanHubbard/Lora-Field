@@ -249,6 +249,12 @@ export const api = {
   getFarmGateway: (farmId: string) =>
     apiFetch<{ gateway: FarmGateway | null }>(`/farms/${farmId}/gateway`),
 
+  // Tombol "Ganti WiFi": gateway membuka portal WiFi, WiFi lama tetap jadi cadangan.
+  requestGatewayWifiPortal: (farmId: string) =>
+    apiFetch<{ gateway: FarmGateway }>(`/farms/${farmId}/gateway/wifi-portal`, {
+      method: 'POST',
+    }),
+
   getLogs: ({
     farmId,
     limit,

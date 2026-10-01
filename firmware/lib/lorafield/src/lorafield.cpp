@@ -2,7 +2,10 @@
 
 #include <ArduinoJson.h>
 #include <math.h>
+
+#include <algorithm>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 namespace lorafield {
@@ -192,6 +195,134 @@ void ValveTimer::tick(uint32_t now_ms) {
   // sesaat sebelum perintah diterapkan (selisih -1) tidak terbaca sebagai waktu raksasa yang menutup valve.
   int32_t elapsed_ms = static_cast<int32_t>(now_ms - opened_at_ms_);
   if (open_ && elapsed_ms >= 0 && static_cast<uint32_t>(elapsed_ms) >= duration_ms_) open_ = false;
+}
+
+namespace {
+
+struct SettingRule {
+  const char* name;
+  SettingKey key;
+  size_t min_len;
+  size_t max_len;
+  const char* length_error;
+};
+
+constexpr SettingRule kSettingRules[] = {
+    {"mqtt_host", SettingKey::MqttHost, 1, 63, "alamat server harus 1-63 karakter"},
+    {"mqtt_port", SettingKey::MqttPort, 1, 5, "port harus angka 1-65535"},
+    {"mqtt_pass", SettingKey::MqttPass, 8, 64, "password MQTT harus 8-64 karakter"},
+    {"ap_pass", SettingKey::ApPass, 8, 63, "password hotspot harus 8-63 karakter"},  // batas WPA2
+};
+
+}  // namespace
+
+const char* settingName(SettingKey key) {
+  for (const SettingRule& rule : kSettingRules) {
+    if (rule.key == key) return rule.name;
+  }
+  return "";
+}
+
+bool parseSetCommand(const char* line, SettingKey& key, char* value, size_t value_len, const char*& error) {
+  error = "format: set <kunci> <nilai>";
+  if (strncmp(line, "set ", 4) != 0) return false;
+  const char* name = line + 4;
+  const char* space = strchr(name, ' ');
+  if (space == nullptr) return false;
+  const SettingRule* rule = nullptr;
+  for (const SettingRule& candidate : kSettingRules) {
+    size_t name_len = static_cast<size_t>(space - name);
+    if (strlen(candidate.name) == name_len && strncmp(candidate.name, name, name_len) == 0) rule = &candidate;
+  }
+  if (rule == nullptr) {
+    error = "kunci tidak dikenal (mqtt_host, mqtt_port, mqtt_pass, ap_pass)";
+    return false;
+  }
+  const char* text = space + 1;
+  size_t len = strlen(text);
+  error = rule->length_error;
+  if (len < rule->min_len || len > rule->max_len || len >= value_len) return false;
+  for (size_t i = 0; i < len; i++) {
+    char c = text[i];
+    if (c < 0x21 || c > 0x7E) {
+      error = "nilai tidak boleh berisi spasi atau karakter khusus";
+      return false;
+    }
+    bool host_char = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.' || c == '-';
+    if (rule->key == SettingKey::MqttHost && !host_char) {
+      error = "alamat server hanya boleh huruf, angka, titik, dan tanda minus";
+      return false;
+    }
+    if (rule->key == SettingKey::MqttPort && (c < '0' || c > '9')) return false;
+  }
+  if (rule->key == SettingKey::MqttPort && (atol(text) < 1 || atol(text) > 65535)) return false;
+  memcpy(value, text, len + 1);
+  key = rule->key;
+  return true;
+}
+
+void portalName(const char* device_id, char* out, size_t len) {
+  size_t id_len = strlen(device_id);
+  snprintf(out, len, "LoraField-%s", id_len >= 4 ? device_id + id_len - 4 : device_id);
+}
+
+std::vector<ScannedNetwork> rankNetworks(const std::vector<ScannedNetwork>& scanned, size_t limit) {
+  std::vector<ScannedNetwork> ranked;
+  for (const ScannedNetwork& net : scanned) {
+    if (net.ssid.empty()) continue;
+    auto same = std::find_if(ranked.begin(), ranked.end(),
+                             [&net](const ScannedNetwork& seen) { return seen.ssid == net.ssid; });
+    if (same == ranked.end()) {
+      ranked.push_back(net);
+    } else if (net.rssi > same->rssi) {
+      *same = net;
+    }
+  }
+  std::stable_sort(ranked.begin(), ranked.end(),
+                   [](const ScannedNetwork& a, const ScannedNetwork& b) { return a.rssi > b.rssi; });
+  if (ranked.size() > limit) ranked.resize(limit);
+  return ranked;
+}
+
+GatewayCommand parseGatewayCommand(const uint8_t* payload, size_t len) {
+  JsonDocument doc;
+  if (deserializeJson(doc, payload, len)) return GatewayCommand::Unknown;
+  const char* action = doc["action"] | "";
+  return strcmp(action, "wifi_portal") == 0 ? GatewayCommand::WifiPortal : GatewayCommand::Unknown;
+}
+
+// Selisih tanpa tanda di bawah tetap benar saat millis() kembali ke 0.
+WifiRecovery::Action WifiRecovery::update(bool connected, uint32_t now_ms) {
+  switch (state_) {
+    case State::Connected:
+      if (connected) return Action::None;
+      state_ = State::Trying;
+      phase_start_ms_ = now_ms;
+      last_retry_ms_ = now_ms;  // percobaan pertama dilakukan otomatis oleh driver WiFi
+      return Action::Lost;
+    case State::Trying:
+      if (connected) {
+        state_ = State::Connected;
+        return Action::None;
+      }
+      if (now_ms - phase_start_ms_ >= window_ms_) {
+        state_ = State::Resting;
+        phase_start_ms_ = now_ms;
+        return Action::RadioOff;
+      }
+      if (now_ms - last_retry_ms_ >= retry_every_ms_) {
+        last_retry_ms_ = now_ms;
+        return Action::Reconnect;
+      }
+      return Action::None;
+    case State::Resting:
+      if (now_ms - phase_start_ms_ < rest_ms_) return Action::None;
+      state_ = State::Trying;
+      phase_start_ms_ = now_ms;
+      last_retry_ms_ = now_ms;
+      return Action::RadioOn;
+  }
+  return Action::None;
 }
 
 }  // namespace lorafield

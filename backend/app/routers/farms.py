@@ -12,7 +12,12 @@ from ..auth import get_current_user
 from ..bmkg import get_weather_for_decision
 from ..database import get_connection, row_to_dict
 from ..deps import get_farm_owned
-from ..gateway_service import claim_gateway_for_farm, ensure_gateway_unclaimed, release_gateway
+from ..gateway_service import (
+    claim_gateway_for_farm,
+    ensure_gateway_unclaimed,
+    gateway_link_state,
+    release_gateway,
+)
 from ..crops import find_crop_thresholds
 from ..irrigation import (
     DISCONNECTED_DECISION,
@@ -22,7 +27,7 @@ from ..irrigation import (
     manual_decision,
 )
 from ..limited_irrigation import decision_thresholds, expire_limited_irrigation
-from ..node_service import is_recently_seen, present_node
+from ..node_service import present_node
 from ..schemas import FarmCreate, FarmUpdate
 from ..valve_control import expire_manual_valves
 
@@ -247,11 +252,7 @@ def get_farm_summary(
                 (farm_id,),
             ).fetchall()
         ]
-        gateway = row_to_dict(
-            connection.execute(
-                "SELECT last_seen_at FROM gateways WHERE farm_id = ?", (farm_id,)
-            ).fetchone()
-        )
+        gateway_seen, gateway_cut = gateway_link_state(connection, farm_id)
         latest_by_node = {
             row["node_id"]: dict(row)
             for row in connection.execute(
@@ -305,8 +306,7 @@ def get_farm_summary(
 
     nodes_online = [n for n in nodes if n["status"] == "online"]
     nodes_problem = [n for n in nodes if n["status"] == "offline"]
-    gateway_seen = gateway is not None and is_recently_seen(gateway.get("last_seen_at"))
-    gateway_status = "online" if nodes_online or gateway_seen else "offline"
+    gateway_status = "online" if (nodes_online or gateway_seen) and not gateway_cut else "offline"
 
     return {
         "farm": farm,

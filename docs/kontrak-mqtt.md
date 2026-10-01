@@ -29,7 +29,7 @@ Node sensor --LoRa--> Gateway --WiFi/MQTT--> Broker (Mosquitto) <--> Server Lora
 | Jam | Gateway wajib sinkron NTP sebelum menyambung (dipakai perintah valve) |
 
 Setelah tersambung, gateway langsung: kirim `status` online, kirim `nodes`, lalu subscribe
-`lorafield/gw/{device_id}/node/+/valve/set` dengan QoS 1.
+`lorafield/gw/{device_id}/node/+/valve/set` dan `lorafield/gw/{device_id}/cmd` dengan QoS 1.
 
 ## Aturan ID
 
@@ -46,10 +46,11 @@ Setelah tersambung, gateway langsung: kirim `status` online, kirim `nodes`, lalu
 | Topik | Arah | QoS | Retain | Kapan dikirim |
 |-------|------|-----|--------|---------------|
 | `lorafield/gw/{gw}/status` | gateway ke server | 0 | ya | Saat tersambung, dan Last Will saat putus |
-| `lorafield/gw/{gw}/heartbeat` | gateway ke server | 0 | tidak | Tiap 5 menit |
+| `lorafield/gw/{gw}/heartbeat` | gateway ke server | 0 | tidak | Tiap 10 menit (di bawah batas offline 15 menit) |
 | `lorafield/gw/{gw}/nodes` | gateway ke server | 0 | tidak | Saat tersambung, saat daftar node berubah, dan tiap heartbeat |
 | `lorafield/gw/{gw}/node/{node}/reading` | gateway ke server | 0 | tidak | Tiap paket sensor diterima dari node |
 | `lorafield/gw/{gw}/node/{node}/valve/set` | server ke gateway | 1 | ya | Saat posisi valve node harus berubah |
+| `lorafield/gw/{gw}/cmd` | server ke gateway | 1 | tidak | Saat pengguna menekan "Ganti WiFi" di web |
 
 Semua isi pesan berupa JSON UTF-8. Field yang tidak dikenal diabaikan server.
 
@@ -131,6 +132,19 @@ dari data sensor, bukan dari daftar ini.
   mengirim data). Node melaporkan posisi barunya lewat field `valve` di reading berikutnya. Web
   menampilkan perintah "terkirim ke alat" setelah posisi yang dilaporkan sama dengan perintah.
 
+### cmd (server ke gateway)
+
+```json
+{"action": "wifi_portal"}
+```
+
+- `wifi_portal`: pengguna menekan "Ganti WiFi" di web. Gateway mengirim `status` offline sendiri, lalu
+  membuka portal WiFi (hotspot `LoraField-XXXX`) selama 5 menit. WiFi lama tetap tersimpan: kalau tidak
+  ada WiFi baru yang disimpan, gateway kembali memakai WiFi lama.
+- Tidak retain, karena perintah yang tersimpan di broker akan dijalankan lagi setiap gateway menyambung.
+  Server hanya mengirim perintah saat gateway online.
+- `action` lain diabaikan gateway.
+
 ## Perilaku server
 
 - Gateway yang belum didaftarkan pengguna ke kebun: semua pesannya diabaikan dan dicatat di log
@@ -140,7 +154,10 @@ dari data sensor, bukan dari daftar ini.
 - Pesan rusak (bukan JSON, field wajib hilang, nilai di luar rentang) diabaikan dan dicatat di
   log server. Server tidak membalas error ke gateway.
 - Gateway dianggap online kalau `status`, `heartbeat`, atau `reading` diterima dalam 15 menit
-  terakhir. `status` online dan offline tercatat di Log Gateway web.
+  terakhir. `status` online dan offline tercatat di Log Gateway web. `status` offline (termasuk Last
+  Will) langsung membuat gateway offline di web, sampai ada pesan baru darinya. `status` online yang
+  diterima ulang dari retain saat server menyambung ulang ke broker dihitung sebagai kabar, tapi tidak
+  dicatat ulang di Log Gateway.
 
 ## Keamanan
 
@@ -157,12 +174,15 @@ dari data sensor, bukan dari daftar ini.
    Manual). Kalau posisi valve harus berubah, server kirim `valve/set`.
 5. Gateway meneruskan perintah ke node. Node membuka atau menutup valve, lalu reading berikutnya
    membawa posisi barunya.
-6. Gateway mati mendadak: broker kirim Last Will dan tercatat di Log Gateway web. Status
-   gateway di web berubah offline setelah 15 menit tanpa pesan.
+6. Gateway mati mendadak: setelah keep alive habis (sekitar 1,5 menit), broker kirim Last Will.
+   Kejadian itu tercatat di Log Gateway web dan status gateway langsung berubah offline. Tanpa Last
+   Will (misalnya server sempat putus dari broker), status berubah offline setelah 15 menit tanpa
+   pesan.
 
 ## Belum didukung di v1
 
 - Data tertunda dengan jam asli (simpan dulu saat offline, kirim belakangan).
 - Update firmware lewat udara (OTA).
-- Perintah pengaturan dari server ke alat (interval kirim, kalibrasi sensor).
+- Perintah pengaturan dari server ke alat (interval kirim, kalibrasi sensor). Topik `cmd` baru
+  dipakai untuk `wifi_portal`.
 - TLS.

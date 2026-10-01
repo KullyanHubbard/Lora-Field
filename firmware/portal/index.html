@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>LoraField</title>
+<style>
+/* Portal WiFi gateway LoraField. Token warna, font, dan radius mengikuti tema gelap web LoraField
+   (frontend/src/index.css). Halaman ini dilayani ESP32 tanpa internet, jadi semua isi dan font
+   (Geist, SIL OFL, lihat GEIST-OFL.txt) ikut tertanam di firmware. {{GATEWAY_ID}} diisi firmware. */
+@font-face{font-family:Geist;src:url(/geist.woff2) format('woff2');font-weight:100 900;font-display:swap}
+:root{
+  --background:#0a0a0a;--foreground:#fafafa;--card:#171717;--muted:#262626;--muted-foreground:#a1a1a1;
+  --border:rgba(255,255,255,.1);--input:rgba(255,255,255,.15);--ring:rgba(115,115,115,.5);
+  --primary:#00c896;--primary-foreground:#00120c;--destructive:#ff6467;--radius:.625rem;
+  color-scheme:dark
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100svh;padding:16px;
+  background:var(--background);color:var(--foreground);font:14px/1.45 Geist,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--ring);outline-offset:1px}
+
+.card{display:flex;flex-direction:column;width:100%;max-width:380px;min-height:min(500px,calc(100svh - 32px));
+  padding:24px;border:1px solid var(--border);border-radius:16px;background:var(--card)}
+.brand{font-size:20px;font-weight:600;line-height:28px}
+.title{margin-top:2px;font-size:16px;font-weight:500;line-height:24px;color:var(--muted-foreground)}
+.stage{display:flex;flex:1;flex-direction:column;margin-top:20px}
+.label{font-size:13px;font-weight:500;color:var(--muted-foreground)}
+
+/* Batang gulir tipis di celah 6px di luar baris, supaya tidak menempel ke tepi baris. */
+.list{display:flex;flex-direction:column;gap:4px;max-height:236px;margin:8px -6px 0 0;padding-right:6px;overflow-y:auto;
+  overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#404040 transparent}
+.list::-webkit-scrollbar{width:4px}
+.list::-webkit-scrollbar-thumb{border-radius:4px;background:#404040}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:0 12px;
+  border:1px solid var(--border);border-radius:var(--radius);background:rgba(255,255,255,.03);text-align:left;transition:background .15s,border-color .15s}
+.row:hover{background:var(--muted)}
+.row:active{border-color:var(--primary)}
+.ssid{overflow:hidden;font-weight:500;white-space:nowrap;text-overflow:ellipsis}
+.meta{display:flex;flex-shrink:0;align-items:center;gap:8px;color:var(--muted-foreground)}
+.skeleton{min-height:44px;border-radius:var(--radius);background:var(--muted);animation:pulse 1.4s ease-in-out infinite}
+.note{padding:20px 0;color:var(--muted-foreground);text-align:center}
+@keyframes pulse{50%{opacity:.45}}
+
+.ghost{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:1px solid var(--border);
+  border-radius:var(--radius);font-size:13px;font-weight:500;transition:background .15s}
+.ghost:hover{background:var(--muted)}
+.ghost:disabled{opacity:.5;cursor:default}
+.rescan{align-self:flex-start;margin-top:12px}
+.back{align-self:flex-start;margin-left:-10px;border-color:transparent;color:var(--muted-foreground)}
+
+.info{margin-top:16px}
+.value{margin-top:2px;overflow-wrap:anywhere;font-size:16px;font-weight:600}
+.field{margin-top:16px}
+.input{position:relative;margin-top:6px}
+.input input{width:100%;height:40px;padding:0 96px 0 12px;border:1px solid var(--input);border-radius:var(--radius);
+  background:rgba(255,255,255,.045);font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s}
+.input input:focus{border-color:#737373;box-shadow:0 0 0 3px var(--ring)}
+.toggle{position:absolute;top:4px;right:4px;height:32px;padding:0 10px;border-radius:calc(var(--radius) - 2px);
+  font-size:13px;font-weight:500;color:var(--muted-foreground)}
+.toggle:hover{background:var(--muted);color:var(--foreground)}
+.hint{margin-top:16px;color:var(--muted-foreground)}
+.primary{width:100%;height:40px;margin-top:20px;border-radius:var(--radius);background:var(--primary);
+  color:var(--primary-foreground);font-weight:600;transition:filter .15s}
+.primary:hover{filter:brightness(1.08)}
+.primary:active{transform:translateY(1px)}
+
+.gateway{display:flex;flex-direction:column;gap:2px;margin-top:auto;padding-top:16px}
+.gateway-sep{height:1px;margin-bottom:14px;background:var(--border)}
+.gateway-label{font-size:12px;color:var(--muted-foreground)}
+.gateway-id{font:500 13px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;letter-spacing:.02em}
+
+.wait{align-items:center;justify-content:center;margin-top:0;text-align:center}
+.spinner{width:40px;height:40px;border:3px solid var(--muted);border-top-color:var(--primary);border-radius:50%;animation:spin .9s linear infinite}
+.status-icon{width:40px;height:40px}
+.status-icon.ok{color:var(--primary)}
+.status-icon.fail{color:var(--destructive)}
+.wait-title{margin-top:20px;font-size:16px;font-weight:600}
+.wait-ssid{margin-top:4px;overflow-wrap:anywhere;color:var(--muted-foreground)}
+.retry{margin-top:20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner,.skeleton{animation-duration:3s}}
+@media (max-width:360px){.card{padding:20px}}
+</style>
+</head>
+<body>
+<main class="card" aria-live="polite">
+  <div class="brand">LoraField</div>
+  <h1 class="title" id="title">Hubungkan Gateway</h1>
+
+  <section class="stage" id="pick">
+    <p class="label">Pilih Jaringan WiFi</p>
+    <div class="list" id="list" role="list" aria-label="Jaringan WiFi"></div>
+    <button class="ghost rescan" id="rescan" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      Pindai Ulang
+    </button>
+  </section>
+
+  <form class="stage" id="pass" hidden>
+    <button class="ghost back" id="back" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      Kembali
+    </button>
+    <div class="info">
+      <p class="label">Jaringan WiFi</p>
+      <p class="value" id="chosen"></p>
+    </div>
+    <div class="field" id="pw-field">
+      <label class="label" for="pw">Password</label>
+      <div class="input">
+        <input id="pw" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="64">
+        <button class="toggle" id="toggle" type="button">Tampilkan</button>
+      </div>
+    </div>
+    <p class="hint" id="open-hint" hidden>Jaringan terbuka, tanpa password.</p>
+    <button class="primary" type="submit">Hubungkan</button>
+  </form>
+
+  <section class="stage wait" id="wait" hidden>
+    <div class="spinner" id="spinner" role="status" aria-label="Menghubungkan"></div>
+    <svg class="status-icon ok" id="icon-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    <svg class="status-icon fail" id="icon-fail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+    <p class="wait-title" id="wait-title">Menghubungkan ke Wi-Fi</p>
+    <p class="wait-ssid" id="wait-ssid"></p>
+    <button class="ghost retry" id="retry" type="button" hidden>Coba Lagi</button>
+  </section>
+
+  <div class="gateway" id="gateway">
+    <div class="gateway-sep"></div>
+    <span class="gateway-label">Gateway ID</span>
+    <span class="gateway-id">{{GATEWAY_ID}}</span>
+  </div>
+</main>
+<script>
+(function () {
+  var el = function (id) { return document.getElementById(id); };
+  var list = el('list'), pw = el('pw'), chosen = null;
+  // Gateway mencoba terhubung sampai 3 x 20 detik ditambah jeda; lewat dari itu tanpa jawaban berarti berhasil.
+  var SUCCESS_SILENCE_MS = 90000;
+
+  function show(stage) {
+    ['pick', 'pass', 'wait'].forEach(function (id) { el(id).hidden = id !== stage; });
+    el('title').hidden = stage === 'wait';
+    el('gateway').hidden = stage === 'wait';
+  }
+
+  function svg(markup, cls) {
+    var span = document.createElement('span');
+    span.innerHTML = markup;
+    if (cls) span.className = cls;
+    return span.firstChild;
+  }
+
+  function bars(rssi) {
+    var level = rssi >= -55 ? 4 : rssi >= -67 ? 3 : rssi >= -75 ? 2 : 1, out = '';
+    for (var i = 0; i < 4; i++) {
+      var h = 4 + i * 3;
+      out += '<rect x="' + (i * 4) + '" y="' + (14 - h) + '" width="3" height="' + h + '" rx="1" fill="currentColor"'
+        + (i < level ? '' : ' opacity=".25"') + '/>';
+    }
+    return '<svg width="15" height="14" viewBox="0 0 15 14" role="img" aria-label="Sinyal ' + level + ' dari 4">' + out + '</svg>';
+  }
+
+  var LOCK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Berpassword"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+
+  function setList(nodes) {
+    list.textContent = '';
+    nodes.forEach(function (node) { list.appendChild(node); });
+  }
+
+  function note(text) {
+    var p = document.createElement('p');
+    p.className = 'note';
+    p.textContent = text;
+    return p;
+  }
+
+  function render(networks) {
+    if (!networks.length) return setList([note('Tidak ada WiFi ditemukan.')]);
+    setList(networks.map(function (net) {
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'row';
+      row.setAttribute('role', 'listitem');
+      var name = document.createElement('span');
+      name.className = 'ssid';
+      name.textContent = net.ssid;
+      var meta = document.createElement('span');
+      meta.className = 'meta';
+      if (net.secure) meta.appendChild(svg(LOCK));
+      meta.appendChild(svg(bars(net.rssi)));
+      row.appendChild(name);
+      row.appendChild(meta);
+      row.addEventListener('click', function () { choose(net); });
+      return row;
+    }));
+  }
+
+  function scan() {
+    var skeletons = [];
+    for (var i = 0; i < 5; i++) {
+      var s = document.createElement('div');
+      s.className = 'skeleton';
+      skeletons.push(s);
+    }
+    setList(skeletons);
+    el('rescan').disabled = true;
+    fetch('/scan.json', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(render)
+      .catch(function () { setList([note('Gagal memindai WiFi. Tekan Pindai Ulang.')]); })
+      .then(function () { el('rescan').disabled = false; });
+  }
+
+  function choose(net) {
+    chosen = net;
+    el('chosen').textContent = net.ssid;
+    el('pw-field').hidden = !net.secure;
+    el('open-hint').hidden = net.secure;
+    pw.value = '';
+    pw.type = 'password';
+    el('toggle').textContent = 'Tampilkan';
+    show('pass');
+    if (net.secure) setTimeout(function () { pw.focus(); }, 60);
+  }
+
+  // busy: Menghubungkan ke Wi-Fi, ok: Terhubung ke Wi-Fi, fail: Gagal Terhubung ke Wi-Fi.
+  function status(kind) {
+    // Atribut, bukan properti .hidden: ikon berupa SVG, dan .hidden hanya ada di elemen HTML.
+    var shown = { spinner: kind === 'busy', 'icon-ok': kind === 'ok', 'icon-fail': kind === 'fail', retry: kind === 'fail' };
+    Object.keys(shown).forEach(function (id) {
+      if (shown[id]) el(id).removeAttribute('hidden'); else el(id).setAttribute('hidden', '');
+    });
+    el('wait-title').textContent = kind === 'busy' ? 'Menghubungkan ke Wi-Fi'
+      : kind === 'ok' ? 'Terhubung ke Wi-Fi' : 'Gagal Terhubung ke Wi-Fi';
+  }
+
+  // Selama gateway mencoba terhubung, web server-nya diam (tanpa jawaban). Gateway lalu menjawab
+  // "connected" (hotspot ditahan beberapa detik sebelum ditutup) atau "failed" (portal terbuka lagi).
+  function watch(lastAnswer) {
+    setTimeout(function () {
+      fetch('/status.json', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (s) {
+          if (s.state === 'connected') return status('ok');
+          if (s.state === 'failed') return status('fail');
+          watch(Date.now());
+        })
+        .catch(function () {
+          // Tanpa jawaban sama sekali sejauh ini berarti hotspot sudah ditutup, dan itu hanya terjadi
+          // kalau gateway berhasil terhubung (HP sempat terputus saat kanal hotspot ikut berpindah).
+          if (Date.now() - lastAnswer > SUCCESS_SILENCE_MS) return status('ok');
+          watch(lastAnswer);
+        });
+    }, 1500);
+  }
+
+  el('rescan').addEventListener('click', scan);
+  el('back').addEventListener('click', function () { show('pick'); });
+  el('retry').addEventListener('click', function () {
+    show('pass');
+    if (chosen.secure) setTimeout(function () { pw.focus(); pw.select(); }, 60);
+  });
+  el('toggle').addEventListener('click', function () {
+    var hidden = pw.type === 'password';
+    pw.type = hidden ? 'text' : 'password';
+    el('toggle').textContent = hidden ? 'Sembunyikan' : 'Tampilkan';
+    pw.focus();
+  });
+  el('pass').addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (chosen.secure && !pw.value) return pw.focus();
+    el('wait-ssid').textContent = chosen.ssid;
+    status('busy');
+    show('wait');
+    // Simpan lewat /wifisave bawaan WiFiManager (isian s dan p), logika konfigurasinya tetap sama.
+    var body = new URLSearchParams();
+    body.append('s', chosen.ssid);
+    body.append('p', chosen.secure ? pw.value : '');
+    fetch('/wifisave', { method: 'POST', body: body }).catch(function () {});
+    watch(Date.now());
+  });
+
+  scan();
+})();
+</script>
+</body>
+</html>

@@ -2,12 +2,13 @@
   "mqtt": {
     "host": "127.0.0.1",
     "port": 1883,
+    "password": "",
     "keepalive_seconds": 60
   },
   "firmware_version": "sim-1.0",
   "interval_seconds": 60,
   "send_jitter_seconds": 5,
-  "gateway_heartbeat_minutes": 5,
+  "gateway_heartbeat_minutes": 10,
   "weather_refresh_minutes": 30,
   "bmkg_timeout_seconds": 20,
   "packet_loss_rate": 0.03,

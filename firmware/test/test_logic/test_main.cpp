@@ -196,6 +196,111 @@ void test_valve_timer_closes_itself() {
   TEST_ASSERT_TRUE(valve.isOpen());
 }
 
+void test_parse_set_command() {
+  SettingKey key;
+  char value[65];
+  const char* error = nullptr;
+
+  TEST_ASSERT_TRUE(parseSetCommand("set mqtt_host 192.168.1.4", key, value, sizeof value, error));
+  TEST_ASSERT_TRUE(key == SettingKey::MqttHost);
+  TEST_ASSERT_EQUAL_STRING("192.168.1.4", value);
+  TEST_ASSERT_TRUE(parseSetCommand("set mqtt_host mqtt.lorafield.id", key, value, sizeof value, error));
+  TEST_ASSERT_TRUE(parseSetCommand("set mqtt_port 8883", key, value, sizeof value, error));
+  TEST_ASSERT_TRUE(key == SettingKey::MqttPort);
+  TEST_ASSERT_TRUE(parseSetCommand("set mqtt_pass Rahasia#2026!", key, value, sizeof value, error));
+  TEST_ASSERT_TRUE(key == SettingKey::MqttPass);
+  TEST_ASSERT_TRUE(parseSetCommand("set ap_pass 12345678", key, value, sizeof value, error));
+  TEST_ASSERT_TRUE(key == SettingKey::ApPass);
+  TEST_ASSERT_EQUAL_STRING("ap_pass", settingName(SettingKey::ApPass));
+
+  // Batas WPA2 untuk password hotspot: 8-63 karakter.
+  TEST_ASSERT_FALSE(parseSetCommand("set ap_pass 1234567", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand(
+      "set ap_pass 1234567890123456789012345678901234567890123456789012345678901234", key, value,
+      sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("set mqtt_pass pendek", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("set mqtt_pass dua kata panjang", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("set mqtt_host 192.168.1.4/x", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("set mqtt_port 0", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("set mqtt_port 70000", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("set mqtt_port 18a3", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("set wifi_pass 12345678", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("set mqtt_host", key, value, sizeof value, error));
+  TEST_ASSERT_FALSE(parseSetCommand("show", key, value, sizeof value, error));
+  TEST_ASSERT_NOT_NULL(error);
+
+  char small[8];  // nilai lebih panjang dari buffer ditolak, bukan dipotong
+  TEST_ASSERT_FALSE(parseSetCommand("set ap_pass 12345678", key, small, sizeof small, error));
+}
+
+void test_portal_name() {
+  char name[24];
+  portalName("GW-F024F9925898", name, sizeof name);
+  TEST_ASSERT_EQUAL_STRING("LoraField-5898", name);
+}
+
+void test_rank_networks() {
+  std::vector<ScannedNetwork> scanned = {
+      {"Rumah", -70, true},  {"", -40, true},       {"Kebun", -50, false},
+      {"Rumah", -55, true},  {"Tetangga", -80, true}, {"Masjid", -85, true},
+  };
+  std::vector<ScannedNetwork> ranked = rankNetworks(scanned, 3);
+  TEST_ASSERT_EQUAL(3, ranked.size());  // nama kosong dilewati, nama ganda digabung, dipotong ke 3
+  TEST_ASSERT_EQUAL_STRING("Kebun", ranked[0].ssid.c_str());
+  TEST_ASSERT_FALSE(ranked[0].secure);
+  TEST_ASSERT_EQUAL_STRING("Rumah", ranked[1].ssid.c_str());
+  TEST_ASSERT_EQUAL(-55, ranked[1].rssi);  // sinyal terkuat dari dua titik akses bernama sama
+  TEST_ASSERT_EQUAL_STRING("Tetangga", ranked[2].ssid.c_str());
+  TEST_ASSERT_EQUAL(0, rankNetworks({}, 20).size());
+}
+
+void test_parse_gateway_command() {
+  const char* portal = "{\"action\":\"wifi_portal\"}";
+  TEST_ASSERT_TRUE(parseGatewayCommand(reinterpret_cast<const uint8_t*>(portal), strlen(portal)) ==
+                   GatewayCommand::WifiPortal);
+  const char* other = "{\"action\":\"reboot\"}";
+  TEST_ASSERT_TRUE(parseGatewayCommand(reinterpret_cast<const uint8_t*>(other), strlen(other)) ==
+                   GatewayCommand::Unknown);
+  const char* broken = "wifi_portal";
+  TEST_ASSERT_TRUE(parseGatewayCommand(reinterpret_cast<const uint8_t*>(broken), strlen(broken)) ==
+                   GatewayCommand::Unknown);
+  TEST_ASSERT_TRUE(parseGatewayCommand(nullptr, 0) == GatewayCommand::Unknown);
+}
+
+void test_wifi_recovery() {
+  using Action = WifiRecovery::Action;
+  const uint32_t minute = 60000;
+  WifiRecovery wifi(10 * minute, 30000, 30 * minute);
+  TEST_ASSERT_TRUE(wifi.update(true, 0) == Action::None);
+
+  // Putus: dicatat sekali, lalu sambung ulang dipaksa tiap 30 detik.
+  TEST_ASSERT_TRUE(wifi.update(false, 1000) == Action::Lost);
+  TEST_ASSERT_TRUE(wifi.update(false, 30999) == Action::None);
+  TEST_ASSERT_TRUE(wifi.update(false, 31000) == Action::Reconnect);
+  TEST_ASSERT_TRUE(wifi.update(false, 31500) == Action::None);
+  TEST_ASSERT_TRUE(wifi.update(false, 61000) == Action::Reconnect);
+
+  // 10 menit tetap putus: radio istirahat 30 menit, tanpa percobaan selama istirahat.
+  TEST_ASSERT_TRUE(wifi.update(false, 1000 + 10 * minute) == Action::RadioOff);
+  TEST_ASSERT_TRUE(wifi.update(false, 1000 + 25 * minute) == Action::None);
+  TEST_ASSERT_TRUE(wifi.update(false, 1000 + 40 * minute - 1) == Action::None);
+  TEST_ASSERT_TRUE(wifi.update(false, 1000 + 40 * minute) == Action::RadioOn);
+
+  // Tersambung di jendela berikutnya: kembali normal, tidak ada aksi lagi.
+  TEST_ASSERT_TRUE(wifi.update(false, 1000 + 40 * minute + 30000) == Action::Reconnect);
+  TEST_ASSERT_TRUE(wifi.update(true, 1000 + 41 * minute) == Action::None);
+  TEST_ASSERT_TRUE(wifi.update(true, 1000 + 80 * minute) == Action::None);
+
+  // Putus lagi: jendela 10 menit dihitung dari awal.
+  TEST_ASSERT_TRUE(wifi.update(false, 100 * minute) == Action::Lost);
+  TEST_ASSERT_TRUE(wifi.update(false, 109 * minute) != Action::RadioOff);
+  TEST_ASSERT_TRUE(wifi.update(false, 110 * minute) == Action::RadioOff);
+
+  WifiRecovery wrap(10 * minute, 30000, 30 * minute);  // millis() kembali ke 0 saat putus
+  wrap.update(false, 0xFFFFFFFFu - 1000);
+  TEST_ASSERT_TRUE(wrap.update(false, 29000) == Action::Reconnect);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_reading_packet_round_trip);
@@ -208,5 +313,10 @@ int main() {
   RUN_TEST(test_remaining_and_mismatch);
   RUN_TEST(test_sensor_conversions);
   RUN_TEST(test_valve_timer_closes_itself);
+  RUN_TEST(test_parse_set_command);
+  RUN_TEST(test_portal_name);
+  RUN_TEST(test_rank_networks);
+  RUN_TEST(test_parse_gateway_command);
+  RUN_TEST(test_wifi_recovery);
   return UNITY_END();
 }

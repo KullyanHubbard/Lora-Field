@@ -20,11 +20,18 @@ class GatewayLink:
         # Perintah valve terakhir per node dari server, diisi thread paho, diambil loop utama.
         self.pending: dict[str, dict] = {}
         self._mqtt = mqtt_config
-        self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=gateway_id)
+        self._client = self._new_client()
         self._client.will_set(self._topic("status"), json.dumps({"state": "offline"}), qos=1, retain=True)
         self._client.on_connect = self._on_connect
         self._client.on_disconnect = self._on_disconnect
         self._client.on_message = self._on_message
+
+    def _new_client(self) -> mqtt.Client:
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=self.gateway_id)
+        # Sama seperti firmware: username = ID gateway. Password kosong = broker tanpa password.
+        if self._mqtt.get("password"):
+            client.username_pw_set(self.gateway_id, self._mqtt["password"])
+        return client
 
     def _topic(self, suffix: str) -> str:
         return f"{TOPIC_ROOT}/{self.gateway_id}/{suffix}"
@@ -76,7 +83,7 @@ class GatewayLink:
     def clear_retained(self) -> None:
         """Hapus pesan retain gateway ini di broker (status dan perintah valve tiap node)."""
         # Klien terpisah tanpa callback, supaya tidak ikut mengirim status online saat tersambung.
-        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=self.gateway_id)
+        client = self._new_client()
         client.connect(self._mqtt["host"], self._mqtt["port"], self._mqtt["keepalive_seconds"])
         client.loop_start()
         topics = [self._topic("status")] + [self._topic(f"node/{node_id}/valve/set") for node_id, _ in self.nodes]

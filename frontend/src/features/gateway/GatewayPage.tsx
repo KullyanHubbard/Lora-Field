@@ -4,11 +4,13 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GatewayInfoCard } from './components/GatewayInfoCard';
 import { GatewayLogContent } from './components/GatewayLogContent';
+import { GatewayWifiChange } from './components/GatewayWifiChange';
 import { useGatewayPageViewModel } from './useGatewayPageViewModel';
 
 export default function GatewayPage() {
   const { t } = useTranslation();
   const {
+    farmId,
     gatewayInfo,
     isSummaryLoading,
     summaryError,
@@ -49,6 +51,11 @@ export default function GatewayPage() {
       <GatewayInfoCard
         info={gatewayInfo}
         className="shrink-0 rounded-2xl border border-border bg-gradient-to-br from-card to-card/80 p-6 transition-colors"
+        footer={
+          farmId && gatewayInfo.isOnline && gatewayInfo.portalSsid ? (
+            <GatewayWifiChange farmId={farmId} portalSsid={gatewayInfo.portalSsid} />
+          ) : undefined
+        }
       />
 
       <Card className="min-h-0 flex-1 overflow-hidden">

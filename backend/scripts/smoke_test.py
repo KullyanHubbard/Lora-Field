@@ -2578,10 +2578,13 @@ def run(report: Report, with_network: bool) -> None:
 
             def __init__(self) -> None:
                 self.terkirim: list[tuple[str, dict]] = []
+                self.qos_terakhir: int | None = None
+                self.retain_terakhir: bool | None = None
 
             def publish(self, topic, body, qos, retain):
                 # Isi kosong = penghapusan perintah retain, dicatat sebagai None.
                 self.terkirim.append((topic, json.loads(body) if body else None))
+                self.qos_terakhir, self.retain_terakhir = qos, retain
                 return types.SimpleNamespace(rc=0)
 
         gw_mqtt = f"SIM-GW-{suffix}"
@@ -2762,6 +2765,86 @@ def run(report: Report, with_network: bool) -> None:
                 summary_mqtt.get("gateway_status") == "online" and summary_mqtt.get("nodes_online") == 1,
                 f"gateway {summary_mqtt.get('gateway_status')}, online {summary_mqtt.get('nodes_online')}",
             )
+
+            def gateway_status_mqtt() -> str | None:
+                return client.get(f"/api/farms/{farm_mqtt}/summary", headers=auth).json().get("gateway_status")
+
+            def kabar_terakhir_lalu() -> None:
+                # Last Will baru dikirim broker setelah keep alive habis, jadi kabar terakhir gateway lebih lama.
+                with database.get_connection() as connection:
+                    connection.execute(
+                        "UPDATE gateways SET last_seen_at = datetime('now', '-2 minutes') WHERE device_id = ?",
+                        (gw_mqtt,),
+                    )
+
+            kabar_terakhir_lalu()
+            kirim("status", {"state": "offline"})
+            status_terputus = gateway_status_mqtt()
+            report.check(
+                "MQTT: gateway dilaporkan terputus -> langsung offline walau node masih dalam batas waktu",
+                status_terputus == "offline",
+                f"gateway {status_terputus}",
+            )
+            kirim("status", {"state": "online", "fw": "sim-1"})
+            status_kembali = gateway_status_mqtt()
+            report.check("MQTT: gateway tersambung lagi -> online", status_kembali == "online", f"gateway {status_kembali}")
+            kabar_terakhir_lalu()
+            kirim("status", {"state": "offline"})
+            kirim("heartbeat", {"uptime_s": 30, "nodes_heard": 0})
+            status_heartbeat = gateway_status_mqtt()
+            report.check(
+                "MQTT: heartbeat setelah terputus -> online walau status tersambung terlewat",
+                status_heartbeat == "online",
+                f"gateway {status_heartbeat}",
+            )
+            kabar_terakhir_lalu()
+            kirim("status", {"state": "offline"})
+            jumlah_log = len(client.get(f"/api/farms/{farm_mqtt}/gateway-logs", headers=auth).json()["items"])
+            kirim("status", {"state": "online", "fw": "sim-1"}, retained=True)
+            status_retain = gateway_status_mqtt()
+            jumlah_log_retain = len(client.get(f"/api/farms/{farm_mqtt}/gateway-logs", headers=auth).json()["items"])
+            report.check(
+                "MQTT: status online retain saat server menyambung ulang -> online, tanpa entri log baru",
+                status_retain == "online" and jumlah_log_retain == jumlah_log,
+                f"gateway {status_retain}, log {jumlah_log} -> {jumlah_log_retain}",
+            )
+
+            # Tombol "Ganti WiFi" di web: perintah cmd ke gateway.
+            url_ganti_wifi = f"/api/farms/{farm_mqtt}/gateway/wifi-portal"
+            jumlah_kirim = len(klien.terkirim)
+            resp_wifi = client.post(url_ganti_wifi, headers=auth)
+            events_wifi = [
+                item["event"]
+                for item in client.get(f"/api/farms/{farm_mqtt}/gateway-logs", headers=auth).json()["items"]
+            ]
+            report.check(
+                "Ganti WiFi: gateway online -> perintah wifi_portal terkirim QoS 1 tanpa retain dan tercatat",
+                resp_wifi.status_code == 200
+                and klien.terkirim[jumlah_kirim:] == [(f"{topik}/cmd", {"action": "wifi_portal"})]
+                and klien.qos_terakhir == 1
+                and klien.retain_terakhir is False
+                and events_wifi[:1] == ["wifi_portal"],
+                f"status {resp_wifi.status_code}, kirim {klien.terkirim[jumlah_kirim:]}, "
+                f"qos {klien.qos_terakhir}, retain {klien.retain_terakhir}, log {events_wifi[:1]}",
+            )
+            mqtt_bridge._client = None
+            resp_nonaktif = client.post(url_ganti_wifi, headers=auth)
+            mqtt_bridge._client = klien
+            report.check(
+                "Ganti WiFi: jembatan MQTT nonaktif -> 503",
+                resp_nonaktif.status_code == 503,
+                f"status {resp_nonaktif.status_code}",
+            )
+            kabar_terakhir_lalu()
+            kirim("status", {"state": "offline"})
+            jumlah_kirim = len(klien.terkirim)
+            resp_offline = client.post(url_ganti_wifi, headers=auth)
+            report.check(
+                "Ganti WiFi: gateway offline -> 409, perintah tidak dikirim",
+                resp_offline.status_code == 409 and len(klien.terkirim) == jumlah_kirim,
+                f"status {resp_offline.status_code}, kirim {klien.terkirim[jumlah_kirim:]}",
+            )
+            kirim("status", {"state": "online", "fw": "sim-1"})
 
             # MAC ESP32 satu pabrikan: awalan ID sama, nama bawaan tetap harus beda.
             node_kembar = ["ND-246F28A1B2C3", "ND-246F28D4E5F6"]

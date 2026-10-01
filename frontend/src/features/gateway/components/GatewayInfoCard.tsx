@@ -32,9 +32,11 @@ function StatTile({
 export function GatewayInfoCard({
   info,
   className,
+  footer,
 }: {
   info: GatewayInfoViewModel;
   className?: string;
+  footer?: ReactNode;
 }) {
   const { t } = useTranslation();
 
@@ -70,6 +72,7 @@ export function GatewayInfoCard({
           value={info.lastSeen ? timeAgo(info.lastSeen, t) : EMPTY_VALUE}
         />
       </div>
+      {footer && <div className="mt-4 flex justify-end">{footer}</div>}
     </div>
   );
 }

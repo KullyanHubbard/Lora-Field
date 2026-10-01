@@ -55,6 +55,9 @@ Semua laju, batas, dan jarak kirim diatur di config. Tidak ada nilai sensor yang
 Butuh broker Mosquitto yang jalan dan backend dengan `MQTT_HOST` terisi di `backend/.env`.
 Library Python: `pip install paho-mqtt`.
 
+Kalau broker memakai password, isi `mqtt.password` di `config.json`. Sama seperti gateway asli,
+username = ID gateway simulasi, jadi tiap ID `SIM-GW-...` perlu didaftarkan di file password broker.
+
 ```bat
 python simulator/lorafield_sim.py run
 ```

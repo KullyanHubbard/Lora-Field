@@ -704,7 +704,19 @@
     "filterHeartbeat": "Heartbeat",
     "filterDataSync": "Sinkronisasi",
     "eventCount": "{{count}} event",
-    "heartbeatNodes": "{{heard}} dari {{total}} node terdengar"
+    "heartbeatNodes": "{{heard}} dari {{total}} node terdengar",
+    "eventWifiPortal": "Ganti WiFi",
+    "changeWifi": "Ganti WiFi",
+    "changeWifiTitle": "Ganti WiFi gateway?",
+    "changeWifiDesc": "Gateway akan berhenti mengirim data sebentar selama WiFi diganti.",
+    "changeWifiStep1": "Gateway memutus WiFi sekarang dan membuka hotspot {{ssid}} selama 5 menit.",
+    "changeWifiStep2": "Sambungkan HP ke hotspot itu dengan password di stiker gateway.",
+    "changeWifiStep3": "Halaman pengaturan terbuka sendiri: pilih WiFi baru, ketik passwordnya, lalu Simpan.",
+    "changeWifiFallback": "Kalau tidak ada WiFi baru yang disimpan, gateway kembali memakai WiFi lama.",
+    "changeWifiConfirm": "Buka Portal WiFi",
+    "changeWifiSuccess": "Perintah terkirim. Sambungkan HP ke hotspot gateway.",
+    "changeWifiError": "Gagal mengirim perintah ke gateway.",
+    "cancel": "Batal"
   },
   "helpCenter": {
     "contact": {
