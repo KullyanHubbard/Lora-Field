@@ -604,6 +604,15 @@
     "filterDisconnected": "Disconnected",
     "filterHeartbeat": "Heartbeat",
     "filterRestarted": "Restarted",
+    "bootReason": {
+      "power_on": "Power loss or RST button",
+      "brownout": "Voltage drop, check adapter and cable",
+      "watchdog": "Program froze (watchdog)",
+      "crash": "Program error",
+      "planned": "Planned restart (Change WiFi or command)",
+      "firmware_update": "Firmware updated",
+      "other": "Other cause"
+    },
     "eventCount": "{{count}} event(s)",
     "heartbeatNodes": "{{heard}} of {{total}} node(s) heard",
     "eventWifiPortal": "Change WiFi",

@@ -78,6 +78,21 @@ PortalLink portal_link = PortalLink::Idle;
 volatile uint8_t wifi_disconnect_reason = 0;
 // Keadaan lampu status. Diubah setup() dan loop(), dibaca pewaktu lampu (startStatusLed).
 volatile StatusLed status_led = StatusLed::WifiDown;
+// Penyebab gateway menyala (kode boot_reason kontrak MQTT), dikirim di setiap heartbeat.
+const char* boot_reason = "other";
+// Nomor nyala: acak, baru setiap gateway menyala, dikirim di heartbeat supaya server tahu pasti gateway sempat
+// restart. Dibuat saat heartbeat pertama, ketika radio WiFi sudah menyala (sumber acak esp_random paling baik).
+uint32_t boot_id = 0;
+
+// ResetReason (lib/lorafield) memakai angka esp_reset_reason_t; gagal compile kalau ESP-IDF mengubahnya.
+static_assert(static_cast<int>(ResetReason::PowerOn) == ESP_RST_POWERON &&
+                  static_cast<int>(ResetReason::Software) == ESP_RST_SW &&
+                  static_cast<int>(ResetReason::Panic) == ESP_RST_PANIC &&
+                  static_cast<int>(ResetReason::InterruptWatchdog) == ESP_RST_INT_WDT &&
+                  static_cast<int>(ResetReason::TaskWatchdog) == ESP_RST_TASK_WDT &&
+                  static_cast<int>(ResetReason::OtherWatchdog) == ESP_RST_WDT &&
+                  static_cast<int>(ResetReason::Brownout) == ESP_RST_BROWNOUT,
+              "ResetReason tidak sama dengan esp_reset_reason_t");
 WifiRecovery wifi_recovery(WIFI_RECONNECT_WINDOW_MS, WIFI_RECONNECT_EVERY_MS, WIFI_REST_MS);
 
 void topicFor(char* out, size_t len, const char* suffix) {
@@ -338,6 +353,15 @@ void pollSerial() {
 }
 
 // Jeda singkat setelah menyala: perintah "config" lewat Serial masuk mode pengaturan (tools/provision.py).
+// Versi firmware berbeda dari saat menyala sebelumnya (baru di-upload). Versi sekarang langsung disimpan.
+bool firmwareChanged() {
+  prefs.begin(kPrefsNamespace, false);
+  bool changed = prefs.getString("fw", "") != FIRMWARE_VERSION;
+  if (changed) prefs.putString("fw", FIRMWARE_VERSION);
+  prefs.end();
+  return changed;
+}
+
 bool configRequested() {
   unsigned long start = millis();
   while (millis() - start < CONFIG_WINDOW_MS) {
@@ -577,7 +601,9 @@ void heartbeat() {
   char body[192], topic[64];
   // esp_timer 64-bit: tidak kembali ke 0 setelah 49 hari seperti millis(), yang di server terbaca restart.
   // Nama dan sinyal WiFi tampil di kartu Gateway web (password WiFi tidak pernah dikirim).
-  heartbeatJson(esp_timer_get_time() / 1000000, heard, WiFi.SSID().c_str(), WiFi.RSSI(), body, sizeof body);
+  while (boot_id == 0) boot_id = esp_random();
+  heartbeatJson(esp_timer_get_time() / 1000000, heard, WiFi.SSID().c_str(), WiFi.RSSI(), boot_reason, boot_id,
+                body, sizeof body);
   topicFor(topic, sizeof topic, "heartbeat");
   mqtt.publish(topic, body);
   // Daftar node ikut tiap heartbeat, untuk kebun yang didaftarkan setelah gateway menyala.
@@ -613,6 +639,7 @@ void setup() {
   Serial.printf("CPU %u MHz\n", getCpuFrequencyMhz());
 
   esp_reset_reason_t reset_reason = esp_reset_reason();
+  boot_reason = bootReasonCode(static_cast<ResetReason>(reset_reason), firmwareChanged());
   if (reset_reason == ESP_RST_BROWNOUT) {
     Serial.println("Restart sebelumnya karena tegangan turun (brownout). Cek adaptor dan kabel, atau pasang baterai.");
   } else if (reset_reason == ESP_RST_TASK_WDT || reset_reason == ESP_RST_INT_WDT || reset_reason == ESP_RST_WDT) {

@@ -122,8 +122,29 @@ size_t readingJson(const Reading& reading, int rssi, char* out, size_t len) {
   return serializeJson(doc, out, len);
 }
 
-size_t heartbeatJson(uint64_t uptime_s, int nodes_heard, const char* wifi_ssid, int wifi_rssi, char* out,
-                     size_t len) {
+const char* bootReasonCode(ResetReason reason, bool firmware_changed) {
+  if (firmware_changed) return "firmware_update";
+  switch (reason) {
+    case ResetReason::PowerOn:
+    case ResetReason::External:
+      return "power_on";
+    case ResetReason::Brownout:
+      return "brownout";
+    case ResetReason::InterruptWatchdog:
+    case ResetReason::TaskWatchdog:
+    case ResetReason::OtherWatchdog:
+      return "watchdog";
+    case ResetReason::Panic:
+      return "crash";
+    case ResetReason::Software:
+      return "planned";
+    default:
+      return "other";
+  }
+}
+
+size_t heartbeatJson(uint64_t uptime_s, int nodes_heard, const char* wifi_ssid, int wifi_rssi,
+                     const char* boot_reason, uint32_t boot_id, char* out, size_t len) {
   JsonDocument doc;
   doc["uptime_s"] = uptime_s;
   doc["nodes_heard"] = nodes_heard;
@@ -131,6 +152,8 @@ size_t heartbeatJson(uint64_t uptime_s, int nodes_heard, const char* wifi_ssid, 
     doc["wifi_ssid"] = wifi_ssid;
     doc["wifi_rssi"] = wifi_rssi < -120 ? -120 : (wifi_rssi > 0 ? 0 : wifi_rssi);  // rentang validasi server
   }
+  if (boot_reason != nullptr && boot_reason[0] != '\0') doc["boot_reason"] = boot_reason;
+  if (boot_id != 0) doc["boot_id"] = boot_id;
   if (measureJson(doc) >= len) return 0;
   return serializeJson(doc, out, len);
 }

@@ -150,7 +150,11 @@ Heartbeat (sejak firmware 0.2.4) dikirim juga tepat setelah tersambung ke broker
 pencacah 64-bit (`esp_timer_get_time`). Server memakai uptime itu untuk mencatat "Menyala ulang" di Riwayat
 Koneksi dalam hitungan detik setelah gateway restart; heartbeat sendiri tidak dicatat. Sejak 0.2.6 heartbeat juga
 membawa nama dan sinyal WiFi (`heartbeatJson`, dites di PC), yang tampil di kartu Gateway web. Prosesor gateway
-berjalan di 160 MHz (`GATEWAY_CPU_MHZ`).
+berjalan di 160 MHz (`GATEWAY_CPU_MHZ`). Sejak 0.2.7 heartbeat membawa penyebab gateway menyala (`boot_reason`,
+dari `esp_reset_reason` dan versi firmware yang disimpan di memori alat; `bootReasonCode`, dites di PC), yang
+tampil di entri "Menyala ulang" di Riwayat Koneksi. Sejak 0.2.8 heartbeat juga membawa nomor nyala (`boot_id`,
+acak dari `esp_random` saat heartbeat pertama), sehingga server tahu pasti gateway sempat restart walau jaraknya
+kurang dari 1 menit (uji alat 2026-10-02: RST 52 detik setelah upload terlewat dengan cara jam menyala saja).
 
 Watchdog (sejak firmware 0.2.2): kalau `loop()` gateway tidak berputar selama 2 menit
 (`GATEWAY_WATCHDOG_S`), gateway restart sendiri dan Serial menulis "Restart sebelumnya karena gateway

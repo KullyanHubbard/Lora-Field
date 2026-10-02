@@ -45,11 +45,32 @@ bool macFromDeviceId(const char* id, uint8_t mac[6]);
 
 // Pesan MQTT sesuai kontrak. Kembalikan panjang JSON, 0 kalau buffer kurang.
 size_t readingJson(const Reading& reading, int rssi, char* out, size_t len);
-// Isi heartbeat: uptime, node terdengar, dan WiFi yang dipakai gateway (nama dan kekuatan sinyal dBm,
-// dijepit -120 sampai 0). Nama WiFi kosong: kedua field WiFi tidak dikirim. Nama di-escape ArduinoJson,
-// jadi boleh berisi tanda kutip. Kembalikan panjang JSON, 0 kalau buffer kurang.
-size_t heartbeatJson(uint64_t uptime_s, int nodes_heard, const char* wifi_ssid, int wifi_rssi, char* out,
-                     size_t len);
+// Penyebab gateway menyala. Angka sama dengan esp_reset_reason_t ESP-IDF 4.4 (main.cpp memastikannya
+// dengan static_assert), supaya logikanya bisa dites di PC tanpa header ESP-IDF.
+enum class ResetReason : int {
+  Unknown = 0,
+  PowerOn = 1,
+  External = 2,
+  Software = 3,
+  Panic = 4,
+  InterruptWatchdog = 5,
+  TaskWatchdog = 6,
+  OtherWatchdog = 7,
+  DeepSleep = 8,
+  Brownout = 9,
+  Sdio = 10,
+};
+// Kode boot_reason di heartbeat (docs/kontrak-mqtt.md): power_on (listrik padam atau tombol RST, ESP32 tidak
+// bisa membedakannya), brownout, watchdog, crash, planned (restart dari firmware sendiri, mis. Ganti WiFi),
+// firmware_update (versi firmware berbeda dari saat menyala sebelumnya, menang atas penyebab lain), other.
+const char* bootReasonCode(ResetReason reason, bool firmware_changed);
+
+// Isi heartbeat: uptime, node terdengar, WiFi yang dipakai gateway (nama dan kekuatan sinyal dBm, dijepit
+// -120 sampai 0), penyebab gateway menyala, dan nomor nyala (acak, baru setiap gateway menyala). Nama WiFi
+// kosong: kedua field WiFi tidak dikirim; boot_reason null atau kosong dan boot_id 0: tidak dikirim. Nama
+// di-escape ArduinoJson, jadi boleh berisi tanda kutip. Kembalikan panjang JSON, 0 kalau buffer kurang.
+size_t heartbeatJson(uint64_t uptime_s, int nodes_heard, const char* wifi_ssid, int wifi_rssi,
+                     const char* boot_reason, uint32_t boot_id, char* out, size_t len);
 // Isi valve/set. Isi kosong = tutup. false kalau rusak (perintah diabaikan).
 bool parseValveCommand(const uint8_t* payload, size_t len, bool& open, uint32_t& until);
 // "lorafield/gw/{gw}/node/{node}/valve/set" -> {node}.

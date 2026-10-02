@@ -2927,6 +2927,49 @@ def run(report: Report, with_network: bool) -> None:
                 jumlah_restart() == awal + 2,
                 f"restart {awal} -> {jumlah_restart()}",
             )
+
+            # Penyebab menyala dari gateway (boot_reason) ditulis di detail log restarted; kode asing dikosongkan.
+            def restart_terbaru() -> dict:
+                return max(
+                    (item for item in log_gateway_mqtt() if item["event"] == "restarted"), key=lambda item: item["id"]
+                )
+
+            kirim("heartbeat", {"uptime_s": 500, "nodes_heard": 0, "boot_reason": "brownout"})
+            kirim("heartbeat", {"uptime_s": 20, "nodes_heard": 0, "boot_reason": "brownout"})
+            report.check(
+                "MQTT: menyala ulang karena listrik turun -> detail brownout",
+                restart_terbaru()["detail"] == "brownout",
+                f"detail {restart_terbaru()['detail']!r}",
+            )
+            kirim("heartbeat", {"uptime_s": 500, "nodes_heard": 0})
+            kirim("heartbeat", {"uptime_s": 20, "nodes_heard": 0, "boot_reason": "<script>"})
+            report.check(
+                "MQTT: kode penyebab menyala asing tidak disimpan",
+                restart_terbaru()["detail"] == "",
+                f"detail {restart_terbaru()['detail']!r}",
+            )
+
+            # Nomor nyala (boot_id): restart pasti terdeteksi berapa pun jaraknya, tanpa alarm palsu.
+            kirim("heartbeat", {"uptime_s": 900, "nodes_heard": 0, "boot_id": 111})  # nomor pertama: cara jam menyala
+            sebelum_nomor = jumlah_restart()
+            kirim("heartbeat", {"uptime_s": 600, "nodes_heard": 0, "boot_id": 111})  # tertahan 5 menit, nomor sama
+            report.check(
+                "MQTT: nomor nyala sama -> bukan restart walau jam menyala bergeser 5 menit",
+                jumlah_restart() == sebelum_nomor,
+                f"restart {sebelum_nomor} -> {jumlah_restart()}",
+            )
+            kirim("heartbeat", {"uptime_s": 580, "nodes_heard": 0, "boot_id": 222, "boot_reason": "power_on"})
+            report.check(
+                "MQTT: nomor nyala baru 20 detik setelah menyala sebelumnya -> tercatat menyala ulang (uji alat RST)",
+                jumlah_restart() == sebelum_nomor + 1 and restart_terbaru()["detail"] == "power_on",
+                f"restart {sebelum_nomor} -> {jumlah_restart()}, detail {restart_terbaru()['detail']!r}",
+            )
+            kirim("heartbeat", {"uptime_s": 10, "nodes_heard": 0, "boot_id": True})
+            kirim("heartbeat", {"uptime_s": 10, "nodes_heard": 0, "boot_id": 2**32})
+            report.check(
+                "MQTT: nomor nyala rusak diabaikan, nomor tersimpan tidak berubah",
+                client.get(f"/api/farms/{farm_mqtt}/gateway", headers=auth).json()["gateway"].get("boot_id") == 222,
+            )
             report.check(
                 "MQTT: heartbeat tidak pernah tercatat di log gateway",
                 all(item["event"] != "heartbeat" for item in log_gateway_mqtt()),

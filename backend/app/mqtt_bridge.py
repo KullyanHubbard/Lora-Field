@@ -32,6 +32,9 @@ TOPIC_ROOT = "lorafield/gw"
 # setelah menyala sebelumnya (keputusan user: 1 menit).
 RESTART_TOLERANCE = timedelta(minutes=1)
 MAX_UPTIME_S = 10 * 365 * 86400  # uptime di atas ini dianggap rusak dan diabaikan
+# Kode boot_reason heartbeat (docs/kontrak-mqtt.md), disimpan apa adanya di detail log `restarted`.
+BOOT_REASONS = {"power_on", "brownout", "watchdog", "crash", "planned", "firmware_update", "other"}
+MAX_BOOT_ID = 2**32 - 1  # nomor nyala gateway: uint32, 0 berarti tidak ada
 _DEVICE_ID = re.compile(DEVICE_ID_PATTERN)
 
 _client: mqtt.Client | None = None
@@ -171,7 +174,9 @@ def _handle_heartbeat(gateway_id: str, data: dict) -> None:
         # Heartbeat hanya kabar (status online, kotak Terakhir di web), tidak dicatat di Log Gateway supaya
         # kejadian penting tidak tenggelam. Yang dicatat: gateway sempat restart.
         _touch_gateway(connection, gateway_id)
-        _detect_restart(connection, gateway_id, farm["id"], data.get("uptime_s"))
+        _detect_restart(
+            connection, gateway_id, farm["id"], data.get("uptime_s"), data.get("boot_reason"), data.get("boot_id")
+        )
         _store_wifi(connection, gateway_id, data)
 
 
@@ -193,20 +198,36 @@ def _store_wifi(connection, gateway_id: str, data: dict) -> None:
             logger.warning("Sinyal WiFi dari %s tidak sah, diabaikan: %r", gateway_id, rssi)
 
 
-def _detect_restart(connection, gateway_id: str, farm_id: str, uptime_s) -> None:
-    """Catat `restarted` kalau jam menyala gateway (waktu terima dikurangi uptime) maju dari catatan sebelumnya.
+def _detect_restart(connection, gateway_id: str, farm_id: str, uptime_s, boot_reason=None, boot_id=None) -> None:
+    """Catat `restarted` kalau gateway sempat menyala ulang sejak heartbeat sebelumnya.
 
-    Dicatat pada perkiraan jam menyala, supaya urutannya di Log Gateway benar walau heartbeat datang belakangan.
-    Heartbeat pertama gateway hanya menyimpan jam menyala.
+    Utama: nomor nyala (`boot_id`, acak, baru setiap gateway menyala) berbeda dari yang tersimpan, pasti berapa pun
+    jaraknya dan tanpa alarm palsu dari heartbeat yang tertahan. Cadangan untuk firmware lama, simulator, dan
+    heartbeat pertama yang membawa nomor: jam menyala (waktu terima dikurangi uptime) maju lebih dari
+    RESTART_TOLERANCE. Dicatat pada perkiraan jam menyala, supaya urutannya di Log Gateway benar walau heartbeat
+    datang belakangan. Heartbeat pertama gateway hanya menyimpan. Detail log = kode penyebab menyala dari gateway
+    (`boot_reason`, diterjemahkan web), kosong kalau tidak dikirim atau tidak dikenal.
     """
-    if isinstance(uptime_s, bool) or not isinstance(uptime_s, (int, float)) or not 0 <= uptime_s <= MAX_UPTIME_S:
+    uptime_ok = not isinstance(uptime_s, bool) and isinstance(uptime_s, (int, float)) and 0 <= uptime_s <= MAX_UPTIME_S
+    id_ok = not isinstance(boot_id, bool) and isinstance(boot_id, int) and 0 < boot_id <= MAX_BOOT_ID
+    if not (uptime_ok or id_ok):
         return
-    booted = (datetime.now(timezone.utc) - timedelta(seconds=uptime_s)).strftime("%Y-%m-%d %H:%M:%S")
-    row = connection.execute("SELECT booted_at FROM gateways WHERE device_id = ?", (gateway_id,)).fetchone()
-    previous = _parse_db_time(row["booted_at"]) if row else None
-    connection.execute("UPDATE gateways SET booted_at = ? WHERE device_id = ?", (booted, gateway_id))
-    if previous is not None and _parse_db_time(booted) - previous > RESTART_TOLERANCE:
-        _gateway_log(connection, farm_id, "restarted", "", created_at=booted)
+    booted = (
+        (datetime.now(timezone.utc) - timedelta(seconds=uptime_s)).strftime("%Y-%m-%d %H:%M:%S") if uptime_ok else None
+    )
+    row = connection.execute("SELECT booted_at, boot_id FROM gateways WHERE device_id = ?", (gateway_id,)).fetchone()
+    if id_ok and row is not None and row["boot_id"] is not None:
+        restarted = row["boot_id"] != boot_id
+    else:
+        previous = _parse_db_time(row["booted_at"]) if row else None
+        restarted = booted is not None and previous is not None and _parse_db_time(booted) - previous > RESTART_TOLERANCE
+    connection.execute(
+        "UPDATE gateways SET booted_at = COALESCE(?, booted_at), boot_id = COALESCE(?, boot_id) WHERE device_id = ?",
+        (booted, boot_id if id_ok else None, gateway_id),
+    )
+    if restarted:
+        detail = boot_reason if boot_reason in BOOT_REASONS else ""
+        _gateway_log(connection, farm_id, "restarted", detail, created_at=booted)
 
 
 def _handle_nodes(gateway_id: str, data: dict) -> None:

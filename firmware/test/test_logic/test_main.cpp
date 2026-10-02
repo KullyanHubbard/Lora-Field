@@ -354,26 +354,49 @@ void test_heartbeat_json() {
   char out[200];
   JsonDocument doc;
   // Nama WiFi dengan tanda kutip dan garis miring tetap jadi JSON yang sah; uptime 64-bit tidak terpotong.
-  TEST_ASSERT_TRUE(heartbeatJson(5000000000ULL, 2, "Rumah \"Pak\" \\ Budi", -58, out, sizeof out) > 0);
+  TEST_ASSERT_TRUE(heartbeatJson(5000000000ULL, 2, "Rumah \"Pak\" \\ Budi", -58, nullptr, 0, out, sizeof out) > 0);
   TEST_ASSERT_FALSE(deserializeJson(doc, out));
   TEST_ASSERT_TRUE(doc["uptime_s"].as<uint64_t>() == 5000000000ULL);
   TEST_ASSERT_EQUAL(2, doc["nodes_heard"].as<int>());
   TEST_ASSERT_EQUAL_STRING("Rumah \"Pak\" \\ Budi", doc["wifi_ssid"].as<const char*>());
   TEST_ASSERT_EQUAL(-58, doc["wifi_rssi"].as<int>());
   // Sinyal di luar rentang server dijepit.
-  heartbeatJson(10, 0, "A", -200, out, sizeof out);
+  heartbeatJson(10, 0, "A", -200, nullptr, 0, out, sizeof out);
   deserializeJson(doc, out);
   TEST_ASSERT_EQUAL(-120, doc["wifi_rssi"].as<int>());
-  heartbeatJson(10, 0, "A", 5, out, sizeof out);
+  heartbeatJson(10, 0, "A", 5, nullptr, 0, out, sizeof out);
   deserializeJson(doc, out);
   TEST_ASSERT_EQUAL(0, doc["wifi_rssi"].as<int>());
   // Tanpa nama WiFi: field WiFi tidak dikirim.
-  heartbeatJson(10, 0, "", -40, out, sizeof out);
+  heartbeatJson(10, 0, "", -40, nullptr, 0, out, sizeof out);
   deserializeJson(doc, out);
   TEST_ASSERT_TRUE(doc["wifi_ssid"].isNull());
   TEST_ASSERT_TRUE(doc["wifi_rssi"].isNull());
+  TEST_ASSERT_TRUE(doc["boot_reason"].isNull());  // tanpa penyebab menyala: field tidak dikirim
+  heartbeatJson(10, 0, "A", -40, "brownout", 0, out, sizeof out);
+  deserializeJson(doc, out);
+  TEST_ASSERT_EQUAL_STRING("brownout", doc["boot_reason"].as<const char*>());
+  TEST_ASSERT_TRUE(doc["boot_id"].isNull());  // nomor nyala 0: tidak dikirim
+  heartbeatJson(10, 0, "A", -40, "power_on", 4000000000UL, out, sizeof out);
+  deserializeJson(doc, out);
+  TEST_ASSERT_TRUE(doc["boot_id"].as<uint32_t>() == 4000000000UL);  // nomor nyala 32-bit utuh
   // Buffer kurang.
-  TEST_ASSERT_EQUAL(0, heartbeatJson(10, 0, "Rumah", -50, out, 10));
+  TEST_ASSERT_EQUAL(0, heartbeatJson(10, 0, "Rumah", -50, nullptr, 0, out, 10));
+}
+
+void test_boot_reason_code() {
+  TEST_ASSERT_EQUAL_STRING("power_on", bootReasonCode(ResetReason::PowerOn, false));
+  TEST_ASSERT_EQUAL_STRING("power_on", bootReasonCode(ResetReason::External, false));
+  TEST_ASSERT_EQUAL_STRING("brownout", bootReasonCode(ResetReason::Brownout, false));
+  TEST_ASSERT_EQUAL_STRING("watchdog", bootReasonCode(ResetReason::TaskWatchdog, false));
+  TEST_ASSERT_EQUAL_STRING("watchdog", bootReasonCode(ResetReason::InterruptWatchdog, false));
+  TEST_ASSERT_EQUAL_STRING("watchdog", bootReasonCode(ResetReason::OtherWatchdog, false));
+  TEST_ASSERT_EQUAL_STRING("crash", bootReasonCode(ResetReason::Panic, false));
+  TEST_ASSERT_EQUAL_STRING("planned", bootReasonCode(ResetReason::Software, false));
+  TEST_ASSERT_EQUAL_STRING("other", bootReasonCode(ResetReason::Unknown, false));
+  TEST_ASSERT_EQUAL_STRING("other", bootReasonCode(ResetReason::DeepSleep, false));
+  // Versi firmware berubah (baru di-upload) menang atas penyebab reset dari alat upload.
+  TEST_ASSERT_EQUAL_STRING("firmware_update", bootReasonCode(ResetReason::PowerOn, true));
 }
 
 int main() {
@@ -397,5 +420,6 @@ int main() {
   RUN_TEST(test_status_led_patterns);
   RUN_TEST(test_runtime_status_led);
   RUN_TEST(test_heartbeat_json);
+  RUN_TEST(test_boot_reason_code);
   return UNITY_END();
 }

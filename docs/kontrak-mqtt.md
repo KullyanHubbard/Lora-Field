@@ -69,7 +69,7 @@ Last Will.
 ### heartbeat
 
 ```json
-{"uptime_s": 3600, "nodes_heard": 3, "wifi_ssid": "Rumah Pak Budi", "wifi_rssi": -58}
+{"uptime_s": 3600, "nodes_heard": 3, "wifi_ssid": "Rumah Pak Budi", "wifi_rssi": -58, "boot_reason": "power_on", "boot_id": 3141592653}
 ```
 
 - `uptime_s`: detik sejak gateway menyala. Tidak boleh kembali ke 0 selama gateway menyala (firmware memakai
@@ -81,6 +81,13 @@ Last Will.
 - `wifi_ssid` (opsional): nama WiFi yang sedang dipakai gateway, maksimal 32 byte. Password WiFi tidak pernah
   dikirim. `wifi_rssi` (opsional): kekuatan sinyal WiFi gateway ke router, dBm, -120 sampai 0. Server
   menyimpan keduanya untuk kartu Gateway di web; nilai yang tidak sah diabaikan, nilai lama tetap.
+- `boot_reason` (opsional): penyebab gateway menyala, salah satu dari `power_on` (listrik padam atau tombol RST,
+  ESP32 tidak bisa membedakannya), `brownout` (listrik turun), `watchdog` (program macet), `crash` (program
+  error), `planned` (restart dari firmware sendiri, mis. Ganti WiFi), `firmware_update` (versi firmware baru),
+  `other`. Server menuliskannya di detail log `restarted`; kode lain dikosongkan.
+- `boot_id` (opsional): nomor nyala, bilangan acak 1–4294967295 yang dibuat baru setiap gateway menyala. Nomor
+  yang berbeda dari heartbeat sebelumnya berarti gateway sempat restart, berapa pun jaraknya. Tanpa `boot_id`
+  (firmware lama, simulator), server memakai cara jam menyala dari `uptime_s` di atas.
 
 ### nodes
 

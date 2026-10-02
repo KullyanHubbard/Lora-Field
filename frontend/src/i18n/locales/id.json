@@ -705,6 +705,15 @@
     "filterDisconnected": "Terputus",
     "filterHeartbeat": "Heartbeat",
     "filterRestarted": "Menyala ulang",
+    "bootReason": {
+      "power_on": "Listrik padam atau tombol RST",
+      "brownout": "Listrik turun, cek adaptor dan kabel",
+      "watchdog": "Program macet (watchdog)",
+      "crash": "Program error",
+      "planned": "Restart terencana (Ganti WiFi atau perintah)",
+      "firmware_update": "Firmware diperbarui",
+      "other": "Penyebab lain"
+    },
     "eventCount": "{{count}} event",
     "heartbeatNodes": "{{heard}} dari {{total}} node terdengar",
     "eventWifiPortal": "Ganti WiFi",

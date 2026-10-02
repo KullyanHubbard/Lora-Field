@@ -219,6 +219,8 @@ def init_db() -> None:
         ensure_column(connection, "password_resets", "attempts", "INTEGER NOT NULL DEFAULT 0")
         # Perkiraan jam gateway menyala (waktu terima heartbeat dikurangi uptime), untuk deteksi restart.
         ensure_column(connection, "gateways", "booted_at", "TEXT")
+        # Nomor nyala gateway dari heartbeat terakhir (acak, baru setiap gateway menyala), untuk deteksi restart.
+        ensure_column(connection, "gateways", "boot_id", "INTEGER")
         # WiFi yang dipakai gateway menurut heartbeat terakhir: nama dan kekuatan sinyal (dBm).
         ensure_column(connection, "gateways", "wifi_ssid", "TEXT")
         ensure_column(connection, "gateways", "wifi_rssi", "INTEGER")

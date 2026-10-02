@@ -128,7 +128,13 @@ export function GatewayLogContent({
                                   : 'text-muted-foreground',
                               )}
                             >
-                              {nodeCount ? t('gateway.heartbeatNodes', nodeCount) : log.detail}
+                              {nodeCount
+                                ? t('gateway.heartbeatNodes', nodeCount)
+                                : log.event === 'restarted'
+                                  ? t(`gateway.bootReason.${log.detail}`, {
+                                      defaultValue: log.detail,
+                                    })
+                                  : log.detail}
                             </p>
                           )}
                         </div>

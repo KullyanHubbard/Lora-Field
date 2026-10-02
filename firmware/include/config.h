@@ -2,7 +2,7 @@
 // dengan alat: sesuaikan dengan wiring dan hasil kalibrasi tim IoT sebelum di-flash.
 #pragma once
 
-#define FIRMWARE_VERSION "0.2.6"
+#define FIRMWARE_VERSION "0.2.8"
 
 // Radio LoRa, board LilyGO T3 v1.6.1 (PlatformIO: ttgo-lora32-v21). Versi board lain beda pin.
 // Uji alat 2026-10-01, LoRa32 V2.1 915 MHz: radio terdeteksi (SCK, MISO, MOSI, SS benar). RST dan DIO0
