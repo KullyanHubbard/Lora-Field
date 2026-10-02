@@ -1,4 +1,5 @@
 // Tes logika firmware di PC, tanpa alat: pio test -e native
+#include <ArduinoJson.h>
 #include <lorafield.h>
 #include <string.h>
 #include <unity.h>
@@ -312,6 +313,69 @@ void test_wifi_needs_restore() {
   TEST_ASSERT_FALSE(wifiNeedsRestore("", "", "Rumah", "salah123"));
 }
 
+void test_status_led_patterns() {
+  // Tersambung: menyala terus.
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::Connected, 0));
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::Connected, 1999));
+  // WiFi belum: 1 detik nyala, 1 detik mati.
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::WifiDown, 0));
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::WifiDown, 999));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::WifiDown, 1000));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::WifiDown, 1999));
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::WifiDown, 2000));
+  // Server belum: dua kedip singkat lalu jeda sampai 2 detik.
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::ServerUnreachable, 0));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::ServerUnreachable, 150));
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::ServerUnreachable, 300));
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::ServerUnreachable, 449));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::ServerUnreachable, 450));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::ServerUnreachable, 1999));
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::ServerUnreachable, 2000));
+  // Portal: 4 kali per detik.
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::Portal, 0));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::Portal, 125));
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::Portal, 250));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::Portal, 999));
+  // Mode pengaturan: kedip singkat tiap 2 detik.
+  TEST_ASSERT_TRUE(statusLedOn(StatusLed::Setup, 99));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::Setup, 100));
+  TEST_ASSERT_FALSE(statusLedOn(StatusLed::Setup, 1999));
+}
+
+void test_runtime_status_led() {
+  TEST_ASSERT_TRUE(runtimeStatusLed(true, true) == StatusLed::Connected);
+  TEST_ASSERT_TRUE(runtimeStatusLed(true, false) == StatusLed::ServerUnreachable);
+  TEST_ASSERT_TRUE(runtimeStatusLed(false, false) == StatusLed::WifiDown);
+  // WiFi sudah putus tapi MQTT belum sadar: tetap dianggap WiFi belum, bukan tersambung.
+  TEST_ASSERT_TRUE(runtimeStatusLed(false, true) == StatusLed::WifiDown);
+}
+
+void test_heartbeat_json() {
+  char out[200];
+  JsonDocument doc;
+  // Nama WiFi dengan tanda kutip dan garis miring tetap jadi JSON yang sah; uptime 64-bit tidak terpotong.
+  TEST_ASSERT_TRUE(heartbeatJson(5000000000ULL, 2, "Rumah \"Pak\" \\ Budi", -58, out, sizeof out) > 0);
+  TEST_ASSERT_FALSE(deserializeJson(doc, out));
+  TEST_ASSERT_TRUE(doc["uptime_s"].as<uint64_t>() == 5000000000ULL);
+  TEST_ASSERT_EQUAL(2, doc["nodes_heard"].as<int>());
+  TEST_ASSERT_EQUAL_STRING("Rumah \"Pak\" \\ Budi", doc["wifi_ssid"].as<const char*>());
+  TEST_ASSERT_EQUAL(-58, doc["wifi_rssi"].as<int>());
+  // Sinyal di luar rentang server dijepit.
+  heartbeatJson(10, 0, "A", -200, out, sizeof out);
+  deserializeJson(doc, out);
+  TEST_ASSERT_EQUAL(-120, doc["wifi_rssi"].as<int>());
+  heartbeatJson(10, 0, "A", 5, out, sizeof out);
+  deserializeJson(doc, out);
+  TEST_ASSERT_EQUAL(0, doc["wifi_rssi"].as<int>());
+  // Tanpa nama WiFi: field WiFi tidak dikirim.
+  heartbeatJson(10, 0, "", -40, out, sizeof out);
+  deserializeJson(doc, out);
+  TEST_ASSERT_TRUE(doc["wifi_ssid"].isNull());
+  TEST_ASSERT_TRUE(doc["wifi_rssi"].isNull());
+  // Buffer kurang.
+  TEST_ASSERT_EQUAL(0, heartbeatJson(10, 0, "Rumah", -50, out, 10));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_reading_packet_round_trip);
@@ -330,5 +394,8 @@ int main() {
   RUN_TEST(test_parse_gateway_command);
   RUN_TEST(test_wifi_recovery);
   RUN_TEST(test_wifi_needs_restore);
+  RUN_TEST(test_status_led_patterns);
+  RUN_TEST(test_runtime_status_led);
+  RUN_TEST(test_heartbeat_json);
   return UNITY_END();
 }

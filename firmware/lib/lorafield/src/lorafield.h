@@ -45,6 +45,11 @@ bool macFromDeviceId(const char* id, uint8_t mac[6]);
 
 // Pesan MQTT sesuai kontrak. Kembalikan panjang JSON, 0 kalau buffer kurang.
 size_t readingJson(const Reading& reading, int rssi, char* out, size_t len);
+// Isi heartbeat: uptime, node terdengar, dan WiFi yang dipakai gateway (nama dan kekuatan sinyal dBm,
+// dijepit -120 sampai 0). Nama WiFi kosong: kedua field WiFi tidak dikirim. Nama di-escape ArduinoJson,
+// jadi boleh berisi tanda kutip. Kembalikan panjang JSON, 0 kalau buffer kurang.
+size_t heartbeatJson(uint64_t uptime_s, int nodes_heard, const char* wifi_ssid, int wifi_rssi, char* out,
+                     size_t len);
 // Isi valve/set. Isi kosong = tutup. false kalau rusak (perintah diabaikan).
 bool parseValveCommand(const uint8_t* payload, size_t len, bool& open, uint32_t& until);
 // "lorafield/gw/{gw}/node/{node}/valve/set" -> {node}.
@@ -95,6 +100,20 @@ std::vector<ScannedNetwork> rankNetworks(const std::vector<ScannedNetwork>& scan
 // password salah lalu portal ditinggal = WiFi lama hilang). Saat portal ditutup tanpa tersambung, WiFi
 // tersimpan sebelum portal dipasang lagi kalau berbeda. Alat tanpa WiFi lama: tidak ada yang dipulihkan.
 bool wifiNeedsRestore(const char* before_ssid, const char* before_pass, const char* now_ssid, const char* now_pass);
+
+// Lampu status gateway (LED hijau bawaan, docs/rencana-produk.md F3). Bentuk kedip berbeda tiap keadaan
+// supaya mudah dibedakan orang awam:
+//   Connected          menyala terus
+//   ServerUnreachable  kedip ganda lalu jeda, tiap 2 detik (WiFi tersambung, server belum)
+//   WifiDown           kedip lambat: 1 detik nyala, 1 detik mati
+//   Portal             kedip cepat, 4 kali per detik
+//   Setup              kedip singkat tiap 2 detik (mode pengaturan, alat belum diisi pabrik)
+enum class StatusLed { Connected, ServerUnreachable, WifiDown, Portal, Setup };
+// Nyala atau mati pada waktu now_ms. Dipanggil pewaktu berkala, terpisah dari loop().
+bool statusLedOn(StatusLed state, uint32_t now_ms);
+// Keadaan lampu saat gateway berjalan. WiFi dicek dulu: sambungan MQTT bisa masih terbaca tersambung
+// beberapa saat setelah WiFi putus.
+StatusLed runtimeStatusLed(bool wifi_connected, bool mqtt_connected);
 
 // Perintah server ke gateway, topik lorafield/gw/{gw}/cmd (docs/kontrak-mqtt.md).
 enum class GatewayCommand { Unknown, WifiPortal };

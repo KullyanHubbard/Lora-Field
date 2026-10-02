@@ -129,6 +129,9 @@ export interface FarmGateway {
   first_seen_at: string;
   last_seen_at: string | null;
   claimed_at: string | null;
+  // WiFi yang dipakai gateway menurut heartbeat terakhir (null kalau firmware belum melaporkannya).
+  wifi_ssid?: string | null;
+  wifi_rssi?: number | null;
 }
 
 export interface WeatherForecastPoint {

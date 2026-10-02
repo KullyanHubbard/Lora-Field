@@ -7,13 +7,8 @@ import { ACCENT_BG } from '@/lib/toneClasses';
 const GATEWAY_LOGS_PER_PAGE = 10;
 export const GATEWAY_LOGS_FETCH_LIMIT = 20;
 
-export const GATEWAY_EVENT_FILTERS = [
-  'all',
-  'connected',
-  'disconnected',
-  'heartbeat',
-  'data_sync',
-] as const;
+// Heartbeat tidak dicatat lagi sejak 2026-10-02 (entri lama tetap tampil di Semua), jadi tidak punya filter.
+export const GATEWAY_EVENT_FILTERS = ['all', 'connected', 'disconnected', 'restarted'] as const;
 
 export type GatewayEventFilter = (typeof GATEWAY_EVENT_FILTERS)[number];
 
@@ -23,7 +18,7 @@ const GATEWAY_EVENT_LABEL_KEYS: Record<string, string> = {
   connected: 'gateway.filterConnected',
   disconnected: 'gateway.filterDisconnected',
   heartbeat: 'gateway.filterHeartbeat',
-  data_sync: 'gateway.filterDataSync',
+  restarted: 'gateway.filterRestarted',
   wifi_portal: 'gateway.eventWifiPortal',
 };
 
@@ -32,8 +27,8 @@ export type GatewayInfoViewModel = {
   displayName: string | null;
   statusLabelKey: string;
   statusTone: StatusTone;
-  signalValueKey: string;
-  internetValueKey: string;
+  wifiSsid: string | null;
+  wifiRssi: number | null;
   lastSeen: string | null;
   isOnline: boolean;
   // Hotspot portal WiFi gateway: "LoraField-" + 4 karakter terakhir ID (sama dengan firmware dan stiker).
@@ -52,12 +47,19 @@ export function buildGatewayInfo(
     displayName: gateway?.display_name ?? null,
     statusLabelKey: status.labelKey,
     statusTone: status.tone,
-    signalValueKey: 'gateway.signalNone',
-    internetValueKey: 'gateway.internetNotMonitored',
+    wifiSsid: gateway?.wifi_ssid ?? null,
+    wifiRssi: gateway?.wifi_rssi ?? null,
     lastSeen: gateway?.last_seen_at ?? null,
     isOnline: !!gateway && gatewayStatus === 'online',
     portalSsid: gateway ? `LoraField-${gateway.device_id.slice(-4)}` : null,
   };
+}
+
+// Mutu sinyal WiFi gateway ke router (dBm, makin mendekati 0 makin kuat).
+export function getWifiSignalLabelKey(rssi: number): string {
+  if (rssi >= -60) return 'gateway.signalStrong';
+  if (rssi >= -70) return 'gateway.signalMedium';
+  return 'gateway.signalWeak';
 }
 
 export function buildGatewayEventCounts(logs: GatewayLog[]) {
@@ -106,7 +108,7 @@ export function parseHeartbeatNodeCount(log: GatewayLog) {
 }
 
 export function getGatewayEventTone(event: string) {
-  if (event === 'connected' || event === 'heartbeat' || event === 'data_sync') return 'green';
+  if (event === 'connected' || event === 'heartbeat') return 'green';
   if (event === 'disconnected') return 'red';
   return 'neutral';
 }
@@ -116,7 +118,7 @@ export function getGatewayEventDotClass(event: string) {
     connected: ACCENT_BG.emerald,
     disconnected: ACCENT_BG.red,
     heartbeat: ACCENT_BG.blue,
-    data_sync: ACCENT_BG.violet,
+    restarted: ACCENT_BG.amber,
     wifi_portal: ACCENT_BG.amber,
   };
 

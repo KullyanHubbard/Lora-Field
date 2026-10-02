@@ -12,7 +12,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { LimitedIrrigationDateDialog } from '@/features/irrigation/components/LimitedIrrigationDateDialog';
 import { LimitedIrrigationHelp } from '@/features/irrigation/components/LimitedIrrigationHelp';
 import {
@@ -34,56 +33,9 @@ export function LimitedIrrigationCard({ farm }: { farm: Farm }) {
   const isManual = farm.irrigation_mode === 'manual';
   const close = () => setDialog(null);
 
-  let content;
-  if (farm.limited_until) {
-    content = (
-      <>
-        <span className="font-medium">
-          {t('limitedIrrigation.activeUntil', {
-            date: formatLimitedUntil(farm.limited_until, i18n.language),
-          })}
-        </span>
-        {farm.limited_reason && (
-          <span className="text-muted-foreground">
-            {t(`limitedIrrigation.reason.${farm.limited_reason}`)}
-          </span>
-        )}
-        {isManual && (
-          <span className="text-muted-foreground">{t('limitedIrrigation.manualNote')}</span>
-        )}
-        <div className="flex gap-2 sm:ml-auto">
-          <Button variant="outline" size="sm" onClick={() => setDialog('edit')}>
-            {t('limitedIrrigation.editDate')}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setDialog('stop')}>
-            {t('limitedIrrigation.stop')}
-          </Button>
-        </div>
-      </>
-    );
-  } else if (isRiceCrop(farm.crop_type)) {
-    content = <span className="text-muted-foreground">{t('limitedIrrigation.riceNote')}</span>;
-  } else {
-    content = (
-      <>
-        <span className="text-muted-foreground">
-          {isManual ? t('limitedIrrigation.autoOnly') : t('limitedIrrigation.inactiveDesc')}
-        </span>
-        <Button
-          size="sm"
-          className="sm:ml-auto"
-          disabled={isManual}
-          onClick={() => setDialog('start')}
-        >
-          {t('limitedIrrigation.start')}
-        </Button>
-      </>
-    );
-  }
-
   return (
-    <Card size="sm">
-      <CardContent className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+    <div className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-3 text-sm">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
         <div className="flex items-center gap-1.5">
           <CalendarClock className={cn('size-4 shrink-0', ACCENT_TEXT.sky)} />
           <span className="font-semibold">{t('limitedIrrigation.title')}</span>
@@ -96,8 +48,45 @@ export function LimitedIrrigationCard({ farm }: { farm: Farm }) {
             <CircleHelp className="size-4 text-muted-foreground" />
           </Button>
         </div>
-        {content}
-      </CardContent>
+        {farm.limited_until ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">
+              {t('limitedIrrigation.activeUntil', {
+                date: formatLimitedUntil(farm.limited_until, i18n.language),
+              })}
+            </span>
+            {farm.limited_reason && (
+              <span className="text-muted-foreground">
+                {t(`limitedIrrigation.reason.${farm.limited_reason}`)}
+              </span>
+            )}
+            {isManual && (
+              <span className="text-muted-foreground">{t('limitedIrrigation.manualNote')}</span>
+            )}
+          </div>
+        ) : isRiceCrop(farm.crop_type) ? (
+          <span className="text-muted-foreground">{t('limitedIrrigation.riceNote')}</span>
+        ) : isManual ? (
+          <span className="text-muted-foreground">{t('limitedIrrigation.autoOnly')}</span>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {farm.limited_until ? (
+          <>
+            <Button variant="outline" size="sm" onClick={() => setDialog('edit')}>
+              {t('limitedIrrigation.editDate')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setDialog('stop')}>
+              {t('limitedIrrigation.stop')}
+            </Button>
+          </>
+        ) : !isRiceCrop(farm.crop_type) ? (
+          <Button size="sm" disabled={isManual} onClick={() => setDialog('start')}>
+            {t('limitedIrrigation.start')}
+          </Button>
+        ) : null}
+      </div>
 
       {dialog === 'help' && (
         <AlertDialog open onOpenChange={(open) => !open && close()}>
@@ -150,6 +139,6 @@ export function LimitedIrrigationCard({ farm }: { farm: Farm }) {
           </AlertDialogContent>
         </AlertDialog>
       )}
-    </Card>
+    </div>
   );
 }

@@ -28,7 +28,7 @@ export function IrrigationNodeGridCard({
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 px-4 pt-0 pb-2 sm:px-5 sm:pt-0 sm:pb-2">
         {nodes.length === 0 ? (
-          <div className="flex min-h-[120px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+          <div className="flex flex-1 w-full min-h-[120px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 p-4 text-center text-sm text-muted-foreground">
             {t('irrigation.perNodeEmpty')}
           </div>
         ) : (

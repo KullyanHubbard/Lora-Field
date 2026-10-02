@@ -108,6 +108,7 @@ void setup() {
     delay(2000);
   }
   LoRa.setSpreadingFactor(LORA_SPREADING_FACTOR);
+  LoRa.setTxPower(LORA_TX_POWER_DBM);  // batas daya pancar Indonesia, lihat config.h
   LoRa.setSyncWord(LORA_SYNC_WORD);
   LoRa.enableCrc();
 }

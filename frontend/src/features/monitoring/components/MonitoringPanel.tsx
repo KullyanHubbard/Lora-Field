@@ -108,22 +108,32 @@ export function MonitoringPanel({
         <CardTitle className="text-sm">{t('monitoring.selectNode')}</CardTitle>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-        <MonitoringNodeSelect
-          nodes={nodes}
-          effectiveNodeId={effectiveNodeId}
-          onSelectNode={onSelectNode}
-        />
-
-        {readingsError ? (
-          <p className="text-destructive">
-            {t('monitoring.errorLoadReadings', { message: readingsError.message })}
-          </p>
-        ) : readingsLoading && readings.length === 0 ? (
-          <MonitoringChartLoadingState />
-        ) : readings.length === 0 ? (
-          <p className="text-muted-foreground">{t('monitoring.emptyReadings')}</p>
+        {nodes.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center text-center">
+            <p className="text-sm text-muted-foreground">{t('monitoring.noNodes')}</p>
+          </div>
         ) : (
-          <MonitoringChartGrid readings={readings} thresholds={thresholds} />
+          <>
+            <MonitoringNodeSelect
+              nodes={nodes}
+              effectiveNodeId={effectiveNodeId}
+              onSelectNode={onSelectNode}
+            />
+
+            {readingsError ? (
+              <p className="text-destructive">
+                {t('monitoring.errorLoadReadings', { message: readingsError.message })}
+              </p>
+            ) : readingsLoading && readings.length === 0 ? (
+              <MonitoringChartLoadingState />
+            ) : readings.length === 0 ? (
+              <div className="flex flex-1 items-center justify-center text-center">
+                <p className="text-sm text-muted-foreground">{t('monitoring.emptyReadings')}</p>
+              </div>
+            ) : (
+              <MonitoringChartGrid readings={readings} thresholds={thresholds} />
+            )}
+          </>
         )}
       </CardContent>
     </Card>

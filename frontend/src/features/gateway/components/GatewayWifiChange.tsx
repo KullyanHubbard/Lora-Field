@@ -6,7 +6,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -33,16 +32,16 @@ export function GatewayWifiChange({ farmId, portalSsid }: { farmId: string; port
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t('gateway.changeWifiTitle')}</AlertDialogTitle>
-              <AlertDialogDescription>{t('gateway.changeWifiDesc')}</AlertDialogDescription>
             </AlertDialogHeader>
             <ol className="list-decimal space-y-1.5 pl-5 text-sm text-foreground">
               <li>{t('gateway.changeWifiStep1', { ssid: portalSsid })}</li>
               <li>{t('gateway.changeWifiStep2')}</li>
               <li>{t('gateway.changeWifiStep3')}</li>
             </ol>
-            <p className="text-sm text-muted-foreground">{t('gateway.changeWifiFallback')}</p>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={request.isPending}>{t('gateway.cancel')}</AlertDialogCancel>
+              <AlertDialogCancel disabled={request.isPending}>
+                {t('gateway.cancel')}
+              </AlertDialogCancel>
               <AlertDialogAction
                 disabled={request.isPending}
                 onClick={(event) => {

@@ -14,6 +14,8 @@
 #include <WiFiManager.h>
 #include <esp_mac.h>
 #include <esp_system.h>
+#include <esp_task_wdt.h>
+#include <esp_timer.h>
 #include <esp_wifi.h>
 #include <lorafield.h>
 #include <soc/rtc_cntl_reg.h>
@@ -74,6 +76,8 @@ enum class PortalLink { Idle, Connecting, Connected };
 PortalLink portal_link = PortalLink::Idle;
 // Alasan WiFi terakhir putus atau gagal tersambung (kode driver ESP32), untuk pesan Serial.
 volatile uint8_t wifi_disconnect_reason = 0;
+// Keadaan lampu status. Diubah setup() dan loop(), dibaca pewaktu lampu (startStatusLed).
+volatile StatusLed status_led = StatusLed::WifiDown;
 WifiRecovery wifi_recovery(WIFI_RECONNECT_WINDOW_MS, WIFI_RECONNECT_EVERY_MS, WIFI_REST_MS);
 
 void topicFor(char* out, size_t len, const char* suffix) {
@@ -350,6 +354,7 @@ bool configRequested() {
 // Hanya melayani perintah Serial sampai "restart". Alat baru dari pabrik selalu masuk sini, jadi gateway
 // tidak pernah membuka hotspot tanpa password.
 [[noreturn]] void provisioningMode() {
+  status_led = StatusLed::Setup;
   Serial.println(
       "MODE PENGATURAN. Perintah: show | set mqtt_host <alamat> | set mqtt_port <port> | "
       "set mqtt_pass <password> | set ap_pass <password hotspot, 8-63 karakter> | portal | forget wifi | restart");
@@ -494,6 +499,7 @@ void connectWifi(bool open_portal) {
     }
   });
   wm.setAPCallback([](WiFiManager*) {
+    status_led = StatusLed::Portal;
     Serial.printf("Portal WiFi dibuka: sambungkan HP ke hotspot %s (password di stiker), lalu pilih WiFi.\n",
                   portal_ssid);
   });
@@ -521,10 +527,13 @@ void connectWifi(bool open_portal) {
     if (!connected) restoreWifi(before);
   }
   if (!connected) Serial.println("Menyambung WiFi...");
+  status_led = StatusLed::WifiDown;
   while (!connected && !wm.autoConnect(portal_ssid, settings.ap_pass)) {
+    status_led = StatusLed::WifiDown;  // portal tutup, WiFi tersimpan dicoba lagi
     restoreWifi(before);
     Serial.println("Portal ditutup tanpa WiFi baru, mencoba WiFi tersimpan lagi");
   }
+  status_led = StatusLed::ServerUnreachable;  // WiFi tersambung, MQTT belum
   Serial.printf("WiFi tersambung: %s, IP %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
   setBrownoutDetector(true);
   // Perintah Serial yang masuk selama portal berjalan tidak dilayani saat itu. Dibuang di sini supaya
@@ -532,6 +541,8 @@ void connectWifi(bool open_portal) {
   while (Serial.available() > 0) Serial.read();
   serial_pos = 0;
 }
+
+void heartbeat();
 
 bool connectMqtt() {
   char status_topic[64], valve_topic[64], online[64];
@@ -545,7 +556,10 @@ bool connectMqtt() {
   }
   snprintf(online, sizeof online, "{\"state\":\"online\",\"fw\":\"%s\"}", FIRMWARE_VERSION);
   mqtt.publish(status_topic, online, true);
-  publishNodes();
+  // Heartbeat (beserta daftar node) langsung saat tersambung: server mendeteksi gateway yang baru menyala
+  // ulang dari uptime-nya dalam hitungan detik, bukan menunggu heartbeat berkala berikutnya.
+  heartbeat();
+  last_heartbeat_ms = millis();
   mqtt.subscribe(valve_topic, 1);
   char cmd_topic[64];
   topicFor(cmd_topic, sizeof cmd_topic, "cmd");
@@ -560,8 +574,10 @@ void heartbeat() {
     heard += nodes[i].heard ? 1 : 0;
     nodes[i].heard = false;
   }
-  char body[64], topic[64];
-  snprintf(body, sizeof body, "{\"uptime_s\":%lu,\"nodes_heard\":%d}", millis() / 1000, heard);
+  char body[192], topic[64];
+  // esp_timer 64-bit: tidak kembali ke 0 setelah 49 hari seperti millis(), yang di server terbaca restart.
+  // Nama dan sinyal WiFi tampil di kartu Gateway web (password WiFi tidak pernah dikirim).
+  heartbeatJson(esp_timer_get_time() / 1000000, heard, WiFi.SSID().c_str(), WiFi.RSSI(), body, sizeof body);
   topicFor(topic, sizeof topic, "heartbeat");
   mqtt.publish(topic, body);
   // Daftar node ikut tiap heartbeat, untuk kebun yang didaftarkan setelah gateway menyala.
@@ -570,9 +586,22 @@ void heartbeat() {
 
 }  // namespace
 
+// Lampu status dihitung ulang berkala oleh pewaktu esp_timer (tugas tersendiri), bukan oleh loop(): lampu
+// tetap berkedip saat setup() menunggu portal WiFi atau sambungan WiFi.
+void startStatusLed() {
+  pinMode(GATEWAY_LED_PIN, OUTPUT);
+  esp_timer_create_args_t args = {};
+  args.callback = [](void*) { digitalWrite(GATEWAY_LED_PIN, statusLedOn(status_led, millis()) ? HIGH : LOW); };
+  args.name = "status_led";
+  esp_timer_handle_t timer;
+  esp_timer_create(&args, &timer);
+  esp_timer_start_periodic(timer, STATUS_LED_TICK_MS * 1000ULL);
+}
+
 void setup() {
   brownout_config = READ_PERI_REG(RTC_CNTL_BROWN_OUT_REG);
   Serial.begin(115200);
+  startStatusLed();
   uint8_t mac[6];
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
   deviceId("GW", mac, gateway_id, sizeof gateway_id);
@@ -580,9 +609,16 @@ void setup() {
   // Baris ini dibaca tools/provision.py, jangan ubah formatnya.
   Serial.printf("\nLoraField gateway %s, firmware %s\n", gateway_id, FIRMWARE_VERSION);
   Serial.println("Daftarkan kebun di web memakai ID gateway ini.");
+  setCpuFrequencyMhz(GATEWAY_CPU_MHZ);
+  Serial.printf("CPU %u MHz\n", getCpuFrequencyMhz());
 
-  if (esp_reset_reason() == ESP_RST_BROWNOUT) {
+  esp_reset_reason_t reset_reason = esp_reset_reason();
+  if (reset_reason == ESP_RST_BROWNOUT) {
     Serial.println("Restart sebelumnya karena tegangan turun (brownout). Cek adaptor dan kabel, atau pasang baterai.");
+  } else if (reset_reason == ESP_RST_TASK_WDT || reset_reason == ESP_RST_INT_WDT || reset_reason == ESP_RST_WDT) {
+    Serial.println("Restart sebelumnya karena gateway macet (watchdog).");
+  } else if (reset_reason == ESP_RST_PANIC) {
+    Serial.println("Restart sebelumnya karena program error (crash).");
   }
   loadSettings();
   bool open_portal = portalRequested();
@@ -598,6 +634,7 @@ void setup() {
     delay(2000);
   }
   LoRa.setSpreadingFactor(LORA_SPREADING_FACTOR);
+  LoRa.setTxPower(LORA_TX_POWER_DBM);  // batas daya pancar Indonesia, lihat config.h
   LoRa.setSyncWord(LORA_SYNC_WORD);
   LoRa.enableCrc();
 
@@ -614,6 +651,10 @@ void setup() {
   mqtt.setBufferSize(1024);
   mqtt.setKeepAlive(60);
   mqtt.setCallback(onMqttMessage);
+  // Mulai di sini, setelah portal WiFi: watchdog bawaan ESP32 mengawasi loop(), yang memberi tanda hidup
+  // tiap putaran (enableLoopWDT, inti Arduino ESP32). panic = true: macet berarti restart.
+  esp_task_wdt_init(GATEWAY_WATCHDOG_S, true);
+  enableLoopWDT();
 }
 
 // Radio WiFi dimatikan, dinyalakan dari nol, lalu menyambung ke WiFi tersimpan.
@@ -635,7 +676,8 @@ void handleWifiRecovery(unsigned long now) {
       // Driver WiFi berhenti mencoba sendiri untuk sebagian penyebab putus, jadi sambung ulang dipaksa
       // berkala. Uji alat 2026-10-02: setelah router restart, WiFi.reconnect() gagal terus selama 10 menit,
       // sedangkan radio yang dinyalakan dari nol (akhir masa istirahat) tersambung dalam 5 detik.
-      Serial.printf("WiFi belum tersambung (alasan: %s), radio WiFi dinyalakan ulang\n",
+      // Kode alasan ikut dicetak: sebagian kode tidak punya nama di inti Arduino ESP32.
+      Serial.printf("WiFi belum tersambung (alasan: %u %s), radio WiFi dinyalakan ulang\n", wifi_disconnect_reason,
                     WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(wifi_disconnect_reason)));
       restartWifiRadio();
       break;
@@ -659,6 +701,7 @@ void loop() {
   unsigned long now = millis();
   pollSerial();
   handleWifiRecovery(now);
+  status_led = runtimeStatusLed(WiFi.status() == WL_CONNECTED, mqtt.connected());
 
   // Jam NTP wajib sebelum MQTT: perintah valve memakai jam tutup mutlak (epoch UTC). Ditunggu tanpa
   // menghentikan loop, supaya Serial dan tombol tetap dilayani.

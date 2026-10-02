@@ -62,7 +62,7 @@ export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; cla
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-center">
         {!selectedNs ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
+          <p className="w-full py-4 text-center text-sm text-muted-foreground">
             {t('dashboard.nodeSensor.empty')}
           </p>
         ) : (

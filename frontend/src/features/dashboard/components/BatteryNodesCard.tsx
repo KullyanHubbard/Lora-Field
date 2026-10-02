@@ -118,9 +118,9 @@ export function BatteryNodesCard({
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-1 flex-col justify-center">
         {nodes.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
+          <p className="w-full py-4 text-center text-sm text-muted-foreground">
             {t('dashboard.gaugeBatteryEmpty')}
           </p>
         ) : (

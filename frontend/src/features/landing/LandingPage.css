@@ -5,3 +5,8 @@
 .dark .landing-page {
   --grid-line: oklch(1 0 0 / 24%);
 }
+
+/* Rasio mengikuti dimensi aset Hero-Preview1.png. */
+.landing-preview {
+  aspect-ratio: 1919 / 946;
+}

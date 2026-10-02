@@ -18,6 +18,7 @@ from pydantic import ValidationError
 from .bmkg import get_weather_for_decision
 from .config import settings
 from .database import get_connection, row_to_dict
+from .gateway_service import last_link_event
 from .irrigation import manual_decision
 from .node_service import _parse_db_time, default_node_name, insert_node
 from .reading_service import apply_reading
@@ -26,6 +27,11 @@ from .schemas import DEVICE_ID_PATTERN, MqttNodeList, MqttReadingIn
 logger = logging.getLogger("lorafield.mqtt")
 
 TOPIC_ROOT = "lorafield/gw"
+# Jam menyala gateway dari dua heartbeat boleh berselisih sebanyak ini (jeda jaringan, heartbeat tertahan di WiFi
+# buruk, jam server disetel ulang) tanpa dianggap restart. Uji alat 2026-10-02: 2 menit melewatkan restart 78 detik
+# setelah menyala sebelumnya (keputusan user: 1 menit).
+RESTART_TOLERANCE = timedelta(minutes=1)
+MAX_UPTIME_S = 10 * 365 * 86400  # uptime di atas ini dianggap rusak dan diabaikan
 _DEVICE_ID = re.compile(DEVICE_ID_PATTERN)
 
 _client: mqtt.Client | None = None
@@ -125,10 +131,10 @@ def _touch_gateway(connection, gateway_id: str) -> None:
     )
 
 
-def _gateway_log(connection, farm_id: str, event: str, detail: str) -> None:
+def _gateway_log(connection, farm_id: str, event: str, detail: str, created_at: str | None = None) -> None:
     connection.execute(
-        "INSERT INTO gateway_logs (farm_id, event, detail) VALUES (?, ?, ?)",
-        (farm_id, event, detail[:300]),
+        "INSERT INTO gateway_logs (farm_id, event, detail, created_at) VALUES (?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))",
+        (farm_id, event, detail[:300], created_at),
     )
 
 
@@ -137,21 +143,24 @@ def _handle_status(gateway_id: str, data: dict, retained: bool) -> None:
     if state not in ("online", "offline"):
         logger.warning("Status gateway %s tidak dikenal: %r", gateway_id, state)
         return
-    # Status retain dikirim ulang broker tiap backend menyambung: bukan kejadian baru, jadi tidak dicatat
-    # di log. Retain "online" tetap dihitung sebagai kabar, karena broker menggantinya dengan Last Will
-    # saat gateway putus; gateway yang tersambung selagi backend putus langsung online lagi.
-    if retained and state == "offline":
-        return
+    event = "connected" if state == "online" else "disconnected"
     with get_connection() as connection:
         farm = _claimed_farm(connection, gateway_id)
         if farm is None:
             return
+        # Retain "online" dihitung sebagai kabar, karena broker menggantinya dengan Last Will saat gateway putus.
         if state == "online":
             _touch_gateway(connection, gateway_id)
-        if retained:
-            return
         detail = f"firmware {data['fw']}" if data.get("fw") else ""
-        _gateway_log(connection, farm["id"], "connected" if state == "online" else "disconnected", detail)
+        if retained:
+            # Status retain dikirim ulang broker tiap backend menyambung. Sama dengan laporan koneksi terakhir
+            # di log: bukan kejadian baru. Berbeda: gateway tersambung atau putus selagi backend putus dari
+            # broker (uji alat 2026-10-02: Mosquitto restart, gateway tersambung 9 detik lebih dulu), jadi
+            # dicatat supaya Riwayat Koneksi cocok dengan status gateway.
+            last = last_link_event(connection, farm["id"])
+            if last is not None and last["event"] == event:
+                return
+        _gateway_log(connection, farm["id"], event, detail)
 
 
 def _handle_heartbeat(gateway_id: str, data: dict) -> None:
@@ -159,9 +168,45 @@ def _handle_heartbeat(gateway_id: str, data: dict) -> None:
         farm = _claimed_farm(connection, gateway_id)
         if farm is None:
             return
+        # Heartbeat hanya kabar (status online, kotak Terakhir di web), tidak dicatat di Log Gateway supaya
+        # kejadian penting tidak tenggelam. Yang dicatat: gateway sempat restart.
         _touch_gateway(connection, gateway_id)
-        detail = f"{data.get('nodes_heard', '?')} node terdengar, uptime {data.get('uptime_s', '?')} detik"
-        _gateway_log(connection, farm["id"], "heartbeat", detail)
+        _detect_restart(connection, gateway_id, farm["id"], data.get("uptime_s"))
+        _store_wifi(connection, gateway_id, data)
+
+
+def _store_wifi(connection, gateway_id: str, data: dict) -> None:
+    """Simpan nama dan sinyal WiFi gateway dari heartbeat (field opsional, untuk kartu Gateway di web).
+
+    Nilai yang tidak sah diabaikan, nilai lama tetap. Nama WiFi maksimal 32 byte (batas SSID) tanpa karakter kontrol.
+    """
+    ssid, rssi = data.get("wifi_ssid"), data.get("wifi_rssi")
+    if ssid is not None:
+        if isinstance(ssid, str) and 0 < len(ssid.encode("utf-8")) <= 32 and ssid.isprintable():
+            connection.execute("UPDATE gateways SET wifi_ssid = ? WHERE device_id = ?", (ssid, gateway_id))
+        else:
+            logger.warning("Nama WiFi dari %s tidak sah, diabaikan: %r", gateway_id, ssid)
+    if rssi is not None:
+        if isinstance(rssi, int) and not isinstance(rssi, bool) and -120 <= rssi <= 0:
+            connection.execute("UPDATE gateways SET wifi_rssi = ? WHERE device_id = ?", (rssi, gateway_id))
+        else:
+            logger.warning("Sinyal WiFi dari %s tidak sah, diabaikan: %r", gateway_id, rssi)
+
+
+def _detect_restart(connection, gateway_id: str, farm_id: str, uptime_s) -> None:
+    """Catat `restarted` kalau jam menyala gateway (waktu terima dikurangi uptime) maju dari catatan sebelumnya.
+
+    Dicatat pada perkiraan jam menyala, supaya urutannya di Log Gateway benar walau heartbeat datang belakangan.
+    Heartbeat pertama gateway hanya menyimpan jam menyala.
+    """
+    if isinstance(uptime_s, bool) or not isinstance(uptime_s, (int, float)) or not 0 <= uptime_s <= MAX_UPTIME_S:
+        return
+    booted = (datetime.now(timezone.utc) - timedelta(seconds=uptime_s)).strftime("%Y-%m-%d %H:%M:%S")
+    row = connection.execute("SELECT booted_at FROM gateways WHERE device_id = ?", (gateway_id,)).fetchone()
+    previous = _parse_db_time(row["booted_at"]) if row else None
+    connection.execute("UPDATE gateways SET booted_at = ? WHERE device_id = ?", (booted, gateway_id))
+    if previous is not None and _parse_db_time(booted) - previous > RESTART_TOLERANCE:
+        _gateway_log(connection, farm_id, "restarted", "", created_at=booted)
 
 
 def _handle_nodes(gateway_id: str, data: dict) -> None:

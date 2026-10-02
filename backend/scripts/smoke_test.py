@@ -1227,6 +1227,48 @@ def run(report: Report, with_network: bool) -> None:
             gateway_seen.get("gateway_status") == "online",
             f"gateway={gateway_seen.get('gateway_status')}",
         )
+        # Batas gateway terpisah dari batas node (temuan 2026-10-02): gateway tanpa node hanya mengirim
+        # heartbeat tiap 10 menit, jadi batas node yang pendek tidak boleh membuatnya offline bergantian.
+        batas_node_asli = settings.node_offline_after_minutes
+        settings.node_offline_after_minutes = 5
+        try:
+            def summary_setelah_diam(tabel: str, menit: int) -> dict:
+                with database.get_connection() as connection:
+                    connection.execute(
+                        f"UPDATE {tabel} SET last_seen_at = datetime('now', ?) WHERE farm_id = ?",
+                        (f"-{menit} minutes", farm_id),
+                    )
+                return client.get(f"/api/farms/{farm_id}/summary", headers=auth).json()
+
+            jeda_heartbeat = summary_setelah_diam("gateways", 8)
+            report.check(
+                "gateway diam 8 menit (di antara heartbeat 10 menit) tetap online walau batas node 5 menit",
+                jeda_heartbeat.get("gateway_status") == "online",
+                f"gateway={jeda_heartbeat.get('gateway_status')}",
+            )
+            gateway_hilang = summary_setelah_diam("gateways", 16)
+            report.check(
+                "gateway diam 16 menit (lewat batas gateway 15 menit) -> offline",
+                gateway_hilang.get("gateway_status") == "offline",
+                f"gateway={gateway_hilang.get('gateway_status')}",
+            )
+            node_diam = summary_setelah_diam("nodes", 8)
+            report.check(
+                "node diam 8 menit dengan batas node 5 menit tetap offline (batas node tidak berubah)",
+                node_diam.get("nodes_online") == 0 and node_diam.get("nodes_problem") == 3,
+                f"online={node_diam.get('nodes_online')} problem={node_diam.get('nodes_problem')}",
+            )
+        finally:
+            settings.node_offline_after_minutes = batas_node_asli
+            with database.get_connection() as connection:
+                connection.execute(
+                    "UPDATE nodes SET last_seen_at = datetime('now', '-1 day') WHERE farm_id = ?",
+                    (farm_id,),
+                )
+                connection.execute(
+                    "UPDATE gateways SET last_seen_at = CURRENT_TIMESTAMP WHERE farm_id = ?",
+                    (farm_id,),
+                )
         weather = report.expect(
             "GET /api/farms/{id}/weather",
             client.get(f"/api/farms/{farm_id}/weather", headers=auth),
@@ -2754,9 +2796,11 @@ def run(report: Report, with_network: bool) -> None:
                 item["event"]
                 for item in client.get(f"/api/farms/{farm_mqtt}/gateway-logs", headers=auth).json()["items"]
             ]
+            # Riwayat masih kosong: status retain pertama tetap dicatat (belum ada laporan koneksi pembanding).
+            # Heartbeat hanya kabar, tidak dicatat.
             report.check(
-                "MQTT: status (tanpa retain) dan heartbeat tercatat di log gateway",
-                sorted(events) == ["connected", "heartbeat"],
+                "MQTT: status (retain pertama dan tanpa retain) tercatat di log gateway, heartbeat tidak",
+                sorted(events) == ["connected", "connected"],
                 f"events {events}",
             )
             summary_mqtt = client.get(f"/api/farms/{farm_mqtt}/summary", headers=auth).json()
@@ -2797,16 +2841,128 @@ def run(report: Report, with_network: bool) -> None:
                 status_heartbeat == "online",
                 f"gateway {status_heartbeat}",
             )
-            kabar_terakhir_lalu()
-            kirim("status", {"state": "offline"})
-            jumlah_log = len(client.get(f"/api/farms/{farm_mqtt}/gateway-logs", headers=auth).json()["items"])
+            # Status retain saat server menyambung ulang ke broker: dicatat hanya kalau berbeda dari laporan
+            # koneksi terakhir di log, yaitu kejadian yang terlewat selagi server putus dari broker.
+            def log_terbaru() -> dict:
+                return client.get(f"/api/farms/{farm_mqtt}/gateway-logs?limit=1", headers=auth).json()["items"][0]
+
+            kirim("status", {"state": "online", "fw": "sim-1"})
+            sebelum = log_terbaru()
             kirim("status", {"state": "online", "fw": "sim-1"}, retained=True)
             status_retain = gateway_status_mqtt()
-            jumlah_log_retain = len(client.get(f"/api/farms/{farm_mqtt}/gateway-logs", headers=auth).json()["items"])
             report.check(
-                "MQTT: status online retain saat server menyambung ulang -> online, tanpa entri log baru",
-                status_retain == "online" and jumlah_log_retain == jumlah_log,
-                f"gateway {status_retain}, log {jumlah_log} -> {jumlah_log_retain}",
+                "MQTT: retain online, log terakhir terhubung -> online, tanpa entri log baru",
+                status_retain == "online" and log_terbaru()["id"] == sebelum["id"],
+                f"gateway {status_retain}, log {sebelum['id']} -> {log_terbaru()['id']}",
+            )
+            kabar_terakhir_lalu()
+            kirim("status", {"state": "offline"})
+            kirim("status", {"state": "online", "fw": "sim-1"}, retained=True)
+            terlewat = log_terbaru()
+            status_terlewat = gateway_status_mqtt()
+            report.check(
+                "MQTT: retain online, log terakhir terputus -> dicatat terhubung (tersambung selagi server putus)",
+                status_terlewat == "online"
+                and terlewat["event"] == "connected"
+                and terlewat["detail"] == "firmware sim-1",
+                f"gateway {status_terlewat}, log {terlewat['event']} {terlewat['detail']!r}",
+            )
+            kabar_terakhir_lalu()
+            sebelum = log_terbaru()
+            kirim("status", {"state": "offline"}, retained=True)
+            putus = log_terbaru()
+            status_putus = gateway_status_mqtt()
+            report.check(
+                "MQTT: retain offline, log terakhir terhubung -> dicatat terputus dan langsung offline",
+                status_putus == "offline" and putus["event"] == "disconnected" and putus["id"] != sebelum["id"],
+                f"gateway {status_putus}, log {putus['event']} {putus['detail']!r}",
+            )
+            kirim("status", {"state": "offline"}, retained=True)
+            report.check(
+                "MQTT: retain offline, log terakhir terputus -> tanpa entri log baru",
+                log_terbaru()["id"] == putus["id"],
+                f"log {putus['id']} -> {log_terbaru()['id']}",
+            )
+            kirim("status", {"state": "online", "fw": "sim-1"})  # bagian berikutnya butuh gateway online
+
+            # Deteksi restart dari uptime heartbeat: jam menyala = waktu terima dikurangi uptime.
+            def log_gateway_mqtt() -> list[dict]:
+                return client.get(f"/api/farms/{farm_mqtt}/gateway-logs?limit=100", headers=auth).json()["items"]
+
+            def jumlah_restart() -> int:
+                return sum(item["event"] == "restarted" for item in log_gateway_mqtt())
+
+            kirim("heartbeat", {"uptime_s": 5000, "nodes_heard": 0})
+            awal = jumlah_restart()
+            kirim("heartbeat", {"uptime_s": 4950, "nodes_heard": 0})  # jam menyala maju 50 detik: jeda jaringan
+            report.check(
+                "MQTT: jam menyala bergeser di bawah 1 menit (jeda jaringan) bukan restart",
+                jumlah_restart() == awal,
+                f"restart {awal} -> {jumlah_restart()}",
+            )
+            kirim("heartbeat", {"uptime_s": 30, "nodes_heard": 0})  # gateway baru menyala 30 detik lalu
+            restart = [item for item in log_gateway_mqtt() if item["event"] == "restarted"]
+            umur_restart = (
+                (datetime.now(timezone.utc) - datetime.fromisoformat(restart[0]["created_at"]).replace(tzinfo=timezone.utc))
+                .total_seconds()
+                if restart
+                else None
+            )
+            report.check(
+                "MQTT: uptime mengecil -> tercatat menyala ulang pada perkiraan jam menyala",
+                len(restart) == awal + 1 and umur_restart is not None and 25 <= umur_restart <= 40,
+                f"restart {awal} -> {len(restart)}, umur {umur_restart}",
+            )
+            kirim("heartbeat", {"uptime_s": 30, "nodes_heard": 0})
+            kirim("heartbeat", {"uptime_s": "rusak", "nodes_heard": 0})
+            report.check(
+                "MQTT: heartbeat berikutnya dan uptime rusak tidak mencatat restart lagi",
+                jumlah_restart() == awal + 1,
+                f"restart {jumlah_restart()}",
+            )
+            kirim("heartbeat", {"uptime_s": 200, "nodes_heard": 0})
+            kirim("heartbeat", {"uptime_s": 122, "nodes_heard": 0})  # menyala lagi 78 detik setelah menyala sebelumnya
+            report.check(
+                "MQTT: restart 78 detik setelah menyala sebelumnya tetap tercatat (uji alat 2026-10-02)",
+                jumlah_restart() == awal + 2,
+                f"restart {awal} -> {jumlah_restart()}",
+            )
+            report.check(
+                "MQTT: heartbeat tidak pernah tercatat di log gateway",
+                all(item["event"] != "heartbeat" for item in log_gateway_mqtt()),
+            )
+
+            # Nama dan sinyal WiFi dari heartbeat, untuk kartu Gateway di web.
+            def wifi_gateway_mqtt() -> tuple:
+                gateway = client.get(f"/api/farms/{farm_mqtt}/gateway", headers=auth).json()["gateway"]
+                return gateway.get("wifi_ssid"), gateway.get("wifi_rssi")
+
+            kirim("heartbeat", {"uptime_s": 40, "nodes_heard": 0, "wifi_ssid": 'Rumah "Pak" Budi', "wifi_rssi": -58})
+            wifi_awal = wifi_gateway_mqtt()
+            report.check(
+                "MQTT: heartbeat menyimpan nama dan sinyal WiFi gateway",
+                wifi_awal == ('Rumah "Pak" Budi', -58),
+                f"wifi {wifi_awal}",
+            )
+            for rusak in (
+                {"wifi_ssid": "x" * 33, "wifi_rssi": -121},
+                {"wifi_ssid": "Rumah\nBaru", "wifi_rssi": True},
+                {"wifi_ssid": "", "wifi_rssi": 5},
+                {"wifi_ssid": 123, "wifi_rssi": "-50"},
+            ):
+                kirim("heartbeat", {"uptime_s": 41, "nodes_heard": 0, **rusak})
+            kirim("heartbeat", {"uptime_s": 42, "nodes_heard": 0})  # firmware lama: tanpa field WiFi
+            wifi_tetap = wifi_gateway_mqtt()
+            report.check(
+                "MQTT: nama atau sinyal WiFi tidak sah dan heartbeat tanpa WiFi tidak mengubah data lama",
+                wifi_tetap == wifi_awal,
+                f"wifi {wifi_tetap}",
+            )
+            kirim("heartbeat", {"uptime_s": 43, "nodes_heard": 0, "wifi_ssid": "Kantor", "wifi_rssi": -71})
+            report.check(
+                "MQTT: ganti WiFi -> nama dan sinyal baru tersimpan",
+                wifi_gateway_mqtt() == ("Kantor", -71),
+                f"wifi {wifi_gateway_mqtt()}",
             )
 
             # Tombol "Ganti WiFi" di web: perintah cmd ke gateway.

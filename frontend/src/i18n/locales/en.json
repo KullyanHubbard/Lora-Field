@@ -129,7 +129,7 @@
     "errorLoad": "Failed to load irrigation data: {{message}}",
     "noData": "Data not available.",
     "perNodeTitle": "Per-Node Detail",
-    "perNodeEmpty": "No nodes for this farm yet.",
+    "perNodeEmpty": "Node unavailable",
     "waitingData": "Waiting for data",
     "checkIrrigation": "Check irrigation",
     "resumeAuto": "Resume automatic watering",
@@ -150,7 +150,7 @@
       "delayed": "Delayed",
       "offline": "Offline",
       "initializing": "Initializing",
-      "notConfigured": "Not Configured"
+      "notConfigured": "Awaiting Nodes"
     },
     "gatewayLabel": "Gateway",
     "syncLabel": "Sync",
@@ -172,7 +172,6 @@
   "limitedIrrigation": {
     "title": "Limited Irrigation",
     "helpLabel": "What is Limited Irrigation?",
-    "inactiveDesc": "Temporarily reduce automatic watering, then return to normal on its own.",
     "autoOnly": "Can only be started in Automatic mode.",
     "riceNote": "Rice is better suited to Manual mode, because the sensor measures soil moisture, not standing water depth.",
     "activeUntil": "Limited Irrigation until {{date}}",
@@ -234,7 +233,7 @@
     "errorLoadFarm": "Failed to load farm data: {{message}}",
     "noData": "Data not available.",
     "selectNode": "Select node",
-    "noNodes": "No nodes",
+    "noNodes": "Node unavailable",
     "errorLoadReadings": "Failed to load readings: {{message}}",
     "emptyReadings": "No sensor readings available for this node.",
     "chartSoilMoisture": "Soil Moisture",
@@ -307,7 +306,7 @@
     "viewAllLogs": "View All Logs",
     "nodeSensor": {
       "title": "Sensor Node",
-      "empty": "No nodes registered for this farm yet.",
+      "empty": "Node unavailable",
       "metrics": {
         "soilMoisture": "Soil Moisture",
         "soilTemp": "Soil Temp",
@@ -316,7 +315,7 @@
       }
     },
     "gaugeBatteryCardTitle": "Node Battery",
-    "gaugeBatteryEmpty": "No nodes yet",
+    "gaugeBatteryEmpty": "Node unavailable",
     "gaugeBatteryScrollLeft": "Scroll left",
     "gaugeBatteryScrollRight": "Scroll right",
     "batteryLow": "Low",
@@ -587,10 +586,13 @@
     "title": "Gateway",
     "errorLoad": "Failed to load gateway data: {{message}}",
     "noData": "Data not available.",
-    "internetNotMonitored": "Not monitored",
-    "signal": "Signal",
-    "signalNone": "-",
-    "internet": "Internet",
+    "signal": "WiFi signal",
+    "signalStrong": "Strong",
+    "signalMedium": "Fair",
+    "signalWeak": "Weak",
+    "internet": "WiFi",
+    "wifiDisconnected": "Not connected",
+    "wifiLast": "last: {{ssid}}",
     "lastSeenShort": "Last",
     "connectionHistory": "Connection History",
     "noLogs": "No logs yet",
@@ -601,19 +603,17 @@
     "filterConnected": "Connected",
     "filterDisconnected": "Disconnected",
     "filterHeartbeat": "Heartbeat",
-    "filterDataSync": "Sync",
+    "filterRestarted": "Restarted",
     "eventCount": "{{count}} event(s)",
     "heartbeatNodes": "{{heard}} of {{total}} node(s) heard",
     "eventWifiPortal": "Change WiFi",
     "changeWifi": "Change WiFi",
     "changeWifiTitle": "Change the gateway WiFi?",
-    "changeWifiDesc": "The gateway stops sending data for a moment while the WiFi is changed.",
     "changeWifiStep1": "The gateway disconnects from WiFi now and opens the {{ssid}} hotspot for 5 minutes.",
-    "changeWifiStep2": "Connect your phone to that hotspot using the password on the gateway sticker.",
+    "changeWifiStep2": "Connect your device to that hotspot using the password on the gateway sticker.",
     "changeWifiStep3": "The setup page opens by itself: choose the new WiFi, type its password, then Save.",
-    "changeWifiFallback": "If no new WiFi is saved, the gateway goes back to the old WiFi.",
     "changeWifiConfirm": "Open WiFi Portal",
-    "changeWifiSuccess": "Command sent. Connect your phone to the gateway hotspot.",
+    "changeWifiSuccess": "Command sent. Connect your device to the gateway hotspot.",
     "changeWifiError": "Failed to send the command to the gateway.",
     "cancel": "Cancel"
   },
@@ -668,7 +668,7 @@
       },
       {
         "title": "BMKG Weather Forecast",
-        "description": "Accurate weather data per farm location, updated every 30 minutes."
+        "description": "BMKG weather forecasts for each farm location."
       },
       {
         "title": "Manage Multiple Farms",
@@ -719,7 +719,7 @@
       },
       {
         "question": "Can this system be used for crops other than rice?",
-        "answer": "Yes. LoraField supports more than 30 crop types, from chili, tomatoes, and melons to ornamental plants. Each crop has its own soil moisture threshold (VWC) stored in the system, so irrigation is adjusted to each crop needs."
+        "answer": "Yes. LoraField supports various crop types, such as chili, tomatoes, and melons. Each crop has its own soil moisture threshold (VWC) stored in the system, so irrigation is adjusted to each crop needs."
       },
       {
         "question": "Is my farm data secure?",

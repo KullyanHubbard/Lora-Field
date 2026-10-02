@@ -129,7 +129,7 @@
     "errorLoad": "Gagal memuat data irigasi: {{message}}",
     "noData": "Data tidak tersedia.",
     "perNodeTitle": "Detail per Node",
-    "perNodeEmpty": "Belum ada node untuk kebun ini.",
+    "perNodeEmpty": "Node tidak tersedia",
     "waitingData": "Menunggu data",
     "checkIrrigation": "Periksa penyiraman",
     "resumeAuto": "Aktifkan lagi",
@@ -150,7 +150,7 @@
       "delayed": "Tertunda",
       "offline": "Offline",
       "initializing": "Inisialisasi",
-      "notConfigured": "Belum Terhubung"
+      "notConfigured": "Menunggu Node"
     },
     "gatewayLabel": "Gateway",
     "syncLabel": "Sync",
@@ -172,7 +172,6 @@
   "limitedIrrigation": {
     "title": "Irigasi Terbatas",
     "helpLabel": "Apa itu Irigasi Terbatas?",
-    "inactiveDesc": "Kurangi siram otomatis sementara, lalu kembali normal sendiri.",
     "autoOnly": "Hanya bisa dimulai di mode Otomatis.",
     "riceNote": "Padi lebih cocok memakai mode Manual, karena sensor mengukur kelembapan tanah, bukan tinggi genangan air.",
     "activeUntil": "Irigasi Terbatas sampai {{date}}",
@@ -233,7 +232,7 @@
     "errorLoadFarm": "Gagal memuat data kebun: {{message}}",
     "noData": "Data tidak tersedia.",
     "selectNode": "Pilih node",
-    "noNodes": "Tidak ada node",
+    "noNodes": "Node tidak tersedia",
     "errorLoadReadings": "Gagal memuat pembacaan: {{message}}",
     "emptyReadings": "Belum ada data pembacaan sensor untuk node ini.",
     "chartSoilMoisture": "Kelembapan Tanah",
@@ -306,7 +305,7 @@
     "viewAllLogs": "Lihat Seluruh Log",
     "nodeSensor": {
       "title": "Node Sensor",
-      "empty": "Belum ada node terdaftar untuk kebun ini.",
+      "empty": "Node tidak tersedia",
       "metrics": {
         "soilMoisture": "Kelembapan Tanah",
         "soilTemp": "Suhu Tanah",
@@ -315,7 +314,7 @@
       }
     },
     "gaugeBatteryCardTitle": "Baterai Node",
-    "gaugeBatteryEmpty": "Belum ada node",
+    "gaugeBatteryEmpty": "Node tidak tersedia",
     "gaugeBatteryScrollLeft": "Geser ke kiri",
     "gaugeBatteryScrollRight": "Geser ke kanan",
     "batteryLow": "Rendah",
@@ -600,7 +599,7 @@
       },
       {
         "title": "Prediksi Cuaca BMKG",
-        "description": "Data cuaca akurat per lokasi kebun, diperbarui setiap 30 menit."
+        "description": "Prakiraan cuaca BMKG sesuai lokasi kebun."
       },
       {
         "title": "Kelola Banyak Kebun",
@@ -651,7 +650,7 @@
       },
       {
         "question": "Apakah sistem ini bisa digunakan untuk tanaman selain padi?",
-        "answer": "Bisa. LoraField mendukung lebih dari 30 jenis tanaman, mulai dari cabai, tomat, melon, hingga tanaman hias. Tiap tanaman memiliki ambang batas kelembaban tanah (VWC) yang sudah tersimpan di sistem, jadi irigasi akan disesuaikan dengan kebutuhan masing-masing."
+        "answer": "Bisa. LoraField mendukung berbagai jenis tanaman, seperti cabai, tomat, dan melon. Tiap tanaman memiliki ambang batas kelembaban tanah (VWC) yang sudah tersimpan di sistem, jadi irigasi akan disesuaikan dengan kebutuhan masing-masing."
       },
       {
         "question": "Apakah data kebun saya aman?",
@@ -688,10 +687,13 @@
     "title": "Gateway",
     "errorLoad": "Gagal memuat data gateway: {{message}}",
     "noData": "Data tidak tersedia.",
-    "internetNotMonitored": "Belum dipantau",
-    "signal": "Sinyal",
-    "signalNone": "-",
-    "internet": "Internet",
+    "signal": "Sinyal WiFi",
+    "signalStrong": "Kuat",
+    "signalMedium": "Sedang",
+    "signalWeak": "Lemah",
+    "internet": "WiFi",
+    "wifiDisconnected": "Tidak terhubung",
+    "wifiLast": "terakhir: {{ssid}}",
     "lastSeenShort": "Terakhir",
     "connectionHistory": "Riwayat Koneksi",
     "noLogs": "Belum ada log",
@@ -702,19 +704,17 @@
     "filterConnected": "Terhubung",
     "filterDisconnected": "Terputus",
     "filterHeartbeat": "Heartbeat",
-    "filterDataSync": "Sinkronisasi",
+    "filterRestarted": "Menyala ulang",
     "eventCount": "{{count}} event",
     "heartbeatNodes": "{{heard}} dari {{total}} node terdengar",
     "eventWifiPortal": "Ganti WiFi",
     "changeWifi": "Ganti WiFi",
     "changeWifiTitle": "Ganti WiFi gateway?",
-    "changeWifiDesc": "Gateway akan berhenti mengirim data sebentar selama WiFi diganti.",
     "changeWifiStep1": "Gateway memutus WiFi sekarang dan membuka hotspot {{ssid}} selama 5 menit.",
-    "changeWifiStep2": "Sambungkan HP ke hotspot itu dengan password di stiker gateway.",
+    "changeWifiStep2": "Sambungkan Device ke hotspot itu dengan password di stiker gateway.",
     "changeWifiStep3": "Halaman pengaturan terbuka sendiri: pilih WiFi baru, ketik passwordnya, lalu Simpan.",
-    "changeWifiFallback": "Kalau tidak ada WiFi baru yang disimpan, gateway kembali memakai WiFi lama.",
     "changeWifiConfirm": "Buka Portal WiFi",
-    "changeWifiSuccess": "Perintah terkirim. Sambungkan HP ke hotspot gateway.",
+    "changeWifiSuccess": "Perintah terkirim. Sambungkan Device ke hotspot gateway.",
     "changeWifiError": "Gagal mengirim perintah ke gateway.",
     "cancel": "Batal"
   },

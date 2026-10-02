@@ -9,20 +9,14 @@ import sqlite3
 
 from fastapi import HTTPException
 
+from .config import settings
 from .database import row_to_dict
 from .node_service import is_recently_seen
 
 
-def gateway_link_state(connection, farm_id: str) -> tuple[bool, bool]:
-    """Sambungan gateway kebun: (melapor dalam batas waktu, terputus menurut laporan koneksi terakhir).
-
-    Laporan terputus (status offline atau Last Will dari broker) mengalahkan batas waktu sampai ada kabar
-    baru dari gateway (status online, heartbeat, daftar node, atau reading).
-    """
-    gateway = row_to_dict(
-        connection.execute("SELECT last_seen_at FROM gateways WHERE farm_id = ?", (farm_id,)).fetchone()
-    )
-    last_event = row_to_dict(
+def last_link_event(connection, farm_id: str) -> dict | None:
+    """Laporan koneksi terakhir gateway kebun di gateway_logs: {event, created_at}, event connected/disconnected."""
+    return row_to_dict(
         connection.execute(
             """
             SELECT event, created_at FROM gateway_logs
@@ -32,8 +26,21 @@ def gateway_link_state(connection, farm_id: str) -> tuple[bool, bool]:
             (farm_id,),
         ).fetchone()
     )
+
+
+def gateway_link_state(connection, farm_id: str) -> tuple[bool, bool]:
+    """Sambungan gateway kebun: (melapor dalam GATEWAY_OFFLINE_AFTER_MINUTES, terputus menurut laporan
+    koneksi terakhir).
+
+    Laporan terputus (status offline atau Last Will dari broker) mengalahkan batas waktu sampai ada kabar
+    baru dari gateway (status online, heartbeat, daftar node, atau reading).
+    """
+    gateway = row_to_dict(
+        connection.execute("SELECT last_seen_at FROM gateways WHERE farm_id = ?", (farm_id,)).fetchone()
+    )
+    last_event = last_link_event(connection, farm_id)
     last_seen = (gateway or {}).get("last_seen_at")
-    seen = gateway is not None and is_recently_seen(last_seen)
+    seen = gateway is not None and is_recently_seen(last_seen, settings.gateway_offline_after_minutes)
     cut = (
         last_event is not None
         and last_event["event"] == "disconnected"

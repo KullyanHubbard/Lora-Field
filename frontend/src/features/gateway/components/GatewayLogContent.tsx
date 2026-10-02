@@ -2,7 +2,7 @@ import { Activity, RadioTower, WifiOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { timeAgo } from '@/lib/format';
+import { formatServerDateTimeParts } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import {
   GATEWAY_EVENT_FILTERS,
@@ -36,7 +36,7 @@ export function GatewayLogContent({
   onPreviousPage: () => void;
   onNextPage: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const filterOptions = GATEWAY_EVENT_FILTERS.map((value) => ({
     value,
@@ -91,6 +91,7 @@ export function GatewayLogContent({
                 const tone = getGatewayEventTone(log.event);
                 const nodeCount = parseHeartbeatNodeCount(log);
                 const missingNodes = nodeCount != null && nodeCount.heard < nodeCount.total;
+                const when = formatServerDateTimeParts(log.created_at, i18n.language);
                 return (
                   <div key={log.id} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
                     <span className="mt-1 shrink-0">
@@ -131,8 +132,15 @@ export function GatewayLogContent({
                             </p>
                           )}
                         </div>
-                        <span className="shrink-0 tabular-nums text-[0.65rem] text-muted-foreground">
-                          {timeAgo(log.created_at, t)}
+                        <span className="shrink-0 text-right tabular-nums text-[0.65rem] text-muted-foreground">
+                          {when ? (
+                            <>
+                              <span className="block">{when.time}</span>
+                              <span className="block">{when.date}</span>
+                            </>
+                          ) : (
+                            t('time.unavailable')
+                          )}
                         </span>
                       </div>
                     </div>

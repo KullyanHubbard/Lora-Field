@@ -41,6 +41,7 @@ FRONTEND_URL=https://app.domain-anda.id  # opsional; kosong = email reset tanpa 
 ALLOWED_ORIGINS=                    # opsional, origin CORS tambahan, pisah koma
 EXPOSE_DEV_TOKENS=false             # true hanya untuk tes lokal
 NODE_OFFLINE_AFTER_MINUTES=15       # node dianggap offline kalau tidak kirim data selama ini
+GATEWAY_OFFLINE_AFTER_MINUTES=15    # gateway dianggap offline tanpa kabar selama ini; wajib > 10 (jarak heartbeat)
 MANUAL_IRRIGATION_MAX_MINUTES=30    # valve yang dibuka manual ditutup otomatis setelah ini
 VALVE_RESEND_MINUTES=5              # kirim ulang perintah valve kalau alat masih melapor posisi lain setelah ini
 ```

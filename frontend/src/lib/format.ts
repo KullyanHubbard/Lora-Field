@@ -42,6 +42,18 @@ export function formatClockTime(date: Date, locale: string, withSeconds = false)
   });
 }
 
+// Jam lengkap dengan detik dan tanggal lokal dari waktu backend, untuk melacak kejadian persis
+// ('id' -> { time: '12.27.43', date: '2/10/2026' }). null kalau waktunya tidak terbaca.
+export function formatServerDateTimeParts(
+  value: string | number | Date | null | undefined,
+  locale: string,
+): { time: string; date: string } | null {
+  const date = parseServerDate(value);
+  return date
+    ? { time: formatClockTime(date, locale, true), date: date.toLocaleDateString(locale) }
+    : null;
+}
+
 export function timeAgo(date: string | number | Date | null | undefined, t: TFunction): string {
   const parsed = parseServerDate(date);
   if (!parsed) return t('time.unavailable');

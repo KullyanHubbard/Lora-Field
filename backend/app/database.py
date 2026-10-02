@@ -217,6 +217,11 @@ def init_db() -> None:
         ensure_column(connection, "decision_logs", "limited_until", "TEXT")
         ensure_column(connection, "decision_logs", "limited_reason", "TEXT")
         ensure_column(connection, "password_resets", "attempts", "INTEGER NOT NULL DEFAULT 0")
+        # Perkiraan jam gateway menyala (waktu terima heartbeat dikurangi uptime), untuk deteksi restart.
+        ensure_column(connection, "gateways", "booted_at", "TEXT")
+        # WiFi yang dipakai gateway menurut heartbeat terakhir: nama dan kekuatan sinyal (dBm).
+        ensure_column(connection, "gateways", "wifi_ssid", "TEXT")
+        ensure_column(connection, "gateways", "wifi_rssi", "INTEGER")
         # Akun yang sudah ada sebelum verifikasi email berlaku dianggap terverifikasi. Hanya
         # saat kolom baru dibuat: akun baru yang belum verifikasi wajib tetap NULL.
         if ensure_column(connection, "users", "email_verified_at", "TEXT"):

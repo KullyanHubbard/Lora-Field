@@ -95,7 +95,7 @@ export function MetricStatCard({
 
       {!stats ? (
         <p className="mt-4 flex flex-1 items-center justify-center text-center text-sm text-muted-foreground">
-          {t('dashboard.metricNoData')}
+          {nodes.length === 0 ? t('dashboard.nodeSensor.empty') : t('dashboard.metricNoData')}
         </p>
       ) : (
         <>

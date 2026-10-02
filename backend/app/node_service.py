@@ -54,10 +54,12 @@ def _parse_db_time(value: str | None) -> datetime | None:
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 
-def is_recently_seen(last_seen_at: str | None) -> bool:
-    """True kalau waktu terakhir terlihat masih dalam batas NODE_OFFLINE_AFTER_MINUTES."""
+def is_recently_seen(last_seen_at: str | None, offline_after_minutes: int | None = None) -> bool:
+    """True kalau waktu terakhir terlihat masih dalam batas (bawaan NODE_OFFLINE_AFTER_MINUTES)."""
     last_seen = _parse_db_time(last_seen_at)
-    offline_after = timedelta(minutes=settings.node_offline_after_minutes)
+    if offline_after_minutes is None:
+        offline_after_minutes = settings.node_offline_after_minutes
+    offline_after = timedelta(minutes=offline_after_minutes)
     return last_seen is not None and datetime.now(timezone.utc) - last_seen <= offline_after
 
 

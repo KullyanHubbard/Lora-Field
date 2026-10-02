@@ -28,7 +28,7 @@ Node sensor --LoRa--> Gateway --WiFi/MQTT--> Broker (Mosquitto) <--> Server Lora
 | Ukuran pesan | Maks 1024 byte. Di PubSubClient panggil `setBufferSize(1024)` |
 | Jam | Gateway wajib sinkron NTP sebelum menyambung (dipakai perintah valve) |
 
-Setelah tersambung, gateway langsung: kirim `status` online, kirim `nodes`, lalu subscribe
+Setelah tersambung, gateway langsung: kirim `status` online, kirim `heartbeat` dan `nodes`, lalu subscribe
 `lorafield/gw/{device_id}/node/+/valve/set` dan `lorafield/gw/{device_id}/cmd` dengan QoS 1.
 
 ## Aturan ID
@@ -46,7 +46,7 @@ Setelah tersambung, gateway langsung: kirim `status` online, kirim `nodes`, lalu
 | Topik | Arah | QoS | Retain | Kapan dikirim |
 |-------|------|-----|--------|---------------|
 | `lorafield/gw/{gw}/status` | gateway ke server | 0 | ya | Saat tersambung, dan Last Will saat putus |
-| `lorafield/gw/{gw}/heartbeat` | gateway ke server | 0 | tidak | Tiap 10 menit (di bawah batas offline 15 menit) |
+| `lorafield/gw/{gw}/heartbeat` | gateway ke server | 0 | tidak | Saat tersambung, lalu tiap 10 menit (di bawah batas offline 15 menit) |
 | `lorafield/gw/{gw}/nodes` | gateway ke server | 0 | tidak | Saat tersambung, saat daftar node berubah, dan tiap heartbeat |
 | `lorafield/gw/{gw}/node/{node}/reading` | gateway ke server | 0 | tidak | Tiap paket sensor diterima dari node |
 | `lorafield/gw/{gw}/node/{node}/valve/set` | server ke gateway | 1 | ya | Saat posisi valve node harus berubah |
@@ -69,11 +69,18 @@ Last Will.
 ### heartbeat
 
 ```json
-{"uptime_s": 3600, "nodes_heard": 3}
+{"uptime_s": 3600, "nodes_heard": 3, "wifi_ssid": "Rumah Pak Budi", "wifi_rssi": -58}
 ```
 
-- `uptime_s`: detik sejak gateway menyala. Angka yang mengecil menandai gateway sempat restart.
+- `uptime_s`: detik sejak gateway menyala. Tidak boleh kembali ke 0 selama gateway menyala (firmware memakai
+  pencacah 64-bit, bukan `millis()` yang berputar ke 0 setelah 49 hari). Server menghitung jam menyala
+  (waktu terima dikurangi `uptime_s`); jam menyala yang maju lebih dari 1 menit dari heartbeat sebelumnya
+  dicatat sebagai `restarted` ("Menyala ulang") di Log Gateway, pada perkiraan jam menyala itu. Heartbeat
+  sendiri tidak dicatat di Log Gateway; ia hanya kabar (status online dan waktu terakhir di web).
 - `nodes_heard`: jumlah node berbeda yang paketnya diterima sejak heartbeat sebelumnya.
+- `wifi_ssid` (opsional): nama WiFi yang sedang dipakai gateway, maksimal 32 byte. Password WiFi tidak pernah
+  dikirim. `wifi_rssi` (opsional): kekuatan sinyal WiFi gateway ke router, dBm, -120 sampai 0. Server
+  menyimpan keduanya untuk kartu Gateway di web; nilai yang tidak sah diabaikan, nilai lama tetap.
 
 ### nodes
 
@@ -154,10 +161,12 @@ dari data sensor, bukan dari daftar ini.
 - Pesan rusak (bukan JSON, field wajib hilang, nilai di luar rentang) diabaikan dan dicatat di
   log server. Server tidak membalas error ke gateway.
 - Gateway dianggap online kalau `status`, `heartbeat`, atau `reading` diterima dalam 15 menit
-  terakhir. `status` online dan offline tercatat di Log Gateway web. `status` offline (termasuk Last
-  Will) langsung membuat gateway offline di web, sampai ada pesan baru darinya. `status` online yang
-  diterima ulang dari retain saat server menyambung ulang ke broker dihitung sebagai kabar, tapi tidak
-  dicatat ulang di Log Gateway.
+  terakhir (`GATEWAY_OFFLINE_AFTER_MINUTES` di server, terpisah dari batas offline node). `status` online dan offline tercatat di Log Gateway web. `status` offline (termasuk Last
+  Will) langsung membuat gateway offline di web, sampai ada pesan baru darinya. `status` yang diterima
+  ulang dari retain saat server menyambung ulang ke broker hanya dicatat di Log Gateway kalau berbeda
+  dari laporan koneksi terakhir di log (gateway tersambung atau putus selagi server putus dari broker).
+  Isinya sama dengan catatan biasa. `status` online dari retain tetap
+  dihitung sebagai kabar.
 
 ## Keamanan
 

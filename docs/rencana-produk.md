@@ -60,17 +60,22 @@ dicatat di sini beserta versi produknya.
   diisi dari iPhone lewat portal, gateway tersambung ke server. Hotspot tanpa nama yang sempat muncul
   ternyata akibat brownout, diatasi dengan mematikan pendeteksi brownout hanya selama menyambung WiFi.
   Tambahan (2026-10-02, keputusan user): WiFi putus saat berjalan dicoba ulang 10 menit lalu radio
-  istirahat 30 menit, bergantian; tombol "Ganti WiFi" di halaman Gateway web (topik MQTT `cmd`,
+  istirahat 5 menit (semula 30 menit), bergantian; tombol "Ganti WiFi" di halaman Gateway web (topik MQTT `cmd`,
   endpoint `POST /api/farms/{id}/gateway/wifi-portal`).
-- **F3. Penanda status.** LED bawaan (GPIO 25): kedip cepat = mode pengaturan, kedip lambat =
-  menyambung, menyala = tersambung. OLED bawaan opsional (butuh library baru).
+- **F3. Penanda status.** Dikerjakan 2026-10-02 (firmware 0.2.3, gateway), terbukti di alat. LED hijau
+  bawaan (GPIO 25): menyala terus = tersambung, kedip ganda = WiFi tersambung tapi server belum, kedip
+  lambat = WiFi belum tersambung, kedip cepat = portal WiFi, kedip singkat = mode pengaturan. Belum: jendela
+  lampu di wadah (H2) dan arti lampu di stiker atau buku panduan (P1). OLED bawaan opsional (butuh library baru).
 - **F4. TLS ke broker** (`WiFiClientSecure`, bawaan ESP32).
 - **F5. Pengaman paket LoRa.** Sekarang paket tidak diamankan: siapa pun yang punya radio LoRa bisa
   memalsukan data sensor atau menyuruh valve membuka. Paket diberi tanda tangan dengan kunci per node
   dan nomor urut, supaya paket palsu dan paket lama yang diputar ulang ditolak.
 - **F6. Update firmware lewat udara (OTA).** Wajib sebelum dijual banyak. Tanpa OTA, setiap perbaikan
   berarti mencolok USB ke tiap alat di lokasi petani.
-- **F7. Watchdog.** Alat restart sendiri kalau macet.
+- **F7. Watchdog.** Alat restart sendiri kalau macet. Dikerjakan 2026-10-02 (firmware 0.2.2, gateway):
+  watchdog bawaan ESP32 mengawasi loop(), batas 2 menit. Terbukti di alat: loop yang sengaja dibuat
+  macet di-restart tepat 2 menit kemudian dan tersambung lagi. Masa menyala (portal WiFi) tidak
+  diawasi. Node belum.
 - **F8. Kunci memori alat (flash encryption ESP32).** Tanpa ini, password MQTT dan password hotspot
   bisa dibaca dari memori gateway yang dibongkar. Sifatnya permanen (eFuse), jadi dipasang di tahap
   produksi setelah firmware stabil, bersama OTA.
@@ -82,7 +87,12 @@ dicatat di sini beserta versi produknya.
   panel surya node, wadah tahan cuaca. Temuan 2026-10-02: LoRa32 V2.1 tanpa baterai sering brownout
   saat radio WiFi menyala, di port USB komputer maupun charger 5V 1,2A, terutama setelah tombol RST.
   Menurunkan daya pancar WiFi tidak menolong. Kandidat solusi: baterai Li-ion di colokan baterai
-  board, kapasitor besar di jalur 5V, adaptor dan kabel yang lebih baik.
+  board, kapasitor besar di jalur 5V, adaptor dan kabel yang lebih baik. Uji 2026-10-02 sore: kepala
+  charger HP USB-A yang sanggup 5V 3A (label: 5V=3A, 5V=4,5A, 4,5V=5A, 9V=2A, 12V=1,5A) membuat gateway
+  menyala sekali dan tersambung dalam 13 detik, dua kali berturut-turut (colok dan RST), tanpa brownout;
+  dari port USB komputer brownout 1-2 kali tiap menyala. Calon spesifikasi produk: adaptor 5V minimal 2A
+  (perlu diukur arus puncaknya). Belum: uji portal WiFi dari charger ini, dan putusan apakah pendeteksi
+  brownout boleh dinyalakan penuh lagi (setelah uji lebih lama dengan adaptor produk).
 - **P1. Alur produksi per alat.** Flash firmware (hapus memori dulu supaya tidak membawa WiFi dari
   uji), buat password acak, simpan di alat dan server, cetak stiker (ID gateway, password hotspot,
   QR code WiFi, 4 karakter terakhir ID node). Awal alatnya sudah ada: `firmware/tools/provision.py`
@@ -91,9 +101,18 @@ dicatat di sini beserta versi produknya.
 
 ## Aturan dan izin (L), perlu dicek ahli
 
-- **L1. Daya pancar LoRa.** Firmware memakai bawaan library LoRa (17 dBm) dan belum menghitung gain
-  antena. Cek batas daya pancar pita 920–923 MHz di Indonesia, lalu atur di `config.h`.
-- **L2. Sertifikasi perangkat telekomunikasi (Komdigi) dan aturan TKDN** sebelum alat dijual.
+- **L1. Daya pancar LoRa.** Dikerjakan 2026-10-02 (firmware 0.2.5). Aturan: Kepmen Kominfo No. 5 Tahun
+  2024 (Standar Teknis LPWAN Nonseluler), pita 920–923 MHz: node ≤ 100 mW EIRP (20 dBm), gateway ≤ 400 mW
+  EIRP (26 dBm), bandwidth ≤ 250 kHz, duty cycle ≤ 1%. Angka dibaca dari rancangan konsultasi publik
+  (November 2023); naskah final belum dicocokkan langsung, cek ulang saat L2. Firmware: 17 dBm tertulis di
+  `config.h` (`LORA_TX_POWER_DBM`), dengan antena bawaan sekitar 3 dBi = sekitar 20 dBm EIRP, pas di batas
+  node. Duty cycle node sekitar 0,3% (compile gagal kalau jarak kirim melewati 1%). Belum: ukur penguatan
+  antena yang dipakai produk.
+- **L2. Sertifikasi perangkat telekomunikasi (Komdigi) dan aturan TKDN** sebelum alat dijual. Temuan L1:
+  gateway 920–923 MHz wajib punya filter dengan redaman lebih dari 50 dB di 915 dan 925 MHz (Kepmen 5/2024
+  bagian Persyaratan Filter). Board LoRa32 tidak punya filter itu, jadi perlu filter SAW tambahan atau
+  modul lain. Aturan yang sama meminta frekuensi dikunci dari pabrik; firmware sudah memenuhinya karena
+  frekuensi hanya di `config.h`, tidak bisa diubah pengguna.
 
 ## Urutan saran
 

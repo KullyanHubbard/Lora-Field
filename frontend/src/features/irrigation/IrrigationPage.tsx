@@ -10,7 +10,6 @@ import { IrrigationLoadingState } from '@/features/irrigation/components/Irrigat
 import { IrrigationNodeGridCard } from '@/features/irrigation/components/IrrigationNodeGridCard';
 import { IrrigationRecommendationCard } from '@/features/irrigation/components/IrrigationRecommendationCard';
 import { IrrigationStatsGrid } from '@/features/irrigation/components/IrrigationStatsGrid';
-import { LimitedIrrigationCard } from '@/features/irrigation/components/LimitedIrrigationCard';
 import {
   buildIrrigationStats,
   getIrrigationActivity,
@@ -71,12 +70,11 @@ export default function IrrigationPage() {
         </Card>
       )}
       <IrrigationHeaderCard
+        farm={summary.farm}
         gatewayStatus={summary.gateway_status}
         lastSync={lastSync}
         activity={getIrrigationActivity(irrigationNodes)}
       />
-
-      <LimitedIrrigationCard farm={summary.farm} />
 
       <IrrigationStatsGrid stats={stats} />
 

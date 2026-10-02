@@ -126,10 +126,37 @@ oleh driver WiFi): radio WiFi dimatikan lalu dinyalakan dari nol, dan alasan gag
 (mis. `NO_AP_FOUND` = WiFi tidak terlihat, `AUTH_FAIL` = ditolak). Uji alat 2026-10-02: di firmware 0.2.0
 (`WiFi.reconnect()`) gateway tidak tersambung lagi selama 10 menit setelah router restart; di 0.2.1
 tersambung sekitar 1 menit setelah router menyala. Router ZTE yang baru menyala sempat menolak dengan
-`AUTH_FAIL` walau password benar. Kalau tetap gagal, radio WiFi dimatikan 30 menit supaya hemat daya, lalu dicoba lagi
+`AUTH_FAIL` walau password benar. Kalau tetap gagal, radio WiFi dimatikan 5 menit (gateway memakai adaptor, jadi tidak perlu lama), lalu dicoba lagi
 10 menit, bergantian, sampai tersambung. Begitu tersambung, MQTT menyambung dalam 5 detik. Angkanya di
 `config.h` (`WIFI_RECONNECT_*`, `WIFI_REST_MS`), jadwalnya di `WifiRecovery` (`lib/lorafield`, dites di
 PC). Kalau password router diganti, gateway tidak akan tersambung sendiri: pakai RST dua kali.
+
+Lampu status (sejak firmware 0.2.3), LED **hijau** bawaan (GPIO 25, bukan lampu merah pengisian baterai):
+
+| Lampu | Keadaan |
+|-------|---------|
+| Menyala terus | Tersambung ke server |
+| Kedip ganda lalu jeda, tiap 2 detik | WiFi tersambung, server belum terjangkau |
+| Kedip lambat (1 detik nyala, 1 detik mati) | WiFi belum tersambung (router mati, sinyal hilang, password router diganti) |
+| Kedip cepat, 4 kali per detik | Portal WiFi terbuka |
+| Kedip singkat tiap 2 detik | Mode pengaturan (alat belum diisi pabrik) |
+
+Pola dihitung `statusLedOn` (`lib/lorafield`, dites di PC) dan dijalankan pewaktu `esp_timer`, jadi tetap
+berkedip saat portal terbuka atau saat menyambung. Lampu tidak membuktikan program hidup; gateway yang macet
+ditangani watchdog. Uji alat 2026-10-02: pola tersambung, portal, WiFi putus (router mati), dan server
+putus (Mosquitto dihentikan) sesuai; mode pengaturan baru dites di PC.
+
+Heartbeat (sejak firmware 0.2.4) dikirim juga tepat setelah tersambung ke broker, dan `uptime_s` memakai
+pencacah 64-bit (`esp_timer_get_time`). Server memakai uptime itu untuk mencatat "Menyala ulang" di Riwayat
+Koneksi dalam hitungan detik setelah gateway restart; heartbeat sendiri tidak dicatat. Sejak 0.2.6 heartbeat juga
+membawa nama dan sinyal WiFi (`heartbeatJson`, dites di PC), yang tampil di kartu Gateway web. Prosesor gateway
+berjalan di 160 MHz (`GATEWAY_CPU_MHZ`).
+
+Watchdog (sejak firmware 0.2.2): kalau `loop()` gateway tidak berputar selama 2 menit
+(`GATEWAY_WATCHDOG_S`), gateway restart sendiri dan Serial menulis "Restart sebelumnya karena gateway
+macet (watchdog)" saat menyala lagi. Masa menyala, termasuk portal WiFi yang boleh terbuka lama, tidak
+diawasi. Restart karena watchdog tidak dihitung sebagai tekan RST. Uji alat 2026-10-02: loop yang
+sengaja dibuat macet di-restart tepat 2 menit kemudian, lalu tersambung lagi ke MQTT dalam 14 detik.
 
 ## Perintah
 
@@ -150,5 +177,7 @@ pio device monitor
   (`SOIL_ADC_WET`).
 - Cek level relay (`VALVE_ACTIVE_LEVEL`) dan pembagi tegangan baterai.
 - Frekuensi, spreading factor, dan sync word gateway dan node wajib sama.
+- Daya pancar (`LORA_TX_POWER_DBM`) mengikuti batas Indonesia (lihat komentar di `config.h`). Antena
+  yang lebih besar dari 3 dBi wajib diimbangi dengan menurunkan angka itu.
 - Belum ada: enkripsi paket LoRa, TLS ke broker, update firmware lewat udara (OTA), deep sleep,
   kunci memori alat (flash encryption). Lihat [docs/rencana-produk.md](../docs/rencana-produk.md).

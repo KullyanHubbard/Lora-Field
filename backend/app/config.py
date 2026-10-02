@@ -1,4 +1,5 @@
 from pathlib import Path
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +30,12 @@ class Settings(BaseSettings):
 
     # Node dianggap offline kalau tidak mengirim data selama ini.
     node_offline_after_minutes: int = 15
+
+    # Gateway dianggap offline kalau tidak ada kabar (status, heartbeat, daftar node, reading) selama ini
+    # (docs/kontrak-mqtt.md). Terpisah dari batas node: gateway tanpa node hanya mengirim heartbeat tiap
+    # 10 menit, jadi batas 10 menit atau kurang membuat gateway sehat tampil offline bergantian (temuan
+    # 2026-10-02 saat batas node lebih pendek dari jarak heartbeat). Nilai seperti itu ditolak saat startup.
+    gateway_offline_after_minutes: int = Field(default=15, gt=10)
 
     # Valve yang dibuka manual ditutup otomatis setelah selama ini, kalau lupa dihentikan.
     manual_irrigation_max_minutes: int = 30

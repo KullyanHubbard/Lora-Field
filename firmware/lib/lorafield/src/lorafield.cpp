@@ -122,6 +122,19 @@ size_t readingJson(const Reading& reading, int rssi, char* out, size_t len) {
   return serializeJson(doc, out, len);
 }
 
+size_t heartbeatJson(uint64_t uptime_s, int nodes_heard, const char* wifi_ssid, int wifi_rssi, char* out,
+                     size_t len) {
+  JsonDocument doc;
+  doc["uptime_s"] = uptime_s;
+  doc["nodes_heard"] = nodes_heard;
+  if (wifi_ssid != nullptr && wifi_ssid[0] != '\0') {
+    doc["wifi_ssid"] = wifi_ssid;
+    doc["wifi_rssi"] = wifi_rssi < -120 ? -120 : (wifi_rssi > 0 ? 0 : wifi_rssi);  // rentang validasi server
+  }
+  if (measureJson(doc) >= len) return 0;
+  return serializeJson(doc, out, len);
+}
+
 bool parseValveCommand(const uint8_t* payload, size_t len, bool& open, uint32_t& until) {
   open = false;
   until = 0;
@@ -287,6 +300,29 @@ std::vector<ScannedNetwork> rankNetworks(const std::vector<ScannedNetwork>& scan
 bool wifiNeedsRestore(const char* before_ssid, const char* before_pass, const char* now_ssid, const char* now_pass) {
   if (before_ssid[0] == '\0') return false;
   return strcmp(before_ssid, now_ssid) != 0 || strcmp(before_pass, now_pass) != 0;
+}
+
+bool statusLedOn(StatusLed state, uint32_t now_ms) {
+  switch (state) {
+    case StatusLed::Connected:
+      return true;
+    case StatusLed::ServerUnreachable: {
+      uint32_t t = now_ms % 2000;
+      return t < 150 || (t >= 300 && t < 450);
+    }
+    case StatusLed::WifiDown:
+      return now_ms % 2000 < 1000;
+    case StatusLed::Portal:
+      return now_ms % 250 < 125;
+    case StatusLed::Setup:
+      return now_ms % 2000 < 100;
+  }
+  return false;
+}
+
+StatusLed runtimeStatusLed(bool wifi_connected, bool mqtt_connected) {
+  if (!wifi_connected) return StatusLed::WifiDown;
+  return mqtt_connected ? StatusLed::Connected : StatusLed::ServerUnreachable;
 }
 
 GatewayCommand parseGatewayCommand(const uint8_t* payload, size_t len) {
