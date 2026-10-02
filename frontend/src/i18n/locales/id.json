@@ -161,13 +161,7 @@
     "belowThreshold": "Di bawah threshold",
     "recommendationTitle": "Rekomendasi",
     "recommendationEmpty": "Belum ada node untuk dianalisis.",
-    "recommendationWaitingMoisture": "Menunggu data kelembapan.",
-    "condition": {
-      "critical": "Kritis",
-      "dry": "Kering",
-      "wet": "Basah",
-      "normal": "Normal"
-    }
+    "recommendationWaitingMoisture": "Menunggu data kelembapan."
   },
   "limitedIrrigation": {
     "title": "Irigasi Terbatas",
@@ -431,9 +425,9 @@
     "unknown": "Tidak Diketahui"
   },
   "soilStatus": {
-    "noData": "Tidak Ada Data",
-    "dry": "Butuh Irigasi",
-    "wet": "Terlalu Basah",
+    "critical": "Kritis",
+    "dry": "Kering",
+    "wet": "Basah",
     "normal": "Normal"
   },
   "irrigationStatus": {

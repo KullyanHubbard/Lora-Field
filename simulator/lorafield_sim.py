@@ -162,12 +162,28 @@ class Site:
         due = [node for node in self.nodes if send_all or self._send_due(node, now)]
         for node in due:
             self._send(node, now, now_dt)
-        if now - self.last_heartbeat >= self.config["gateway_heartbeat_minutes"] * 60 and self.link.connected:
+        if self.heartbeat_due(now):
             self._heartbeat(now, now_dt)
         return bool(due)
 
+    def heartbeat_due(self, now: float) -> bool:
+        """Heartbeat begitu tersambung ke broker, lalu tiap gateway_heartbeat_minutes."""
+        interval = self.config["gateway_heartbeat_minutes"] * 60
+        return self.link.connected and (self.link.heartbeat_due or now - self.last_heartbeat >= interval)
+
     def _gateway_wifi(self, now: float, now_dt: datetime) -> None:
-        """Sesekali WiFi gateway putus beberapa menit, seperti router mati atau sinyal hilang."""
+        """Sesekali WiFi gateway putus beberapa menit, seperti router mati atau sinyal hilang.
+
+        Ganti WiFi dari web: seperti firmware, gateway restart lalu membuka portal; simulator tidak punya
+        WiFi baru, jadi setelah portal habis gateway kembali ke WiFi lama.
+        """
+        if self.link.portal_requested:
+            minutes = self.config.get("gateway_portal_minutes", 5)
+            self.link.open_portal()
+            self.wifi_back_at = now + minutes * 60
+            self.started = time.monotonic()  # restart: uptime heartbeat mulai lagi dari 0
+            print(f"[{now_dt:%H:%M:%S}] {self.name}: Ganti WiFi dari web, portal dibuka {minutes} menit")
+            return
         outage = self.config["gateway_wifi_outage"]
         if self.link.wifi_down:
             if now >= self.wifi_back_at:
@@ -225,6 +241,7 @@ class Site:
         self.link.publish_nodes()
         self.heard.clear()
         self.last_heartbeat = now
+        self.link.heartbeat_due = False
 
     def _transmit(self, node: NodeState, now: float) -> str:
         """Satu kali node kirim data lewat LoRa, lalu gateway meneruskannya ke MQTT."""

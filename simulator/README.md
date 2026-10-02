@@ -12,7 +12,11 @@ Penanda simulasi: ID gateway dan node diawali `SIM-` (terlihat di kartu Gateway)
 Bagian alat (mengikuti kontrak MQTT):
 
 - Gateway menyambung ke broker dengan ID sendiri dan Last Will, lalu mengirim status online,
-  daftar node, dan heartbeat berkala.
+  daftar node, dan heartbeat (langsung saat tersambung, lalu berkala).
+- Tombol "Ganti WiFi" di web (topik `cmd`): seperti firmware, gateway mengirim status offline
+  sendiri dan membuka portal selama `gateway_portal_minutes` (bawaan 5 menit). Simulator tidak
+  punya WiFi baru, jadi setelah itu gateway kembali ke WiFi lama dan web mencatat "Menyala ulang"
+  (tanpa penyebab, karena heartbeat simulator tidak membawa `boot_reason`).
 - Node mengirim data sensor lewat LoRa; gateway menambahkan kuat sinyal (RSSI) lalu
   meneruskannya ke MQTT bersama posisi valve yang sebenarnya.
 - Perintah valve dari server diteruskan gateway ke node. Node menutup valve sendiri saat batas

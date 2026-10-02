@@ -1,5 +1,6 @@
 import type { FarmSummary, NodeSummary } from '@/types';
 import { EMPTY_VALUE, parseServerDate } from '@/lib/format';
+import { getSoilStatusFromMoisture } from '@/lib/status';
 import { ACCENT_BG } from '@/lib/toneClasses';
 
 export type IrrigationStats = {
@@ -23,21 +24,18 @@ export function formatSyncTime(value: string | null | undefined, locale: string)
   });
 }
 
+const MOISTURE_BAR: Record<string, string> = {
+  'soilStatus.critical': ACCENT_BG.red,
+  'soilStatus.dry': ACCENT_BG.amber,
+  'soilStatus.wet': ACCENT_BG.sky,
+  'soilStatus.normal': ACCENT_BG.emerald,
+};
+
 export function moistureCondition(value: number | null, lower: number, upper: number) {
   if (value == null)
     return { labelKey: 'irrigation.waitingData', tone: 'neutral' as const, bar: 'bg-muted' };
-  if (value < lower * 0.75) {
-    return { labelKey: 'irrigation.condition.critical', tone: 'red' as const, bar: ACCENT_BG.red };
-  }
-  if (value < lower)
-    return { labelKey: 'irrigation.condition.dry', tone: 'yellow' as const, bar: ACCENT_BG.amber };
-  if (value > upper)
-    return { labelKey: 'irrigation.condition.wet', tone: 'yellow' as const, bar: ACCENT_BG.sky };
-  return {
-    labelKey: 'irrigation.condition.normal',
-    tone: 'green' as const,
-    bar: ACCENT_BG.emerald,
-  };
+  const status = getSoilStatusFromMoisture(value, lower, upper);
+  return { ...status, bar: MOISTURE_BAR[status.labelKey] };
 }
 
 export type IrrigationActivity =

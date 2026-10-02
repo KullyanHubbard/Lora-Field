@@ -2,8 +2,8 @@
 // (FILTER_OPTIONS, classifyLog, getDecisionBadgeClass, formatLogTime, escapeCSV,
 // dan pembentukan string CSV di handleExportCSV). Semua fungsi murni.
 import type { TFunction } from 'i18next';
-import type { IrrigationLog } from '@/types';
-import type { StatusTone } from '@/lib/status';
+import type { DecisionType, IrrigationLog, LimitedIrrigationEvent } from '@/types';
+import { getIrrigationStatusBadge, type StatusTone } from '@/lib/status';
 import { EMPTY_VALUE, formatClockTime, parseServerDate } from '@/lib/format';
 
 export const LOG_FILTER_OPTIONS = [
@@ -46,23 +46,24 @@ export function classifyLog(log: Pick<IrrigationLog, 'decision_type'>): LogType 
   }
 }
 
-// Baris Irigasi Terbatas punya label sendiri; kelompok filternya tetap 'normal'.
-export function limitedEventLabelKey(decisionType: IrrigationLog['decision_type']): string | null {
-  return decisionType?.startsWith('limited_') ? `limitedIrrigation.log.${decisionType}` : null;
+function isLimitedEvent(
+  decisionType: DecisionType | LimitedIrrigationEvent,
+): decisionType is LimitedIrrigationEvent {
+  return decisionType.startsWith('limited_');
 }
 
-// Versi lama: getDecisionBadgeClass -> 'badge-green' dst. Sekarang return tone.
-export function getDecisionTone(type: LogType): StatusTone {
-  switch (type) {
-    case 'open':
-      return 'green';
-    case 'delayed':
-      return 'yellow';
-    case 'closed':
-      return 'yellow';
-    default:
-      return 'green';
-  }
+// Baris Irigasi Terbatas punya label sendiri; kelompok filternya tetap 'normal'.
+export function limitedEventLabelKey(decisionType: IrrigationLog['decision_type']): string | null {
+  return decisionType && isLimitedEvent(decisionType)
+    ? `limitedIrrigation.log.${decisionType}`
+    : null;
+}
+
+// Warna sama dengan badge Dashboard dan Irigasi. Baris Irigasi Terbatas dan log lama tanpa type: hijau.
+export function getLogTone(log: Pick<IrrigationLog, 'decision_type'>): StatusTone {
+  const type = log.decision_type;
+  if (type == null || isLimitedEvent(type)) return 'green';
+  return getIrrigationStatusBadge(type).tone;
 }
 
 export function formatLogTime(iso: string | null | undefined, locale: string): string {

@@ -161,13 +161,7 @@
     "belowThreshold": "Below threshold",
     "recommendationTitle": "Recommendations",
     "recommendationEmpty": "No nodes to analyze yet.",
-    "recommendationWaitingMoisture": "Waiting for moisture data.",
-    "condition": {
-      "critical": "Critical",
-      "dry": "Dry",
-      "wet": "Wet",
-      "normal": "Normal"
-    }
+    "recommendationWaitingMoisture": "Waiting for moisture data."
   },
   "limitedIrrigation": {
     "title": "Limited Irrigation",
@@ -440,9 +434,9 @@
     "unknown": "Unknown"
   },
   "soilStatus": {
-    "noData": "No Data",
-    "dry": "Needs Irrigation",
-    "wet": "Too Wet",
+    "critical": "Critical",
+    "dry": "Dry",
+    "wet": "Wet",
     "normal": "Normal"
   },
   "irrigationStatus": {

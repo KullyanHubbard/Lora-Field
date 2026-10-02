@@ -69,16 +69,15 @@ export function getIrrigationReasonKey(
   return type ? `irrigationReason.${type}` : null;
 }
 
+// Satu aturan kondisi kelembapan untuk semua halaman (Irigasi, Monitoring).
 // lower/upper = threshold kebun dari summary.thresholds (ikut jenis tanaman).
 export function getSoilStatusFromMoisture(
-  value: number | null | undefined,
+  value: number,
   lower: number,
   upper: number,
 ): StatusBadge {
-  if (value == null || value <= 0) {
-    return { labelKey: 'soilStatus.noData', tone: 'red' };
-  }
-  if (value < lower) return { labelKey: 'soilStatus.dry', tone: 'red' };
+  if (value < lower * 0.75) return { labelKey: 'soilStatus.critical', tone: 'red' };
+  if (value < lower) return { labelKey: 'soilStatus.dry', tone: 'yellow' };
   if (value > upper) return { labelKey: 'soilStatus.wet', tone: 'yellow' };
   return { labelKey: 'soilStatus.normal', tone: 'green' };
 }

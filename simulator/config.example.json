@@ -9,6 +9,7 @@
   "interval_seconds": 60,
   "send_jitter_seconds": 5,
   "gateway_heartbeat_minutes": 10,
+  "gateway_portal_minutes": 5,
   "weather_refresh_minutes": 30,
   "bmkg_timeout_seconds": 20,
   "packet_loss_rate": 0.03,

@@ -6,6 +6,7 @@ import random
 from contextlib import redirect_stdout
 from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 from environment import Ambient, ambient_at
 from lorafield_sim import Site, new_entry
@@ -173,5 +174,52 @@ assert build_reading(broken, clear_sky, config, random.Random(1), "soil-dry")["s
 broken.last_air_temp, broken.last_air_humidity = 29.0, 70.0
 stuck = build_reading(broken, clear_sky, config, random.Random(1), "dht22-dead")
 assert (stuck["air_temp"], stuck["air_humidity"]) == (29.0, 70.0), "DHT22 mati: angka udara macet di bacaan terakhir"
+
+# Kontrak MQTT seperti firmware: begitu tersambung langsung heartbeat dan berlangganan cmd; "Ganti WiFi" membuka portal.
+class FakeClient:
+    def __init__(self) -> None:
+        self.subscribed: list[str] = []
+
+    def subscribe(self, topic: str, qos: int) -> None:
+        self.subscribed.append(topic)
+
+
+gw = Site(farm, new_entry(farm, config, random.Random(7)), config, random.Random(7))
+gw.ambient = Ambient(air_temp=30, humidity=70, raining=False, source="test")
+published: list[tuple[str, object]] = []
+# Tanpa broker: catat kiriman saja. rc 1 = belum terkirim, jadi stop() tidak menunggu.
+gw.link._publish = lambda suffix, data, **kwargs: published.append((suffix, data)) or SimpleNamespace(rc=1)
+gw.link.start = lambda: None
+fake = FakeClient()
+gw.last_heartbeat = base = 3_000_000_000.0
+with redirect_stdout(io.StringIO()):
+    gw.link._on_connect(fake, None, None, SimpleNamespace(is_failure=False), None)
+assert f"lorafield/gw/{gw.gateway_id}/cmd" in fake.subscribed, "gateway berlangganan topik cmd"
+assert gw.heartbeat_due(base + 1), "heartbeat langsung dikirim begitu tersambung, tanpa menunggu 10 menit"
+with redirect_stdout(io.StringIO()):
+    gw._heartbeat(base + 1, datetime.fromtimestamp(base + 1))
+assert not gw.heartbeat_due(base + 2), "setelah heartbeat, berikutnya menunggu jadwal"
+
+
+def cmd(payload: bytes) -> None:
+    message = SimpleNamespace(topic=f"lorafield/gw/{gw.gateway_id}/cmd", payload=payload)
+    with redirect_stdout(io.StringIO()):
+        gw.link._on_message(None, None, message)
+
+
+cmd(b'{"action":"reboot"}')
+cmd(b"bukan json")
+assert not gw.link.portal_requested and not gw.link.pending, "action lain di cmd diabaikan, bukan perintah valve"
+cmd(b'{"action":"wifi_portal"}')
+with redirect_stdout(io.StringIO()):
+    gw._gateway_wifi(base + 10, datetime.fromtimestamp(base + 10))
+assert gw.link.wifi_down and not gw.link.connected, "Ganti WiFi: gateway putus selama portal terbuka"
+assert published[-1] == ("status", {"state": "offline"}), "sebelum portal, gateway mengirim status offline sendiri"
+with redirect_stdout(io.StringIO()):
+    gw._gateway_wifi(base + 10 + 299, datetime.fromtimestamp(base + 309))
+assert gw.link.wifi_down, "portal tetap terbuka sampai 5 menit"
+with redirect_stdout(io.StringIO()):
+    gw._gateway_wifi(base + 10 + 300, datetime.fromtimestamp(base + 310))
+assert not gw.link.wifi_down, "portal habis tanpa WiFi baru: kembali ke WiFi lama"
 
 print("Semua cek simulator lolos.")

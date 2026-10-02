@@ -19,6 +19,10 @@ class GatewayLink:
         self.wifi_down = False
         # Perintah valve terakhir per node dari server, diisi thread paho, diambil loop utama.
         self.pending: dict[str, dict] = {}
+        # Diisi thread paho, dijalankan loop utama: perintah "Ganti WiFi" dari web, dan heartbeat yang
+        # dikirim begitu tersambung (seperti firmware sejak 0.2.4).
+        self.portal_requested = False
+        self.heartbeat_due = False
         self._mqtt = mqtt_config
         self._client = self._new_client()
         self._client.will_set(self._topic("status"), json.dumps({"state": "offline"}), qos=1, retain=True)
@@ -74,6 +78,13 @@ class GatewayLink:
         self.wifi_down = False
         self.start()
 
+    def open_portal(self) -> None:
+        """Ganti WiFi: seperti firmware, kirim status offline sendiri lalu putus selama portal terbuka."""
+        self.portal_requested = False
+        self.stop()
+        self.connected = False
+        self.wifi_down = True
+
     def publish_heartbeat(self, uptime_s: int, nodes_heard: int) -> None:
         self._publish("heartbeat", {"uptime_s": uptime_s, "nodes_heard": nodes_heard})
 
@@ -100,7 +111,9 @@ class GatewayLink:
         print(f"[{self.gateway_id}] tersambung ke broker MQTT")
         self._publish("status", {"state": "online", "fw": self.firmware}, retain=True)
         self.publish_nodes()
+        self.heartbeat_due = True
         client.subscribe(self._topic("node/+/valve/set"), qos=1)
+        client.subscribe(self._topic("cmd"), qos=1)
 
     def _on_disconnect(self, client, userdata, flags, reason_code, properties) -> None:
         if self.connected:
@@ -108,6 +121,9 @@ class GatewayLink:
         self.connected = False
 
     def _on_message(self, client, userdata, message) -> None:
+        if message.topic == self._topic("cmd"):
+            self._on_command(message.payload)
+            return
         # lorafield/gw/{gw}/node/{node}/valve/set
         node_id = message.topic.split("/")[4]
         if not message.payload:
@@ -121,3 +137,14 @@ class GatewayLink:
             return
         if isinstance(command, dict) and command.get("state") in ("open", "closed"):
             self.pending[node_id] = command
+
+    def _on_command(self, payload: bytes) -> None:
+        """Topik cmd: hanya action wifi_portal yang dikenal, sisanya diabaikan (kontrak MQTT)."""
+        try:
+            command = json.loads(payload)
+        except ValueError:
+            command = None
+        if isinstance(command, dict) and command.get("action") == "wifi_portal":
+            self.portal_requested = True
+        else:
+            print(f"[{self.gateway_id}] perintah server tidak dikenal, diabaikan")
