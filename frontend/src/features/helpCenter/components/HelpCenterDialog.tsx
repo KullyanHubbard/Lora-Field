@@ -23,10 +23,10 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent className="max-h-[90svh] max-w-md overflow-y-auto">
-        {/* Close button */}
         <Button
           variant="ghost"
           size="icon"
+          aria-label={t('helpCenter.close')}
           className="absolute right-2 top-2 size-8"
           onClick={onClose}
         >
@@ -36,7 +36,6 @@ export function HelpCenterDialog({ isOpen, onClose }: HelpCenterDialogProps) {
         <h2 className="mb-6 text-xl font-bold tracking-tight">{t('helpCenter.contact.title')}</h2>
 
         <div className="grid gap-4">
-          {/* Email */}
           <Card>
             <CardContent className="flex items-start gap-3.5 p-4">
               <Mail className="mt-0.5 size-5 shrink-0 text-primary" />

@@ -36,7 +36,7 @@ export interface ResetPasswordViewModel {
 }
 
 // Tautan di email reset membawa email di fragmen URL (#email=...), lihat forgot_password di backend.
-export function emailFromResetLink(hash: string): string {
+function emailFromResetLink(hash: string): string {
   const email = new URLSearchParams(hash.replace(/^#/, '')).get('email')?.trim() ?? '';
   return isValidEmail(email) ? email : '';
 }

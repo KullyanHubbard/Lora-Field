@@ -7,7 +7,7 @@ import {
   IRRIGATION_ACTIVITY_LABEL_KEYS,
   type IrrigationActivity,
 } from '@/features/irrigation/irrigationHelpers';
-import { LimitedIrrigationCard } from '@/features/irrigation/components/LimitedIrrigationCard';
+import { LimitedIrrigationSection } from '@/features/irrigation/components/LimitedIrrigationSection';
 import type { Farm, FarmSummary } from '@/types';
 import { ACCENT_TEXT } from '@/lib/toneClasses';
 import { cn } from '@/lib/utils';
@@ -49,7 +49,7 @@ export function IrrigationHeaderCard({
           </div>
         </div>
         <div className="border-t border-border/60 pt-3">
-          <LimitedIrrigationCard farm={farm} />
+          <LimitedIrrigationSection farm={farm} />
         </div>
       </CardContent>
     </Card>

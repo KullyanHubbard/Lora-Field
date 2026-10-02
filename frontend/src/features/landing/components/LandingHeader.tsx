@@ -81,7 +81,6 @@ export function LandingHeader({ isMenuOpen, onMenuToggle, onMenuClose }: Landing
           </Button>
         </div>
       </div>
-      {/* Mobile menu */}
       <AnimatePresence mode="wait">
         {isMenuOpen ? (
           <motion.div
@@ -90,7 +89,7 @@ export function LandingHeader({ isMenuOpen, onMenuToggle, onMenuClose }: Landing
             animate={LANDING_REVEAL_VISIBLE}
             exit={{ opacity: 0, y: -LANDING_REVEAL_OFFSET }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-x-0 top-16 border-b bg-background/95 backdrop-blur-lg md:hidden"
+            className="absolute inset-x-0 top-16 border-b bg-background md:hidden"
           >
             <div className={`${LANDING_SHELL} flex flex-col gap-4 py-4`}>
               <a href="#features" className="py-2 text-sm font-medium" onClick={onMenuClose}>

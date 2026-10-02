@@ -1,4 +1,4 @@
-// Dashboard summary grid: 3-column layout for /farms/:id (Dashboard).
+// Grid Ringkasan Kebun 3 kolom untuk /farms/:id (Dashboard).
 import { GatewayInfoContent } from '@/features/dashboard/components/DashboardGatewayInfoContent';
 import { ActivityLogCard } from '@/features/dashboard/components/ActivityLogCard';
 import { BatteryNodesCard } from '@/features/dashboard/components/BatteryNodesCard';

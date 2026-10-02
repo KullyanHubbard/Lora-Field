@@ -567,7 +567,7 @@
     "heroImageFallback": "Pratinjau tidak tersedia",
     "featuresBadge": "Fitur",
     "featuresTitle": "Teknologi Irigasi Modern dalam Satu Platform",
-    "featuresSubtitle": "LoraField menggabungkan sensor IoT, data cuaca BMKG, dan otomatisasi katup untuk memberikan kontrol penuh atas irigasi kebunmu dari mana saja.",
+    "featuresSubtitle": "LoraField menggabungkan sensor IoT, data cuaca BMKG, dan otomatisasi valve untuk memberikan kontrol penuh atas irigasi kebunmu dari mana saja.",
     "howItWorksBadge": "Tiga Langkah Mudah",
     "howItWorksTitle": "Pasang, Atur, Pantau. Selesai.",
     "howItWorksSubtitle": "Tidak perlu keahlian teknis. Cukup pasang perangkat, daftar kebun, dan biarkan sistem mengatur irigasi secara otomatis.",
@@ -578,18 +578,18 @@
     "ctaButton": "Mulai Monitoring",
     "footerNav": "Navigasi",
     "footerAbout": "LoraField",
-    "footerAboutDesc": "Sistem irigasi pintar berbasis web dengan sensor IoT, data cuaca BMKG, dan otomatisasi katup. Pantau dan kendalikan kebunmu dari mana saja.",
+    "footerAboutDesc": "Sistem irigasi pintar berbasis web dengan sensor IoT, data cuaca BMKG, dan otomatisasi valve. Pantau dan kendalikan kebunmu dari mana saja.",
     "footerFeatures": "Fitur",
     "footerFaq": "FAQ",
     "toggleMenu": "Buka menu",
     "featuresItems": [
       {
         "title": "Monitoring Sensor Real-Time",
-        "description": "Pantau kelembaban tanah, suhu, dan kelembaban udara dari setiap node sensor secara langsung."
+        "description": "Pantau kelembapan tanah, suhu, dan kelembapan udara dari setiap node sensor secara langsung."
       },
       {
         "title": "Irigasi Otomatis Cerdas",
-        "description": "Katup irigasi buka/tutup otomatis berdasarkan kondisi tanah dan prediksi cuaca."
+        "description": "Valve irigasi buka/tutup otomatis berdasarkan kondisi tanah dan prediksi cuaca."
       },
       {
         "title": "Prediksi Cuaca BMKG",
@@ -622,13 +622,13 @@
       {
         "step": "03",
         "title": "Pantau & Serahkan ke Sistem",
-        "description": "Lihat data real-time dari dashboard. Katup irigasi akan bekerja otomatis berdasarkan tanah dan cuaca."
+        "description": "Lihat data real-time dari dashboard. Valve irigasi akan bekerja otomatis berdasarkan tanah dan cuaca."
       }
     ],
     "faqItems": [
       {
         "question": "Apa itu LoraField dan bagaimana cara kerjanya?",
-        "answer": "LoraField adalah sistem irigasi pintar berbasis web yang menggabungkan sensor IoT, data cuaca dari BMKG, dan otomatisasi katup. Sensor di kebunmu membaca kondisi tanah secara real-time, lalu sistem menentukan apakah irigasi perlu dibuka, ditutup, atau ditunda berdasarkan kelembaban tanah dan prediksi cuaca. Semua data bisa kamu pantau langsung dari dashboard."
+        "answer": "LoraField adalah sistem irigasi pintar berbasis web yang menggabungkan sensor IoT, data cuaca dari BMKG, dan otomatisasi valve. Sensor di kebunmu membaca kondisi tanah secara real-time, lalu sistem menentukan apakah irigasi perlu dibuka, ditutup, atau ditunda berdasarkan kelembapan tanah dan prediksi cuaca. Semua data bisa kamu pantau langsung dari dashboard."
       },
       {
         "question": "Apakah saya perlu keahlian teknis untuk memasang perangkat?",
@@ -644,7 +644,7 @@
       },
       {
         "question": "Apakah sistem ini bisa digunakan untuk tanaman selain padi?",
-        "answer": "Bisa. LoraField mendukung berbagai jenis tanaman, seperti cabai, tomat, dan melon. Tiap tanaman memiliki ambang batas kelembaban tanah (VWC) yang sudah tersimpan di sistem, jadi irigasi akan disesuaikan dengan kebutuhan masing-masing."
+        "answer": "Bisa. LoraField mendukung berbagai jenis tanaman, seperti cabai, tomat, dan melon. Tiap tanaman memiliki ambang batas kelembapan tanah (VWC) yang sudah tersimpan di sistem, jadi irigasi akan disesuaikan dengan kebutuhan masing-masing."
       },
       {
         "question": "Apakah data kebun saya aman?",
@@ -721,6 +721,7 @@
     "cancel": "Batal"
   },
   "helpCenter": {
+    "close": "Tutup",
     "contact": {
       "title": "Hubungi Kami",
       "email": "Email",

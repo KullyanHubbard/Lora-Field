@@ -38,7 +38,6 @@ export function MyFarmsCard({
           </div>
         </div>
 
-        {/* Detail info */}
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div className="rounded-lg bg-muted/40 p-3">
             <div className="text-xs text-muted-foreground">{t('myFarms.cardLocation')}</div>

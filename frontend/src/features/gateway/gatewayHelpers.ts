@@ -12,7 +12,6 @@ export const GATEWAY_EVENT_FILTERS = ['all', 'connected', 'disconnected', 'resta
 
 export type GatewayEventFilter = (typeof GATEWAY_EVENT_FILTERS)[number];
 
-// Map of event values to their i18n keys
 const GATEWAY_EVENT_LABEL_KEYS: Record<string, string> = {
   all: 'gateway.filterAll',
   connected: 'gateway.filterConnected',
@@ -90,7 +89,6 @@ export function paginateGatewayLogs(logs: GatewayLog[], page: number) {
   return logs.slice(start, start + GATEWAY_LOGS_PER_PAGE);
 }
 
-// Returns i18n key for gateway event label
 export function getGatewayEventLabelKey(event: string): string {
   return (
     GATEWAY_EVENT_LABEL_KEYS[event] ??

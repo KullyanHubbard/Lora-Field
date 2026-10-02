@@ -13,7 +13,7 @@ class SensorReadingIn(BaseModel):
     air_humidity: float = Field(..., ge=0, le=100)
     battery: float | None = Field(default=None, ge=0, le=100, description="Persentase baterai node, kalau perangkat melaporkannya")
     rssi: float | None = Field(default=None, ge=-150, le=0, description="Kuat sinyal paket ini (dBm), diukur gateway saat menerima")
-    farm_id: str | None = Field(default=None, description="Required for first-time node self-registration")
+    farm_id: str | None = Field(default=None, description="Wajib untuk node yang belum terdaftar (self-registration)")
 
 
 # Pesan MQTT dari gateway (docs/kontrak-mqtt.md). Tidak dipakai route HTTP.

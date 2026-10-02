@@ -26,11 +26,16 @@ import type { Farm } from '@/types';
 
 type OpenDialog = 'help' | 'start' | 'edit' | 'stop' | null;
 
-export function LimitedIrrigationCard({ farm }: { farm: Farm }) {
+export function LimitedIrrigationSection({ farm }: { farm: Farm }) {
   const { t, i18n } = useTranslation();
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const stop = useStopLimitedIrrigation(farm.id);
   const isManual = farm.irrigation_mode === 'manual';
+  const isRice = isRiceCrop(farm.crop_type);
+  // Keterangan saat Irigasi Terbatas tidak aktif: padi tidak memakainya, mode manual tidak bisa memulainya.
+  let idleNoteKey: string | null = null;
+  if (isRice) idleNoteKey = 'limitedIrrigation.riceNote';
+  else if (isManual) idleNoteKey = 'limitedIrrigation.autoOnly';
   const close = () => setDialog(null);
 
   return (
@@ -64,11 +69,9 @@ export function LimitedIrrigationCard({ farm }: { farm: Farm }) {
               <span className="text-muted-foreground">{t('limitedIrrigation.manualNote')}</span>
             )}
           </div>
-        ) : isRiceCrop(farm.crop_type) ? (
-          <span className="text-muted-foreground">{t('limitedIrrigation.riceNote')}</span>
-        ) : isManual ? (
-          <span className="text-muted-foreground">{t('limitedIrrigation.autoOnly')}</span>
-        ) : null}
+        ) : (
+          idleNoteKey && <span className="text-muted-foreground">{t(idleNoteKey)}</span>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
@@ -81,11 +84,13 @@ export function LimitedIrrigationCard({ farm }: { farm: Farm }) {
               {t('limitedIrrigation.stop')}
             </Button>
           </>
-        ) : !isRiceCrop(farm.crop_type) ? (
-          <Button size="sm" disabled={isManual} onClick={() => setDialog('start')}>
-            {t('limitedIrrigation.start')}
-          </Button>
-        ) : null}
+        ) : (
+          !isRice && (
+            <Button size="sm" disabled={isManual} onClick={() => setDialog('start')}>
+              {t('limitedIrrigation.start')}
+            </Button>
+          )
+        )}
       </div>
 
       {dialog === 'help' && (

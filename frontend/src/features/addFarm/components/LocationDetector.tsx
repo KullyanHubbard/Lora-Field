@@ -106,7 +106,7 @@ export function LocationDetector({
     [locationHint, onLatChange, onLngChange, onAdm4Change, resolveAdm4, t],
   );
 
-  // Auto-detect once on mount if coordinates are still empty (preserves original behaviour).
+  // Deteksi otomatis sekali saat halaman dibuka kalau koordinat masih kosong (perilaku versi lama).
   useEffect(() => {
     if (autoTriggered.current) return;
     autoTriggered.current = true;

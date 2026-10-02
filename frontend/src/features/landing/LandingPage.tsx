@@ -38,18 +38,15 @@ export default function LandingPage() {
         onMenuClose={handleMenuClose}
       />
       <main className="flex-1">
-        {/* Hero Section */}
         <LandingHero />
 
-        {/* Features Section */}
         <LandingFeatures />
 
-        {/* How It Works Section */}
         <LandingSteps />
 
         <LandingFaq />
 
-        {/* CTA Section */}
+        {/* Ajakan penutup */}
         <section className="relative w-full overflow-hidden bg-gradient-to-br from-primary to-primary/80 py-20 text-primary-foreground md:py-32">
           <div className={`absolute inset-0 -z-10 ${LANDING_GRID}`}></div>
           <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-foreground/10 blur-3xl"></div>

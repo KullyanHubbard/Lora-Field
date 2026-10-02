@@ -730,6 +730,7 @@
     ]
   },
   "helpCenter": {
+    "close": "Close",
     "contact": {
       "title": "Contact Us",
       "email": "Email",
