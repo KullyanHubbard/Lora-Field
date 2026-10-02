@@ -13,7 +13,7 @@ Isolasi:
   - Cuaca BMKG di-seed manual ke weather_cache, jadi tidak ada panggilan keluar.
   - Resend dimatikan (resend_api_key dikosongkan), OTP dibaca lewat expose_dev_tokens.
 
-Dua endpoint memang butuh internet (GET /api/weather dan GET /api/utils/resolve-adm4).
+Dua cek memang butuh internet (ambil prakiraan BMKG asli dan GET /api/utils/resolve-adm4).
 Keduanya dilewati secara default; aktifkan dengan flag --network.
 
 Jalankan dari root project atau dari folder backend/:
@@ -60,7 +60,7 @@ settings.mqtt_host = ""            # jangan sambung ke broker sungguhan; bagian 
 from fastapi.testclient import TestClient  # noqa: E402
 import app.bmkg as bmkg_module  # noqa: E402
 from app.bmkg import set_cached_weather  # noqa: E402
-from app.irrigation import auto_decision  # noqa: E402
+from app.irrigation import auto_decision, calculate_decision  # noqa: E402
 from app.reading_service import apply_reading  # noqa: E402
 from app import mqtt_bridge  # noqa: E402
 from app import reading_service  # noqa: E402
@@ -1095,17 +1095,12 @@ def run(report: Report, with_network: bool) -> None:
             client.get(f"/api/nodes/{node_a}/readings", params={"hours": 1000}, headers=auth).status_code == 422,
         )
 
-        dec = report.expect(
-            "GET /api/decision",
-            client.get("/api/decision", params={"soil_moisture": 30, "rain_next_3h": True}, headers=auth),
-            200,
-            ("soil_moisture", "rain_next_3h", "thresholds", "decision"),
-        )
-        report.check(
-            "kelembapan rendah + hujan -> irigasi ditunda",
-            dec.get("decision", {}).get("type") == "delayed",
-            f"type = {dec.get('decision', {}).get('type')}",
-        )
+        tunda = calculate_decision(30, True)
+        report.check("kelembapan rendah + hujan -> irigasi ditunda", tunda["type"] == "delayed", f"type = {tunda['type']}")
+        # Endpoint debug /api/weather dan /api/decision dihapus 2026-10-03 (tidak dipakai web, /api/weather
+        # selalu memanggil BMKG tanpa cache).
+        status_debug = [client.get(path, headers=auth).status_code for path in ("/api/weather", "/api/decision")]
+        report.check("endpoint debug cuaca dan keputusan sudah tidak ada (404)", status_debug == [404, 404], f"status {status_debug}")
 
         logs = report.expect("GET /api/logs", client.get("/api/logs", headers=auth), 200, ("items",))
         log_items = logs.get("items") or []
@@ -1262,11 +1257,11 @@ def run(report: Report, with_network: bool) -> None:
         report.check("cuaca dilayani dari cache", weather.get("from_cache") is True)
 
         if with_network:
-            report.expect(
-                "GET /api/weather?adm4= (internet)",
-                client.get("/api/weather", params={"adm4": ADM4}, headers=auth),
-                200,
-                ("provider", "condition"),
+            asli = bmkg_module.fetch_bmkg_weather(ADM4)
+            report.check(
+                "prakiraan BMKG asli terbaca (internet)",
+                bool(asli.get("provider")) and "condition" in asli,
+                f"kunci {sorted(asli)}",
             )
             report.expect(
                 "GET /api/utils/resolve-adm4 (internet)",
@@ -1274,7 +1269,7 @@ def run(report: Report, with_network: bool) -> None:
                 200,
             )
         else:
-            report.skip("GET /api/weather?adm4=", "butuh internet, pakai --network")
+            report.skip("prakiraan BMKG asli", "butuh internet, pakai --network")
             report.skip("GET /api/utils/resolve-adm4", "butuh internet, pakai --network")
 
         section("Kendali valve")
@@ -2673,6 +2668,18 @@ def run(report: Report, with_network: bool) -> None:
                 "nama node dari web tidak ditimpa daftar node gateway",
                 ganti.get("node", {}).get("name") == "Blok Timur" and node_db().get("name") == "Blok Timur",
                 f"respons {ganti.get('node', {}).get('name')!r}, db {node_db().get('name')!r}",
+            )
+            node_nama_panjang = f"SIM-{suffix}-PJ"
+            kirim("nodes", {"nodes": [{"node_id": node_nama_panjang, "name": "  " + "Blok " * 12}]})
+            with database.get_connection() as connection:
+                nama_panjang = connection.execute(
+                    "SELECT name FROM nodes WHERE id = ?", (node_nama_panjang,)
+                ).fetchone()["name"]
+                connection.execute("DELETE FROM nodes WHERE id = ?", (node_nama_panjang,))
+            report.check(
+                "nama node dari gateway dipotong ke batas web (40 karakter)",
+                nama_panjang == ("Blok " * 12).strip()[:40].strip(),
+                f"nama {nama_panjang!r} ({len(nama_panjang)} karakter)",
             )
 
             reading_mqtt(10.0, "closed")

@@ -24,8 +24,14 @@ class MqttReadingIn(SensorReadingIn):
     valve: Literal["open", "closed"] = Field(..., description="Posisi valve sebenarnya di node")
 
 
+# Batas nama node, sama untuk ganti nama di web dan nama dari gateway.
+NODE_NAME_MAX_LENGTH = 40
+
+
 class MqttNodeItem(BaseModel):
     node_id: str = Field(..., pattern=DEVICE_ID_PATTERN)
+    # Nama lebih panjang dari NODE_NAME_MAX_LENGTH tetap diterima lalu dipotong saat disimpan,
+    # supaya node tetap terdaftar.
     name: str = Field(default="", max_length=100)
 
 
@@ -41,7 +47,7 @@ class NodeLocationUpdate(BaseModel):
 
 
 class NodeNameUpdate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=40)
+    name: str = Field(..., min_length=1, max_length=NODE_NAME_MAX_LENGTH)
 
 
 class ThresholdConfig(BaseModel):

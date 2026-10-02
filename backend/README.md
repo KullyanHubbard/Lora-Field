@@ -103,10 +103,10 @@ Ringkasan kontrak API untuk frontend ada di section "Backend Endpoints" di `CLAU
 
 ## Contoh
 
-Ambil cuaca BMKG (butuh bearer token):
+Ambil cuaca BMKG kebun (butuh bearer token):
 
 ```bash
-curl -H "Authorization: Bearer <token>" "http://127.0.0.1:8000/api/weather?adm4=31.71.01.1001"
+curl -H "Authorization: Bearer <token>" "http://127.0.0.1:8000/api/farms/<farm_id>/weather"
 ```
 
 Payload `POST /api/nodes/{node_id}/readings?adm4=...` (untuk node baru, sertakan `farm_id`). `?adm4=` opsional dan hanya dipakai kalau kebun belum punya kode BMKG:

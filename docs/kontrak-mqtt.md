@@ -96,7 +96,7 @@ Last Will.
 ```
 
 Daftar node yang dikelola gateway. Dikirim ulang tiap heartbeat, karena pengguna bisa mendaftarkan
-kebun di web setelah gateway menyala dan pesan saat tersambung sudah terlewat. `name` opsional; kalau kosong server memberi nama
+kebun di web setelah gateway menyala dan pesan saat tersambung sudah terlewat. `name` opsional, maksimal 40 karakter (lebih panjang dipotong server); kalau kosong server memberi nama
 `Node <4 karakter terakhir ID>`. `name` hanya dipakai saat node pertama terdaftar; setelah itu nama diatur di web
 dan tidak ditimpa daftar ini. Pesan ini hanya mendaftarkan node. Status online node tetap ditentukan
 dari data sensor, bukan dari daftar ini.

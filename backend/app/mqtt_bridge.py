@@ -22,7 +22,7 @@ from .gateway_service import farm_gateway, last_link_event
 from .irrigation import manual_decision
 from .node_service import default_node_name, insert_node
 from .reading_service import apply_reading
-from .schemas import DEVICE_ID_PATTERN, MqttNodeList, MqttReadingIn
+from .schemas import DEVICE_ID_PATTERN, NODE_NAME_MAX_LENGTH, MqttNodeList, MqttReadingIn
 
 logger = logging.getLogger("lorafield.mqtt")
 
@@ -250,7 +250,7 @@ def _handle_nodes(gateway_id: str, data: dict) -> None:
                     connection,
                     item.node_id,
                     farm["id"],
-                    item.name or default_node_name(item.node_id),
+                    item.name.strip()[:NODE_NAME_MAX_LENGTH].strip() or default_node_name(item.node_id),
                     gateway_id=gateway_id,
                 )
                 # Terdaftar belum berarti online: status node hanya dari data sensor.
