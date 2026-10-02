@@ -2,7 +2,7 @@
 // dengan alat: sesuaikan dengan wiring dan hasil kalibrasi tim IoT sebelum di-flash.
 #pragma once
 
-#define FIRMWARE_VERSION "0.2.0"
+#define FIRMWARE_VERSION "0.2.1"
 
 // Radio LoRa, board LilyGO T3 v1.6.1 (PlatformIO: ttgo-lora32-v21). Versi board lain beda pin.
 // Uji alat 2026-10-01, LoRa32 V2.1 915 MHz: radio terdeteksi (SCK, MISO, MOSI, SS benar). RST dan DIO0
@@ -59,6 +59,8 @@
 #define PORTAL_SUCCESS_NOTICE_MS 8000UL
 // WiFi putus saat gateway berjalan (keputusan user, 2026-10-02): sambung ulang dipaksa tiap 30 detik
 // selama 10 menit; kalau tetap gagal, radio WiFi istirahat 30 menit (hemat daya), lalu coba lagi.
+// Uji alat 2026-10-02 (router ZTE dimatikan 2 menit): firmware 0.2.1 tersambung lagi sekitar 1 menit
+// setelah router menyala; masa istirahat 30 menit lalu coba lagi juga terbukti (tersambung dalam 5 detik).
 #define WIFI_RECONNECT_WINDOW_MS 600000UL
 #define WIFI_RECONNECT_EVERY_MS 30000UL
 #define WIFI_REST_MS 1800000UL

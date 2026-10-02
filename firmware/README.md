@@ -102,10 +102,15 @@ perintah `wifi_portal` (topik `cmd`), gateway mengirim status offline lalu membu
 WiFi lama sebagai cadangan.
 
 Ganti WiFi atau password router: tekan tombol RST dua kali dalam 3 detik. Portal dibuka 5 menit
-tanpa menghapus WiFi lama; kalau tidak ada WiFi baru yang disimpan, gateway kembali memakai WiFi lama
+tanpa menghapus WiFi lama; kalau tidak ada WiFi baru yang berhasil tersambung, gateway kembali memakai WiFi lama
 (listrik berkedip dua kali tidak membuat gateway kehilangan WiFi). Restart karena brownout tidak
 dihitung, dan permintaan portal tetap tersimpan sampai portal benar-benar terbuka. Lewat Serial:
 `portal` (buka portal) atau `forget wifi` (hapus WiFi).
+
+WiFiManager langsung menyimpan WiFi yang diketik di portal walau gagal tersambung. Karena itu gateway
+menyalin WiFi lama sebelum portal dibuka dan memasangnya lagi kalau portal ditutup tanpa tersambung
+(`wifiNeedsRestore`, dites di PC). Terbukti di alat 2026-10-02 (firmware 0.2.1): password salah lalu
+portal ditinggal, gateway kembali ke WiFi lama. Di firmware 0.2.0 WiFi lama hilang.
 
 Perilaku saat menyala: WiFi tersimpan dicoba 3 kali masing-masing 20 detik. Kalau gagal, portal
 dibuka, lalu WiFi tersimpan dicoba lagi, bergantian, sampai tersambung (misalnya router menyala lebih
@@ -117,7 +122,11 @@ tersambung, supaya tidak dijalankan belakangan.
 
 WiFi putus saat gateway berjalan (router mati, sinyal hilang): portal tidak dibuka. Gateway memaksa
 sambung ulang tiap 30 detik selama 10 menit (juga untuk penyebab putus yang tidak dicoba ulang sendiri
-oleh driver WiFi). Kalau tetap gagal, radio WiFi dimatikan 30 menit supaya hemat daya, lalu dicoba lagi
+oleh driver WiFi): radio WiFi dimatikan lalu dinyalakan dari nol, dan alasan gagalnya ditulis di Serial
+(mis. `NO_AP_FOUND` = WiFi tidak terlihat, `AUTH_FAIL` = ditolak). Uji alat 2026-10-02: di firmware 0.2.0
+(`WiFi.reconnect()`) gateway tidak tersambung lagi selama 10 menit setelah router restart; di 0.2.1
+tersambung sekitar 1 menit setelah router menyala. Router ZTE yang baru menyala sempat menolak dengan
+`AUTH_FAIL` walau password benar. Kalau tetap gagal, radio WiFi dimatikan 30 menit supaya hemat daya, lalu dicoba lagi
 10 menit, bergantian, sampai tersambung. Begitu tersambung, MQTT menyambung dalam 5 detik. Angkanya di
 `config.h` (`WIFI_RECONNECT_*`, `WIFI_REST_MS`), jadwalnya di `WifiRecovery` (`lib/lorafield`, dites di
 PC). Kalau password router diganti, gateway tidak akan tersambung sendiri: pakai RST dua kali.

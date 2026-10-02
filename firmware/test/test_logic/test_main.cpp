@@ -301,6 +301,17 @@ void test_wifi_recovery() {
   TEST_ASSERT_TRUE(wrap.update(false, 29000) == Action::Reconnect);
 }
 
+void test_wifi_needs_restore() {
+  // Password salah diketik di portal lalu portal ditinggal: WiFi lama dipasang lagi.
+  TEST_ASSERT_TRUE(wifiNeedsRestore("Rumah", "benar123", "Rumah", "salah123"));
+  // WiFi lain dipilih di portal tapi gagal: WiFi lama dipasang lagi.
+  TEST_ASSERT_TRUE(wifiNeedsRestore("Rumah", "benar123", "Tetangga", "abc12345"));
+  // Portal ditinggal tanpa mengetik apa pun: tidak ada yang ditulis ulang ke memori.
+  TEST_ASSERT_FALSE(wifiNeedsRestore("Rumah", "benar123", "Rumah", "benar123"));
+  // Alat baru tanpa WiFi lama: WiFi yang diketik dibiarkan.
+  TEST_ASSERT_FALSE(wifiNeedsRestore("", "", "Rumah", "salah123"));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_reading_packet_round_trip);
@@ -318,5 +329,6 @@ int main() {
   RUN_TEST(test_rank_networks);
   RUN_TEST(test_parse_gateway_command);
   RUN_TEST(test_wifi_recovery);
+  RUN_TEST(test_wifi_needs_restore);
   return UNITY_END();
 }

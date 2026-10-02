@@ -91,6 +91,11 @@ struct ScannedNetwork {
 };
 std::vector<ScannedNetwork> rankNetworks(const std::vector<ScannedNetwork>& scanned, size_t limit);
 
+// WiFiManager langsung menyimpan WiFi yang diketik di portal walau gagal tersambung (uji alat 2026-10-02:
+// password salah lalu portal ditinggal = WiFi lama hilang). Saat portal ditutup tanpa tersambung, WiFi
+// tersimpan sebelum portal dipasang lagi kalau berbeda. Alat tanpa WiFi lama: tidak ada yang dipulihkan.
+bool wifiNeedsRestore(const char* before_ssid, const char* before_pass, const char* now_ssid, const char* now_pass);
+
 // Perintah server ke gateway, topik lorafield/gw/{gw}/cmd (docs/kontrak-mqtt.md).
 enum class GatewayCommand { Unknown, WifiPortal };
 GatewayCommand parseGatewayCommand(const uint8_t* payload, size_t len);

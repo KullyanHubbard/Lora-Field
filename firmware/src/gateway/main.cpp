@@ -14,6 +14,7 @@
 #include <WiFiManager.h>
 #include <esp_mac.h>
 #include <esp_system.h>
+#include <esp_wifi.h>
 #include <lorafield.h>
 #include <soc/rtc_cntl_reg.h>
 #include <time.h>
@@ -71,6 +72,8 @@ bool wifi_portal_requested = false;  // perintah "Ganti WiFi" dari web, dijalank
 // diam; jadi permintaan status yang terlayani saat masih Connecting berarti percobaan itu gagal.
 enum class PortalLink { Idle, Connecting, Connected };
 PortalLink portal_link = PortalLink::Idle;
+// Alasan WiFi terakhir putus atau gagal tersambung (kode driver ESP32), untuk pesan Serial.
+volatile uint8_t wifi_disconnect_reason = 0;
 WifiRecovery wifi_recovery(WIFI_RECONNECT_WINDOW_MS, WIFI_RECONNECT_EVERY_MS, WIFI_REST_MS);
 
 void topicFor(char* out, size_t len, const char* suffix) {
@@ -373,6 +376,32 @@ void setBrownoutDetector(bool enabled) {
   brownout_detector_off = !enabled;
 }
 
+struct WifiCredentials {
+  char ssid[33];
+  char pass[65];
+};
+
+// WiFi tersimpan di memori WiFi ESP32 (radio WiFi harus sudah menyala).
+WifiCredentials storedWifi() {
+  WifiCredentials creds = {};
+  wifi_config_t conf;
+  if (esp_wifi_get_config(WIFI_IF_STA, &conf) == ESP_OK) {
+    memcpy(creds.ssid, conf.sta.ssid, sizeof conf.sta.ssid);
+    memcpy(creds.pass, conf.sta.password, sizeof conf.sta.password);
+  }
+  return creds;
+}
+
+// Portal ditutup tanpa tersambung: WiFi yang gagal diketik di portal diganti lagi dengan WiFi lama
+// (wifiNeedsRestore, lib/lorafield).
+void restoreWifi(const WifiCredentials& before) {
+  WifiCredentials now = storedWifi();
+  if (!wifiNeedsRestore(before.ssid, before.pass, now.ssid, now.pass)) return;
+  WiFi.persistent(true);  // WiFiManager mematikannya setelah menyimpan WiFi dari portal
+  WiFi.begin(before.ssid, before.pass, 0, nullptr, false);
+  Serial.printf("WiFi dari portal tidak tersambung, WiFi lama (%s) dipakai lagi\n", before.ssid);
+}
+
 void redirectToWifiPage(WiFiManager& wm) {
   wm.server->sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/wifi", true);
   wm.server->send(302, "text/plain", "");
@@ -436,6 +465,7 @@ void connectWifi(bool open_portal) {
   setBrownoutDetector(false);
   portal_link = PortalLink::Idle;
   WiFi.mode(WIFI_STA);
+  WifiCredentials before = storedWifi();
   WiFiManager wm;
   wm.setDebugOutput(false);
   wm.setTitle("LoraField");
@@ -488,9 +518,11 @@ void connectWifi(bool open_portal) {
     Serial.println("Portal diminta (RST dua kali atau Ganti WiFi dari web): kalau WiFi tidak diganti, WiFi lama tetap dipakai.");
     connected = wm.startConfigPortal(portal_ssid, settings.ap_pass);
     setPortalRequest(false);
+    if (!connected) restoreWifi(before);
   }
   if (!connected) Serial.println("Menyambung WiFi...");
   while (!connected && !wm.autoConnect(portal_ssid, settings.ap_pass)) {
+    restoreWifi(before);
     Serial.println("Portal ditutup tanpa WiFi baru, mencoba WiFi tersimpan lagi");
   }
   Serial.printf("WiFi tersambung: %s, IP %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
@@ -569,12 +601,27 @@ void setup() {
   LoRa.setSyncWord(LORA_SYNC_WORD);
   LoRa.enableCrc();
 
+  WiFi.onEvent(
+      [](WiFiEvent_t, WiFiEventInfo_t info) {
+        uint8_t reason = info.wifi_sta_disconnected.reason;
+        // ASSOC_LEAVE = diputus gateway sendiri (radio dimatikan), bukan penyebab putus.
+        if (reason != WIFI_REASON_ASSOC_LEAVE) wifi_disconnect_reason = reason;
+      },
+      ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   connectWifi(open_portal);
   configTime(0, 0, "pool.ntp.org", "time.google.com");
   mqtt.setServer(settings.mqtt_host, settings.mqtt_port);
   mqtt.setBufferSize(1024);
   mqtt.setKeepAlive(60);
   mqtt.setCallback(onMqttMessage);
+}
+
+// Radio WiFi dimatikan, dinyalakan dari nol, lalu menyambung ke WiFi tersimpan.
+void restartWifiRadio() {
+  setBrownoutDetector(false);  // radio menyala lagi: lonjakan arus yang sama seperti saat boot
+  WiFi.mode(WIFI_OFF);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin();  // WiFi tersimpan dari portal
 }
 
 // WiFi putus saat berjalan: portal tidak dibuka (router yang restart tidak boleh membuat gateway pindah ke
@@ -585,9 +632,12 @@ void handleWifiRecovery(unsigned long now) {
       Serial.println("WiFi putus, menyambung ulang otomatis");
       break;
     case WifiRecovery::Action::Reconnect:
-      // Driver WiFi berhenti mencoba sendiri untuk sebagian penyebab putus (mis. ditolak router saat
-      // router baru menyala), jadi sambung ulang dipaksa berkala.
-      WiFi.reconnect();
+      // Driver WiFi berhenti mencoba sendiri untuk sebagian penyebab putus, jadi sambung ulang dipaksa
+      // berkala. Uji alat 2026-10-02: setelah router restart, WiFi.reconnect() gagal terus selama 10 menit,
+      // sedangkan radio yang dinyalakan dari nol (akhir masa istirahat) tersambung dalam 5 detik.
+      Serial.printf("WiFi belum tersambung (alasan: %s), radio WiFi dinyalakan ulang\n",
+                    WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(wifi_disconnect_reason)));
+      restartWifiRadio();
       break;
     case WifiRecovery::Action::RadioOff:
       Serial.printf("WiFi belum kembali setelah %lu menit: radio WiFi istirahat %lu menit\n",
@@ -597,9 +647,7 @@ void handleWifiRecovery(unsigned long now) {
       break;
     case WifiRecovery::Action::RadioOn:
       Serial.println("Mencoba WiFi lagi setelah istirahat");
-      setBrownoutDetector(false);  // radio menyala lagi: lonjakan arus yang sama seperti saat boot
-      WiFi.mode(WIFI_STA);
-      WiFi.begin();  // WiFi tersimpan dari portal
+      restartWifiRadio();
       break;
     case WifiRecovery::Action::None:
       break;

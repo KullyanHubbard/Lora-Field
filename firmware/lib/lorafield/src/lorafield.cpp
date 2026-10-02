@@ -284,6 +284,11 @@ std::vector<ScannedNetwork> rankNetworks(const std::vector<ScannedNetwork>& scan
   return ranked;
 }
 
+bool wifiNeedsRestore(const char* before_ssid, const char* before_pass, const char* now_ssid, const char* now_pass) {
+  if (before_ssid[0] == '\0') return false;
+  return strcmp(before_ssid, now_ssid) != 0 || strcmp(before_pass, now_pass) != 0;
+}
+
 GatewayCommand parseGatewayCommand(const uint8_t* payload, size_t len) {
   JsonDocument doc;
   if (deserializeJson(doc, payload, len)) return GatewayCommand::Unknown;
