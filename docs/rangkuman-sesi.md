@@ -397,3 +397,79 @@ Item baru:
 - Validator email menolak domain `.test` (sudah tercatat di Sesi 2) dan terulang saat membuat akun uji.
 - Tangkapan layar browser sering gagal karena jendela tertutup jendela lain. Pengecekan dilanjutkan lewat teks halaman, lalu tangkapan layar diulang.
 - Tiga kebun uji dihapus langsung di database karena endpoint hapus butuh login pemilik. Cadangan dibuat lebih dulu, dan data anak diperiksa kosong sebelum menghapus.
+
+## Sesi 5 (2026-10-01 s/d 2026-10-02)
+
+### Cakupan commit
+
+- Satu commit: `7c57cbe` "gateway done" (32 file), dibuat user dari seluruh hasil sesi ini. Titik awal: `d072970` "docs: rangkuman sesi 4".
+- Cek cepat: `git show --stat 7c57cbe`
+- Sesi dimulai dari prompt "Sesi 5: uji gateway asli" (tahap A sampai E). Atas permintaan user, cakupannya dibatasi ke tahap A sampai C (gateway, MQTT, web). Setelah itu user meminta semua pekerjaan mengarah ke produk siap jual, jadi sesi berlanjut ke pengaturan per alat, portal WiFi, dan tombol Ganti WiFi. Tahap D (node) dan E (valve) belum.
+
+### Perubahan per bagian
+
+| Bagian | Isi perubahan | Pemeriksaan |
+|--------|---------------|-------------|
+| Uji gateway asli | Board LoRa32 V2.1 915 MHz (sama dengan T3 v1.6.1, chip USB CH9102 di COM3), pin radio di `config.h` cocok. Gateway `GW-F024F9925898` tersambung WiFi, Mosquitto, server, lalu diklaim user ke kebun baru "Kebun Sawit Kaur" | Serial Monitor, log server, database |
+| Simulator | Dukungan password MQTT (`mqtt.password`, username = ID gateway, sama seperti gateway asli) | `test_sim.py` lolos, uji login ke broker percobaan |
+| Status gateway | Laporan terputus (status offline atau Last Will) langsung membuat gateway offline di summary; status online yang diterima ulang dari retain dihitung sebagai kabar tanpa entri log baru. Aturannya dipindah ke `gateway_link_state` (`gateway_service.py`) | Smoke 325 ke 329, uji versi salah tertangkap |
+| Heartbeat | 5 menit menjadi 10 menit (keputusan user): `config.h`, kontrak, config simulator | Tes firmware, `test_sim.py` |
+| Firmware gateway 0.2.0 | Pengaturan per alat di memori (`Preferences`: alamat dan port broker, password MQTT, password hotspot), mode pengaturan untuk alat baru, perintah Serial (`show`, `set`, `portal`, `forget wifi`, `restart`, `config` dalam 3 detik setelah menyala). `secrets.h` dihapus. Portal WiFiManager 2.0.17: hotspot `LoraField-XXXX` dengan password per alat, teks Indonesia (`wm_strings_id.h`), halaman bawaan berbahaya (`/update`, `/erase`, dan lainnya) ditutup, alamat cek internet HP dialihkan ke `/wifi`, portal 5 menit dan tidak ditutup selama ada HP tersambung. RST dua kali membuka portal tanpa menghapus WiFi lama (board uji tidak punya tombol BOOT); permintaan portal bertahan walau board restart karena brownout. Pendeteksi brownout dimatikan hanya selama `connectWifi`. Jam NTP tidak lagi ditunggu selamanya. Perintah Serial yang tertahan selama portal dibuang. WiFi putus saat berjalan: coba ulang 10 menit, radio istirahat 30 menit, bergantian (`WifiRecovery`). Perintah server `cmd` `wifi_portal` | Tes firmware 10 ke 15, uji versi salah tertangkap, compile gateway dan node, uji di alat |
+| Alat bantu produksi | `firmware/tools/provision.py`: isi pengaturan lewat USB, password MQTT diketik tersembunyi lalu dicek ke broker sebelum disimpan, password hotspot acak, cetak isi stiker dan QR code WiFi. Pilihan `--portal`, `--forget-wifi`, `--skip-mqtt-check` | Cek fungsi, uji login ke broker asli (benar diterima, salah ditolak) |
+| Halaman portal baru | `firmware/portal/index.html` menggantikan halaman `/wifi` WiFiManager: satu kartu, tiga tahap (pilih WiFi, password, status), gaya tema gelap web LoraField, font Geist ikut tertanam (`board_build.embed_*`). Status: Menghubungkan ke Wi-Fi, Terhubung ke Wi-Fi, Gagal Terhubung ke Wi-Fi (dengan tombol Coba Lagi). Alamat baru `/scan.json`, `/status.json`, `/geist.woff2`. Penyimpanan tetap lewat `/wifisave` WiFiManager | Pratinjau di browser dengan server tiruan (HP dan desktop, jalur berhasil dan gagal), tes `rankNetworks` |
+| Tombol Ganti WiFi | `POST /api/farms/{id}/gateway/wifi-portal` (404 tanpa gateway, 409 gateway offline, 503 MQTT nonaktif), topik MQTT `cmd` tanpa retain, event `wifi_portal` di gateway_logs. Web: tombol dan dialog di halaman Gateway (`GatewayWifiChange.tsx`), label log | Smoke 329 ke 332, uji versi salah tertangkap, OpenAPI hanya bertambah 1 endpoint, tsc, eslint, build |
+| Dokumen | `docs/rencana-produk.md` (baru), `docs/kontrak-mqtt.md`, `CLAUDE.md`, `firmware/README.md`, `simulator/README.md` | Pemeriksa diff `guard_diff.py` |
+
+### File
+
+- Backend: `backend/app/gateway_service.py`, `backend/app/mqtt_bridge.py`, `backend/app/routers/farms.py`, `backend/app/routers/gateways.py`, `backend/scripts/smoke_test.py`.
+- Firmware: `firmware/src/gateway/main.cpp`, `firmware/include/config.h`, `firmware/include/wm_strings_id.h` (baru), `firmware/include/secrets.example.h` (dihapus), `firmware/lib/lorafield/src/lorafield.h`, `firmware/lib/lorafield/src/lorafield.cpp`, `firmware/test/test_logic/test_main.cpp`, `firmware/platformio.ini`, `firmware/portal/index.html` (baru), `firmware/portal/geist-latin-wght-normal.woff2` (baru), `firmware/portal/GEIST-OFL.txt` (baru), `firmware/tools/provision.py` (baru), `firmware/README.md`.
+- Frontend: `frontend/src/features/gateway/GatewayPage.tsx`, `frontend/src/features/gateway/components/GatewayInfoCard.tsx`, `frontend/src/features/gateway/components/GatewayWifiChange.tsx` (baru), `frontend/src/features/gateway/gatewayHelpers.ts`, `frontend/src/features/gateway/queries.ts`, `frontend/src/lib/api.ts`, `frontend/src/i18n/locales/id.json`, `frontend/src/i18n/locales/en.json`.
+- Simulator: `simulator/gateway_link.py`, `simulator/config.example.json`, `simulator/README.md`.
+- Dokumen: `CLAUDE.md`, `docs/kontrak-mqtt.md`, `docs/rencana-produk.md` (baru).
+
+### Perubahan di luar repo
+
+- Mosquitto (dijalankan user): tambahan di akhir `C:\Program Files\Mosquitto\mosquitto.conf` (satu listener 1883, `listener_allow_anonymous false`, plugin password-file dan acl-file), `C:\mosquitto-data\passwd` (user `lorafield-server`, `GW-F024F9925898`, `SIM-GW-7585bd`, `SIM-GW-89706d`), `C:\mosquitto-data\acl`, dan `icacls` untuk memberi SYSTEM izin pada `passwd` dan `mosquitto.db`. Layanan terbukti menyala sendiri setelah komputer restart.
+- Windows (dijalankan user): profil jaringan Ethernet menjadi Private, aturan firewall "LoraField MQTT (jaringan lokal)" untuk TCP 1883, hanya Private dan subnet lokal.
+- `backend/.env`: `MQTT_HOST=127.0.0.1`, `MQTT_PORT=1883`, `MQTT_USERNAME=lorafield-server`, `MQTT_PASSWORD` (diisi Claude atas permintaan user, isi baris lain tidak dibaca). `simulator/config.json`: password dan heartbeat 10 menit. `firmware/include/secrets.h` sempat dibuat lalu dihapus.
+- Gateway: firmware 0.2.0 terpasang, memori alat berisi broker `192.168.1.4:1883`, password MQTT, dan password hotspot uji. Password hotspot uji disimpan di file scratchpad sesi (`password-hotspot-uji.txt`), yang bersifat sementara.
+- Database dev: kebun "Kebun Sawit Kaur" (`farm-821f3b6e`) dengan gateway `GW-F024F9925898`, dibuat user lewat web.
+- `frontend/dist` di-build ulang. Library WiFiManager diunduh PlatformIO (izin user).
+- Memory Claude: `target-siap-jual.md` (baru), `todo-lorafield.md` diperbarui.
+- Password MQTT sempat tertulis di chat oleh user dan dipakai sama untuk server, gateway, dan simulator.
+
+### Keputusan yang diambil
+
+- Broker: satu pintu 1883, semua klien wajib password, gateway hanya boleh di topiknya sendiri (ACL dengan pola `%u`), server memakai akun `lorafield-server`.
+- Gateway ke server tetap MQTT, bukan HTTPS. Server produksi: satu VPS dan domain untuk web, backend, Mosquitto, dan SQLite. Vercel dan Turso tidak dipakai dulu. Expo kampus memakai VPS itu. Anggapan sementara: gateway dipasang di rumah petani yang punya WiFi.
+- Semua pekerjaan mengarah ke produk siap jual; jalan pintas uji wajib ditandai (memory `target-siap-jual`).
+- Status gateway mengikuti koneksi: terputus langsung offline, tersambung langsung online, batas 15 menit tetap sebagai cadangan.
+- Heartbeat 10 menit.
+- Portal: WiFiManager, password hotspot unik per alat dicetak di stiker beserta QR code, 5 menit dan tetap terbuka selama ada HP tersambung, RST dua kali, WiFi lama tetap jadi cadangan.
+- WiFi putus saat berjalan: coba ulang 10 menit, radio istirahat 30 menit, bergantian, tanpa restart otomatis dan tanpa membuka portal.
+- Tombol "Ganti WiFi" di halaman Gateway web.
+- Layout portal tiga tahap sesuai prompt user, dengan teks status "Menghubungkan ke Wi-Fi", "Terhubung ke Wi-Fi", dan "Gagal Terhubung ke Wi-Fi".
+- Brownout: pendeteksi hanya dimatikan selama menyambung WiFi; perbaikan utamanya di sumber daya (rencana produk H2).
+
+### Belum dikerjakan saat Sesi 5 selesai
+
+- Konfirmasi di alat untuk tiga status portal baru (firmware sudah di-upload, user belum melaporkan hasilnya) dan jadwal pemulihan WiFi 10/30 menit (baru dites di PC). Yang sudah terbukti di alat: pengaturan dari memori, portal dari iPhone dan laptop, cadangan WiFi lama saat portal habis, tombol Ganti WiFi, status gateway langsung offline dan online, Mosquitto dan gateway tersambung lagi sendiri setelah komputer restart.
+- Tahap D (node) dan E (valve) dari prompt Sesi 5.
+- Sumber daya gateway: baterai Li-ion atau kapasitor, ukur kebutuhan adaptor (H2).
+- Ganti password MQTT yang tertulis di chat, bedakan password server dari password alat.
+- Backend tidak menyala sendiri setelah komputer restart (di VPS dibuat layanan, S1). Kunci alamat IP komputer di router sampai pindah ke VPS. Folder `C:\mosquitto-data` masih bisa diubah semua akun Windows.
+- Rencana produk lainnya: S1 sampai S5, F4 sampai F8, H2, P1, L1, L2 (`docs/rencana-produk.md`).
+- Usulan yang belum diputuskan: label "Belum Terhubung" di header Dashboard (artinya belum ada node) diganti "Belum Ada Node"; heartbeat tidak dicatat satu per satu di riwayat (hanya kejadian penting dan restart); pembaruan web langsung tanpa menunggu 30 detik; pilihan jaringan tersembunyi di portal.
+
+### Pelajaran dan kesalahan
+
+- `mosquitto --test-config` dengan `persistence true` meninggalkan `mosquitto.db.new` milik akun pengguna. Uji konfigurasi berikutnya memakai salinan dengan `persistence false`.
+- `mosquitto_passwd` membuat file yang hanya bisa dibaca pembuatnya, sehingga layanan Mosquitto (akun SYSTEM) mati saat dinyalakan ulang. Diperbaiki dengan `icacls`, dan langkah ini dicatat di CLAUDE.md.
+- Mosquitto 2.1 menandai `password_file` dan `acl_file` sebagai usang; dipakai `global_plugin` dengan `plugin_opt_*`.
+- Board LoRa32 tanpa baterai brownout saat radio WiFi menyala. Menurunkan daya pancar tidak menolong. Hotspot "tanpa nama" ternyata akibat brownout, bukan bug kode portal.
+- Skrip pemantau Serial sempat mengirim perintah "portal" tanpa sengaja (penggantian baris dengan `sed` gagal tanpa ketahuan), sehingga gateway membuka portal lagi tepat setelah tersambung. Sejak itu pemantau dicek tidak berisi perintah tulis sebelum dijalankan, dan firmware membuang perintah Serial yang tertahan.
+- Properti `.hidden` tidak berlaku untuk ikon SVG; ketahuan lewat pratinjau portal dengan server tiruan sebelum upload.
+- WiFiManager tetap mendaftarkan halaman berbahaya walau tidak tampil di menu; ditutup lewat `setWebServerCallback`, karena handler yang didaftarkan lebih dulu yang dipakai.
+- Upload firmware dan membuka port Serial biasa me-restart board; pemantauan memakai port dengan DTR dan RTS dilepas.
+- Uji versi salah tetap dipakai untuk setiap tes baru di smoke test dan tes firmware, dan semuanya tertangkap.
