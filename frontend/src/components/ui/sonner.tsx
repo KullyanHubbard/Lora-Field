@@ -3,8 +3,7 @@
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 import { CircleCheck, Info, TriangleAlert, OctagonX, Loader2 } from 'lucide-react';
 
-// Aplikasi selalu tema gelap (<html class="dark">), jadi toast dikunci gelap juga.
-// Ganti jadi mengikuti tema aplikasi saat toggle light mode dibuat.
+// Aplikasi hanya tema gelap (<html class="dark">), jadi toast dikunci gelap juga.
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner

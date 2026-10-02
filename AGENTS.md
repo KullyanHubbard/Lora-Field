@@ -241,7 +241,8 @@ Detail lengkap ada di `CLAUDE.md`. Ringkasnya:
 - Layout **Ringkasan Kebun** di Dashboard (3 kolom) dilindungi. Jangan ubah struktur, ukuran, atau
   posisi kartunya tanpa persetujuan user.
 - Tidak ada data dummy di kode frontend. Data uji datang dari `simulator/` lewat API.
-- Setiap perubahan harus aman di mode terang dan gelap, serta di layar HP (tanpa scroll horizontal).
+- Aplikasi hanya mode gelap (tidak ada mode terang). Setiap perubahan harus terbaca di mode gelap,
+  serta aman di layar HP (tanpa scroll horizontal). Kelas warna baru cukup versi gelapnya.
 
 ## Kalau user mengizinkan tugas di luar frontend
 
@@ -307,7 +308,7 @@ boleh dipakai untuk path yang user izinkan secara eksplisit di chat, jangan dipa
 
 Jangan bilang "bersih" atau "selesai" untuk cek yang tidak benar-benar kamu jalankan. Tulis
 "TIDAK DIJALANKAN" untuk yang tidak kamu jalankan, dan alasannya. Kalau ada yang gagal, katakan apa
-adanya dengan potongan outputnya. Perubahan tampilan: sebutkan halaman dan mode (terang, gelap, HP)
+adanya dengan potongan outputnya. Perubahan tampilan: sebutkan halaman dan layar (laptop, HP)
 yang perlu dicek user dengan mata, jangan mengaku sudah terlihat benar kalau kamu tidak membukanya.
 
 ## Kalau kamu melanggar aturan

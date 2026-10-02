@@ -1,8 +1,4 @@
 .landing-page {
-  --grid-line: oklch(0 0 0 / 7%);
-}
-
-.dark .landing-page {
   --grid-line: oklch(1 0 0 / 24%);
 }
 

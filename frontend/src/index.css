@@ -48,8 +48,10 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Aplikasi hanya mode gelap (keputusan user, 2026-10-03), jadi token tema hanya punya satu nilai.
+   <html class="dark"> tetap dipasang supaya varian dark: komponen shadcn aktif. */
 :root {
-  /* Palet grafik sensor & cuaca (dipakai lewat src/lib/chartColors.ts). Sama di dua mode. */
+  /* Palet grafik sensor & cuaca (dipakai lewat src/lib/chartColors.ts). */
   --chart-cyan: #06b6d4;
   --chart-emerald: #10b981;
   --chart-red: #ef4444;
@@ -60,12 +62,12 @@
   --chart-violet-soft: #a78bfa;
   --chart-sky: #0ea5e9;
   --chart-dot-ring: #ffffff;
-  /* Garis grafik kartu metrik Ringkasan Kebun, versi gelap ada di .dark. */
-  --chart-metric-soil-moisture: #06b6d4;
-  --chart-metric-soil-temp: #f97316;
-  --chart-metric-air-temp: #f59e0b;
-  --chart-metric-air-humidity: #0ea5e9;
-  /* Pilihan warna pin kebun di peta (Kebun Saya). Sama di light dan dark. */
+  /* Garis grafik kartu metrik Ringkasan Kebun. */
+  --chart-metric-soil-moisture: #22d3ee;
+  --chart-metric-soil-temp: #fb923c;
+  --chart-metric-air-temp: #fbbf24;
+  --chart-metric-air-humidity: #38bdf8;
+  /* Pilihan warna pin kebun di peta (Kebun Saya). */
   --marker-blue: #3b82f6;
   --marker-green: #22c55e;
   --marker-yellow: #eab308;
@@ -83,42 +85,6 @@
   --marker-rose: #f43f5e;
   --marker-teal: #14b8a6;
   --marker-dot: #ffffff;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  /* State aktif & hover sidebar: turunan hijau brand --primary (#00C896 = oklch 0.739 0.152 167). */
-  --sidebar-accent: oklch(0.95 0.05 167);
-  --sidebar-accent-foreground: oklch(0.4 0.1 167);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -142,10 +108,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --chart-metric-soil-moisture: #22d3ee;
-  --chart-metric-soil-temp: #fb923c;
-  --chart-metric-air-temp: #fbbf24;
-  --chart-metric-air-humidity: #38bdf8;
+  --radius: 0.625rem;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: #00c896;

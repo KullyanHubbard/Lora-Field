@@ -231,7 +231,7 @@ Saat ini tidak ada endpoint yang direncanakan tapi belum dibuat. Endpoint yang t
 
 - Dashboard Utama = ringkasan cepat semua kebun, BUKAN data detail. Peta Kebun Interaktif wajib ada di Dashboard. Card kebun adalah jalur alternatif selain map untuk masuk ke Detail Kebun.
 - Detail Kebun dibatasi hanya kebun yang dipilih (`useParams().id`).
-- Dukung dark mode dan light mode (di build baru lewat tema shadcn, toggle via class/`data-theme` di `<html>`). Pastikan style jalan di kedua mode.
+- Aplikasi hanya mode gelap (keputusan user, 2026-10-03; mode terang tidak dibuat). Token tema hanya punya nilai gelap di `:root` (`src/index.css`), dan `<html class="dark">` di `index.html` tetap dipasang supaya varian `dark:` komponen shadcn aktif. Kelas warna baru cukup versi gelapnya (tanpa pasangan `x dark:y`). Tidak ada tombol tema.
 - Badge status warna konsisten: green/yellow/red.
 - Progress bar selalu sertakan label range `0%` dan `100%`.
 - Landing page marketing publik ADA di route `/` (lihat tabel Routes). Aturan lama "jangan buat landing page" sudah dicabut user (2026-06-21). Dashboard tetap pengalaman utama bagi user yang sudah login; landing hanya etalase di `/` (publik, tanpa auth guard, untuk semua pengunjung).
@@ -247,7 +247,7 @@ Prinsip dasar:
 
 - Layout memakai 3 kolom utama untuk ringkasan cepat kondisi kebun.
 - Section ini bukan monitoring lengkap.
-- Layout harus terasa penuh, sejajar, seimbang, bersih, tidak kosong di bawah, tidak terlalu padat, tidak terlalu renggang, dan aman di light mode serta dark mode.
+- Layout harus terasa penuh, sejajar, seimbang, bersih, tidak kosong di bawah, tidak terlalu padat, tidak terlalu renggang, dan terbaca di mode gelap.
 
 Struktur 3 kolom:
 
@@ -305,11 +305,11 @@ Responsiveness:
 - Pada layar kecil/mobile, card boleh stack vertikal.
 - Tidak boleh ada overflow horizontal atau card terpotong.
 
-Dark mode dan light mode:
+Warna (aplikasi hanya mode gelap):
 
 - Gunakan CSS variable atau token tema yang sudah ada.
 - Jangan hardcode warna hex baru.
-- Pastikan border, background, teks, badge, dan icon tetap terbaca di dua mode.
+- Pastikan border, background, teks, badge, dan icon tetap terbaca di mode gelap.
 
 Larangan keras:
 
@@ -327,8 +327,7 @@ Validasi sebelum selesai:
 - Kolom 3 tetap berisi 4 card metrik.
 - Tidak ada ruang kosong aneh di bawah kolom 3.
 - Prediksi Cuaca tetap menyambung rapi.
-- Light mode aman.
-- Dark mode aman.
+- Mode gelap aman.
 - Responsive aman.
 - Tidak ada section lain berubah.
 - Tidak ada file tidak relevan ikut berubah.
