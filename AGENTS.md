@@ -192,7 +192,7 @@ Izin harus menyebut areanya. Izin untuk satu file atau folder tidak berlaku untu
   menaikkan versi dependency.
 - Config: `frontend/vite.config.ts`, `frontend/tsconfig*.json`, `frontend/eslint.config.js`,
   `frontend/.prettierrc`, `frontend/components.json`.
-- `frontend/public/static/`, `.gitignore`, `.gitattributes`, `Dockerfile`, `docker-compose.yml`,
+- `frontend/public/`, `.gitignore`, `.gitattributes`, `Dockerfile`, `docker-compose.yml`,
   `lorafield.bat`.
 - `.env` di mana pun, dan `backend/data/` (database asli user).
 - `frontend/src/components/ui/**` (komponen shadcn), kecuali tugasnya memang komponen itu.

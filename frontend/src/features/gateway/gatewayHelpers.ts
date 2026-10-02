@@ -98,15 +98,6 @@ export function getGatewayEventLabelKey(event: string): string {
   );
 }
 
-// Detail heartbeat dikirim gateway sebagai "<terdengar>/<total> node" (lihat simulator/lorafield_sim.py).
-// Format lain menghasilkan null supaya teks aslinya tetap tampil.
-export function parseHeartbeatNodeCount(log: GatewayLog) {
-  if (log.event !== 'heartbeat') return null;
-  const match = /^(\d+)\/(\d+) node$/.exec(log.detail.trim());
-  if (!match) return null;
-  return { heard: Number(match[1]), total: Number(match[2]) };
-}
-
 export function getGatewayEventTone(event: string) {
   if (event === 'connected' || event === 'heartbeat') return 'green';
   if (event === 'disconnected') return 'red';

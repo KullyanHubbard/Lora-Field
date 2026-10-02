@@ -39,11 +39,11 @@ Modul di `backend/app/` (hasil Fase 1 sampai Fase 4 rapikan backend, 2026-09-23)
 | `valve_control.py` | Perintah valve mode manual, tutup otomatis setelah batas waktu, catatan ke decision_logs |
 | `limited_irrigation.py` | Irigasi Terbatas: batas siram otomatis turun sementara per kebun (`decision_thresholds`), selesai sendiri di tanggalnya (`expire_limited_irrigation`), catatan ke decision_logs |
 | `deps.py` | Helper bersama antar-router: `client_ip` dan verifikasi kepemilikan farm/node |
-| `gateway_service.py` | `ensure_gateway_unclaimed` + `claim_gateway_for_farm` (dipakai `create_farm` dan `claim_farm_gateway`), `release_gateway` (dipakai `delete_farm` dan `unclaim_farm_gateway`) |
-| `node_service.py` | `insert_node` (dipakai registrasi batch gateway dan self-registration) dan `record_reading` (simpan reading + decision_log) |
+| `gateway_service.py` | `ensure_gateway_unclaimed` + `claim_gateway_for_farm` (dipakai `create_farm` dan `claim_farm_gateway`), `release_gateway` (dipakai `delete_farm` dan `unclaim_farm_gateway`), `gateway_link_state` dan `last_link_event` (status sambungan gateway dari `last_seen_at` dan laporan koneksi terakhir) |
+| `node_service.py` | `insert_node` (dipakai jembatan MQTT dan self-registration HTTP), `record_reading` (simpan reading + decision_log), `present_node` (bentuk node untuk response API) |
 | `reading_service.py` | `apply_reading`: keputusan irigasi + simpan reading, dipakai route HTTP readings dan jembatan MQTT |
 | `mqtt_bridge.py` | Jembatan MQTT sesuai `docs/kontrak-mqtt.md`: terima status/heartbeat/nodes/reading gateway, kirim `valve/set` (retain, dengan `until`) dan perintah `cmd` (`wifi_portal`, tanpa retain). Nonaktif kalau `MQTT_HOST` kosong. Route valve memanggil `publish_farm_valves` setelah transaksi |
-| `irrigation.py` | `THRESHOLDS` + `calculate_decision`, aturan buka/tutup valve |
+| `irrigation.py` | Aturan buka/tutup valve: `calculate_decision` (dasar), `auto_decision` (siram bertahap mode otomatis), `manual_decision`, `effective_rain_next_3h`, `DEFAULT_THRESHOLDS` |
 | `bmkg.py` | Fetch prakiraan BMKG, normalisasi response, cache per adm4 |
 | `adm4.py` | Resolusi kode adm4 dari koordinat (Nominatim + tabel wilayah; fallback alamat ketikan, termasuk format "Desa, Kecamatan, Kabupaten") |
 | `crops.py` | `CROP_THRESHOLDS`, 30 tanaman, sumber `GET /api/crops` |
@@ -71,6 +71,7 @@ Frontend (`frontend/`), kunci ke ini, jangan ganti:
 - TanStack Query (server state)
 - react-router-dom v7 (port struktur routing dari lama)
 - Charts: Recharts via shadcn Chart. Map: react-leaflet.
+- Teks id/en: i18next + react-i18next. Ikon: lucide-react. Notifikasi: sonner. Animasi: motion (landing dan halaman auth). Font: @fontsource-variable/geist.
 - Prettier + ESLint
 
 Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.4, React Router 7.15, Leaflet 1.9.4, Chart.js 4.4 + react-chartjs-2 5.2. Warna tema teal LoraField kini hidup sebagai CSS variable shadcn di `frontend/src/index.css`, bukan file CSS lama.
@@ -108,8 +109,8 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | `/api/auth/reset-password` | POST | OTP | Ganti password (flow lupa password). Body wajib `{ email, token, new_password }`. Ikut memverifikasi email akun yang belum verifikasi |
 | `/api/auth/change-password` | POST | JWT | Ganti password (sudah login) |
 | `/api/auth/profile` | PATCH | JWT | Update phone number. Query opsional `browser_language` (`id`/`en`, default `en`) dipakai untuk backfill kolom `language` akun lama. |
-| `/api/auth/me` | GET | JWT | Fetch profil user (return UserPublic). Query opsional `browser_language` (`id`/`en`, default `en`). Sumber: routers/auth.py:142. |
-| `/api/auth/preferences/language` | PATCH | JWT | Set preferensi bahasa akun. Body `{ language }` (`id`/`en`), return `{ language }`. Sumber: routers/auth.py:216. |
+| `/api/auth/me` | GET | JWT | Fetch profil user (return UserPublic). Query opsional `browser_language` (`id`/`en`, default `en`). Sumber: `get_me` di routers/auth.py. |
+| `/api/auth/preferences/language` | PATCH | JWT | Set preferensi bahasa akun. Body `{ language }` (`id`/`en`), return `{ language }`. Sumber: `update_language_preference` di routers/auth.py. |
 
 > Catatan: AuthContext memakai `/api/auth/me` saat bootstrap untuk memverifikasi token tersimpan sebelum route terproteksi dirender. Request-nya dibatasi 8 detik; kegagalan transport atau 5xx jatuh ke cache `lf_user`, sedangkan 4xx mengakhiri sesi.
 
@@ -118,20 +119,21 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 | Endpoint | Method | Keterangan |
 |----------|--------|-----------|
 | `/api/farms` | GET | List kebun milik user (dari JWT). Return `{ items, total }` |
-| `/api/farms/{farm_id}` | GET | Detail kebun. Return `{ farm }` |
-| `/api/farms` | POST | Buat kebun baru. Body WAJIB berisi `gateway_device_id` (schema `FarmCreate`), dan gateway itu langsung diklaim ke kebun baru. Auto-resolve `bmkg_adm4_code` dari koordinat. Return `{ farm, gateway }`. routers/farms.py:128 |
-| `/api/farms/{farm_id}` | PATCH | Update kebun (partial, `exclude_unset`); re-resolve `bmkg_adm4_code` kalau koordinat berubah. `crop_type` tidak bisa diganti: nilai berbeda dari tanaman kebun ditolak 422, nilai yang sama diterima tanpa perubahan. Return `{ farm }`. Schema body: `FarmUpdate` (routers/farms.py:43) |
-| `/api/farms/{farm_id}` | DELETE | Hapus kebun (verifikasi kepemilikan). Menghapus juga decision_logs, readings, nodes, dan gateway_logs milik kebun itu, lalu melepas gateway-nya (baris `gateways` tetap ada). routers/farms.py:101. Setelah itu perintah valve retain tiap node di broker dihapus (isi kosong = valve tutup) |
+| `/api/farms/{farm_id}` | GET | Detail kebun. Return `{ farm }`. Belum dipakai web (kebun dibaca dari summary) |
+| `/api/farms` | POST | Buat kebun baru. Body WAJIB berisi `gateway_device_id` (schema `FarmCreate`), dan gateway itu langsung diklaim ke kebun baru. Auto-resolve `bmkg_adm4_code` dari koordinat. Return `{ farm, gateway }`. `create_farm` di routers/farms.py |
+| `/api/farms/{farm_id}` | PATCH | Update kebun (partial, `exclude_unset`); re-resolve `bmkg_adm4_code` kalau koordinat berubah. `crop_type` tidak bisa diganti: nilai berbeda dari tanaman kebun ditolak 422, nilai yang sama diterima tanpa perubahan. Return `{ farm }`. Schema body: `FarmUpdate` (schemas.py), route `update_farm` di routers/farms.py. Web memakainya untuk edit nama kebun di Kebun Saya (`api.updateFarm`) |
+| `/api/farms/{farm_id}` | DELETE | Hapus kebun (verifikasi kepemilikan). Menghapus juga decision_logs, readings, nodes, dan gateway_logs milik kebun itu, lalu melepas gateway-nya (baris `gateways` tetap ada). `delete_farm` di routers/farms.py. Setelah itu perintah valve retain tiap node di broker dihapus (isi kosong = valve tutup) |
 
 ### Gateway
 
 | Endpoint | Method | Keterangan |
 |----------|--------|-----------|
-| `/api/farms/{farm_id}/gateway` | GET | Gateway yang terpasang di kebun. Return `{ gateway }`, isinya `null` kalau kebun belum punya gateway. routers/gateways.py:67 |
-| `/api/farms/{farm_id}/gateway/claim` | POST | Klaim gateway ke kebun. Body `GatewayClaimPayload` (`device_id`, `display_name`). 409 kalau gateway sudah dipakai kebun lain atau kebun sudah punya gateway. Return `{ gateway }`. routers/gateways.py:83 |
-| `/api/farms/{farm_id}/gateway/unclaim` | POST | Lepas gateway dari kebun. Baris `gateways` tidak dihapus, hanya `farm_id`, `display_name`, dan `claimed_at` yang dikosongkan supaya device bisa dipakai kebun lain. Setelah itu perintah valve retain tiap node di broker dihapus (isi kosong = valve tutup). Return `{ gateway }`. routers/gateways.py:104 |
+| `/api/farms/{farm_id}/gateway` | GET | Gateway yang terpasang di kebun. Return `{ gateway }`, isinya `null` kalau kebun belum punya gateway. `get_farm_gateway` di routers/gateways.py |
+| `/api/farms/{farm_id}/gateway/claim` | POST | Klaim gateway ke kebun. Body `GatewayClaimPayload` (`device_id`, `display_name`). 409 kalau gateway sudah dipakai kebun lain atau kebun sudah punya gateway. Return `{ gateway }`. `claim_farm_gateway` di routers/gateways.py. Belum dipakai web (gateway diklaim saat kebun dibuat) |
+| `/api/farms/{farm_id}/gateway/unclaim` | POST | Lepas gateway dari kebun. Baris `gateways` tidak dihapus, hanya `farm_id`, `display_name`, dan `claimed_at` yang dikosongkan supaya device bisa dipakai kebun lain. Setelah itu perintah valve retain tiap node di broker dihapus (isi kosong = valve tutup). Return `{ gateway }`. `unclaim_farm_gateway` di routers/gateways.py. Belum dipakai web |
 | `/api/farms/{farm_id}/gateway/wifi-portal` | POST | Tombol "Ganti WiFi" di halaman Gateway: kirim `{"action":"wifi_portal"}` ke topik MQTT `cmd` (QoS 1, tanpa retain), gateway membuka portal WiFi 5 menit dengan WiFi lama sebagai cadangan. 404 kalau kebun belum punya gateway, 409 kalau gateway offline (aturan sama dengan `summary.gateway_status`, lewat `gateway_link_state` di `gateway_service.py`), 503 kalau jembatan MQTT nonaktif atau kiriman gagal. Mencatat event `wifi_portal` di gateway_logs. Return `{ gateway }` |
-| `/api/gateways/{gateway_id}/register` | POST | Batch register node dari firmware gateway. `gateway_id` di path = `device_id`, bukan kolom `id`. Body `GatewayRegisterPayload` (`farm_id`, `nodes[]`). Node yang belum ada dibuat otomatis. Response menyebut status `pending` untuk node baru dan `active` untuk node lama, tapi di DB keduanya tersimpan `online` (baterai awal 100, belum dari perangkat). Idempoten. Return `GatewayRegisterResponse`. routers/gateways.py:130 |
+
+Semua route gateway memakai `get_farm_owned`: kebun yang tidak ada atau milik user lain dibalas 404, sama dengan route kebun lain. Node didaftarkan gateway lewat pesan MQTT `nodes` (`docs/kontrak-mqtt.md`); tidak ada endpoint HTTP untuk registrasi node batch atau untuk menulis log gateway (dihapus 2026-10-03, keduanya sisa sebelum MQTT).
 
 ### Utils
 
@@ -144,18 +146,17 @@ Catatan stack lama (sudah dihapus, hanya konteks historis): React 18.3 + Vite 5.
 
 | Endpoint | Keterangan |
 |----------|-----------|
-| `GET /api/farms/{id}/summary` | Summary kebun (gateway, nodes, soil avg, valve, threshold, decision). routers/farms.py:200 |
-| `GET /api/farms/{id}/weather` | Prakiraan cuaca BMKG untuk kebun (auto-resolve adm4, cache 30 menit). Kalau BMKG gangguan, pakai cache lama sampai umurnya WEATHER_STALE_MAX_HOURS (default 12 jam), lalu balas 502 kalau tidak ada cache yang layak pakai. **Ini endpoint cuaca yang dipakai frontend.** routers/farms.py:177 |
-| `GET /api/nodes` | List node (filter `?farm_id=`). Return `{ items, total }`. routers/nodes.py:18 |
-| `PATCH /api/nodes/{id}/location` | Update lokasi/region/koordinat node. Return `{ node }`. routers/nodes.py:49 |
+| `GET /api/farms/{id}/summary` | Summary kebun (gateway, nodes, soil avg, valve, threshold, decision, cuaca). `get_farm_summary` di routers/farms.py |
+| `GET /api/farms/{id}/weather` | Prakiraan cuaca BMKG untuk kebun (auto-resolve adm4, cache 30 menit). Kalau BMKG gangguan, pakai cache lama sampai umurnya WEATHER_STALE_MAX_HOURS (default 12 jam), lalu balas 502 kalau tidak ada cache yang layak pakai. Web tidak memanggil endpoint ini: Dashboard dan halaman Cuaca membaca `summary.weather` (sumber sama, `get_weather_for_decision`; null alih-alih 502 kalau cuaca tidak tersedia). `get_farm_weather` di routers/farms.py |
+| `GET /api/nodes` | List node (filter `?farm_id=`). Return `{ items, total }`. `list_nodes` di routers/nodes.py. Belum dipakai web (node dibaca dari summary) |
+| `PATCH /api/nodes/{id}/location` | Update lokasi/region/koordinat node. Return `{ node }`. `update_node_location` di routers/nodes.py. Belum dipakai web |
 | `PATCH /api/nodes/{id}/name` | Ganti nama node (1–40 karakter, di-trim, cek kepemilikan). Return `{ node }`. Nama bawaan node = `Node` + 4 karakter terakhir ID (sesuai stiker); nama dari gateway MQTT hanya dipakai saat node pertama terdaftar |
 | `GET /api/nodes/{id}/readings` | Pembacaan sensor node (`limit` 1–100, default 20). Opsional `hours` (1–72): semua reading dalam N jam sebelum reading terbaru node, `limit` diabaikan. Frontend memakai `hours` (`READINGS_FETCH_HOURS` di `src/lib/timeWindows.ts`). routers/nodes.py |
-| `POST /api/nodes/{id}/readings` | Insert reading + hitung decision (threshold kebun) + tulis decision_log. Cuaca memakai kode BMKG kebun; `?adm4=` opsional, hanya cadangan kalau kebun belum punya kode. Body boleh menyertakan `battery` (0–100) dari perangkat dan `rssi` (dBm, -150 sampai 0) yang diukur gateway saat menerima paket. Kalau node belum ada, node dibuat otomatis (self-registration) dan body WAJIB menyertakan `farm_id`, kalau tidak 400. Reading tidak pernah gagal karena BMKG gangguan: kalau cuaca tidak tersedia, keputusan otomatis pakai rain_next_3h=false. Return `{ reading, decision, node_created, node_status }`. routers/nodes.py:101 |
-| `GET /api/weather?adm4=X` | Cuaca BMKG mentah by adm4 (debug, butuh auth, bypass cache jadi selalu memanggil BMKG). routers/utils.py:42 |
-| `GET /api/decision?soil_moisture=X&rain_next_3h=bool` | Simulator keputusan irigasi (stateless, butuh auth). routers/utils.py:50 |
+| `POST /api/nodes/{id}/readings` | Insert reading + hitung decision (threshold kebun) + tulis decision_log. Cuaca memakai kode BMKG kebun; `?adm4=` opsional, hanya cadangan kalau kebun belum punya kode. Body boleh menyertakan `battery` (0–100) dari perangkat dan `rssi` (dBm, -150 sampai 0) yang diukur gateway saat menerima paket. Kalau node belum ada, node dibuat otomatis (self-registration) dan body WAJIB menyertakan `farm_id`, kalau tidak 400. Reading tidak pernah gagal karena BMKG gangguan: kalau cuaca tidak tersedia, keputusan otomatis pakai rain_next_3h=false. Return `{ reading, decision, node_created, node_status }`. `create_reading` di routers/nodes.py. Alat asli dan simulator mengirim reading lewat MQTT (logika keputusan sama, `apply_reading`); route HTTP ini dipakai smoke test |
+| `GET /api/weather?adm4=X` | Cuaca BMKG mentah by adm4 (debug, butuh auth, bypass cache jadi selalu memanggil BMKG). `get_weather` di routers/utils.py |
+| `GET /api/decision?soil_moisture=X&rain_next_3h=bool` | Simulator keputusan irigasi (stateless, butuh auth). `get_decision` di routers/utils.py |
 | `GET /api/logs` | Decision logs milik user. `limit` 1–1000 (default 20). Query opsional `farm_id` (cek kepemilikan, 404 kalau bukan milik user), `start` dan `end` (ISO date-time, inklusif, tanpa zona dianggap UTC). Web mengambil 100 log terbaru (refresh berkala) kalau tanpa filter tanggal, dan sampai 1000 log tanpa refresh berkala kalau filter tanggal dipakai. Tiap item membawa `decision_type` (`open`/`delayed`/`closed`/`standby`/`soaking`/`pulse_limit`, null untuk log lama tak dikenal); frontend membaca ini, bukan teks `decision`. Baris Irigasi Terbatas (`limited_*`) juga membawa `limited_until` dan `limited_reason` (null di baris lain). Baris dari reading (`record_reading`) hanya ditulis kalau `decision_type` node berubah dari baris terakhirnya; aksi tombol valve manual (`_log_manual_action`) tetap selalu dicatat. Bacaan sensor tetap tersimpan tiap reading di tabel `readings`. Baris lama per menit sebelum 2026-09-27 dibiarkan |
-| `GET /api/farms/{id}/gateway-logs` | Log koneksi gateway kebun (`limit` 1–100, default 20). Verifikasi kepemilikan. Return `{ items, total }`. Kosong sampai hardware gateway lapor. routers/gateways.py:26 |
-| `POST /api/farms/{id}/gateway-logs` | Insert log koneksi gateway (scaffolding hardware). Body `GatewayLogIn` (`event`, `detail`). Return `{ log }`, status 201. routers/gateways.py:47 |
+| `GET /api/farms/{id}/gateway-logs` | Log koneksi gateway kebun (`limit` 1–100, default 20). Verifikasi kepemilikan. Return `{ items, total }`. Diisi jembatan MQTT (`connected`, `disconnected`, `restarted`) dan tombol Ganti WiFi (`wifi_portal`). `list_gateway_logs` di routers/gateways.py |
 
 ### Kendali Valve
 
@@ -181,7 +182,7 @@ nodes           : id, farm_id, gateway_id, name, location, region, latitude, lon
 readings        : id, farm_id, node_id, soil_moisture, soil_temp, air_temp, air_humidity, rssi, created_at
 decision_logs   : id, node_id, soil_moisture, weather, decision, decision_type, valve_state, reason, created_at, limited_until, limited_reason
 gateways        : id, device_id (UNIQUE), farm_id (UNIQUE, NULL kalau belum diklaim), display_name, first_seen_at, last_seen_at, claimed_at, booted_at (perkiraan jam menyala dari uptime heartbeat, via ensure_column, untuk deteksi restart), boot_id (nomor nyala acak dari heartbeat, via ensure_column; deteksi restart utama, jam menyala hanya cadangan), wifi_ssid, wifi_rssi (WiFi gateway menurut heartbeat terakhir, via ensure_column; kartu Gateway menampilkannya hanya saat online)
-gateway_logs    : id, farm_id, event, detail, created_at; log koneksi gateway (kosong sampai hardware lapor)
+gateway_logs    : id, farm_id, event, detail, created_at; log koneksi gateway: connected, disconnected, restarted, wifi_portal (baris heartbeat sebelum 2026-10-02 dibiarkan)
 weather_cache   : adm4 (PK), data (JSON), updated_at; TTL 30 menit. Cache lewat TTL tetap dipakai sebagai cadangan (dihitung ulang dari isi "forecast") kalau BMKG gagal, sampai umurnya WEATHER_STALE_MAX_HOURS (default 12 jam). BMKG yang gagal untuk suatu adm4 tidak dicoba lagi selama 5 menit (jeda percobaan ulang, in-memory per proses)
 wilayah         : kode (PK, format adm4 BMKG), nama, nama_norm, level (1=provinsi s/d 4=desa), parent; di-seed sekali dari app/data/wilayah.csv
 password_resets : id, user_id, token (6-digit OTP), expires_at, used, created_at, attempts (jumlah kode salah, kode hangus di 5)
@@ -195,13 +196,13 @@ Catatan gateway: `summary.gateway_status` = `online` kalau ada node online atau 
 
 Catatan node (via `present_node` di `node_service.py`): kolom `nodes.status` hanya diisi saat insert dan tidak dibaca lagi. `status` di response API diturunkan dari `last_seen_at`, `offline` kalau tidak ada data melewati `NODE_OFFLINE_AFTER_MINUTES` (default 15). `battery` di response = null kalau perangkat belum pernah melaporkannya.
 
-Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun FK yang pakai `ON DELETE CASCADE`. Jadi kode yang menghapus baris induk wajib menghapus baris anaknya lebih dulu. Lihat `delete_farm` (routers/farms.py:101) sebagai contoh urutannya.
+Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun FK yang pakai `ON DELETE CASCADE`. Jadi kode yang menghapus baris induk wajib menghapus baris anaknya lebih dulu. Lihat `delete_farm` (routers/farms.py) sebagai contoh urutannya.
 
 ## Endpoint Belum Ada (jangan panggil/karang)
 
-> Catatan (2026-09-27): pembatas percobaan login dan forgot-password SUDAH ADA (lihat tabel Auth), tapi in-memory per proses (`routers/auth.py`): hitungannya hilang saat server restart dan tidak dibagi antar-worker. Pindahkan ke tabel DB kalau backend dijalankan dengan lebih dari satu worker.
+Saat ini tidak ada endpoint yang direncanakan tapi belum dibuat. Endpoint yang tidak tercantum di section "Backend Endpoints" dianggap tidak ada.
 
-> Catatan (2026-06-24): `PATCH /api/farms/{farm_id}` SUDAH ADA di backend (routers/farms.py:43), sebelumnya tertulis belum ada. Frontend memanggilnya lewat `api.updateFarm` (`src/lib/api.ts`) untuk edit nama kebun di Kebun Saya.
+> Catatan (2026-09-27): pembatas percobaan login dan forgot-password SUDAH ADA (lihat tabel Auth), tapi in-memory per proses (`routers/auth.py`): hitungannya hilang saat server restart dan tidak dibagi antar-worker. Pindahkan ke tabel DB kalau backend dijalankan dengan lebih dari satu worker.
 
 ## Logika Irigasi
 
@@ -224,7 +225,7 @@ Catatan FK: `PRAGMA foreign_keys` aktif di tiap koneksi, dan TIDAK ADA satu pun 
 - Tiap user hanya melihat kebun miliknya. Jangan buat fitur yang menampilkan kebun lintas-user kecuali mode admin pusat diminta eksplisit.
 - Sumber kebenaran user = JWT backend. JANGAN pakai `user_id` di query params endpoint farm.
 - Model akses: `User -> Farm -> Gateway -> Node -> Sensor Data -> Irrigation Log -> Dashboard`
-- Satu kebun = satu tanaman (tidak bisa diganti), satu gateway (`gateways.farm_id` UNIQUE, klaim kedua ditolak 409), dan beberapa node (tiap node milik satu kebun; registrasi node dari kebun lain ditolak 409).
+- Satu kebun = satu tanaman (tidak bisa diganti), satu gateway (`gateways.farm_id` UNIQUE, klaim kedua ditolak 409), dan beberapa node (tiap node milik satu kebun; node yang sudah terdaftar di kebun lain diabaikan jembatan MQTT).
 
 ## Aturan Produk & UI (untuk build baru)
 
@@ -316,7 +317,7 @@ Larangan keras:
 - Jangan ubah ukuran kolom 1 atau kolom 2.
 - Jangan memindahkan card antar kolom.
 - Jangan menghapus 4 card metrik kolom 3.
-- Jangan mengubah section lain, sidebar, topbar, routing, API, backend, package.json, package-lock.json, atau `frontend/public/static/`.
+- Jangan mengubah section lain, sidebar, topbar, routing, API, backend, package.json, package-lock.json, atau `frontend/public/`.
 - Jangan refactor besar, menambah dependency baru, menambahkan inline style, atau meninggalkan komentar eksperimen.
 
 Validasi sebelum selesai:
@@ -409,9 +410,10 @@ Jangan mengubah struktur sidebar kecuali user meminta eksplisit.
 
 ## Cara Kerja (anti-error)
 
-- Kerjakan SATU fase per instruksi. Setelah selesai: jalankan `npx tsc -p tsconfig.app.json --noEmit` dan `npm run dev`, pastikan nol error. (`npx tsc --noEmit` polos tidak memeriksa apa pun karena `tsconfig.json` root hanya berisi references.)
+- Kerjakan SATU fase per instruksi. Setelah selesai, dari folder `frontend/`: jalankan `npx tsc -p tsconfig.app.json --noEmit`, `npx eslint src`, `npx prettier --check src`, dan `npm run build`, pastikan nol error (sama dengan AGENTS.md dan GEMINI.md). (`npx tsc --noEmit` polos tidak memeriksa apa pun karena `tsconfig.json` root hanya berisi references.)
+- Jangan menyalakan, mematikan, atau me-restart dev server, backend, simulator, atau Mosquitto: user menjalankannya sendiri di terminal. Cek tampilan lewat dev server yang sudah jalan di port 5173; kalau tidak jalan, minta user menyalakannya.
 - Kalau yang diubah backend, verifikasinya `python backend/scripts/smoke_test.py` (harus nol gagal) plus diff `backend/scripts/openapi_snapshot.py` sebelum/sesudah (harus kosong kalau kontrak API tidak diniatkan berubah).
 - Tampilkan ringkasan file yang dibuat/diubah.
 - JANGAN lanjut ke fase berikutnya tanpa diminta. Akurasi di atas kecepatan.
 - Jangan refactor besar tanpa kebutuhan langsung dari user. Pertahankan naming convention yang sudah ada.
-- Known issue: Vite dev server (`npm run dev`) bisa mati sendiri tanpa warning jelas. Jika semua API call gagal tapi backend sehat, restart Vite.
+- Known issue: Vite dev server (`npm run dev`) bisa mati sendiri tanpa warning jelas. Jika semua API call gagal tapi backend sehat, minta user me-restart Vite.

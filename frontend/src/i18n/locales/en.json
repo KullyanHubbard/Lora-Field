@@ -614,7 +614,6 @@
       "other": "Other cause"
     },
     "eventCount": "{{count}} event(s)",
-    "heartbeatNodes": "{{heard}} of {{total}} node(s) heard",
     "eventWifiPortal": "Change WiFi",
     "changeWifi": "Change WiFi",
     "changeWifiTitle": "Change the gateway WiFi?",

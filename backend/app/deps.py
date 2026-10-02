@@ -35,15 +35,3 @@ def get_node_owned(connection, node_id: str, user_id: str) -> dict:
         raise HTTPException(status_code=404, detail="Node tidak ditemukan")
     get_farm_owned(connection, farm_id, user_id)
     return node
-
-
-def get_farm_for_gateway_action(connection, farm_id: str, user_id: str) -> dict:
-    """Ambil farm untuk aksi gateway; bedakan not found dan forbidden."""
-    farm = row_to_dict(
-        connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone()
-    )
-    if farm is None:
-        raise HTTPException(status_code=404, detail="Kebun tidak ditemukan")
-    if farm["user_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Tidak punya akses ke kebun ini")
-    return farm

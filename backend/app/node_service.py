@@ -1,6 +1,6 @@
 """Operasi tulis node: pembuatan baris node dan pencatatan reading sensor.
 
-Dipakai registrasi batch gateway dan self-registration lewat endpoint readings.
+Dipakai jembatan MQTT dan self-registration lewat endpoint readings.
 Semua fungsi jalan di dalam transaksi pemanggil.
 """
 

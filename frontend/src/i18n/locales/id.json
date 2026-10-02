@@ -715,7 +715,6 @@
       "other": "Penyebab lain"
     },
     "eventCount": "{{count}} event",
-    "heartbeatNodes": "{{heard}} dari {{total}} node terdengar",
     "eventWifiPortal": "Ganti WiFi",
     "changeWifi": "Ganti WiFi",
     "changeWifiTitle": "Ganti WiFi gateway?",

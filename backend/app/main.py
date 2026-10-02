@@ -1,6 +1,7 @@
 """Entrypoint FastAPI LoraField: setup app, include router, dan serving SPA."""
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -12,7 +13,9 @@ from fastapi.staticfiles import StaticFiles
 
 
 # Logging dikonfigurasi sebelum modul app lain di-import supaya log startup ikut tertangkap.
-LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
+# LORAFIELD_LOG_DIR (environment proses, tidak dibaca dari .env) dipakai smoke test supaya tidak
+# menulis ke backend/logs/app.log milik server yang mungkin sedang jalan.
+LOG_DIR = Path(os.environ.get("LORAFIELD_LOG_DIR") or Path(__file__).resolve().parents[1] / "logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 _log_format = logging.Formatter(

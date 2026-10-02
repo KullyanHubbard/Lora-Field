@@ -8,6 +8,8 @@ hasilnya langsung merah.
 Isolasi:
   - Database dialihkan ke file SQLite sementara. Database dev di backend/data/ TIDAK
     disentuh sama sekali.
+  - Log app ditulis ke folder sementara yang sama (LORAFIELD_LOG_DIR), bukan ke
+    backend/logs/app.log milik server.
   - Cuaca BMKG di-seed manual ke weather_cache, jadi tidak ada panggilan keluar.
   - Resend dimatikan (resend_api_key dikosongkan), OTP dibaca lewat expose_dev_tokens.
 
@@ -24,6 +26,8 @@ Exit code 0 kalau semua cek lolos, 1 kalau ada yang gagal.
 from __future__ import annotations
 
 import json
+import logging
+import os
 import shutil
 import sqlite3
 import sys
@@ -45,6 +49,8 @@ from app.config import settings  # noqa: E402
 TMP_DIR = Path(tempfile.mkdtemp(prefix="lorafield-smoke-"))
 database.DATA_DIR = TMP_DIR
 database.DB_PATH = TMP_DIR / "smoke.db"
+# Log juga ke folder sementara, dibaca app.main saat di-import di bawah.
+os.environ["LORAFIELD_LOG_DIR"] = str(TMP_DIR / "logs")
 
 settings.jwt_secret_key = settings.jwt_secret_key or "smoke-test-secret-not-for-production"
 settings.resend_api_key = ""       # jangan sampai kirim email sungguhan
@@ -145,6 +151,16 @@ def run(report: Report, with_network: bool) -> None:
         set_cached_weather(ADM4, FAKE_WEATHER)
 
         section("Public")
+        log_files = [
+            Path(handler.baseFilename)
+            for handler in logging.getLogger().handlers
+            if isinstance(handler, logging.FileHandler)
+        ]
+        report.check(
+            "log smoke test ke folder sementara, bukan backend/logs",
+            bool(log_files) and all(TMP_DIR in path.parents for path in log_files),
+            f"file log: {log_files}",
+        )
         report.expect("GET /health", client.get("/health"), 200)
         crops = report.expect("GET /api/crops", client.get("/api/crops"), 200, ("crops",))
         report.check(
@@ -935,49 +951,13 @@ def run(report: Report, with_network: bool) -> None:
         section("Nodes")
         node_a = f"node-{suffix}-a"
         node_b = f"node-{suffix}-b"
-        registered = report.expect(
-            "POST /api/gateways/{id}/register",
-            client.post(
-                f"/api/gateways/{device_id}/register",
-                json={
-                    "farm_id": farm_id,
-                    "nodes": [
-                        {
-                            "node_id": node_a,
-                            "name": "Node A",
-                            "region": "Blok A",
-                            "latitude": -7.79,
-                            "longitude": 110.31,
-                        },
-                        {"node_id": node_b, "name": "Node B", "region": "Blok B"},
-                    ],
-                },
-                headers=auth,
-            ),
-            200,
-            ("gateway_id", "farm_id", "status", "nodes", "created_count"),
-        )
-        report.check(
-            "dua node terbuat",
-            registered.get("created_count") == 2,
-            f"created_count = {registered.get('created_count')}",
-        )
-        report.check(
-            "node baru berstatus pending",
-            all(n.get("status") == "pending" for n in registered.get("nodes", [])),
-            f"status: {[n.get('status') for n in registered.get('nodes', [])]}",
-        )
-        rerun = report.expect(
-            "register ulang bersifat idempoten",
-            client.post(
-                f"/api/gateways/{device_id}/register",
-                json={"farm_id": farm_id, "nodes": [{"node_id": node_a, "name": "Node A"}]},
-                headers=auth,
-            ),
-            200,
-            ("created_count",),
-        )
-        report.check("register ulang tidak menduplikasi node", rerun.get("created_count") == 0)
+        # Node didaftarkan lewat pesan MQTT `nodes`, sama seperti gateway asli. Pesan yang sama
+        # dikirim ulang tiap heartbeat, jadi dikirim dua kali di sini.
+        daftar_node = json.dumps(
+            {"nodes": [{"node_id": node_a, "name": "Node A"}, {"node_id": node_b, "name": "Node B"}]}
+        ).encode()
+        for _ in range(2):
+            mqtt_bridge.handle_message(f"lorafield/gw/{device_id}/nodes", daftar_node)
 
         nodes = report.expect(
             "GET /api/nodes?farm_id=",
@@ -985,7 +965,11 @@ def run(report: Report, with_network: bool) -> None:
             200,
             ("items", "total"),
         )
-        report.check("dua node terdaftar di kebun", nodes.get("total") == 2, f"total = {nodes.get('total')}")
+        report.check(
+            "dua node terdaftar lewat MQTT, kiriman ulang tidak menduplikasi",
+            nodes.get("total") == 2,
+            f"total = {nodes.get('total')}",
+        )
         report.expect(
             "PATCH /api/nodes/{id}/location",
             client.patch(
@@ -2562,23 +2546,23 @@ def run(report: Report, with_network: bool) -> None:
             client.delete(f"/api/farms/{farm2}", headers=auth)
 
         section("Gateway logs")
-        report.expect(
-            "POST /api/farms/{id}/gateway-logs",
-            client.post(
-                f"/api/farms/{farm_id}/gateway-logs",
-                json={"event": "connected", "detail": "smoke test"},
-                headers=auth,
-            ),
-            201,
-            ("log",),
-        )
+        # Log koneksi hanya ditulis jembatan MQTT (dan tombol Ganti WiFi), tidak ada endpoint tulis.
+        mqtt_bridge.handle_message(f"lorafield/gw/{device_id}/status", b'{"state":"online","fw":"smoke"}')
         glogs = report.expect(
             "GET /api/farms/{id}/gateway-logs",
             client.get(f"/api/farms/{farm_id}/gateway-logs", headers=auth),
             200,
             ("items", "total"),
         )
-        report.check("gateway log tercatat", glogs.get("total") == 1, f"total = {glogs.get('total')}")
+        report.check(
+            "gateway log tercatat dari status MQTT",
+            [(log["event"], log["detail"]) for log in glogs.get("items", [])] == [("connected", "firmware smoke")],
+            f"items = {glogs.get('items')}",
+        )
+        status = client.post(
+            f"/api/farms/{farm_id}/gateway-logs", json={"event": "disconnected", "detail": ""}, headers=auth
+        ).status_code
+        report.check("log gateway tidak bisa ditulis lewat HTTP", status == 405, f"status {status}")
 
         section("Gateway claim/unclaim")
         unclaimed = report.expect(
@@ -3669,10 +3653,9 @@ def run(report: Report, with_network: bool) -> None:
             kebun = kebun_baru("Tembakau")
             node_data, node_kosong = f"node-{suffix}-data", f"node-{suffix}-kosong"
             kirim_ke(kebun, node_data, 55.0)
-            client.post(
-                f"/api/gateways/GW-TEMBAKAU-{suffix}/register",
-                json={"farm_id": kebun, "nodes": [{"node_id": node_kosong, "name": "Tanpa Data"}]},
-                headers=auth,
+            mqtt_bridge.handle_message(
+                f"lorafield/gw/GW-TEMBAKAU-{suffix}/nodes",
+                json.dumps({"nodes": [{"node_id": node_kosong, "name": "Tanpa Data"}]}).encode(),
             )
             client.post(url_terbatas(kebun), json={"reason": "other", "until": batas(5)}, headers=auth)
             report.check(
@@ -3736,6 +3719,27 @@ def run(report: Report, with_network: bool) -> None:
         report.check("user lain tidak bisa mengubah Irigasi Terbatas kebun orang", status == 404, f"status {status}")
         status = client.delete(f"/api/farms/{farm_id}/limited-irrigation", headers=other_auth).status_code
         report.check("user lain tidak bisa menghentikan Irigasi Terbatas kebun orang", status == 404, f"status {status}")
+        # Route gateway sama dengan route kebun lain: kebun orang dibalas 404, bukan 403 yang membocorkan
+        # bahwa ID kebun itu ada.
+        gateway_orang = {
+            "GET gateway": client.get(f"/api/farms/{farm_id}/gateway", headers=other_auth),
+            "GET gateway-logs": client.get(f"/api/farms/{farm_id}/gateway-logs", headers=other_auth),
+            "claim": client.post(
+                f"/api/farms/{farm_id}/gateway/claim",
+                json={"device_id": f"GW-ORANG-{suffix}", "display_name": ""},
+                headers=other_auth,
+            ),
+            "unclaim": client.post(f"/api/farms/{farm_id}/gateway/unclaim", headers=other_auth),
+            "wifi-portal": client.post(f"/api/farms/{farm_id}/gateway/wifi-portal", headers=other_auth),
+        }
+        status_gateway = {aksi: resp.status_code for aksi, resp in gateway_orang.items()}
+        report.check(
+            "user lain mendapat 404 di semua route gateway kebun orang",
+            set(status_gateway.values()) == {404},
+            f"status {status_gateway}",
+        )
+        tetap = client.get(f"/api/farms/{farm_id}/gateway", headers=auth).json().get("gateway") or {}
+        report.check("gateway pemilik tetap terpasang", tetap.get("device_id") == device_id, f"gateway {tetap}")
         other_farms = client.get("/api/farms", headers=other_auth).json()
         report.check("daftar kebun user lain kosong", other_farms.get("total") == 0, f"total = {other_farms.get('total')}")
 
@@ -3786,6 +3790,8 @@ def main() -> int:
 
         traceback.print_exc()
     finally:
+        # File log yang masih terbuka tidak bisa dihapus di Windows.
+        logging.shutdown()
         shutil.rmtree(TMP_DIR, ignore_errors=True)
 
     total = report.passed + len(report.failed)

@@ -36,10 +36,6 @@ function MonitoringNodeSelect({
 }: Pick<MonitoringPanelProps, 'nodes' | 'effectiveNodeId' | 'onSelectNode'>) {
   const { t } = useTranslation();
 
-  if (nodes.length === 0) {
-    return <p className="text-sm text-muted-foreground">{t('monitoring.noNodes')}</p>;
-  }
-
   return (
     <Select value={effectiveNodeId} onValueChange={onSelectNode}>
       <SelectTrigger className="w-full max-w-xs">

@@ -69,11 +69,6 @@ class LimitedIrrigationUpdate(BaseModel):
     until: datetime = Field(..., description="Batas selesai baru; tanpa zona dianggap UTC")
 
 
-class GatewayLogIn(BaseModel):
-    event: str = Field(..., min_length=1, max_length=50)
-    detail: str = Field(default="", max_length=300)
-
-
 class GatewayClaimPayload(BaseModel):
     device_id: str = Field(..., min_length=4, max_length=64)
     display_name: str = Field(default="", max_length=100)
@@ -171,31 +166,3 @@ class LanguagePreferenceUpdate(BaseModel):
 
 class LanguagePreferenceResponse(BaseModel):
     language: Language
-
-
-class NodeRegistrationItem(BaseModel):
-    node_id: str
-    name: str
-    region: str = ""
-    latitude: float | None = None
-    longitude: float | None = None
-
-
-class GatewayRegisterPayload(BaseModel):
-    farm_id: str
-    nodes: list[NodeRegistrationItem]
-
-
-class RegisteredNode(BaseModel):
-    id: str
-    name: str
-    status: str  # "pending" | "active"
-    created: bool
-
-
-class GatewayRegisterResponse(BaseModel):
-    gateway_id: str
-    farm_id: str
-    status: str  # "registered"
-    nodes: list[RegisteredNode]
-    created_count: int

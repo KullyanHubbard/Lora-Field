@@ -9,7 +9,6 @@ import {
   getGatewayEventDotClass,
   getGatewayEventLabelKey,
   getGatewayEventTone,
-  parseHeartbeatNodeCount,
   type GatewayEventFilter,
 } from '@/features/gateway/gatewayHelpers';
 import type { GatewayLog } from '@/types';
@@ -89,19 +88,12 @@ export function GatewayLogContent({
             <div className="divide-y divide-border/30">
               {logs.map((log) => {
                 const tone = getGatewayEventTone(log.event);
-                const nodeCount = parseHeartbeatNodeCount(log);
-                const missingNodes = nodeCount != null && nodeCount.heard < nodeCount.total;
                 const when = formatServerDateTimeParts(log.created_at, i18n.language);
                 return (
                   <div key={log.id} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
                     <span className="mt-1 shrink-0">
                       {tone === 'green' ? (
-                        <RadioTower
-                          className={cn(
-                            'size-3.5',
-                            missingNodes ? NOTICE_CLASSES.warningText : ACCENT_TEXT.emerald,
-                          )}
-                        />
+                        <RadioTower className={cn('size-3.5', ACCENT_TEXT.emerald)} />
                       ) : tone === 'red' ? (
                         <WifiOff className={cn('size-3.5', ACCENT_TEXT.red)} />
                       ) : (
@@ -120,21 +112,12 @@ export function GatewayLogContent({
                             {t(getGatewayEventLabelKey(log.event))}
                           </p>
                           {log.detail && (
-                            <p
-                              className={cn(
-                                'truncate text-[0.65rem]',
-                                missingNodes
-                                  ? `font-medium ${NOTICE_CLASSES.warningText}`
-                                  : 'text-muted-foreground',
-                              )}
-                            >
-                              {nodeCount
-                                ? t('gateway.heartbeatNodes', nodeCount)
-                                : log.event === 'restarted'
-                                  ? t(`gateway.bootReason.${log.detail}`, {
-                                      defaultValue: log.detail,
-                                    })
-                                  : log.detail}
+                            <p className="truncate text-[0.65rem] text-muted-foreground">
+                              {log.event === 'restarted'
+                                ? t(`gateway.bootReason.${log.detail}`, {
+                                    defaultValue: log.detail,
+                                  })
+                                : log.detail}
                             </p>
                           )}
                         </div>

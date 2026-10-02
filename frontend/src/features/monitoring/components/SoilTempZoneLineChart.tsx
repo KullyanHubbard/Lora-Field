@@ -93,10 +93,7 @@ export default function SoilTempZoneLineChart({
         status={
           latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined
         }
-        sideLabel={t('dashboard.soilTargetCaption', {
-          lower: OPTIMAL_SOIL_TEMP.min,
-          upper: OPTIMAL_SOIL_TEMP.max,
-        })}
+        sideLabel={t('monitoring.zoneTemp')}
         sideValue={`${OPTIMAL_SOIL_TEMP.min}–${OPTIMAL_SOIL_TEMP.max}${DEG_C}`}
         embedded={embedded}
       />
