@@ -131,8 +131,8 @@ def update_node_valve(
     current_user: Annotated[dict, Depends(get_current_user)],
 ) -> dict:
     with get_connection() as connection:
-        farm_id = get_node_owned(connection, node_id, current_user["id"])["farm_id"]
-        farm = get_farm_owned(connection, farm_id, current_user["id"])
+        _, farm = get_node_owned(connection, node_id, current_user["id"])
+        farm_id = farm["id"]
         require_manual_mode(farm)
         expire_manual_valves(connection, farm_id)
         node = next(n for n in farm_nodes(connection, farm_id) if n["id"] == node_id)
@@ -148,8 +148,7 @@ def resume_auto_irrigation(
     current_user: Annotated[dict, Depends(get_current_user)],
 ) -> dict:
     with get_connection() as connection:
-        node = get_node_owned(connection, node_id, current_user["id"])
-        farm = get_farm_owned(connection, node["farm_id"], current_user["id"])
+        node, farm = get_node_owned(connection, node_id, current_user["id"])
         if farm["irrigation_mode"] != "auto":
             raise HTTPException(status_code=409, detail="Kebun sedang mode manual.")
         if node["auto_paused_at"]:

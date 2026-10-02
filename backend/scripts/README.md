@@ -32,8 +32,8 @@ git diff --no-index baseline.json sesudah.json
 python backend/scripts/smoke_test.py
 ```
 
-`smoke_test.py` mengalihkan database ke file sementara, jadi `backend/data/lorafield.db`
-tidak ikut terisi data test. Dua endpoint yang butuh internet (`GET /api/weather` dan
+`smoke_test.py` mengalihkan database dan log ke folder sementara, jadi `backend/data/lorafield.db`
+dan `backend/logs/app.log` tidak ikut terisi data test (log lewat variabel proses `LORAFIELD_LOG_DIR`). Dua endpoint yang butuh internet (`GET /api/weather` dan
 `GET /api/utils/resolve-adm4`) dilewati kecuali dijalankan dengan `--network`.
 
 Log output di `backend/logs/`:

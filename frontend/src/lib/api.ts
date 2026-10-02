@@ -242,7 +242,7 @@ export const api = {
   getReadings: (nodeId: string, hours: number) =>
     apiFetch<{ items: Reading[] }>(`/nodes/${nodeId}/readings?hours=${hours}`),
 
-  // Kosong sampai hardware gateway mulai lapor.
+  // Ditulis jembatan MQTT (terhubung, terputus, menyala ulang) dan tombol Ganti WiFi.
   getGatewayLogs: (farmId: string, limit: number) =>
     apiFetch<{ items: GatewayLog[] }>(`/farms/${farmId}/gateway-logs?limit=${limit}`),
 

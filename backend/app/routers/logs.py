@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..auth import get_current_user
-from ..database import get_connection
+from ..database import db_time, get_connection
 from ..deps import get_farm_owned
 
 router = APIRouter()
@@ -22,7 +22,7 @@ def _utc_text(value: datetime) -> str:
         except OverflowError as exc:
             # Tanggal di ujung kalender dengan zona jauh dari UTC keluar rentang datetime saat diubah ke UTC.
             raise HTTPException(status_code=422, detail="Filter tanggal di luar rentang yang didukung.") from exc
-    return value.strftime("%Y-%m-%d %H:%M:%S")
+    return db_time(value)
 
 
 @router.get("/api/logs")

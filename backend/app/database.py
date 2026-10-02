@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 import csv
+from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
 from typing import Generator
@@ -358,3 +359,19 @@ def row_to_dict(row: sqlite3.Row | None) -> dict | None:
     if row is None:
         return None
     return dict(row)
+
+
+def parse_db_time(value: str | None) -> datetime | None:
+    """Waktu CURRENT_TIMESTAMP SQLite = UTC tanpa penanda zona. None kalau kosong atau tidak terbaca."""
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def db_time(value: datetime) -> str:
+    """Teks waktu dengan format yang sama seperti CURRENT_TIMESTAMP SQLite. value sudah UTC."""
+    return value.strftime("%Y-%m-%d %H:%M:%S")

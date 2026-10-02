@@ -15,7 +15,7 @@ from ..deps import get_farm_owned
 from ..gateway_service import (
     claim_gateway_for_farm,
     ensure_gateway_unclaimed,
-    gateway_link_state,
+    gateway_online,
     release_gateway,
 )
 from ..crops import find_crop_thresholds
@@ -252,7 +252,7 @@ def get_farm_summary(
                 (farm_id,),
             ).fetchall()
         ]
-        gateway_seen, gateway_cut = gateway_link_state(connection, farm_id)
+        gateway_status = "online" if gateway_online(connection, farm_id) else "offline"
         latest_by_node = {
             row["node_id"]: dict(row)
             for row in connection.execute(
@@ -306,7 +306,6 @@ def get_farm_summary(
 
     nodes_online = [n for n in nodes if n["status"] == "online"]
     nodes_problem = [n for n in nodes if n["status"] == "offline"]
-    gateway_status = "online" if (nodes_online or gateway_seen) and not gateway_cut else "offline"
 
     return {
         "farm": farm,

@@ -192,8 +192,8 @@ urutan import, cara memakai `cn`, `useTranslation`, `StatusPill`, dan seterusnya
 - Backend (port 8000), web dev server (port 5173), simulator, dan broker Mosquitto bisa sedang berjalan
   di komputer user. Jangan mematikan, me-restart, atau menjalankan ulang proses itu, dan jangan
   memakai port itu.
-- Jangan menjalankan `python simulator/lorafield_sim.py` dengan perintah `run`, `reset`, atau `cleanup`,
-  dan perintah lain yang menulis ke database atau broker.
+- Jangan menjalankan `python simulator/lorafield_sim.py run` atau `reset` (keduanya menyambung ke broker
+  asli). Cek logika simulator cukup lewat `python simulator/test_sim.py`.
 - Jangan mengisi `MQTT_HOST` atau menyambung ke broker asli. Simulator user memakainya.
 - Jangan menjalankan git yang mengubah repo (lihat "Dilarang commit").
 - Jangan menghapus file yang tidak kamu buat di sesi ini.

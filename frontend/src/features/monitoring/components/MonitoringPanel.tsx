@@ -11,9 +11,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatusPill } from '@/components/ui/status-pill';
 import { getNodeStatusBadge } from '@/lib/status';
 import type { Node, Reading } from '@/types';
+import { AIR_TEMP_ZONE, SOIL_TEMP_ZONE } from '@/features/monitoring/chartHelpers';
 import SoilMoistureZoneChart from './SoilMoistureZoneChart';
-import SoilTempZoneLineChart from './SoilTempZoneLineChart';
-import AirTempZoneLineChart from './AirTempZoneLineChart';
+import TempZoneLineChart from './TempZoneLineChart';
 import AirHumidityZoneLineChart from './AirHumidityZoneLineChart';
 
 interface MonitoringPanelProps {
@@ -80,8 +80,8 @@ function MonitoringChartGrid({
         upper={thresholds.upper}
         embedded
       />
-      <SoilTempZoneLineChart readings={readings} embedded />
-      <AirTempZoneLineChart readings={readings} embedded />
+      <TempZoneLineChart zone={SOIL_TEMP_ZONE} readings={readings} embedded />
+      <TempZoneLineChart zone={AIR_TEMP_ZONE} readings={readings} embedded />
       <AirHumidityZoneLineChart readings={readings} embedded />
     </div>
   );

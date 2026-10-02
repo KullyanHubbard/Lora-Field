@@ -17,7 +17,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { StatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
@@ -25,57 +24,52 @@ import {
   getHourlyMonitoringPoints,
   latestValue,
   TEMP_CHART_MAX_C,
+  tempBand,
+  type TempBand,
+  type TempZone,
 } from '@/features/monitoring/chartHelpers';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 import { CHART_COLORS } from '@/lib/chartColors';
-import { ACCENT_TEXT } from '@/lib/toneClasses';
 
 const PALETTE = { main: CHART_COLORS.amber, cool: CHART_COLORS.cyan, hot: CHART_COLORS.red };
-const OPTIMAL_SOIL_TEMP = { min: 18, max: 28 };
-
-function soilTempStatus(avg: number): { labelKey: string; tone: StatusTone } {
-  if (avg < OPTIMAL_SOIL_TEMP.min)
-    return { labelKey: 'monitoring.soilTempStatus.cold', tone: 'yellow' };
-  if (avg > OPTIMAL_SOIL_TEMP.max)
-    return { labelKey: 'monitoring.soilTempStatus.warm', tone: 'red' };
-  return { labelKey: 'monitoring.soilTempStatus.normal', tone: 'green' };
-}
+const DOT_FILL: Record<TempBand, string> = {
+  low: PALETTE.cool,
+  ideal: PALETTE.main,
+  high: PALETTE.hot,
+};
 
 interface Point {
   label: string;
   value: number;
-  band: 'cold' | 'ideal' | 'hot';
+  band: TempBand;
 }
 
-function classifyBand(value: number): Point['band'] {
-  if (value < OPTIMAL_SOIL_TEMP.min) return 'cold';
-  if (value > OPTIMAL_SOIL_TEMP.max) return 'hot';
-  return 'ideal';
-}
-
-export default function SoilTempZoneLineChart({
+export default function TempZoneLineChart({
+  zone,
   readings,
   embedded = false,
 }: {
+  zone: TempZone;
   readings: Reading[];
   embedded?: boolean;
 }) {
   const { t, i18n } = useTranslation();
+  const { metric, range } = zone;
+  const title = t(zone.titleKey);
 
   const points = useMemo<Point[]>(() => {
     return getHourlyMonitoringPoints(readings, i18n.language).map(({ label, reading }) => ({
       label,
-      value: reading.soil_temp,
-      band: classifyBand(reading.soil_temp),
+      value: reading[metric],
+      band: tempBand(reading[metric], range),
     }));
-  }, [readings, i18n.language]);
+  }, [readings, i18n.language, metric, range]);
 
-  const latestAvg = latestValue(readings, 'soil_temp');
-  const latestStatus = latestAvg != null ? soilTempStatus(latestAvg) : null;
-
+  const latest = latestValue(readings, metric);
+  const latestStatus = latest != null ? zone.status[tempBand(latest, range)] : null;
   const config = {
-    value: { label: `${t('monitoring.chartSoilTemp')} ${DEG_C}`, color: PALETTE.main },
+    value: { label: `${title} ${DEG_C}`, color: PALETTE.main },
   } satisfies ChartConfig;
 
   return (
@@ -86,15 +80,15 @@ export default function SoilTempZoneLineChart({
       )}
     >
       <MonitoringChartHeader
-        title={t('monitoring.chartSoilTemp')}
-        icon={<ThermometerSun className={cn('size-4', ACCENT_TEXT.amber)} aria-hidden="true" />}
-        value={latestAvg != null ? latestAvg.toFixed(1) : null}
+        title={title}
+        icon={<ThermometerSun className={cn('size-4', zone.iconClass)} aria-hidden="true" />}
+        value={latest != null ? latest.toFixed(1) : null}
         unit={DEG_C}
         status={
           latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined
         }
         sideLabel={t('monitoring.zoneTemp')}
-        sideValue={`${OPTIMAL_SOIL_TEMP.min}–${OPTIMAL_SOIL_TEMP.max}${DEG_C}`}
+        sideValue={`${range.min}–${range.max}${DEG_C}`}
         embedded={embedded}
       />
       <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
@@ -109,32 +103,27 @@ export default function SoilTempZoneLineChart({
               stroke="currentColor"
               strokeOpacity={0.12}
             />
+            <ReferenceArea y1={0} y2={range.min} fill={PALETTE.cool} fillOpacity={0.05} />
             <ReferenceArea
-              y1={0}
-              y2={OPTIMAL_SOIL_TEMP.min}
-              fill={PALETTE.cool}
-              fillOpacity={0.05}
-            />
-            <ReferenceArea
-              y1={OPTIMAL_SOIL_TEMP.min}
-              y2={OPTIMAL_SOIL_TEMP.max}
+              y1={range.min}
+              y2={range.max}
               fill={CHART_COLORS.emerald}
               fillOpacity={0.07}
             />
             <ReferenceArea
-              y1={OPTIMAL_SOIL_TEMP.max}
+              y1={range.max}
               y2={TEMP_CHART_MAX_C}
               fill={PALETTE.hot}
               fillOpacity={0.05}
             />
             <ReferenceLine
-              y={OPTIMAL_SOIL_TEMP.min}
+              y={range.min}
               stroke={PALETTE.cool}
               strokeOpacity={0.45}
               strokeDasharray="5 3"
             />
             <ReferenceLine
-              y={OPTIMAL_SOIL_TEMP.max}
+              y={range.max}
               stroke={PALETTE.hot}
               strokeOpacity={0.45}
               strokeDasharray="5 3"
@@ -158,10 +147,7 @@ export default function SoilTempZoneLineChart({
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  formatter={(v: unknown) => [
-                    `${Number(v ?? 0).toFixed(1)}${DEG_C}`,
-                    t('monitoring.chartSoilTemp'),
-                  ]}
+                  formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(1)}${DEG_C}`, title]}
                 />
               }
             />
@@ -173,24 +159,18 @@ export default function SoilTempZoneLineChart({
               dot={(props: { cx?: number; cy?: number; index?: number }) => {
                 const { cx, cy, index } = props;
                 if (cx == null || cy == null || index == null) return null;
-                const pt = points[index];
-                const fill =
-                  pt?.band === 'cold'
-                    ? PALETTE.cool
-                    : pt?.band === 'hot'
-                      ? PALETTE.hot
-                      : PALETTE.main;
+                const band = points[index]?.band ?? 'ideal';
                 return (
                   <rect
                     x={cx - 3.25}
                     y={cy - 3.25}
                     width={6.5}
                     height={6.5}
-                    rx={1}
-                    fill={fill}
+                    rx={zone.diamondDots ? 1 : 1.5}
+                    fill={DOT_FILL[band]}
                     stroke={CHART_COLORS.dotRing}
                     strokeWidth={1}
-                    transform={`rotate(45 ${cx} ${cy})`}
+                    transform={zone.diamondDots ? `rotate(45 ${cx} ${cy})` : undefined}
                   />
                 );
               }}

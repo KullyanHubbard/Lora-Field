@@ -10,9 +10,8 @@ from fastapi import HTTPException
 
 from .config import settings
 from .crops import is_rice
-from .database import row_to_dict
+from .database import db_time, parse_db_time, row_to_dict
 from .irrigation import farm_thresholds
-from .node_service import _parse_db_time
 from .schemas import ThresholdConfig
 
 # Dicatat di decision_logs untuk tiap node kebun yang sudah punya reading.
@@ -36,12 +35,8 @@ LIMITED_EVENTS = {
 }
 
 
-def _db_time(value: datetime) -> str:
-    return value.strftime("%Y-%m-%d %H:%M:%S")
-
-
 def is_limited_active(farm: dict, now: datetime) -> bool:
-    until = _parse_db_time(farm.get("limited_until"))
+    until = parse_db_time(farm.get("limited_until"))
     return until is not None and now < until
 
 
@@ -67,7 +62,7 @@ def limited_until_text(until: datetime, now: datetime) -> str:
     # +1 hari: frontend mengirim akhir hari lokal, jadi hari ke-max_days masih boleh.
     if not now < until <= now + timedelta(days=max_days + 1):
         raise HTTPException(status_code=422, detail=detail)
-    return _db_time(until)
+    return db_time(until)
 
 
 def log_limited_event(
@@ -102,7 +97,7 @@ def log_limited_event(
           AND EXISTS (SELECT 1 FROM readings r WHERE r.node_id = n.id AND r.created_at <= :at)
         """,
         {
-            "at": created_at or _db_time(datetime.now(timezone.utc)),
+            "at": created_at or db_time(datetime.now(timezone.utc)),
             "decision": info["decision"],
             "event": event,
             "reason_text": info["reason"],

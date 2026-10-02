@@ -1,11 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { Activity, CloudSun, Droplets, History, MapPin, Sprout } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { LandingSectionHeading } from '@/features/landing/components/LandingSectionHeading';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   LANDING_REVEAL_INITIAL,
-  LANDING_REVEAL_TRANSITION,
   LANDING_REVEAL_VISIBLE,
   LANDING_SHELL,
   LANDING_STAGGER_DELAY,
@@ -46,23 +45,12 @@ export function LandingFeatures() {
   return (
     <section id="features" className="w-full py-20 md:py-32">
       <div className={LANDING_SHELL}>
-        <motion.div
-          initial={LANDING_REVEAL_INITIAL}
-          whileInView={LANDING_REVEAL_VISIBLE}
-          viewport={{ once: true }}
-          transition={LANDING_REVEAL_TRANSITION}
-          className="mb-12 flex flex-col items-center justify-center space-y-4 text-center"
-        >
-          <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-            {t('landing.featuresBadge')}
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            {t('landing.featuresTitle')}
-          </h2>
-          <p className="max-w-200 text-muted-foreground md:text-lg">
-            {t('landing.featuresSubtitle')}
-          </p>
-        </motion.div>
+        <LandingSectionHeading
+          badge={t('landing.featuresBadge')}
+          title={t('landing.featuresTitle')}
+          subtitle={t('landing.featuresSubtitle')}
+          className="mb-12"
+        />
 
         <motion.div
           variants={FEATURE_CONTAINER_VARIANTS}

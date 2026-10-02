@@ -7,6 +7,7 @@ Semua fungsi jalan di dalam transaksi pemanggil.
 from datetime import datetime, timedelta, timezone
 
 from .config import settings
+from .database import db_time, parse_db_time
 from .schemas import SensorReadingIn
 
 
@@ -43,20 +44,9 @@ def insert_node(
     )
 
 
-def _parse_db_time(value: str | None) -> datetime | None:
-    """Waktu CURRENT_TIMESTAMP SQLite = UTC tanpa penanda zona."""
-    if not value:
-        return None
-    try:
-        parsed = datetime.fromisoformat(str(value))
-    except ValueError:
-        return None
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
-
-
 def is_recently_seen(last_seen_at: str | None, offline_after_minutes: int | None = None) -> bool:
     """True kalau waktu terakhir terlihat masih dalam batas (bawaan NODE_OFFLINE_AFTER_MINUTES)."""
-    last_seen = _parse_db_time(last_seen_at)
+    last_seen = parse_db_time(last_seen_at)
     if offline_after_minutes is None:
         offline_after_minutes = settings.node_offline_after_minutes
     offline_after = timedelta(minutes=offline_after_minutes)
@@ -68,10 +58,10 @@ def present_node(node: dict) -> dict:
     presented = dict(node)
     presented["status"] = "online" if is_recently_seen(node.get("last_seen_at")) else "offline"
     presented["valve_auto_close_at"] = None
-    command_at = _parse_db_time(node.get("valve_command_at"))
+    command_at = parse_db_time(node.get("valve_command_at"))
     if node.get("valve_command") == "open" and command_at is not None:
         closes_at = command_at + timedelta(minutes=settings.manual_irrigation_max_minutes)
-        presented["valve_auto_close_at"] = closes_at.strftime("%Y-%m-%d %H:%M:%S")
+        presented["valve_auto_close_at"] = db_time(closes_at)
     if not node.get("battery_updated_at"):
         presented["battery"] = None
     return presented

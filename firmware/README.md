@@ -25,6 +25,7 @@ sensor, relay, dan kalibrasi di `include/config.h` masih perkiraan.
 | `lib/lorafield/` | Logika bersama tanpa Arduino: format paket LoRa, JSON kontrak, konversi sensor, timer valve |
 | `include/config.h` | Pin, frekuensi LoRa, interval, kalibrasi, waktu portal WiFi. Sama untuk semua alat sejenis |
 | `include/wm_strings_id.h` | Teks portal WiFi dalam Bahasa Indonesia (turunan teks WiFiManager, lisensi MIT) |
+| `include/lora_radio.h` | Menyalakan radio LoRa, satu urutan untuk gateway dan node |
 | `tools/provision.py` | Alat bantu produksi: isi pengaturan per alat lewat USB dan cetak isi stiker |
 | `test/test_logic/` | Tes logika `lib/lorafield` di PC |
 
@@ -59,8 +60,8 @@ Tidak ada pengaturan yang ditanam di kode, jadi satu file firmware dipakai untuk
 **Saat produksi (sekali per alat):**
 
 1. Upload firmware gateway.
-1. Daftarkan gateway di broker dulu: username = ID gateway, dengan password MQTT-nya.
-2. Jalankan alat bantu produksi. Password MQTT diketik tersembunyi lalu **dicek ke broker sebelum
+2. Daftarkan gateway di broker dulu: username = ID gateway, dengan password MQTT-nya.
+3. Jalankan alat bantu produksi. Password MQTT diketik tersembunyi lalu **dicek ke broker sebelum
    disimpan** (salah ketik langsung ditolak, pengaturan gateway tidak diubah). Password hotspot dibuat
    acak kalau `--ap-pass` tidak diisi:
    ```bat
@@ -68,7 +69,7 @@ Tidak ada pengaturan yang ditanam di kode, jadi satu file firmware dipakai untuk
    ```
    Pilihan lain: `--portal` (langsung buka portal setelah selesai), `--forget-wifi` (hapus WiFi sisa
    uji, portal terbuka sendiri), `--skip-mqtt-check` (broker tidak terjangkau dari komputer produksi).
-3. Cetak stiker dari hasilnya: ID gateway, nama dan password hotspot, QR code WiFi.
+4. Cetak stiker dari hasilnya: ID gateway, nama dan password hotspot, QR code WiFi.
 
 Gateway yang pengaturannya belum lengkap selalu masuk **mode pengaturan** dan hanya menunggu
 perintah Serial, tidak pernah membuka hotspot tanpa password. Perintah Serial (115200 baud) bisa

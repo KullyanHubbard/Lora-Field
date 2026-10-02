@@ -150,8 +150,8 @@ def create_reading(
         default=None, description="Cadangan, hanya dipakai kalau kebun belum punya kode BMKG"
     ),
 ) -> dict:
-    # Node yang belum terdaftar dibuat di sini, dipakai firmware yang langsung kirim
-    # reading tanpa registrasi lewat gateway.
+    # Node yang belum terdaftar dibuat di sini (self-registration). Alat asli mengirim reading lewat
+    # MQTT, bukan route ini; route ini dipakai smoke test dan uji manual.
     node_created = False
 
     # Kode BMKG kebun menang atas ?adm4= dari alat, supaya salah kirim firmware tidak
@@ -189,8 +189,8 @@ def create_reading(
             insert_node(connection, node_id, farm_id, default_node_name(node_id))
             node_created = True
         else:
-            farm_id = get_node_owned(connection, node_id, current_user["id"])["farm_id"]
-            farm = get_farm_owned(connection, farm_id, current_user["id"])
+            _, farm = get_node_owned(connection, node_id, current_user["id"])
+            farm_id = farm["id"]
 
         reading_id, decision = apply_reading(connection, node_id, farm, payload, weather)
 

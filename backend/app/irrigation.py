@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 
 from .config import settings
-from .node_service import _parse_db_time
+from .database import db_time, parse_db_time
 from .schemas import ThresholdConfig
 
 
@@ -148,7 +148,7 @@ def auto_decision(
 
     Kembalikan (decision, state). state = kolom node yang harus diubah, kosong kalau tidak ada.
     """
-    now_text = now.strftime("%Y-%m-%d %H:%M:%S")
+    now_text = db_time(now)
     reset = {
         "auto_pulse_count": 0,
         "auto_pulse_started_at": None,
@@ -168,7 +168,7 @@ def auto_decision(
         if rain_blocks:
             return calculate_decision(soil_moisture, True, thresholds), reset
         # Waktu mulai kosong atau rusak dianggap sekarang, supaya reading dan summary tidak error.
-        pulse_end = (_parse_db_time(node["auto_pulse_started_at"]) or now) + timedelta(
+        pulse_end = (parse_db_time(node["auto_pulse_started_at"]) or now) + timedelta(
             minutes=settings.auto_pulse_minutes
         )
         confirmed_count = node.get("auto_confirmed_pulse_count", 0)
@@ -201,7 +201,7 @@ def auto_decision(
         return calculate_decision(soil_moisture, False, thresholds), {}
     # Jeda setelah batas pulsa sengaja menang atas kondisi darurat, supaya sensor rusak
     # yang terbaca sangat kering tidak membuat valve menyiram terus.
-    limit_at = _parse_db_time(node["auto_limit_at"])
+    limit_at = parse_db_time(node["auto_limit_at"])
     if limit_at and now < limit_at + timedelta(hours=settings.auto_limit_cooldown_hours):
         return dict(AUTO_DECISIONS["pulse_limit"]), {}
     if rain_blocks:

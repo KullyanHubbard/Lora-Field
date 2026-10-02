@@ -17,10 +17,10 @@ from pydantic import ValidationError
 
 from .bmkg import get_weather_for_decision
 from .config import settings
-from .database import get_connection, row_to_dict
-from .gateway_service import last_link_event
+from .database import db_time, get_connection, parse_db_time, row_to_dict
+from .gateway_service import farm_gateway, last_link_event
 from .irrigation import manual_decision
-from .node_service import _parse_db_time, default_node_name, insert_node
+from .node_service import default_node_name, insert_node
 from .reading_service import apply_reading
 from .schemas import DEVICE_ID_PATTERN, MqttNodeList, MqttReadingIn
 
@@ -213,14 +213,14 @@ def _detect_restart(connection, gateway_id: str, farm_id: str, uptime_s, boot_re
     if not (uptime_ok or id_ok):
         return
     booted = (
-        (datetime.now(timezone.utc) - timedelta(seconds=uptime_s)).strftime("%Y-%m-%d %H:%M:%S") if uptime_ok else None
+        db_time(datetime.now(timezone.utc) - timedelta(seconds=uptime_s)) if uptime_ok else None
     )
     row = connection.execute("SELECT booted_at, boot_id FROM gateways WHERE device_id = ?", (gateway_id,)).fetchone()
     if id_ok and row is not None and row["boot_id"] is not None:
         restarted = row["boot_id"] != boot_id
     else:
-        previous = _parse_db_time(row["booted_at"]) if row else None
-        restarted = booted is not None and previous is not None and _parse_db_time(booted) - previous > RESTART_TOLERANCE
+        previous = parse_db_time(row["booted_at"]) if row else None
+        restarted = booted is not None and previous is not None and parse_db_time(booted) - previous > RESTART_TOLERANCE
     connection.execute(
         "UPDATE gateways SET booted_at = COALESCE(?, booted_at), boot_id = COALESCE(?, boot_id) WHERE device_id = ?",
         (booted, boot_id if id_ok else None, gateway_id),
@@ -328,7 +328,7 @@ def valve_target(node: dict, decision: dict) -> dict:
         started, minutes = node["valve_command_at"], settings.manual_irrigation_max_minutes
     else:
         started, minutes = node["auto_pulse_started_at"], settings.auto_pulse_minutes
-    start_at = _parse_db_time(started) or datetime.now(timezone.utc)
+    start_at = parse_db_time(started) or datetime.now(timezone.utc)
     return {"state": "open", "until": int((start_at + timedelta(minutes=minutes)).timestamp())}
 
 
@@ -367,9 +367,7 @@ def publish_gateway_command(gateway_id: str, action: str) -> bool:
 
 def farm_valve_nodes(connection, farm_id: str) -> tuple[str | None, list[str]]:
     """Gateway dan node kebun, diambil sebelum kebun dihapus atau gateway dilepas."""
-    gateway = connection.execute(
-        "SELECT device_id FROM gateways WHERE farm_id = ?", (farm_id,)
-    ).fetchone()
+    gateway = farm_gateway(connection, farm_id)
     node_ids = [
         row["id"] for row in connection.execute("SELECT id FROM nodes WHERE farm_id = ?", (farm_id,))
     ]
@@ -397,9 +395,7 @@ def publish_farm_valves(farm_id: str) -> None:
     if _client is None:
         return
     with get_connection() as connection:
-        gateway = connection.execute(
-            "SELECT device_id FROM gateways WHERE farm_id = ?", (farm_id,)
-        ).fetchone()
+        gateway = farm_gateway(connection, farm_id)
         nodes = [
             row_to_dict(row)
             for row in connection.execute("SELECT * FROM nodes WHERE farm_id = ?", (farm_id,))

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
-import { Badge } from '@/components/ui/badge';
+import { LandingSectionHeading } from '@/features/landing/components/LandingSectionHeading';
 import {
   LANDING_GRID,
   LANDING_REVEAL_INITIAL,
@@ -28,23 +28,12 @@ export function LandingSteps() {
       />
 
       <div className={`${LANDING_SHELL} relative`}>
-        <motion.div
-          initial={LANDING_REVEAL_INITIAL}
-          whileInView={LANDING_REVEAL_VISIBLE}
-          viewport={{ once: true }}
-          transition={LANDING_REVEAL_TRANSITION}
-          className="mb-16 flex flex-col items-center justify-center space-y-4 text-center"
-        >
-          <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-            {t('landing.howItWorksBadge')}
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            {t('landing.howItWorksTitle')}
-          </h2>
-          <p className="max-w-200 text-muted-foreground md:text-lg">
-            {t('landing.howItWorksSubtitle')}
-          </p>
-        </motion.div>
+        <LandingSectionHeading
+          badge={t('landing.howItWorksBadge')}
+          title={t('landing.howItWorksTitle')}
+          subtitle={t('landing.howItWorksSubtitle')}
+          className="mb-16"
+        />
 
         <div className="relative grid gap-8 md:grid-cols-3 md:gap-12">
           {stepsItems.map((step, index) => (

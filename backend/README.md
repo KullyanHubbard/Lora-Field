@@ -1,7 +1,8 @@
 # LoraField Backend
 
-Backend dashboard LoraField: FastAPI + SQLite, fondasi sebelum integrasi MQTT dan
-hardware LoRa. Backend juga men-serve hasil build frontend (`frontend/dist/`) di `/`.
+Backend dashboard LoraField: FastAPI + SQLite, plus jembatan MQTT ke gateway LoRa
+(`app/mqtt_bridge.py`, format pesan di `docs/kontrak-mqtt.md`). Backend juga men-serve hasil
+build frontend (`frontend/dist/`) di `/`.
 
 Data cuaca diambil dari API publik BMKG:
 `https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={kode_wilayah}`.
@@ -44,7 +45,15 @@ NODE_OFFLINE_AFTER_MINUTES=15       # node dianggap offline kalau tidak kirim da
 GATEWAY_OFFLINE_AFTER_MINUTES=15    # gateway dianggap offline tanpa kabar selama ini; wajib > 10 (jarak heartbeat)
 MANUAL_IRRIGATION_MAX_MINUTES=30    # valve yang dibuka manual ditutup otomatis setelah ini
 VALVE_RESEND_MINUTES=5              # kirim ulang perintah valve kalau alat masih melapor posisi lain setelah ini
+
+MQTT_HOST=127.0.0.1                 # kosong = jembatan MQTT nonaktif (gateway tidak bisa lapor)
+MQTT_PORT=1883
+MQTT_USERNAME=lorafield-server
+MQTT_PASSWORD=...                   # akun server di file password Mosquitto
 ```
+
+Pengaturan lain (batas irigasi otomatis, Irigasi Terbatas, cuaca) beserta nilai bawaannya ada di
+`app/config.py`; nama variabelnya sama dengan nama field dalam huruf besar.
 
 `RESEND_FROM_EMAIL` sengaja tanpa default. Pengirim uji Resend (`onboarding@resend.dev`)
 hanya bisa mengirim ke email pemilik akun Resend, jadi email reset ke user lain tidak

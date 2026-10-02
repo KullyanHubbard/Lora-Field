@@ -3028,6 +3028,30 @@ def run(report: Report, with_network: bool) -> None:
                 f"status {resp_offline.status_code}, kirim {klien.terkirim[jumlah_kirim:]}",
             )
             kirim("status", {"state": "online", "fw": "sim-1"})
+            # Satu aturan online dengan summary: node masih mengirim data walau kabar gateway sendiri sudah lama.
+            with database.get_connection() as connection:
+                jejak_node = connection.execute(
+                    "SELECT id, last_seen_at FROM nodes WHERE farm_id = ?", (farm_mqtt,)
+                ).fetchall()
+                connection.execute(
+                    "UPDATE gateways SET last_seen_at = datetime('now', '-1 day') WHERE farm_id = ?", (farm_mqtt,)
+                )
+                connection.execute("UPDATE nodes SET last_seen_at = CURRENT_TIMESTAMP WHERE farm_id = ?", (farm_mqtt,))
+            status_ringkasan = client.get(f"/api/farms/{farm_mqtt}/summary", headers=auth).json().get("gateway_status")
+            mqtt_bridge._client = None  # 503 = lolos cek online tanpa benar-benar mengirim perintah
+            status_ganti_wifi = client.post(url_ganti_wifi, headers=auth).status_code
+            mqtt_bridge._client = klien
+            with database.get_connection() as connection:
+                connection.execute("UPDATE gateways SET last_seen_at = CURRENT_TIMESTAMP WHERE farm_id = ?", (farm_mqtt,))
+                connection.executemany(
+                    "UPDATE nodes SET last_seen_at = ? WHERE id = ?",
+                    [(row["last_seen_at"], row["id"]) for row in jejak_node],
+                )
+            report.check(
+                "Ganti WiFi memakai aturan online yang sama dengan summary (node online, gateway lama diam)",
+                status_ringkasan == "online" and status_ganti_wifi == 503,
+                f"summary {status_ringkasan}, ganti wifi {status_ganti_wifi}",
+            )
 
             # MAC ESP32 satu pabrikan: awalan ID sama, nama bawaan tetap harus beda.
             node_kembar = ["ND-246F28A1B2C3", "ND-246F28D4E5F6"]

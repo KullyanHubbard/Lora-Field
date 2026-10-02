@@ -204,8 +204,8 @@ Izin harus menyebut areanya. Izin untuk satu file atau folder tidak berlaku untu
 - Backend (port 8000), web dev server (port 5173), simulator, dan broker Mosquitto bisa sedang berjalan
   di komputer user. Jangan mematikan, me-restart, atau menjalankan ulang proses itu, dan jangan
   memakai port itu.
-- Jangan menjalankan `python simulator/lorafield_sim.py` dengan perintah `run`, `reset`, atau `cleanup`,
-  dan perintah lain yang menulis ke database atau broker.
+- Jangan menjalankan `python simulator/lorafield_sim.py run` atau `reset` (keduanya menyambung ke broker
+  asli). Cek logika simulator cukup lewat `python simulator/test_sim.py`.
 - Jangan mengisi `MQTT_HOST` atau menyambung ke broker asli. Simulator user memakainya.
 - Jangan menjalankan `npm install`, `npm update`, `npm audit fix`, atau `npx shadcn add`. Semuanya
   mengubah `package.json` atau `components/ui`. Butuh dependency atau komponen baru: berhenti dan tanya.

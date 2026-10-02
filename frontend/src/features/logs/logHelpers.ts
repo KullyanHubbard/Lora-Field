@@ -4,7 +4,7 @@
 import type { TFunction } from 'i18next';
 import type { DecisionType, IrrigationLog, LimitedIrrigationEvent } from '@/types';
 import { getIrrigationStatusBadge, type StatusTone } from '@/lib/status';
-import { EMPTY_VALUE, formatClockTime, parseServerDate } from '@/lib/format';
+import { EMPTY_VALUE, formatServerDateTimeParts } from '@/lib/format';
 
 export const LOG_FILTER_OPTIONS = [
   { key: 'all', label: 'logFilter.all' },
@@ -68,8 +68,8 @@ export function getLogTone(log: Pick<IrrigationLog, 'decision_type'>): StatusTon
 
 export function formatLogTime(iso: string | null | undefined, locale: string): string {
   if (!iso) return EMPTY_VALUE;
-  const d = parseServerDate(iso);
-  return d ? `${d.toLocaleDateString(locale)} ${formatClockTime(d, locale, true)}` : String(iso);
+  const parts = formatServerDateTimeParts(iso, locale);
+  return parts ? `${parts.date} ${parts.time}` : iso;
 }
 
 // Tanggal input (jam lokal) jadi batas waktu ISO UTC untuk GET /api/logs, inklusif sehari penuh.

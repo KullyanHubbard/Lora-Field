@@ -23,8 +23,8 @@ def get_farm_owned(connection, farm_id: str, user_id: str) -> dict:
     return farm
 
 
-def get_node_owned(connection, node_id: str, user_id: str) -> dict:
-    """Ambil node + verifikasi kepemilikan via farm.user_id."""
+def get_node_owned(connection, node_id: str, user_id: str) -> tuple[dict, dict]:
+    """Ambil (node, farm) + verifikasi kepemilikan via farm.user_id."""
     node = row_to_dict(
         connection.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
     )
@@ -33,5 +33,4 @@ def get_node_owned(connection, node_id: str, user_id: str) -> dict:
     farm_id = node.get("farm_id")
     if not farm_id:
         raise HTTPException(status_code=404, detail="Node tidak ditemukan")
-    get_farm_owned(connection, farm_id, user_id)
-    return node
+    return node, get_farm_owned(connection, farm_id, user_id)

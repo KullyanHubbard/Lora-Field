@@ -1,4 +1,6 @@
 import { formatClockTime, parseServerDate } from '@/lib/format';
+import type { StatusTone } from '@/lib/status';
+import { ACCENT_TEXT } from '@/lib/toneClasses';
 import type { Reading } from '@/types';
 import { HOUR_MS, MONITORING_WINDOW_HOURS, startOfHour } from '@/lib/timeWindows';
 
@@ -9,6 +11,52 @@ type ReadingMetricKey = keyof Pick<
 
 // Batas atas sumbu Y grafik suhu tanah dan udara.
 export const TEMP_CHART_MAX_C = 50;
+
+export type TempBand = 'low' | 'ideal' | 'high';
+
+// Satu grafik suhu (TempZoneLineChart) untuk suhu udara dan suhu tanah. Yang beda hanya data di sini:
+// rentang ideal, teks dan warna status tiap pita, warna ikon, dan bentuk titik.
+export interface TempZone {
+  metric: 'air_temp' | 'soil_temp';
+  titleKey: string;
+  iconClass: string;
+  range: { min: number; max: number };
+  status: Record<TempBand, { labelKey: string; tone: StatusTone }>;
+  // Titik belah ketupat supaya suhu tanah beda dari suhu udara.
+  diamondDots: boolean;
+}
+
+export const AIR_TEMP_ZONE: TempZone = {
+  metric: 'air_temp',
+  titleKey: 'monitoring.chartAirTemp',
+  iconClass: ACCENT_TEXT.red,
+  range: { min: 24, max: 32 },
+  status: {
+    low: { labelKey: 'monitoring.airStatus.cool', tone: 'green' },
+    ideal: { labelKey: 'monitoring.airStatus.normal', tone: 'green' },
+    high: { labelKey: 'monitoring.airStatus.hot', tone: 'red' },
+  },
+  diamondDots: false,
+};
+
+export const SOIL_TEMP_ZONE: TempZone = {
+  metric: 'soil_temp',
+  titleKey: 'monitoring.chartSoilTemp',
+  iconClass: ACCENT_TEXT.amber,
+  range: { min: 18, max: 28 },
+  status: {
+    low: { labelKey: 'monitoring.soilTempStatus.cold', tone: 'yellow' },
+    ideal: { labelKey: 'monitoring.soilTempStatus.normal', tone: 'green' },
+    high: { labelKey: 'monitoring.soilTempStatus.warm', tone: 'red' },
+  },
+  diamondDots: true,
+};
+
+export function tempBand(value: number, range: TempZone['range']): TempBand {
+  if (value < range.min) return 'low';
+  if (value > range.max) return 'high';
+  return 'ideal';
+}
 
 interface HourlyMonitoringPoint {
   label: string;

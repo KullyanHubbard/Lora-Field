@@ -6,13 +6,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import {
-  LANDING_REVEAL_INITIAL,
-  LANDING_REVEAL_TRANSITION,
-  LANDING_REVEAL_VISIBLE,
-  LANDING_SHELL,
-} from '@/features/landing/landingHelpers';
+import { LandingSectionHeading } from '@/features/landing/components/LandingSectionHeading';
+import { LANDING_REVEAL_VISIBLE, LANDING_SHELL } from '@/features/landing/landingHelpers';
 
 const FAQ_REVEAL_OFFSET = 10;
 const FAQ_REVEAL_DURATION = 0.3;
@@ -31,19 +26,12 @@ export function LandingFaq() {
   return (
     <section id="faq" className="w-full py-20 md:py-32">
       <div className={LANDING_SHELL}>
-        <motion.div
-          initial={LANDING_REVEAL_INITIAL}
-          whileInView={LANDING_REVEAL_VISIBLE}
-          viewport={{ once: true }}
-          transition={LANDING_REVEAL_TRANSITION}
-          className="mb-12 flex flex-col items-center justify-center space-y-4 text-center"
-        >
-          <Badge className="rounded-md px-4 py-1.5 text-sm font-medium" variant="secondary">
-            {t('landing.navFaq')}
-          </Badge>
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{t('landing.faqTitle')}</h2>
-          <p className="max-w-200 text-muted-foreground md:text-lg">{t('landing.faqSubtitle')}</p>
-        </motion.div>
+        <LandingSectionHeading
+          badge={t('landing.navFaq')}
+          title={t('landing.faqTitle')}
+          subtitle={t('landing.faqSubtitle')}
+          className="mb-12"
+        />
 
         <div className="mx-auto max-w-3xl">
           <Accordion type="single" collapsible className="w-full">

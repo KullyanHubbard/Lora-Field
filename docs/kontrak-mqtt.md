@@ -167,8 +167,9 @@ dari data sensor, bukan dari daftar ini.
   terdaftar di kebun lain ditolak.
 - Pesan rusak (bukan JSON, field wajib hilang, nilai di luar rentang) diabaikan dan dicatat di
   log server. Server tidak membalas error ke gateway.
-- Gateway dianggap online kalau `status`, `heartbeat`, atau `reading` diterima dalam 15 menit
-  terakhir (`GATEWAY_OFFLINE_AFTER_MINUTES` di server, terpisah dari batas offline node). `status` online dan offline tercatat di Log Gateway web. `status` offline (termasuk Last
+- Gateway dianggap online kalau `status` online, `heartbeat`, `nodes`, atau `reading` diterima dalam
+  15 menit terakhir (`GATEWAY_OFFLINE_AFTER_MINUTES` di server, terpisah dari batas offline node), atau
+  ada node kebun yang masih mengirim data. `status` online dan offline tercatat di Log Gateway web. `status` offline (termasuk Last
   Will) langsung membuat gateway offline di web, sampai ada pesan baru darinya. `status` yang diterima
   ulang dari retain saat server menyambung ulang ke broker hanya dicatat di Log Gateway kalau berbeda
   dari laporan koneksi terakhir di log (gateway tersambung atau putus selagi server putus dari broker).
@@ -184,7 +185,7 @@ dari data sensor, bukan dari daftar ini.
 ## Urutan normal
 
 1. Gateway menyala, sambung WiFi, sinkron NTP, sambung broker dengan Last Will.
-2. Gateway kirim `status` online dan `nodes`, lalu subscribe `valve/set`.
+2. Gateway kirim `status` online, `heartbeat`, dan `nodes`, lalu subscribe `valve/set` dan `cmd`.
 3. Node kirim data lewat LoRa. Gateway menambahkan `rssi` lalu kirim `reading`.
 4. Server menghitung keputusan irigasi (mode Otomatis) atau memakai perintah pengguna (mode
    Manual). Kalau posisi valve harus berubah, server kirim `valve/set`.

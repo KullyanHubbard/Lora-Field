@@ -1,4 +1,10 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import i18n from '@/i18n/config';
@@ -23,16 +29,18 @@ export function useFarmSummary(farmId: string) {
   });
 }
 
-// Reading semua node untuk grafik kartu metrik. Key dan rentang jam sama dengan
-// useReadings di Monitoring supaya cache-nya terpakai bersama.
-export function useNodesReadings(nodeIds: string[]) {
-  return useQueries({
-    queries: nodeIds.map((nodeId) => ({
-      queryKey: ['readings', nodeId, READINGS_FETCH_HOURS],
-      queryFn: () => api.getReadings(nodeId, READINGS_FETCH_HOURS),
-      refetchInterval: LIVE_DATA_INTERVAL_MS,
-    })),
+// Reading satu node. Dipakai kartu metrik Dashboard dan grafik Monitoring, jadi cache-nya terpakai bersama.
+export function readingsQuery(nodeId: string) {
+  return queryOptions({
+    queryKey: ['readings', nodeId, READINGS_FETCH_HOURS],
+    queryFn: () => api.getReadings(nodeId, READINGS_FETCH_HOURS),
+    refetchInterval: LIVE_DATA_INTERVAL_MS,
   });
+}
+
+// Reading semua node untuk grafik kartu metrik.
+export function useNodesReadings(nodeIds: string[]) {
+  return useQueries({ queries: nodeIds.map(readingsQuery) });
 }
 
 export function useCrops(q?: string) {

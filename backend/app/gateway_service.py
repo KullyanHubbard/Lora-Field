@@ -28,25 +28,27 @@ def last_link_event(connection, farm_id: str) -> dict | None:
     )
 
 
-def gateway_link_state(connection, farm_id: str) -> tuple[bool, bool]:
-    """Sambungan gateway kebun: (melapor dalam GATEWAY_OFFLINE_AFTER_MINUTES, terputus menurut laporan
-    koneksi terakhir).
+def farm_gateway(connection, farm_id: str) -> dict | None:
+    """Gateway yang terpasang di kebun, None kalau kebun belum punya gateway."""
+    return row_to_dict(connection.execute("SELECT * FROM gateways WHERE farm_id = ?", (farm_id,)).fetchone())
 
-    Laporan terputus (status offline atau Last Will dari broker) mengalahkan batas waktu sampai ada kabar
-    baru dari gateway (status online, heartbeat, daftar node, atau reading).
+
+def gateway_online(connection, farm_id: str) -> bool:
+    """Status gateway kebun, satu aturan untuk summary.gateway_status dan tombol Ganti WiFi.
+
+    Online kalau ada node online atau gateway melapor dalam GATEWAY_OFFLINE_AFTER_MINUTES. Laporan terputus
+    (status offline atau Last Will dari broker) mengalahkan keduanya sampai ada kabar baru dari gateway
+    (status online, heartbeat, daftar node, atau reading).
     """
-    gateway = row_to_dict(
-        connection.execute("SELECT last_seen_at FROM gateways WHERE farm_id = ?", (farm_id,)).fetchone()
-    )
+    gateway = farm_gateway(connection, farm_id)
     last_event = last_link_event(connection, farm_id)
     last_seen = (gateway or {}).get("last_seen_at")
-    seen = gateway is not None and is_recently_seen(last_seen, settings.gateway_offline_after_minutes)
-    cut = (
-        last_event is not None
-        and last_event["event"] == "disconnected"
-        and (last_seen or "") < last_event["created_at"]
-    )
-    return seen, cut
+    if last_event is not None and last_event["event"] == "disconnected" and (last_seen or "") < last_event["created_at"]:
+        return False
+    if gateway is not None and is_recently_seen(last_seen, settings.gateway_offline_after_minutes):
+        return True
+    nodes = connection.execute("SELECT last_seen_at FROM nodes WHERE farm_id = ?", (farm_id,)).fetchall()
+    return any(is_recently_seen(node["last_seen_at"]) for node in nodes)
 
 
 def ensure_gateway_unclaimed(connection, device_id: str) -> dict:

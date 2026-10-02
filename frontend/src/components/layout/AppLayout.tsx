@@ -64,6 +64,7 @@ export function AppLayout() {
   const selectorNav: NavItem[] = [
     { to: '/select-farms', labelKey: 'layout.nav.selectFarms', icon: LayoutDashboard },
     { to: '/my-farms', labelKey: 'layout.nav.myFarms', icon: Sprout },
+    { to: '/addFarm', labelKey: 'layout.nav.registerFarm', icon: Plus },
   ];
 
   const farmNav: NavItem[] = farmId
@@ -127,19 +128,7 @@ export function AppLayout() {
               <SidebarGroup className="pt-1">
                 <SidebarGroupContent>
                   <SidebarMenu className="gap-1.5 px-3">
-                    {farmNav.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <SidebarMenuItem key={item.to}>
-                          <SidebarMenuButton asChild isActive={pathname === item.to}>
-                            <Link to={item.to}>
-                              <Icon />
-                              <span>{t(item.labelKey)}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
+                    <NavMenuItems items={farmNav} pathname={pathname} />
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -171,29 +160,7 @@ export function AppLayout() {
                 <SidebarGroupLabel>{t('layout.menuNav')}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu className="gap-1.5 px-3">
-                    {selectorNav.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <SidebarMenuItem key={item.to}>
-                          <SidebarMenuButton asChild isActive={pathname === item.to}>
-                            <Link to={item.to}>
-                              <Icon />
-                              <span>{t(item.labelKey)}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-
-                    {/* Registrasi Kebun */}
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === '/addFarm'}>
-                        <Link to="/addFarm">
-                          <Plus />
-                          <span>{t('layout.nav.registerFarm')}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <NavMenuItems items={selectorNav} pathname={pathname} />
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -264,4 +231,22 @@ export function AppLayout() {
       <HelpCenterDialog isOpen={isHelpDialogOpen} onClose={() => setIsHelpDialogOpen(false)} />
     </SidebarProvider>
   );
+}
+
+function NavMenuItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
+  const { t } = useTranslation();
+
+  return items.map((item) => {
+    const Icon = item.icon;
+    return (
+      <SidebarMenuItem key={item.to}>
+        <SidebarMenuButton asChild isActive={pathname === item.to}>
+          <Link to={item.to}>
+            <Icon />
+            <span>{t(item.labelKey)}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  });
 }

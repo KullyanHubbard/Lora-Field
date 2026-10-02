@@ -1,6 +1,7 @@
 # Rencana Menuju Produk LoraField
 
-Status: rencana, belum dikerjakan. Dibuat 2026-10-01 (Sesi 5), diperbarui 2026-10-02.
+Status: rencana, sebagian sudah dikerjakan (F1, F2, F3, F7 gateway, L1). Dibuat 2026-10-01 (Sesi 5),
+diperbarui 2026-10-03.
 
 Tujuan: LoraField siap dijual, bukan hanya demo. Setiap jalan pintas yang hanya cocok untuk uji
 dicatat di sini beserta versi produknya.
@@ -16,17 +17,19 @@ dicatat di sini beserta versi produknya.
 - Anggapan sementara: gateway dipasang di rumah petani yang punya WiFi. Kebun tanpa WiFi (modem 4G,
   board dengan SIM) belum diputuskan.
 
-## Status 2026-10-01
+## Status 2026-10-03
 
-- Gateway asli (LoRa32 V2.1 915 MHz) tersambung lewat WiFi ke Mosquitto di komputer rumah, memakai
-  password per alat dan aturan topik per gateway, lalu tampil di web (Kebun Sawit Kaur).
+- Gateway asli (LoRa32 V2.1 915 MHz, firmware 0.2.8) tersambung lewat WiFi ke Mosquitto di komputer
+  rumah, memakai password per alat dan aturan topik per gateway, lalu tampil di web (Kebun Sawit Kaur).
+- Terbukti di alat: pengaturan dari memori, portal WiFi dan tombol Ganti WiFi, lampu status, watchdog,
+  riwayat menyala ulang beserta penyebabnya.
 - Node dan valve belum diuji di alat asli.
 
 ## Jalan pintas uji dan penggantinya
 
 | Sekarang (uji) | Produk |
 |----------------|--------|
-| WiFi dan password MQTT tertanam lewat `include/secrets.h` (firmware 0.1.0) | Firmware 0.2.0: disimpan di memori alat, WiFi diisi petani lewat portal di HP (F1, F2). Belum dicoba di alat |
+| WiFi dan password MQTT tertanam lewat `include/secrets.h` (firmware 0.1.0) | Selesai sejak firmware 0.2.0: disimpan di memori alat, WiFi diisi petani lewat portal di HP (F1, F2). Terbukti di alat 2026-10-02 |
 | Server di komputer rumah, `MQTT_HOST` berupa IP lokal | VPS dan domain, TLS port 8883 (S1, S2, F4) |
 | Password MQTT dibuat manual dengan `mosquitto_passwd`, sama untuk semua alat, pernah tertulis di chat | Password acak unik per alat, dibuat saat produksi dan didaftarkan otomatis (S3, P1). Password uji diganti |
 | Mosquitto sebagai layanan Windows (file `passwd` harus diberi izin baca untuk SYSTEM setiap kali diubah) | Layanan systemd di Linux |
@@ -47,7 +50,7 @@ dicatat di sini beserta versi produknya.
 
 ## Firmware gateway dan node (F)
 
-- **F1. Pengaturan di memori alat.** Dikerjakan 2026-10-02 (firmware 0.2.0), belum dicoba di alat.
+- **F1. Pengaturan di memori alat.** Dikerjakan 2026-10-02 (firmware 0.2.0), terbukti di alat 2026-10-02.
   Alamat dan port broker, password MQTT, dan password hotspot disimpan dengan `Preferences`; diisi
   lewat USB dengan `firmware/tools/provision.py` (password tidak pernah dicetak balik). `secrets.h`
   dihapus. Alat tanpa pengaturan lengkap hanya menunggu perintah Serial.
@@ -116,11 +119,11 @@ dicatat di sini beserta versi produknya.
 
 ## Urutan saran
 
-1. Selesaikan uji alat lokal: layanan Mosquitto, node (D), valve (E).
+1. Selesaikan uji alat lokal: node (D) dan valve (E). Layanan Mosquitto sudah menyala sendiri.
 2. VPS, domain, TLS, dan keamanan (S1, S2, S4, F4). Ini juga dipakai untuk expo.
-3. Uji F1 dan F2 di alat (kodenya sudah ada), lalu F7.
+3. Watchdog node (sisa F7). F1, F2, F3, dan watchdog gateway sudah terbukti di alat 2026-10-02.
 4. F5, F6, lalu S3 dan P1.
-5. L1 dan L2 sebelum penjualan.
+5. Cocokkan L1 dengan naskah final Kepmen 5/2024, lalu L2 sebelum penjualan.
 
 ## Keputusan yang dibutuhkan dari user
 

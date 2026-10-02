@@ -8,7 +8,7 @@ import httpx
 from fastapi import HTTPException
 
 from .config import settings
-from .database import get_connection
+from .database import get_connection, parse_db_time
 
 
 logger = logging.getLogger("lorafield")
@@ -152,17 +152,6 @@ def set_cached_weather(adm4: str, data: dict) -> None:
         )
 
 
-def _parse_cache_time(value: str | None) -> datetime | None:
-    """updated_at weather_cache = UTC tanpa penanda zona (CURRENT_TIMESTAMP SQLite)."""
-    if not value:
-        return None
-    try:
-        parsed = datetime.fromisoformat(str(value))
-    except ValueError:
-        return None
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
-
-
 def _read_weather_cache_row(adm4: str) -> tuple[dict, str] | None:
     """Baca cache apa adanya tanpa filter TTL. Kembalikan (data, updated_at) atau None."""
     with get_connection() as connection:
@@ -181,7 +170,7 @@ def _recompute_stale_weather(data: dict, updated_at: str) -> dict | None:
     now = datetime.now(timezone.utc)
     slots = []
     for item in data.get("forecast") or []:
-        parsed = _parse_cache_time(item.get("utc_datetime"))
+        parsed = parse_db_time(item.get("utc_datetime"))
         if parsed is not None:
             slots.append((parsed, item))
     if not slots:
@@ -224,7 +213,7 @@ def get_weather_for_decision(adm4: str) -> dict | None:
 
     if cached is not None:
         data, updated_at = cached
-        cached_at = _parse_cache_time(updated_at)
+        cached_at = parse_db_time(updated_at)
         if cached_at is not None and datetime.now(timezone.utc) - cached_at <= timedelta(
             minutes=WEATHER_CACHE_TTL_MINUTES
         ):
@@ -257,7 +246,7 @@ def get_weather_for_decision(adm4: str) -> dict | None:
     if cached is None:
         return None
     data, updated_at = cached
-    cached_at = _parse_cache_time(updated_at)
+    cached_at = parse_db_time(updated_at)
     if cached_at is None or datetime.now(timezone.utc) - cached_at > timedelta(
         hours=settings.weather_stale_max_hours
     ):
