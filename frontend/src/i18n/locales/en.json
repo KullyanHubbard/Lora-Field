@@ -160,7 +160,7 @@
     "avgMoistureShort": "Avg moisture",
     "belowThreshold": "Below threshold",
     "recommendationTitle": "Recommendations",
-    "recommendationEmpty": "No nodes to analyze yet.",
+    "recommendationEmpty": "Node unavailable",
     "recommendationWaitingMoisture": "Waiting for moisture data."
   },
   "limitedIrrigation": {
@@ -286,7 +286,7 @@
     "valveUnsentNote": "Switch positions are commands saved on the server. The physical valves have not moved because the commands have not reached the devices (MQTT is not connected).",
     "valveAutoCloseAt": "Stops automatically at {{time}}",
     "valveNoSensorData": "No sensor data yet",
-    "valveNoNodes": "This farm has no nodes yet.",
+    "valveNoNodes": "Node unavailable",
     "valveCommandSaved": "Valve command saved.",
     "valveCommandUnsent": "Not sent to the device yet because MQTT is not connected.",
     "valveCommandError": "Failed to save the valve command.",

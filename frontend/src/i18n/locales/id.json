@@ -160,7 +160,7 @@
     "avgMoistureShort": "Rata-rata kelembapan",
     "belowThreshold": "Di bawah threshold",
     "recommendationTitle": "Rekomendasi",
-    "recommendationEmpty": "Belum ada node untuk dianalisis.",
+    "recommendationEmpty": "Node tidak tersedia",
     "recommendationWaitingMoisture": "Menunggu data kelembapan."
   },
   "limitedIrrigation": {
@@ -285,7 +285,7 @@
     "valveUnsentNote": "Posisi switch adalah perintah yang tersimpan di server. Valve fisik belum bergerak karena perintah belum terkirim ke alat (MQTT belum tersambung).",
     "valveAutoCloseAt": "Berhenti otomatis {{time}}",
     "valveNoSensorData": "Belum ada data sensor",
-    "valveNoNodes": "Kebun ini belum punya node.",
+    "valveNoNodes": "Node tidak tersedia",
     "valveCommandSaved": "Perintah valve disimpan.",
     "valveCommandUnsent": "Belum terkirim ke alat karena MQTT belum tersambung.",
     "valveCommandError": "Perintah valve gagal disimpan.",
