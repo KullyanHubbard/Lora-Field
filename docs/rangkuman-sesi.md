@@ -473,3 +473,87 @@ Item baru:
 - WiFiManager tetap mendaftarkan halaman berbahaya walau tidak tampil di menu; ditutup lewat `setWebServerCallback`, karena handler yang didaftarkan lebih dulu yang dipakai.
 - Upload firmware dan membuka port Serial biasa me-restart board; pemantauan memakai port dengan DTR dan RTS dilepas.
 - Uji versi salah tetap dipakai untuk setiap tes baru di smoke test dan tes firmware, dan semuanya tertangkap.
+
+## Sesi 6 (2026-10-02)
+
+### Cakupan commit
+
+- Empat commit, semuanya dibuat user. Titik awal: `31be6a6` "docs: rangkuman sesi 5".
+  - `8cbb6d4` "firmware 0.2.1: pulihkan WiFi lama setelah portal gagal, sambung ulang WiFi dengan radio dinyalakan ulang" (6 file).
+  - `3af0dc8` "update firmawre" (41 file): firmware 0.2.2 sampai 0.2.6, backend (batas offline gateway, riwayat koneksi, deteksi restart, WiFi dari heartbeat), halaman Gateway, label Menunggu Node, dokumen. Commit ini juga memuat perubahan frontend milik user **di luar sesi ini**: landing (dipecah menjadi `LandingHeader`, `LandingHero`, `LandingFeatures`, `LandingSteps`, `LandingFaq`, `landingHelpers.ts`, `LandingPage.css`), `BatteryNodesCard.tsx`, `MetricStatCard.tsx`, `NodeSensorCard.tsx`, empat file irigasi (`IrrigationPage`, `IrrigationHeaderCard`, `IrrigationNodeGridCard`, `LimitedIrrigationCard`), `MonitoringPanel.tsx`, dan teks dialog `GatewayWifiChange.tsx`.
+  - `e5fdf9b` "firmware 0.2.8: alasan dan nomor nyala gateway di heartbeat, riwayat menyala ulang dengan penyebabnya" (14 file).
+  - `b741bd6` "web: teks Ganti WiFi memakai kata perangkat" (1 file).
+- Cek cepat: `git log --oneline 31be6a6..b741bd6`
+- Sesi dimulai dari prompt "Sesi 6: gateway LoraField bagian 2" (daftar A sampai I). Selesai: A, C, D, G, H, I. B sebagian. E dan F belum. Di luar daftar, uji alat memunculkan beberapa bug dan usulan yang ikut dikerjakan (tabel di bawah).
+
+### Perubahan per bagian
+
+| Bagian | Isi perubahan | Pemeriksaan |
+|--------|---------------|-------------|
+| A. Uji di alat | Tiga status portal terbukti. Dua bug ditemukan dan diperbaiki di firmware 0.2.1: (1) password salah di portal menimpa WiFi lama, karena WiFiManager menyimpan WiFi sebelum tahu berhasil; WiFi lama kini disalin sebelum portal dan dipasang lagi (`wifiNeedsRestore`); (2) setelah router restart, `WiFi.reconnect()` gagal terus selama 10 menit; percobaan tiap 30 detik kini mematikan lalu menyalakan radio dari nol, dan alasan gagal (kode dan nama) ditulis di Serial | Tes PC, uji versi salah, uji alat: portal ditinggal kembali ke WiFi lama, router restart tersambung lagi sekitar 1 menit, masa istirahat lalu coba lagi terbukti |
+| Istirahat radio WiFi | 30 menit menjadi 5 menit (keputusan user: gateway memakai adaptor) | Tes PC |
+| D. Watchdog (0.2.2) | Watchdog bawaan ESP32 mengawasi `loop()`, batas 2 menit (`GATEWAY_WATCHDOG_S`; 1 menit terlalu dekat dengan waktu tunggu terburuk DNS, TCP, dan MQTT). Masa menyala dan portal tidak diawasi. Serial menulis penyebab restart sebelumnya | Uji macet disengaja (restart tepat 2 menit), router restart tanpa restart watchdog, 3 jam 10 menit tanpa restart, Mosquitto dihentikan tanpa restart |
+| C. Lampu status (0.2.3) | LED hijau GPIO 25, lima pola lewat `esp_timer`: menyala terus (tersambung), kedip ganda (WiFi tersambung, server belum), kedip lambat (WiFi belum), kedip cepat (portal), kedip singkat (mode pengaturan). Logika `statusLedOn` dan `runtimeStatusLed` | Tes PC, uji versi salah dua kali, uji alat empat keadaan (mode pengaturan hanya di PC) |
+| Batas offline gateway (backend) | Bug: gateway sehat tampil Offline bergantian tanpa log Terputus. Penyebab: batas gateway ikut batas node, dan `.env` berisi `NODE_OFFLINE_AFTER_MINUTES=5` (heartbeat tiap 10 menit). Baru: `GATEWAY_OFFLINE_AFTER_MINUTES` default 15, wajib lebih dari 10 (startup gagal kalau tidak). User mengganti `.env` ke 15 | Smoke +3, uji versi salah dua kali, OpenAPI sama, pemantauan 16 menit (64 cek, 0 offline) |
+| Riwayat koneksi setelah server tersambung ulang | Bug: Mosquitto restart, gateway tersambung lebih dulu dari server, Terhubung tidak tercatat. Status retain kini dicatat kalau berbeda dari laporan koneksi terakhir (`last_link_event`). Dua tes lama yang mengunci aturan lama diganti. Keterangan "diketahui setelah server tersambung ulang" sempat ditambahkan lalu dihapus (keputusan user) | Smoke, uji versi salah dua arah, uji alat |
+| Waktu di halaman Gateway | "x menit lalu" diganti jam:menit:detik dan tanggal di kotak Terakhir dan Riwayat Koneksi (`formatServerDateTimeParts`) | tsc, eslint, build, cocok dengan Serial |
+| H. Label kebun tanpa node | "Belum Terhubung" menjadi "Menunggu Node" (en: "Awaiting Nodes") | tsc, eslint, build |
+| G. Riwayat koneksi (0.2.4) | Heartbeat tidak dicatat lagi. Restart dideteksi dari jam menyala (waktu terima dikurangi uptime, kolom `gateways.booted_at`), dicatat `restarted` pada jam menyala. Gateway mengirim heartbeat begitu tersambung, uptime 64-bit (`esp_timer_get_time`). Filter "Menyala ulang" menggantikan "Heartbeat" dan "Sinkronisasi". Kelonggaran 2 menit diperkecil ke 1 menit setelah restart 78 detik terlewat di uji alat | Smoke, uji versi salah, uji alat RST |
+| I. Daya pancar LoRa (0.2.5) | Kepmen Kominfo No. 5 Tahun 2024: node ≤ 100 mW EIRP, gateway ≤ 400 mW EIRP, bandwidth ≤ 250 kHz, duty cycle ≤ 1% (dibaca dari rancangan konsultasi publik November 2023). `LORA_TX_POWER_DBM 17` tertulis di `config.h`, compile gagal kalau duty cycle node melewati 1%. Temuan untuk L2: gateway wajib filter 915/925 MHz, board LoRa32 tidak punya | Tes PC, compile, uji versi salah (jarak kirim 10 detik gagal compile) |
+| B. Sumber daya (sebagian) | Port USB PC: 1 sampai 2 kali brownout tiap menyala. Charger HP USB-A (5V sampai 3A): tersambung 13 detik tanpa brownout, dua kali. Data datasheet: ESP32 WiFi TX 240 mA, saran catu ≥ 500 mA; SX1276 87 mA di 17 dBm. Calon spesifikasi adaptor 5V 2A. Prosesor 160 MHz (0.2.6, keputusan user) | Uji alat |
+| WiFi di kartu Gateway (0.2.6) | Heartbeat membawa `wifi_ssid` dan `wifi_rssi` (`heartbeatJson`, ArduinoJson). Kolom `gateways.wifi_ssid`, `wifi_rssi`. Kotak "WiFi" dan "Sinyal WiFi" (Kuat, Sedang, Lemah). Offline: "Tidak terhubung" dan "terakhir: nama WiFi" | Tes PC (nama dengan tanda kutip), smoke, uji versi salah, uji alat (Shakira 2.4 GHz, -47 sampai -53 dBm) |
+| Alasan dan nomor nyala (0.2.7, 0.2.8) | Heartbeat membawa `boot_reason` (`bootReasonCode`: power_on, brownout, watchdog, crash, planned, firmware_update, other; versi firmware di memori alat) dan `boot_id` (nomor acak per nyala). Server: `boot_id` berbeda = restart pasti; jam menyala hanya cadangan. Riwayat menulis penyebabnya | Tes PC, smoke 351, uji versi salah, uji alat: Firmware diperbarui, Listrik padam atau tombol RST, Listrik turun |
+| Teks | "Device" menjadi "perangkat" di dialog Ganti WiFi | eslint, build |
+
+### File
+
+- Backend: `backend/app/config.py`, `database.py`, `gateway_service.py`, `mqtt_bridge.py`, `node_service.py`, `backend/scripts/smoke_test.py`, `backend/README.md`.
+- Firmware: `firmware/src/gateway/main.cpp`, `firmware/src/node/main.cpp`, `firmware/include/config.h`, `firmware/lib/lorafield/src/lorafield.h`, `lorafield.cpp`, `firmware/test/test_logic/test_main.cpp`, `firmware/README.md`.
+- Frontend: `frontend/src/lib/format.ts`, `frontend/src/types/index.ts`, `frontend/src/features/gateway/gatewayHelpers.ts`, `GatewayInfoCard.tsx`, `GatewayLogContent.tsx`, `frontend/src/i18n/locales/id.json`, `en.json`.
+- Dokumen: `CLAUDE.md`, `docs/kontrak-mqtt.md`, `docs/rencana-produk.md`.
+
+### Perubahan di luar repo
+
+- Router ZTE F6600P (oleh user): reservasi DHCP Ethernet komputer `D8:43:AE:A9:11:D4` ke `192.168.1.4`, karena setelah router restart alamat komputer pindah ke `.2` dan gateway tidak menemukan broker.
+- `backend/.env` (oleh user): `NODE_OFFLINE_AFTER_MINUTES` 5 menjadi 15.
+- Gateway: firmware 0.2.8 terpasang. Memori alat punya kunci baru `fw` (versi firmware terakhir).
+- Database dev: kolom baru `gateways.booted_at`, `boot_id`, `wifi_ssid`, `wifi_rssi` (lewat `ensure_column` saat backend menyala).
+- `frontend/dist` di-build ulang.
+- Memory Claude: `env-dan-restart-backend-oleh-user.md` (baru).
+
+### Keputusan yang diambil
+
+- Istirahat radio WiFi 5 menit. Watchdog 2 menit, portal tidak diawasi.
+- Lima pola lampu status, termasuk pemisahan "WiFi belum" dan "server belum".
+- Batas offline gateway terpisah dari node, 15 menit. Batas offline node kembali 15 menit.
+- Riwayat koneksi: heartbeat tidak dicatat; status dari retain dicatat seperti biasa, tanpa keterangan khusus.
+- Halaman Gateway memakai jam dan tanggal lengkap; kotak WiFi dan Sinyal WiFi, offline "Tidak terhubung" dengan nama WiFi terakhir.
+- Label kebun tanpa node: "Menunggu Node". Filter Sinkronisasi dihapus.
+- Daya pancar LoRa 17 dBm sesuai Kepmen 5/2024. Prosesor gateway 160 MHz.
+- Deteksi restart: nomor nyala sebagai cara utama, kelonggaran jam menyala 1 menit sebagai cadangan.
+
+### Belum dikerjakan saat Sesi 6 selesai
+
+- E (OTA) dan F (password alat otomatis). Sebaiknya setelah VPS dan TLS.
+- Sisa B: ukur arus dengan USB power meter, uji portal WiFi saat memakai charger, putusan baterai, pendeteksi brownout dinyalakan penuh setelah uji 1 sampai 2 hari dengan adaptor produk.
+- Uji alat restart kurang dari 1 menit setelah nyala sebelumnya (paling mudah dari charger, tanpa brownout). Baru terbukti di smoke test.
+- Bukti "CPU 160 MHz" di Serial (pemantau dinyalakan setelah boot, barisnya terlewat).
+- Batasan yang diterima: restart beruntun sebelum tersambung hanya mencatat penyebab nyala terakhir; listrik padam dan tombol RST tidak bisa dibedakan.
+- Portal terbuka sendiri saat password router diganti. Catatan: router yang baru menyala juga sempat menolak dengan `AUTH_FAIL` walau password benar.
+- Jam lengkap di Log Aktivitas Dashboard (layout Ringkasan Kebun terkunci).
+- Naskah final Kepmen 5/2024 belum dicocokkan langsung; penguatan antena belum diukur; filter SAW 915/925 MHz untuk gateway (L2).
+- Smoke test menulis log ke `backend/logs/app.log` yang asli (baris uji tercampur di log server).
+- Dari Sesi 5: password MQTT yang tertulis di chat, node dan valve di alat asli, backend tidak menyala sendiri setelah komputer restart.
+
+### Pelajaran dan kesalahan
+
+- WiFiManager menyimpan WiFi yang diketik di portal sebelum tahu berhasil; janji "WiFi lama tetap cadangan" baru benar setelah salinan dipasang lagi.
+- `WiFi.reconnect()` bisa gagal diam-diam berulang kali; radio yang dimatikan dan dinyalakan dari nol langsung tersambung.
+- Restart router mengubah alamat komputer server; gateway yang memakai IP tetap ikut gagal. Di produk alamat broker berupa domain (S1).
+- Batas waktu offline gateway tidak boleh ikut batas node; `.env` bisa menyimpan angka uji lama yang tidak terlihat dari kode.
+- Status retain bisa berupa kejadian baru kalau server menyambung belakangan.
+- Kelonggaran waktu selalu menyisakan celah (restart 78 detik, lalu 52 detik); nomor acak per nyala lebih pasti.
+- Skrip Python lewat heredoc di Git Bash mengubah `\\0` dan `\\n` menjadi byte NUL dan baris baru di file sumber. Sejak itu perubahan seperti ini memakai alat Edit atau skrip di file, dan file dicek bebas byte NUL.
+- Pengaman otomatis menolak membaca `.env` dan menyalakan ulang backend, termasuk cek status sesudahnya. User yang melakukannya lewat `lorafield.bat` menu 3.
+- Pemantau Serial yang dinyalakan setelah upload melewatkan baris saat boot, dan berhenti sendiri setelah batas waktu tugas latar.
+- Uji versi salah tetap dipakai untuk setiap tes baru di smoke test dan tes firmware, dan semuanya tertangkap.
