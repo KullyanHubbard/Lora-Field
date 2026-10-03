@@ -175,6 +175,13 @@ def _read_farm(connection, farm_id: str) -> dict:
     return row_to_dict(connection.execute("SELECT * FROM farms WHERE id = ?", (farm_id,)).fetchone())
 
 
+def _lock_farm(connection, farm_id: str, user_id: str, now: datetime) -> dict:
+    """Pembuka route Irigasi Terbatas: kunci tulis sejak awal (cek status dan ubahnya satu operasi, permintaan
+    bersamaan antre), lalu ambil kebun milik user dengan Irigasi Terbatas yang sudah lewat diselesaikan dulu."""
+    connection.execute("BEGIN IMMEDIATE")
+    return expire_limited_irrigation(connection, get_farm_owned(connection, farm_id, user_id), now)
+
+
 @router.post("/api/farms/{farm_id}/limited-irrigation")
 def start_limited_irrigation(
     farm_id: str,
@@ -183,11 +190,7 @@ def start_limited_irrigation(
 ) -> dict:
     now = datetime.now(timezone.utc)
     with get_connection() as connection:
-        # Kunci tulis sejak awal: cek status dan ubahnya satu operasi, permintaan bersamaan antre.
-        connection.execute("BEGIN IMMEDIATE")
-        farm = expire_limited_irrigation(
-            connection, get_farm_owned(connection, farm_id, current_user["id"]), now
-        )
+        farm = _lock_farm(connection, farm_id, current_user["id"], now)
         require_limited_available(farm)
         until = limited_until_text(payload.until, now)
         connection.execute(
@@ -208,11 +211,7 @@ def update_limited_irrigation(
     """Ubah tanggal selesai. Boleh di mode apa pun, karena Irigasi Terbatas tetap berjalan saat manual."""
     now = datetime.now(timezone.utc)
     with get_connection() as connection:
-        # Kunci tulis sejak awal: cek status dan ubahnya satu operasi, permintaan bersamaan antre.
-        connection.execute("BEGIN IMMEDIATE")
-        farm = expire_limited_irrigation(
-            connection, get_farm_owned(connection, farm_id, current_user["id"]), now
-        )
+        farm = _lock_farm(connection, farm_id, current_user["id"], now)
         require_limited_active(farm)
         until = limited_until_text(payload.until, now)
         if until != farm["limited_until"]:
@@ -234,11 +233,7 @@ def stop_limited_irrigation(
 ) -> dict:
     now = datetime.now(timezone.utc)
     with get_connection() as connection:
-        # Kunci tulis sejak awal: cek status dan ubahnya satu operasi, permintaan bersamaan antre.
-        connection.execute("BEGIN IMMEDIATE")
-        farm = expire_limited_irrigation(
-            connection, get_farm_owned(connection, farm_id, current_user["id"]), now
-        )
+        farm = _lock_farm(connection, farm_id, current_user["id"], now)
         require_limited_active(farm)
         connection.execute(
             """

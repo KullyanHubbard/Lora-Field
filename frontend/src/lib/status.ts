@@ -17,15 +17,8 @@ interface StatusBadge {
   tone: StatusTone;
 }
 
-export function getGatewayStatusBadge(status: string): StatusBadge {
-  const map: Record<string, StatusBadge> = {
-    online: { labelKey: 'status.online', tone: 'green' },
-    offline: { labelKey: 'status.offline', tone: 'red' },
-  };
-  return map[status] ?? map.offline;
-}
-
-export function getNodeStatusBadge(status: string): StatusBadge {
+// Status online/offline gateway dan node. Nilai selain 'online' dianggap offline.
+export function getOnlineStatusBadge(status: string): StatusBadge {
   const map: Record<string, StatusBadge> = {
     online: { labelKey: 'status.online', tone: 'green' },
     offline: { labelKey: 'status.offline', tone: 'red' },

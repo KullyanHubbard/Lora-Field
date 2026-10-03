@@ -1,4 +1,4 @@
-import { getGatewayStatusBadge } from '@/lib/status';
+import { getOnlineStatusBadge } from '@/lib/status';
 import type { StatusTone } from '@/lib/status';
 import { EMPTY_VALUE } from '@/lib/format';
 import type { FarmGateway, FarmSummary, GatewayLog } from '@/types';
@@ -39,7 +39,7 @@ export function buildGatewayInfo(
   gateway: FarmGateway | null | undefined,
   gatewayStatus: FarmSummary['gateway_status'],
 ): GatewayInfoViewModel {
-  const status = getGatewayStatusBadge(gateway ? gatewayStatus : 'offline');
+  const status = getOnlineStatusBadge(gateway ? gatewayStatus : 'offline');
 
   return {
     gatewayId: gateway?.device_id ?? EMPTY_VALUE,

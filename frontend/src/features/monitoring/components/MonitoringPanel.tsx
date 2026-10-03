@@ -9,7 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusPill } from '@/components/ui/status-pill';
-import { getNodeStatusBadge } from '@/lib/status';
+import { getOnlineStatusBadge } from '@/lib/status';
 import type { Node, Reading } from '@/types';
 import { AIR_TEMP_ZONE, SOIL_TEMP_ZONE } from '@/features/monitoring/chartHelpers';
 import SoilMoistureZoneChart from './SoilMoistureZoneChart';
@@ -43,7 +43,7 @@ function MonitoringNodeSelect({
       </SelectTrigger>
       <SelectContent>
         {nodes.map((node) => {
-          const badge = getNodeStatusBadge(node.status);
+          const badge = getOnlineStatusBadge(node.status);
           return (
             <SelectItem key={node.id} value={node.id}>
               <span className="flex items-center gap-2">

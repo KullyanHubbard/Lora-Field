@@ -10,13 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from '@/components/ui/chart';
+import { ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { cn } from '@/lib/utils';
 import type { Reading } from '@/types';
 import { DEG_C } from '@/lib/format';
@@ -28,6 +22,7 @@ import {
   type TempBand,
   type TempZone,
 } from '@/features/monitoring/chartHelpers';
+import { MonitoringChartCard } from './MonitoringChartCard';
 import { MonitoringChartHeader } from './MonitoringChartHeader';
 import { MONITORING_LINE_ANIMATION } from './monitoringChartAnimation';
 import { CHART_COLORS } from '@/lib/chartColors';
@@ -73,118 +68,106 @@ export default function TempZoneLineChart({
   } satisfies ChartConfig;
 
   return (
-    <Card
-      className={cn(
-        embedded &&
-          'h-full min-h-0 rounded-md bg-transparent py-3 ring-0 [--card-spacing:--spacing(3)]',
-      )}
+    <MonitoringChartCard
+      config={config}
+      embedded={embedded}
+      header={
+        <MonitoringChartHeader
+          title={title}
+          icon={<ThermometerSun className={cn('size-4', zone.iconClass)} aria-hidden="true" />}
+          value={latest != null ? latest.toFixed(1) : null}
+          unit={DEG_C}
+          status={
+            latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined
+          }
+          sideLabel={t('monitoring.zoneTemp')}
+          sideValue={`${range.min}–${range.max}${DEG_C}`}
+          embedded={embedded}
+        />
+      }
     >
-      <MonitoringChartHeader
-        title={title}
-        icon={<ThermometerSun className={cn('size-4', zone.iconClass)} aria-hidden="true" />}
-        value={latest != null ? latest.toFixed(1) : null}
-        unit={DEG_C}
-        status={
-          latestStatus ? { tone: latestStatus.tone, label: t(latestStatus.labelKey) } : undefined
-        }
-        sideLabel={t('monitoring.zoneTemp')}
-        sideValue={`${range.min}–${range.max}${DEG_C}`}
-        embedded={embedded}
-      />
-      <CardContent className={cn(embedded && 'min-h-0 flex-1')}>
-        <ChartContainer
-          config={config}
-          className={cn('w-full', embedded ? 'h-full aspect-auto' : 'h-[280px]')}
-        >
-          <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-            <CartesianGrid
-              vertical={false}
-              strokeDasharray="3 3"
-              stroke="currentColor"
-              strokeOpacity={0.12}
+      <ComposedChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+        <CartesianGrid
+          vertical={false}
+          strokeDasharray="3 3"
+          stroke="currentColor"
+          strokeOpacity={0.12}
+        />
+        <ReferenceArea y1={0} y2={range.min} fill={PALETTE.cool} fillOpacity={0.05} />
+        <ReferenceArea
+          y1={range.min}
+          y2={range.max}
+          fill={CHART_COLORS.emerald}
+          fillOpacity={0.07}
+        />
+        <ReferenceArea y1={range.max} y2={TEMP_CHART_MAX_C} fill={PALETTE.hot} fillOpacity={0.05} />
+        <ReferenceLine
+          y={range.min}
+          stroke={PALETTE.cool}
+          strokeOpacity={0.45}
+          strokeDasharray="5 3"
+        />
+        <ReferenceLine
+          y={range.max}
+          stroke={PALETTE.hot}
+          strokeOpacity={0.45}
+          strokeDasharray="5 3"
+        />
+        <XAxis
+          dataKey="label"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          interval={0}
+          tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
+        />
+        <YAxis
+          domain={[0, TEMP_CHART_MAX_C]}
+          tickLine={false}
+          axisLine={false}
+          width={44}
+          tickFormatter={(v) => `${v}${DEG_C}`}
+          tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(1)}${DEG_C}`, title]}
             />
-            <ReferenceArea y1={0} y2={range.min} fill={PALETTE.cool} fillOpacity={0.05} />
-            <ReferenceArea
-              y1={range.min}
-              y2={range.max}
-              fill={CHART_COLORS.emerald}
-              fillOpacity={0.07}
-            />
-            <ReferenceArea
-              y1={range.max}
-              y2={TEMP_CHART_MAX_C}
-              fill={PALETTE.hot}
-              fillOpacity={0.05}
-            />
-            <ReferenceLine
-              y={range.min}
-              stroke={PALETTE.cool}
-              strokeOpacity={0.45}
-              strokeDasharray="5 3"
-            />
-            <ReferenceLine
-              y={range.max}
-              stroke={PALETTE.hot}
-              strokeOpacity={0.45}
-              strokeDasharray="5 3"
-            />
-            <XAxis
-              dataKey="label"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              interval={0}
-              tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
-            />
-            <YAxis
-              domain={[0, TEMP_CHART_MAX_C]}
-              tickLine={false}
-              axisLine={false}
-              width={44}
-              tickFormatter={(v) => `${v}${DEG_C}`}
-              tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
-            />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(v: unknown) => [`${Number(v ?? 0).toFixed(1)}${DEG_C}`, title]}
-                />
-              }
-            />
-            <Line
-              dataKey="value"
-              type="monotone"
-              stroke={PALETTE.main}
-              strokeWidth={2.5}
-              dot={(props: { cx?: number; cy?: number; index?: number }) => {
-                const { cx, cy, index } = props;
-                if (cx == null || cy == null || index == null) return null;
-                const band = points[index]?.band ?? 'ideal';
-                return (
-                  <rect
-                    x={cx - 3.25}
-                    y={cy - 3.25}
-                    width={6.5}
-                    height={6.5}
-                    rx={zone.diamondDots ? 1 : 1.5}
-                    fill={DOT_FILL[band]}
-                    stroke={CHART_COLORS.dotRing}
-                    strokeWidth={1}
-                    transform={zone.diamondDots ? `rotate(45 ${cx} ${cy})` : undefined}
-                  />
-                );
-              }}
-              activeDot={{
-                r: 5,
-                fill: PALETTE.main,
-                stroke: CHART_COLORS.dotRing,
-                strokeWidth: 1.5,
-              }}
-              {...MONITORING_LINE_ANIMATION}
-            />
-          </ComposedChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+          }
+        />
+        <Line
+          dataKey="value"
+          type="monotone"
+          stroke={PALETTE.main}
+          strokeWidth={2.5}
+          dot={(props: { cx?: number; cy?: number; index?: number }) => {
+            const { cx, cy, index } = props;
+            if (cx == null || cy == null || index == null) return null;
+            const band = points[index]?.band ?? 'ideal';
+            return (
+              <rect
+                x={cx - 3.25}
+                y={cy - 3.25}
+                width={6.5}
+                height={6.5}
+                rx={zone.diamondDots ? 1 : 1.5}
+                fill={DOT_FILL[band]}
+                stroke={CHART_COLORS.dotRing}
+                strokeWidth={1}
+                transform={zone.diamondDots ? `rotate(45 ${cx} ${cy})` : undefined}
+              />
+            );
+          }}
+          activeDot={{
+            r: 5,
+            fill: PALETTE.main,
+            stroke: CHART_COLORS.dotRing,
+            strokeWidth: 1.5,
+          }}
+          {...MONITORING_LINE_ANIMATION}
+        />
+      </ComposedChart>
+    </MonitoringChartCard>
   );
 }

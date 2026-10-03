@@ -13,7 +13,7 @@ import {
 import { StatusPill } from '@/components/ui/status-pill';
 import { getNodeLabel, getSelectedNodeSummary } from '@/features/dashboard/dashboardHelpers';
 import { DEG_C, EMPTY_VALUE } from '@/lib/format';
-import { getNodeStatusBadge } from '@/lib/status';
+import { getOnlineStatusBadge } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { NodeSummary } from '@/types';
 import { ACCENT_TEXT, METRIC_ACCENT_TEXT } from '@/lib/toneClasses';
@@ -23,7 +23,7 @@ export function NodeSensorCard({ nodes, className }: { nodes: NodeSummary[]; cla
   const [selected, setSelected] = useState<string | null>(null);
   const selectedNs = getSelectedNodeSummary(nodes, selected);
   const reading = selectedNs?.latest_reading ?? null;
-  const badge = selectedNs ? getNodeStatusBadge(selectedNs.node.status) : null;
+  const badge = selectedNs ? getOnlineStatusBadge(selectedNs.node.status) : null;
 
   return (
     <Card className={cn('h-full', className)}>
